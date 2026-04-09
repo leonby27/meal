@@ -342,7 +342,11 @@ class _EditFoodLogDialog extends StatefulWidget {
 }
 
 class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
-  late final TextEditingController _gramsController;
+  late final TextEditingController _gramsCtl;
+  late final TextEditingController _proteinCtl;
+  late final TextEditingController _fatCtl;
+  late final TextEditingController _carbsCtl;
+  late final TextEditingController _caloriesCtl;
   late String _mealType;
 
   double _proteinPer100g = 0;
@@ -360,10 +364,14 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
   @override
   void initState() {
     super.initState();
-    _gramsController = TextEditingController(
-      text: widget.log.grams.toInt().toString(),
-    );
-    _mealType = widget.log.mealType;
+    final log = widget.log;
+
+    _gramsCtl = TextEditingController(text: _fmt(log.grams));
+    _proteinCtl = TextEditingController(text: _fmt(log.protein));
+    _fatCtl = TextEditingController(text: _fmt(log.fat));
+    _carbsCtl = TextEditingController(text: _fmt(log.carbs));
+    _caloriesCtl = TextEditingController(text: _fmt(log.calories));
+    _mealType = log.mealType;
 
     final p = widget.product;
     if (p != null &&
@@ -375,21 +383,29 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
       _fatPer100g = p.fatPer100g!;
       _carbsPer100g = p.carbsPer100g!;
       _caloriesPer100g = p.caloriesPer100g!;
-    } else if (widget.log.grams > 0) {
-      final g = widget.log.grams;
-      _proteinPer100g = widget.log.protein / g * 100;
-      _fatPer100g = widget.log.fat / g * 100;
-      _carbsPer100g = widget.log.carbs / g * 100;
-      _caloriesPer100g = widget.log.calories / g * 100;
+    } else if (log.grams > 0) {
+      _proteinPer100g = log.protein / log.grams * 100;
+      _fatPer100g = log.fat / log.grams * 100;
+      _carbsPer100g = log.carbs / log.grams * 100;
+      _caloriesPer100g = log.calories / log.grams * 100;
     }
   }
 
-  double get _grams => double.tryParse(_gramsController.text) ?? 0;
+  String _fmt(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 
-  double get _protein => _proteinPer100g * _grams / 100;
-  double get _fat => _fatPer100g * _grams / 100;
-  double get _carbs => _carbsPer100g * _grams / 100;
-  double get _calories => _caloriesPer100g * _grams / 100;
+  void _onGramsChanged(String _) {
+    final g = double.tryParse(_gramsCtl.text) ?? 0;
+    final f = g / 100;
+    _proteinCtl.text = _fmt(_proteinPer100g * f);
+    _fatCtl.text = _fmt(_fatPer100g * f);
+    _carbsCtl.text = _fmt(_carbsPer100g * f);
+    _caloriesCtl.text = _fmt(_caloriesPer100g * f);
+    setState(() {});
+  }
+
+  double _val(TextEditingController c) => double.tryParse(c.text) ?? 0;
+
+  bool get _valid => _val(_gramsCtl) > 0;
 
   @override
   Widget build(BuildContext context) {
@@ -399,52 +415,82 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'На 100 г: ${_caloriesPer100g.toInt()} ккал  '
-            'Б${_proteinPer100g.toStringAsFixed(1)} '
-            'Ж${_fatPer100g.toStringAsFixed(1)} '
-            'У${_carbsPer100g.toStringAsFixed(1)}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _gramsController,
-            keyboardType: TextInputType.number,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Граммы',
-              suffixText: 'г',
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'На 100 г: ${_caloriesPer100g.toInt()} ккал  '
+              'Б${_proteinPer100g.toStringAsFixed(1)} '
+              'Ж${_fatPer100g.toStringAsFixed(1)} '
+              'У${_carbsPer100g.toStringAsFixed(1)}',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '${_calories.toInt()} ккал  •  '
-            'Б ${_protein.toStringAsFixed(1)}  '
-            'Ж ${_fat.toStringAsFixed(1)}  '
-            'У ${_carbs.toStringAsFixed(1)}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
+            const SizedBox(height: 16),
+            TextField(
+              controller: _gramsCtl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Граммы',
+                suffixText: 'г',
+              ),
+              onChanged: _onGramsChanged,
             ),
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _mealType,
-            decoration: const InputDecoration(
-              labelText: 'Приём пищи',
-              isDense: true,
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _proteinCtl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Белки'),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _fatCtl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Жиры'),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _carbsCtl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(labelText: 'Углев.'),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+              ],
             ),
-            items: _mealTypes.entries
-                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
-                .toList(),
-            onChanged: (v) {
-              if (v != null) setState(() => _mealType = v);
-            },
-          ),
-        ],
+            const SizedBox(height: 12),
+            TextField(
+              controller: _caloriesCtl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Калории', suffixText: 'ккал'),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _mealType,
+              decoration: const InputDecoration(
+                labelText: 'Приём пищи',
+                isDense: true,
+              ),
+              items: _mealTypes.entries
+                  .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) setState(() => _mealType = v);
+              },
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -452,15 +498,15 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
           child: const Text('Отмена'),
         ),
         FilledButton(
-          onPressed: _grams > 0
+          onPressed: _valid
               ? () => Navigator.pop(
                     context,
                     _EditResult(
-                      grams: _grams,
-                      protein: _protein,
-                      fat: _fat,
-                      carbs: _carbs,
-                      calories: _calories,
+                      grams: _val(_gramsCtl),
+                      protein: _val(_proteinCtl),
+                      fat: _val(_fatCtl),
+                      carbs: _val(_carbsCtl),
+                      calories: _val(_caloriesCtl),
                       mealType: _mealType,
                     ),
                   )
@@ -473,7 +519,11 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
 
   @override
   void dispose() {
-    _gramsController.dispose();
+    _gramsCtl.dispose();
+    _proteinCtl.dispose();
+    _fatCtl.dispose();
+    _carbsCtl.dispose();
+    _caloriesCtl.dispose();
     super.dispose();
   }
 }

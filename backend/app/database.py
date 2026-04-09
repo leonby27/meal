@@ -18,11 +18,13 @@ def _build_engine_kwargs() -> dict:
             pool_recycle=1800,
             pool_pre_ping=True,
         )
+        connect_args: dict = {"timeout": 10}
         if settings.database_ssl:
             ssl_ctx = ssl.create_default_context()
             ssl_ctx.check_hostname = False
             ssl_ctx.verify_mode = ssl.CERT_NONE
-            kwargs["connect_args"] = {"ssl": ssl_ctx}
+            connect_args["ssl"] = ssl_ctx
+        kwargs["connect_args"] = connect_args
 
     return kwargs
 
