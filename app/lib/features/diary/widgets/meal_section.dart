@@ -73,12 +73,6 @@ class MealSection extends StatelessWidget {
                       color: Colors.grey.shade600,
                     ),
                   ),
-                if (logs.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.copy, size: 20),
-                    tooltip: 'Копировать $title',
-                    onPressed: () => _copyMeal(context),
-                  ),
               ],
             ),
           ),

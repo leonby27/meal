@@ -69,6 +69,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
     try {
       final api = ApiClient();
+      await api.ensureAuthenticated();
       final result = await api.uploadImage('/api/recognize', bytes);
       setState(() {
         _result = result;
