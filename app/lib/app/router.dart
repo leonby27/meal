@@ -66,7 +66,8 @@ final router = GoRouter(
       builder: (context, state) {
         final mealType = state.uri.queryParameters['meal_type'] ?? 'snack';
         final dateStr = state.uri.queryParameters['date'];
-        return CameraScreen(mealType: mealType, dateStr: dateStr);
+        final source = state.uri.queryParameters['source'];
+        return CameraScreen(mealType: mealType, dateStr: dateStr, autoSource: source);
       },
     ),
     GoRoute(

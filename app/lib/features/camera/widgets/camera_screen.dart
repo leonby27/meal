@@ -13,8 +13,9 @@ import 'package:meal_tracker/core/database/app_database.dart';
 class CameraScreen extends StatefulWidget {
   final String mealType;
   final String? dateStr;
+  final String? autoSource;
 
-  const CameraScreen({super.key, required this.mealType, this.dateStr});
+  const CameraScreen({super.key, required this.mealType, this.dateStr, this.autoSource});
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -25,6 +26,23 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _loading = false;
   Map<String, dynamic>? _result;
   String? _error;
+  bool _autoLaunched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoSource != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_autoLaunched) {
+          _autoLaunched = true;
+          final source = widget.autoSource == 'gallery'
+              ? ImageSource.gallery
+              : ImageSource.camera;
+          _pickImage(source);
+        }
+      });
+    }
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();

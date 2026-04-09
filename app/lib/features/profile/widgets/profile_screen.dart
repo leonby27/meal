@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/theme_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -108,6 +109,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: _save,
                       child: const Text('Сохранить'),
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Тема оформления',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 12),
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: ThemeNotifier.instance,
+                    builder: (context, mode, _) {
+                      return SegmentedButton<ThemeMode>(
+                        segments: const [
+                          ButtonSegment(
+                            value: ThemeMode.system,
+                            icon: Icon(Icons.brightness_auto),
+                            label: Text('Системная'),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.light,
+                            icon: Icon(Icons.light_mode),
+                            label: Text('Светлая'),
+                          ),
+                          ButtonSegment(
+                            value: ThemeMode.dark,
+                            icon: Icon(Icons.dark_mode),
+                            label: Text('Тёмная'),
+                          ),
+                        ],
+                        selected: {mode},
+                        onSelectionChanged: (selected) {
+                          ThemeNotifier.instance.setThemeMode(selected.first);
+                        },
+                      );
+                    },
                   ),
                 ],
               ),

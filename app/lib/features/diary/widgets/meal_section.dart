@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
@@ -21,6 +20,8 @@ class MealSection extends StatelessWidget {
     required this.dateStr,
     required this.onDelete,
   });
+
+  bool get isEmpty => logs.isEmpty;
 
   Future<void> _copyMeal(BuildContext context) async {
     final targetDate = await showDatePicker(
@@ -75,12 +76,6 @@ class MealSection extends StatelessWidget {
                     tooltip: 'Копировать $title',
                     onPressed: () => _copyMeal(context),
                   ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  onPressed: () {
-                    context.push('/search?meal_type=$mealType&date=$dateStr');
-                  },
-                ),
               ],
             ),
           ),

@@ -287,20 +287,71 @@ def fetch_product_with_delay(product_id: int) -> Optional[dict]:
     return get_product_detail(product_id)
 
 
+def get_leaf_subcategories(category_id: int) -> list[tuple[int, str]]:
+    """Рекурсивно собирает все leaf-подкатегории из верхнеуровневой категории."""
+    url = f"{BASE_URL}/category/{category_id}"
+    try:
+        resp = session.get(url, timeout=15)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        print(f"  [ERROR] Subcategory fetch {category_id}: {e}", flush=True)
+        return [(category_id, f"cat_{category_id}")]
+
+    data = extract_next_data(resp.text)
+    if not data:
+        return [(category_id, f"cat_{category_id}")]
+
+    cats_tree = (
+        data.get("props", {}).get("pageProps", {})
+        .get("listing", {}).get("categories", [])
+    )
+    if not cats_tree:
+        return [(category_id, f"cat_{category_id}")]
+
+    def collect(nodes):
+        leaves = []
+        for node in nodes:
+            children = node.get("categories", [])
+            if children:
+                leaves.extend(collect(children))
+            else:
+                cid = node.get("categoryListId")
+                name = node.get("categoryListName", "")
+                if cid:
+                    leaves.append((cid, name))
+        return leaves
+
+    root_children = cats_tree[0].get("categories", []) if cats_tree else []
+    leaves = collect(root_children)
+    return leaves if leaves else [(category_id, f"cat_{category_id}")]
+
+
 def main():
     sys.stdout.reconfigure(line_buffering=True) if hasattr(sys.stdout, 'reconfigure') else None
     print("=" * 60, flush=True)
     print("Парсер edostavka.by — готовые к употреблению продукты", flush=True)
     print("=" * 60, flush=True)
 
-    all_categories = {**CATEGORY_WHITELIST, **SUBCATEGORY_WHITELIST}
+    resolved_categories = {}
 
-    print(f"\nКатегорий для обхода: {len(all_categories)}", flush=True)
+    print("\nРазворачиваю подкатегории из whitelist...", flush=True)
+    for cat_id, cat_name in CATEGORY_WHITELIST.items():
+        print(f"  [{cat_name}] (ID: {cat_id})...", flush=True)
+        leaves = get_leaf_subcategories(cat_id)
+        for lid, lname in leaves:
+            resolved_categories[lid] = f"{cat_name} > {lname}"
+        print(f"    → {len(leaves)} подкатегорий", flush=True)
+        time.sleep(0.3)
+
+    for cat_id, cat_name in SUBCATEGORY_WHITELIST.items():
+        resolved_categories[cat_id] = cat_name
+
+    print(f"\nВсего категорий для обхода: {len(resolved_categories)}", flush=True)
     print("-" * 60, flush=True)
 
     all_product_ids = set()
 
-    for cat_id, cat_name in all_categories.items():
+    for cat_id, cat_name in resolved_categories.items():
         print(f"\n[{cat_name}] (ID: {cat_id})", flush=True)
         ids = get_category_products(cat_id, cat_name)
         new_ids = set(ids) - all_product_ids
