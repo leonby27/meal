@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   static const String _baseUrlKey = 'api_base_url';
   static const String _tokenKey = 'auth_token';
-  static const String defaultBaseUrl = 'https://your-backend.timeweb.cloud';
+  static const String defaultBaseUrl = 'http://192.168.10.78:8000';
 
   final http.Client _client = http.Client();
   String _baseUrl = defaultBaseUrl;
@@ -17,10 +18,40 @@ class ApiClient {
   factory ApiClient() => _instance;
   ApiClient._();
 
+  String get baseUrl => _baseUrl;
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _baseUrl = prefs.getString(_baseUrlKey) ?? defaultBaseUrl;
     _token = prefs.getString(_tokenKey);
+  }
+
+  Future<void> setBaseUrl(String url) async {
+    _baseUrl = url;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_baseUrlKey, url);
+  }
+
+  Future<void> ensureAuthenticated() async {
+    if (_token != null) return;
+    try {
+      final result = await post('/api/auth/register', {
+        'email': 'local@device.app',
+        'password': 'device-auto-pass',
+        'name': 'User',
+      });
+      await setToken(result['access_token'] as String);
+    } on ApiException catch (e) {
+      if (e.statusCode == 409) {
+        final result = await post('/api/auth/login', {
+          'email': 'local@device.app',
+          'password': 'device-auto-pass',
+        });
+        await setToken(result['access_token'] as String);
+      } else {
+        rethrow;
+      }
+    }
   }
 
   bool get isAuthenticated => _token != null;
@@ -65,7 +96,12 @@ class ApiClient {
     request.headers.addAll({
       if (_token != null) 'Authorization': 'Bearer $_token',
     });
-    request.files.add(http.MultipartFile.fromBytes('file', imageBytes, filename: 'photo.jpg'));
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      imageBytes,
+      filename: 'photo.jpg',
+      contentType: MediaType('image', 'jpeg'),
+    ));
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
     return _handleResponse(response);

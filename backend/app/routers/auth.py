@@ -1,4 +1,4 @@
-import uuid
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
-    name: str | None = None
+    name: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -28,7 +28,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user_id: str
     email: str
-    name: str | None
+    name: Optional[str] = None
 
 
 @router.post("/register", response_model=TokenResponse)

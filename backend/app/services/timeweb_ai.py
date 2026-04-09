@@ -1,10 +1,15 @@
 import base64
+import io
 import json
+import logging
 import re
 
 import httpx
+from PIL import Image
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """Ты профессиональный диетолог-нутрициолог. Проанализируй фотографию еды и определи:
 1. Название блюда
@@ -22,10 +27,42 @@ SYSTEM_PROMPT = """Ты профессиональный диетолог-нут
   "total": {"protein": 30.0, "fat": 15.0, "carbs": 52.0, "calories": 462}
 }"""
 
+MAX_DIMENSION = 1024
+JPEG_QUALITY = 80
+
+
+def normalize_image(image_bytes: bytes) -> str:
+    """Convert any image to JPEG, resize if needed, return base64."""
+    img = Image.open(io.BytesIO(image_bytes))
+
+    if img.mode in ('RGBA', 'P', 'LA'):
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        background.paste(img, mask=img.split()[-1] if 'A' in img.mode else None)
+        img = background
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
+
+    w, h = img.size
+    if max(w, h) > MAX_DIMENSION:
+        ratio = MAX_DIMENSION / max(w, h)
+        img = img.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+
+    buf = io.BytesIO()
+    img.save(buf, format='JPEG', quality=JPEG_QUALITY, optimize=True)
+    jpeg_bytes = buf.getvalue()
+
+    logger.info(
+        "normalize_image: original=%d bytes, jpeg=%d bytes, size=%dx%d",
+        len(image_bytes), len(jpeg_bytes), img.size[0], img.size[1],
+    )
+    return base64.b64encode(jpeg_bytes).decode('utf-8')
+
 
 async def recognize_food(image_bytes: bytes) -> dict:
     """Отправляет фото еды в Timeweb Cloud AI-агент для распознавания."""
-    image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+    image_base64 = normalize_image(image_bytes)
 
     url = f"{settings.timeweb_ai_base_url}/{settings.timeweb_ai_agent_id}/v1/chat/completions"
     headers = {
@@ -55,7 +92,7 @@ async def recognize_food(image_bytes: bytes) -> dict:
         "max_tokens": 1000,
     }
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(url, headers=headers, json=payload)
         response.raise_for_status()
 

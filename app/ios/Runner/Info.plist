@@ -47,6 +47,15 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Нужен доступ к камере для распознавания еды</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Нужен доступ к фото для выбора изображения еды</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

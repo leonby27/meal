@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -14,19 +15,19 @@ router = APIRouter(prefix="/api/products", tags=["products"])
 class ProductResponse(BaseModel):
     id: int
     name: str
-    weight_grams: float | None
-    protein_per_100g: float | None
-    fat_per_100g: float | None
-    carbs_per_100g: float | None
-    calories_per_100g: float | None
-    image_url: str | None
-    brand: str | None
-    country: str | None
-    category: str | None
+    weight_grams: Optional[float] = None
+    protein_per_100g: Optional[float] = None
+    fat_per_100g: Optional[float] = None
+    carbs_per_100g: Optional[float] = None
+    calories_per_100g: Optional[float] = None
+    image_url: Optional[str] = None
+    brand: Optional[str] = None
+    country: Optional[str] = None
+    category: Optional[str] = None
 
 
 class ProductsListResponse(BaseModel):
-    products: list[ProductResponse]
+    products: list
     total: int
     page: int
     page_size: int
@@ -34,8 +35,8 @@ class ProductsListResponse(BaseModel):
 
 @router.get("", response_model=ProductsListResponse)
 async def list_products(
-    search: str | None = Query(None, min_length=2),
-    category: str | None = None,
+    search: Optional[str] = Query(None, min_length=2),
+    category: Optional[str] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
@@ -71,7 +72,7 @@ async def list_products(
 
 @router.get("/updates")
 async def get_updates(
-    since: datetime | None = None,
+    since: Optional[datetime] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """Returns products added/updated after `since` timestamp."""

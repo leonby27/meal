@@ -1,5 +1,5 @@
-import uuid
 from datetime import datetime, date
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/sync", tags=["sync"])
 
 class FoodLogEntry(BaseModel):
     id: str
-    product_id: int | None = None
+    product_id: Optional[int] = None
     product_name: str
     meal_type: MealType
     meal_date: date
@@ -24,12 +24,12 @@ class FoodLogEntry(BaseModel):
     fat: float
     carbs: float
     calories: float
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
 class SyncPushRequest(BaseModel):
-    entries: list[FoodLogEntry]
+    entries: list
 
 
 class SyncPushResponse(BaseModel):
@@ -43,9 +43,10 @@ async def sync_push(
     db: AsyncSession = Depends(get_db),
 ):
     synced = 0
-    for entry in req.entries:
+    for entry_data in req.entries:
+        entry = FoodLogEntry(**entry_data) if isinstance(entry_data, dict) else entry_data
         existing = await db.execute(
-            select(FoodLog).where(FoodLog.id == uuid.UUID(entry.id))
+            select(FoodLog).where(FoodLog.id == entry.id)
         )
         log = existing.scalar_one_or_none()
 
@@ -60,8 +61,8 @@ async def sync_push(
             log.calories = entry.calories
         else:
             log = FoodLog(
-                id=uuid.UUID(entry.id),
-                user_id=uuid.UUID(user_id),
+                id=entry.id,
+                user_id=user_id,
                 product_id=entry.product_id,
                 product_name=entry.product_name,
                 meal_type=entry.meal_type,
@@ -81,11 +82,11 @@ async def sync_push(
 
 @router.get("/pull")
 async def sync_pull(
-    since: datetime | None = Query(None),
+    since: Optional[datetime] = Query(None),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(FoodLog).where(FoodLog.user_id == uuid.UUID(user_id))
+    query = select(FoodLog).where(FoodLog.user_id == user_id)
     if since:
         query = query.where(FoodLog.updated_at > since)
     query = query.order_by(FoodLog.meal_date.desc(), FoodLog.created_at.desc())

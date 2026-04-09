@@ -14,6 +14,9 @@ void main() async {
   await initializeDateFormatting('ru', null);
   await AppDatabase.getInstance();
   await ApiClient().init();
+  try {
+    await ApiClient().ensureAuthenticated();
+  } catch (_) {}
   await NotificationService.init();
   await NotificationService.restoreReminders();
   await ThemeNotifier.init();
