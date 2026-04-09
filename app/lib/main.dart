@@ -6,6 +6,7 @@ import 'package:meal_tracker/app/router.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/notification_service.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
 
@@ -14,9 +15,7 @@ void main() async {
   await initializeDateFormatting('ru', null);
   await AppDatabase.getInstance();
   await ApiClient().init();
-  try {
-    await ApiClient().ensureAuthenticated();
-  } catch (_) {}
+  await AuthService().init();
   await NotificationService.init();
   await NotificationService.restoreReminders();
   await ThemeNotifier.init();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -34,6 +35,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) setState(() => _dbReady = true);
   }
 
+  Future<void> _signOut() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Выйти из аккаунта?'),
+        content: const Text('Локальные данные сохранятся на устройстве.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Выйти')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await AuthService().signOut();
+  }
+
   Future<void> _save() async {
     await _db.setSetting('calorie_goal', _calorieController.text);
     await _db.setSetting('protein_goal', _proteinController.text);
@@ -53,11 +70,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final auth = AuthService();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Профиль')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildUserCard(auth),
+          const SizedBox(height: 16),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -190,6 +211,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUserCard(AuthService auth) {
+    final hasAccount = auth.userEmail != null;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundImage: auth.userPhotoUrl != null
+                  ? NetworkImage(auth.userPhotoUrl!)
+                  : null,
+              child: auth.userPhotoUrl == null
+                  ? const Icon(Icons.person, size: 28)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    auth.userName ?? 'Пользователь',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (hasAccount)
+                    Text(
+                      auth.userEmail!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (!hasAccount)
+                    Text(
+                      'Гостевой режим',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.orange.shade700,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (hasAccount)
+              IconButton(
+                icon: const Icon(Icons.logout),
+                tooltip: 'Выйти',
+                onPressed: _signOut,
+              ),
+          ],
+        ),
       ),
     );
   }

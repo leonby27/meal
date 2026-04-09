@@ -1,16 +1,24 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
-from app.database import engine, Base
+from app.database import engine, Base, async_session
 from app.routers import auth, recognize, products, sync
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables verified / created")
+    except Exception as e:
+        logger.error("Failed to initialize database on startup: %s", e)
     yield
     await engine.dispose()
 
@@ -36,6 +44,17 @@ app.include_router(products.router)
 app.include_router(sync.router)
 
 
+@app.get("/")
+async def root():
+    return {"status": "ok"}
+
+
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    try:
+        async with async_session() as session:
+            await session.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "connected"}
+    except Exception as e:
+        logger.error("Health check DB failure: %s", e)
+        return {"status": "degraded", "database": "unavailable"}

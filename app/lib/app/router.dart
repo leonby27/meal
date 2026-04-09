@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/features/auth/widgets/login_screen.dart';
 import 'package:meal_tracker/features/diary/widgets/diary_screen.dart';
 import 'package:meal_tracker/features/search/widgets/search_screen.dart';
 import 'package:meal_tracker/features/stats/widgets/stats_screen.dart';
@@ -20,7 +22,19 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/diary',
+  refreshListenable: AuthService(),
+  redirect: (context, state) {
+    final loggedIn = AuthService().isLoggedIn;
+    final isLoginRoute = state.matchedLocation == '/login';
+    if (!loggedIn && !isLoginRoute) return '/login';
+    if (loggedIn && isLoginRoute) return '/diary';
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) => ShellScreen(child: child),

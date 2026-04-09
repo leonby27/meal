@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:drift/drift.dart' as drift;
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:meal_tracker/core/api/api_client.dart';
@@ -80,6 +82,22 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
+  Future<String?> _saveImageLocally(Uint8List bytes, String logId) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final photosDir = Directory('${dir.path}/meal_photos');
+      if (!photosDir.existsSync()) {
+        photosDir.createSync(recursive: true);
+      }
+      final file = File('${photosDir.path}/$logId.jpg');
+      await file.writeAsBytes(bytes);
+      return file.path;
+    } catch (e) {
+      debugPrint('Failed to save photo locally: $e');
+      return null;
+    }
+  }
+
   Future<void> _saveResult() async {
     if (_result == null) return;
 
@@ -90,9 +108,15 @@ class _CameraScreenState extends State<CameraScreen> {
 
     final total = _result!['total'] as Map<String, dynamic>;
     final totalGrams = (_result!['total_grams'] as num?)?.toDouble() ?? 100;
+    final logId = const Uuid().v4();
+
+    String? localImagePath;
+    if (_imageBytes != null) {
+      localImagePath = await _saveImageLocally(_imageBytes!, logId);
+    }
 
     await db.addFoodLog(FoodLogsCompanion.insert(
-      id: const Uuid().v4(),
+      id: logId,
       productName: _result!['name'] as String? ?? 'Неизвестное блюдо',
       mealType: widget.mealType,
       mealDate: DateTime(date.year, date.month, date.day, 12),
@@ -101,6 +125,7 @@ class _CameraScreenState extends State<CameraScreen> {
       fat: drift.Value((total['fat'] as num?)?.toDouble() ?? 0),
       carbs: drift.Value((total['carbs'] as num?)?.toDouble() ?? 0),
       calories: drift.Value((total['calories'] as num?)?.toDouble() ?? 0),
+      imageUrl: drift.Value(localImagePath),
     ));
 
     if (mounted) context.pop();

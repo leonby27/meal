@@ -257,6 +257,10 @@ class AppDatabase extends _$AppDatabase {
     return (delete(foodLogs)..where((l) => l.id.equals(id))).go();
   }
 
+  Future<void> updateFoodLog(String id, FoodLogsCompanion companion) {
+    return (update(foodLogs)..where((l) => l.id.equals(id))).write(companion);
+  }
+
   Stream<List<FoodLog>> watchFoodLogsForDate(DateTime date) {
     final start = DateTime(date.year, date.month, date.day);
     final end = start.add(const Duration(days: 1));
