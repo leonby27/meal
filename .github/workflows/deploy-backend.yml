@@ -1,0 +1,24 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t mealtracker-backend ./backend
+
+      - name: Log in to registry
+        run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
+
+      - name: Push image
+        run: |
+          docker tag mealtracker-backend ${{ secrets.REGISTRY_URL }}/mealtracker-backend:latest
+          docker push ${{ secrets.REGISTRY_URL }}/mealtracker-backend:latest
