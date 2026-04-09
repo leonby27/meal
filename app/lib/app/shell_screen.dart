@@ -20,6 +20,8 @@ class ShellScreen extends StatelessWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+        height: 56,
         selectedIndex: _currentIndex(context),
         onDestinationSelected: (index) {
           switch (index) {
@@ -37,22 +39,22 @@ class ShellScreen extends StatelessWidget {
           NavigationDestination(
             icon: Icon(Icons.book_outlined),
             selectedIcon: Icon(Icons.book),
-            label: 'Дневник',
+            label: '',
           ),
           NavigationDestination(
             icon: Icon(Icons.bar_chart_outlined),
             selectedIcon: Icon(Icons.bar_chart),
-            label: 'Статистика',
+            label: '',
           ),
           NavigationDestination(
             icon: Icon(Icons.favorite_outline),
             selectedIcon: Icon(Icons.favorite),
-            label: 'Избранное',
+            label: '',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
-            label: 'Профиль',
+            label: '',
           ),
         ],
       ),

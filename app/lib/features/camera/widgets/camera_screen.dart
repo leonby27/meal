@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:meal_tracker/core/api/api_client.dart';
@@ -47,8 +48,32 @@ class CameraScreen extends StatefulWidget {
   final String mealType;
   final String? dateStr;
   final String? autoSource;
+  final ScrollController? sheetScrollController;
 
-  const CameraScreen({super.key, required this.mealType, this.dateStr, this.autoSource});
+  const CameraScreen({super.key, required this.mealType, this.dateStr, this.autoSource, this.sheetScrollController});
+
+  static Future<void> showAsSheet(BuildContext context, {required String mealType, String? dateStr, String? autoSource}) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (ctx, scrollController) => CameraScreen(
+          mealType: mealType,
+          dateStr: dateStr,
+          autoSource: autoSource,
+          sheetScrollController: scrollController,
+        ),
+      ),
+    );
+  }
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -76,9 +101,12 @@ class _CameraScreenState extends State<CameraScreen> {
   List<_IngredientEntry> _ingredients = [];
   bool _updatingControllers = false;
 
+  List<AssetEntity> _recentPhotos = [];
+
   @override
   void initState() {
     super.initState();
+    _loadRecentPhotos();
     if (widget.autoSource != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_autoLaunched) {
@@ -90,6 +118,36 @@ class _CameraScreenState extends State<CameraScreen> {
         }
       });
     }
+  }
+
+  Future<void> _loadRecentPhotos() async {
+    final permission = await PhotoManager.requestPermissionExtend();
+    if (!permission.isAuth) return;
+
+    final albums = await PhotoManager.getAssetPathList(
+      type: RequestType.image,
+      filterOption: FilterOptionGroup(
+        imageOption: const FilterOption(sizeConstraint: SizeConstraint(ignoreSize: true)),
+        orders: [const OrderOption(type: OrderOptionType.createDate, asc: false)],
+      ),
+    );
+    if (albums.isEmpty) return;
+
+    final recent = await albums.first.getAssetListRange(start: 0, end: 30);
+    if (mounted) setState(() => _recentPhotos = recent);
+  }
+
+  Future<void> _pickFromGalleryAsset(AssetEntity asset) async {
+    final file = await asset.file;
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    setState(() {
+      _imageBytes = bytes;
+      _result = null;
+      _error = null;
+    });
+    _recognize(bytes);
   }
 
   @override
@@ -345,104 +403,147 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isSheet = widget.sheetScrollController != null;
+
+    final body = ListView(
+      controller: widget.sheetScrollController,
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (isSheet) ...[
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Text(
+            'Распознать блюдо',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        if (_imageBytes != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.memory(_imageBytes!, height: 250, fit: BoxFit.cover),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        if (_imageBytes == null)
+          _buildGalleryGrid(),
+
+        if (_loading)
+          const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('AI анализирует блюдо...'),
+                ],
+              ),
+            ),
+          ),
+
+        if (_error != null)
+          Card(
+            color: Colors.red.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(_error!, style: TextStyle(color: Colors.red.shade700)),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () => _imageBytes != null ? _recognize(_imageBytes!) : null,
+                    child: const Text('Попробовать снова'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        if (_result != null) _buildResult(),
+
+        if (_imageBytes != null && !_loading)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: OutlinedButton.icon(
+              onPressed: () => _pickImage(ImageSource.camera),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Новое фото'),
+            ),
+          ),
+      ],
+    );
+
+    if (isSheet) return body;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Распознать блюдо')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (_imageBytes != null) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.memory(_imageBytes!, height: 250, fit: BoxFit.cover),
-              ),
-              const SizedBox(height: 16),
-            ],
+      body: body,
+    );
+  }
 
-            if (_imageBytes == null)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    children: [
-                      Icon(Icons.camera_alt, size: 64, color: Colors.grey.shade400),
-                      const SizedBox(height: 16),
-                      const Text('Сфотографируйте блюдо или выберите из галереи'),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          FilledButton.icon(
-                            onPressed: () => _pickImage(ImageSource.camera),
-                            icon: const Icon(Icons.camera_alt),
-                            label: const Text('Камера'),
-                          ),
-                          const SizedBox(width: 16),
-                          OutlinedButton.icon(
-                            onPressed: () => _pickImage(ImageSource.gallery),
-                            icon: const Icon(Icons.photo_library),
-                            label: const Text('Галерея'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+  Widget _buildGalleryGrid() {
+    const crossAxisCount = 3;
+    const spacing = 4.0;
+    final totalItems = 1 + _recentPhotos.length;
 
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(
-                  child: Column(
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('AI анализирует блюдо...'),
-                    ],
-                  ),
-                ),
-              ),
-
-            if (_error != null)
-              Card(
-                color: Colors.red.shade50,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Text(_error!, style: TextStyle(color: Colors.red.shade700)),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: () => _imageBytes != null ? _recognize(_imageBytes!) : null,
-                        child: const Text('Попробовать снова'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            if (_result != null) _buildResult(),
-
-            if (_imageBytes != null && !_loading)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.camera),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Новое фото'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: spacing,
+        mainAxisSpacing: spacing,
       ),
+      itemCount: totalItems,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return GestureDetector(
+            onTap: () => _pickImage(ImageSource.camera),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade900,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.camera_alt, color: Colors.white, size: 32),
+                  SizedBox(height: 4),
+                  Text('Камера', style: TextStyle(color: Colors.white, fontSize: 12)),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final asset = _recentPhotos[index - 1];
+        return GestureDetector(
+          onTap: () => _pickFromGalleryAsset(asset),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: FutureBuilder<Uint8List?>(
+              future: asset.thumbnailDataWithSize(const ThumbnailSize.square(300)),
+              builder: (context, snap) {
+                if (snap.data != null) {
+                  return Image.memory(snap.data!, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
+                }
+                return Container(color: Colors.grey.shade200);
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 

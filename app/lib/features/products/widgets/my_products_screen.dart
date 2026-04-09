@@ -10,17 +10,14 @@ class MyProductsScreen extends StatefulWidget {
   State<MyProductsScreen> createState() => _MyProductsScreenState();
 }
 
-class _MyProductsScreenState extends State<MyProductsScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _MyProductsScreenState extends State<MyProductsScreen> {
   late AppDatabase _db;
   bool _dbReady = false;
   List<Product> _userProducts = [];
-  List<Recipe> _recipes = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _initDb();
   }
 
@@ -32,7 +29,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> with SingleTickerPr
 
   Future<void> _reload() async {
     _userProducts = await _db.getUserProducts();
-    _recipes = await _db.getAllRecipes();
   }
 
   @override
@@ -44,32 +40,18 @@ class _MyProductsScreenState extends State<MyProductsScreen> with SingleTickerPr
     return Scaffold(
       appBar: AppBar(
         title: const Text('Мои продукты'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Продукты', icon: Icon(Icons.restaurant)),
-            Tab(text: 'Рецепты', icon: Icon(Icons.menu_book)),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildProductsList(),
-          _buildRecipesList(),
-        ],
-      ),
+      body: _buildProductsList(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final route = _tabController.index == 0 ? '/add-product' : '/add-recipe';
-          final result = await context.push(route);
+          final result = await context.push('/add-product');
           if (result == true) {
             await _reload();
             setState(() {});
           }
         },
         icon: const Icon(Icons.add),
-        label: Text(_tabController.index == 0 ? 'Продукт' : 'Рецепт'),
+        label: const Text('Продукт'),
       ),
     );
   }
@@ -137,67 +119,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildRecipesList() {
-    if (_recipes.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.menu_book_outlined, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(
-              'Нет рецептов',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Создайте блюдо из нескольких продуктов',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 80),
-      itemCount: _recipes.length,
-      itemBuilder: (context, index) {
-        final r = _recipes[index];
-        final perServing = r.servings > 0
-            ? r.totalWeightGrams / r.servings
-            : r.totalWeightGrams;
-        return Dismissible(
-          key: ValueKey(r.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            color: Colors.red,
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 16),
-            child: const Icon(Icons.delete, color: Colors.white),
-          ),
-          confirmDismiss: (_) => _confirmDelete('рецепт "${r.name}"'),
-          onDismissed: (_) async {
-            await _db.deleteRecipe(r.id);
-            await _reload();
-            setState(() {});
-          },
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-              child: const Icon(Icons.menu_book),
-            ),
-            title: Text(r.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: Text(
-              '${r.caloriesPer100g.toInt()} ккал/100г  •  '
-              '${r.totalWeightGrams.toInt()} г  •  '
-              '${r.servings} порц. (${perServing.toInt()} г)',
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Future<bool?> _confirmDelete(String what) {
     return showDialog<bool>(
@@ -219,7 +140,6 @@ class _MyProductsScreenState extends State<MyProductsScreen> with SingleTickerPr
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 }

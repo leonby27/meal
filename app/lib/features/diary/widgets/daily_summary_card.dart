@@ -12,9 +12,10 @@ class DailySummaryCard extends StatefulWidget {
 
 class _DailySummaryCardState extends State<DailySummaryCard> {
   double _goalCalories = 2000;
-  double? _goalProtein;
-  double? _goalFat;
-  double? _goalCarbs;
+  double _goalProtein = 100;
+  double _goalFat = 70;
+  double _goalCarbs = 250;
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -31,9 +32,9 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
     if (mounted) {
       setState(() {
         _goalCalories = double.tryParse(cal ?? '') ?? 2000;
-        _goalProtein = double.tryParse(prot ?? '');
-        _goalFat = double.tryParse(fat ?? '');
-        _goalCarbs = double.tryParse(carbs ?? '');
+        _goalProtein = double.tryParse(prot ?? '') ?? 100;
+        _goalFat = double.tryParse(fat ?? '') ?? 70;
+        _goalCarbs = double.tryParse(carbs ?? '') ?? 250;
       });
     }
   }
@@ -44,7 +45,6 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
     final totalProtein = widget.logs.fold(0.0, (sum, l) => sum + l.protein);
     final totalFat = widget.logs.fold(0.0, (sum, l) => sum + l.fat);
     final totalCarbs = widget.logs.fold(0.0, (sum, l) => sum + l.carbs);
-    final remaining = (_goalCalories - totalCalories).clamp(0, double.infinity);
 
     return Card(
       margin: const EdgeInsets.all(16),
@@ -53,103 +53,63 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
         child: Column(
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 110,
-                  height: 110,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 110,
-                        height: 110,
-                        child: CircularProgressIndicator(
-                          value: (totalCalories / _goalCalories).clamp(0, 1),
-                          strokeWidth: 10,
-                          backgroundColor: Colors.grey.shade300,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            totalCalories > _goalCalories
-                                ? Colors.red
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            totalCalories.toInt().toString(),
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'из ${_goalCalories.toInt()}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey,
-                            ),
-                          ),
-                          Text(
-                            'ккал',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                Expanded(
+                  child: _ProgressRow(
+                    label: 'Ккал',
+                    current: totalCalories,
+                    goal: _goalCalories,
+                    color: Theme.of(context).colorScheme.primary,
+                    overColor: Colors.red,
+                    barHeight: 8,
+                    isBold: true,
                   ),
                 ),
-                const SizedBox(width: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Осталось',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  child: AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.grey.shade500,
                     ),
-                    Text(
-                      '${remaining.toInt()} ккал',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: totalCalories > _goalCalories ? Colors.red : null,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _MacroProgressBar(
-                    label: 'Белки',
-                    current: totalProtein,
-                    goal: _goalProtein,
-                    color: Colors.blue,
-                  ),
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: Column(
+                  children: [
+                    _ProgressRow(
+                      label: 'Белки',
+                      current: totalProtein,
+                      goal: _goalProtein,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(height: 10),
+                    _ProgressRow(
+                      label: 'Жиры',
+                      current: totalFat,
+                      goal: _goalFat,
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(height: 10),
+                    _ProgressRow(
+                      label: 'Углеводы',
+                      current: totalCarbs,
+                      goal: _goalCarbs,
+                      color: Colors.green,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _MacroProgressBar(
-                    label: 'Жиры',
-                    current: totalFat,
-                    goal: _goalFat,
-                    color: Colors.orange,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _MacroProgressBar(
-                    label: 'Углеводы',
-                    current: totalCarbs,
-                    goal: _goalCarbs,
-                    color: Colors.green,
-                  ),
-                ),
-              ],
+              ),
+              crossFadeState: _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 200),
             ),
           ],
         ),
@@ -158,58 +118,66 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
   }
 }
 
-class _MacroProgressBar extends StatelessWidget {
+class _ProgressRow extends StatelessWidget {
   final String label;
   final double current;
-  final double? goal;
+  final double goal;
   final Color color;
+  final Color? overColor;
+  final double barHeight;
+  final bool isBold;
 
-  const _MacroProgressBar({
+  const _ProgressRow({
     required this.label,
     required this.current,
-    this.goal,
+    required this.goal,
     required this.color,
+    this.overColor,
+    this.barHeight = 6,
+    this.isBold = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasGoal = goal != null && goal! > 0;
-    final progress = hasGoal ? (current / goal!).clamp(0.0, 1.0) : 0.0;
+    final progress = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
+    final percent = (progress * 100).toInt();
+    final isOver = current > goal;
+    final activeColor = (isOver && overColor != null) ? overColor! : color;
+    final unit = isBold ? '' : ' г';
+    final currentText = isBold
+        ? current.toInt().toString()
+        : current.toStringAsFixed(1);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '${current.toStringAsFixed(1)} г',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+        Row(
+          children: [
+            Text(
+              '$label: $currentText из ${goal.toInt()}$unit',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+                color: isOver ? activeColor : null,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              '$percent%',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: isOver ? activeColor : Colors.grey.shade600,
+              ),
+            ),
+          ],
         ),
-        if (hasGoal) ...[
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.grey.shade200,
-              valueColor: AlwaysStoppedAnimation(color),
-              minHeight: 6,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'из ${goal!.toInt()} г',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey,
-              fontSize: 10,
-            ),
-          ),
-        ],
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.grey,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.grey.shade200,
+            valueColor: AlwaysStoppedAnimation(activeColor),
+            minHeight: barHeight,
           ),
         ),
       ],

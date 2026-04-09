@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/utils/meal_type_helper.dart';
 
 class MealSection extends StatelessWidget {
   final String title;
@@ -138,24 +139,41 @@ class _FoodLogTile extends StatelessWidget {
     }
   }
 
-  Future<void> _duplicate(BuildContext context) async {
+
+  Future<void> _addAgain(BuildContext context) async {
+    final result = await showModalBottomSheet<(String, double)?>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => _AddAgainSheet(log: log),
+    );
+    if (result == null) return;
+
+    final (mealType, grams) = result;
+    final factor = log.grams > 0 ? grams / log.grams : 1.0;
+    final now = DateTime.now();
+    final date = DateTime(now.year, now.month, now.day, 12);
+
     final db = await AppDatabase.getInstance();
     await db.addFoodLog(FoodLogsCompanion.insert(
       id: const Uuid().v4(),
       productId: drift.Value(log.productId),
       productName: log.productName,
-      mealType: log.mealType,
-      mealDate: log.mealDate,
-      grams: log.grams,
-      protein: drift.Value(log.protein),
-      fat: drift.Value(log.fat),
-      carbs: drift.Value(log.carbs),
-      calories: drift.Value(log.calories),
+      mealType: mealType,
+      mealDate: date,
+      grams: grams,
+      protein: drift.Value(log.protein * factor),
+      fat: drift.Value(log.fat * factor),
+      carbs: drift.Value(log.carbs * factor),
+      calories: drift.Value(log.calories * factor),
       imageUrl: drift.Value(log.imageUrl),
     ));
+
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Запись продублирована')),
+        SnackBar(content: Text('${log.productName} добавлен')),
       );
     }
   }
@@ -174,6 +192,7 @@ class _FoodLogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      onTap: () => _addAgain(context),
       leading: _buildPhoto(),
       title: Text(
         log.productName,
@@ -203,8 +222,6 @@ class _FoodLogTile extends StatelessWidget {
               switch (action) {
                 case 'delete':
                   onDelete();
-                case 'duplicate':
-                  _duplicate(context);
                 case 'favorite':
                   _toggleFavorite(context);
                 case 'edit':
@@ -217,15 +234,6 @@ class _FoodLogTile extends StatelessWidget {
                 child: ListTile(
                   leading: Icon(Icons.edit, size: 20),
                   title: Text('Редактировать'),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'duplicate',
-                child: ListTile(
-                  leading: Icon(Icons.copy, size: 20),
-                  title: Text('Дублировать'),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -539,5 +547,133 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
     _carbsCtl.dispose();
     _caloriesCtl.dispose();
     super.dispose();
+  }
+}
+
+class _AddAgainSheet extends StatefulWidget {
+  final FoodLog log;
+  const _AddAgainSheet({required this.log});
+
+  @override
+  State<_AddAgainSheet> createState() => _AddAgainSheetState();
+}
+
+class _AddAgainSheetState extends State<_AddAgainSheet> {
+  late String _mealType;
+  late final TextEditingController _gramsCtl;
+
+  static const _meals = [
+    (key: 'breakfast', label: 'Завтрак', icon: Icons.wb_sunny_outlined),
+    (key: 'lunch', label: 'Обед', icon: Icons.wb_cloudy_outlined),
+    (key: 'dinner', label: 'Ужин', icon: Icons.nights_stay_outlined),
+    (key: 'snack', label: 'Перекус', icon: Icons.cookie_outlined),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _mealType = defaultMealType();
+    _gramsCtl = TextEditingController(
+      text: widget.log.grams.toInt().toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _gramsCtl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final log = widget.log;
+    final calPer100 = log.grams > 0 ? (log.calories / log.grams * 100) : 0.0;
+    final pPer100 = log.grams > 0 ? (log.protein / log.grams * 100) : 0.0;
+    final fPer100 = log.grams > 0 ? (log.fat / log.grams * 100) : 0.0;
+    final cPer100 = log.grams > 0 ? (log.carbs / log.grams * 100) : 0.0;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          24, 16, 24,
+          MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              log.productName,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'На 100 г: ${calPer100.toInt()} ккал  '
+              'Б${pPer100.toStringAsFixed(1)} '
+              'Ж${fPer100.toStringAsFixed(1)} '
+              'У${cPer100.toStringAsFixed(1)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Приём пищи',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: _meals.map((m) {
+                return ChoiceChip(
+                  avatar: Icon(m.icon, size: 18),
+                  label: Text(m.label),
+                  selected: _mealType == m.key,
+                  onSelected: (_) => setState(() => _mealType = m.key),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _gramsCtl,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Граммы',
+                suffixText: 'г',
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  final grams = double.tryParse(_gramsCtl.text);
+                  if (grams == null || grams <= 0) return;
+                  Navigator.pop(context, (_mealType, grams));
+                },
+                child: const Text('Добавить'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

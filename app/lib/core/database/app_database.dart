@@ -383,7 +383,7 @@ class AppDatabase extends _$AppDatabase {
   // History — all logged days
   Future<List<DateTime>> getLoggedDates({int limit = 60}) async {
     final result = await customSelect(
-      'SELECT DISTINCT DATE(meal_date) as d FROM food_logs ORDER BY d DESC LIMIT ?',
+      'SELECT DISTINCT DATE(meal_date, \'unixepoch\', \'localtime\') as d FROM food_logs ORDER BY d DESC LIMIT ?',
       variables: [Variable.withInt(limit)],
     ).get();
     return result.map((r) {

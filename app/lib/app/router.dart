@@ -100,11 +100,6 @@ final router = GoRouter(
       builder: (context, state) => const AddRecipeScreen(),
     ),
     GoRoute(
-      path: '/history',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const HistoryScreen(),
-    ),
-    GoRoute(
       path: '/reminders',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const RemindersScreen(),

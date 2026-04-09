@@ -150,21 +150,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     valueListenable: ThemeNotifier.instance,
                     builder: (context, mode, _) {
                       return SegmentedButton<ThemeMode>(
+                        showSelectedIcon: false,
                         segments: const [
                           ButtonSegment(
                             value: ThemeMode.system,
-                            icon: Icon(Icons.brightness_auto),
-                            label: Text('Системная'),
+                            icon: Icon(Icons.smartphone),
                           ),
                           ButtonSegment(
                             value: ThemeMode.light,
                             icon: Icon(Icons.light_mode),
-                            label: Text('Светлая'),
                           ),
                           ButtonSegment(
                             value: ThemeMode.dark,
                             icon: Icon(Icons.dark_mode),
-                            label: Text('Тёмная'),
                           ),
                         ],
                         selected: {mode},
@@ -184,29 +182,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.restaurant),
-                  title: const Text('Мои продукты и рецепты'),
+                  title: const Text('Мои продукты'),
                   subtitle: const Text('Добавить или редактировать'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/my-products'),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.notifications_outlined),
-                  title: const Text('Напоминания'),
-                  subtitle: const Text('Push-уведомления о приемах пищи'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/reminders'),
-                ),
-                const Divider(height: 1),
-                ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('О приложении'),
                   subtitle: Text('MealTracker v$appVersion (build $buildNumber, $buildDate)'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.storage),
-                  title: const Text('База продуктов'),
-                  subtitle: const Text('5500+ продуктов (edostavka.by)'),
                 ),
               ],
             ),
@@ -216,56 +201,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _signInFromGuest() async {
+    final success = await AuthService().signInWithGoogle();
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Вы вошли в аккаунт')),
+      );
+      setState(() {});
+    }
+  }
+
+
   Widget _buildUserCard(AuthService auth) {
     final hasAccount = auth.userEmail != null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: auth.userPhotoUrl != null
-                  ? NetworkImage(auth.userPhotoUrl!)
-                  : null,
-              child: auth.userPhotoUrl == null
-                  ? const Icon(Icons.person, size: 28)
-                  : null,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    auth.userName ?? 'Пользователь',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundImage: auth.userPhotoUrl != null
+                      ? NetworkImage(auth.userPhotoUrl!)
+                      : null,
+                  child: auth.userPhotoUrl == null
+                      ? const Icon(Icons.person, size: 28)
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        auth.userName ?? 'Пользователь',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (hasAccount)
+                        Text(
+                          auth.userEmail!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      if (!hasAccount)
+                        Text(
+                          'Гостевой режим',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.orange.shade700,
+                          ),
+                        ),
+                    ],
                   ),
-                  if (hasAccount)
-                    Text(
-                      auth.userEmail!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  if (!hasAccount)
-                    Text(
-                      'Гостевой режим',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.orange.shade700,
-                      ),
-                    ),
-                ],
-              ),
+                ),
+                if (hasAccount)
+                  IconButton(
+                    icon: const Icon(Icons.logout),
+                    tooltip: 'Выйти',
+                    onPressed: _signOut,
+                  ),
+              ],
             ),
-            if (hasAccount)
-              IconButton(
-                icon: const Icon(Icons.logout),
-                tooltip: 'Выйти',
-                onPressed: _signOut,
+            if (!hasAccount) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _signInFromGuest,
+                  icon: const Icon(Icons.login),
+                  label: const Text('Войти через Google'),
+                ),
               ),
+            ],
           ],
         ),
       ),

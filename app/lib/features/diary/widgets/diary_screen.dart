@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/utils/meal_type_helper.dart';
 import 'package:meal_tracker/features/diary/widgets/meal_section.dart';
 import 'package:meal_tracker/features/diary/widgets/daily_summary_card.dart';
+import 'package:meal_tracker/features/camera/widgets/camera_screen.dart';
 
 class DiaryScreen extends StatefulWidget {
   const DiaryScreen({super.key});
@@ -35,27 +37,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
     });
   }
 
-  void _onMenuAction(String action) async {
-    if (action == 'copy_day') {
-      final target = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime(2020),
-        lastDate: DateTime.now().add(const Duration(days: 30)),
-        locale: const Locale('ru'),
-        helpText: 'Скопировать весь день в…',
-      );
-      if (target == null || !mounted) return;
-      final count = await _db.copyMealLogs(fromDate: _selectedDate, toDate: target);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Скопировано $count записей в ${DateFormat('d MMM', 'ru').format(target)}')),
-        );
-      }
-    } else if (action == 'history') {
-      context.push('/history');
-    }
-  }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -69,7 +50,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   void _showAddMealSheet(String dateStr) {
-    String selectedMealType = 'breakfast';
+    String selectedMealType = defaultMealType();
 
     const mealTypes = [
       (key: 'breakfast', label: 'Завтрак', icon: Icons.wb_sunny_outlined),
@@ -111,64 +92,82 @@ class _DiaryScreenState extends State<DiaryScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Приём пищи',
-                      style: Theme.of(ctx).textTheme.titleSmall?.copyWith(
-                        color: Colors.grey.shade600,
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedMealType,
+                      decoration: const InputDecoration(
+                        labelText: 'Приём пищи',
+                        prefixIcon: Icon(Icons.restaurant),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      children: mealTypes.map((m) {
-                        final selected = selectedMealType == m.key;
-                        return ChoiceChip(
-                          avatar: Icon(m.icon, size: 18),
-                          label: Text(m.label),
-                          selected: selected,
-                          onSelected: (_) {
-                            setSheetState(() => selectedMealType = m.key);
-                          },
+                      items: mealTypes.map((m) {
+                        return DropdownMenuItem(
+                          value: m.key,
+                          child: Row(
+                            children: [
+                              Icon(m.icon, size: 20),
+                              const SizedBox(width: 8),
+                              Text(m.label),
+                            ],
+                          ),
                         );
                       }).toList(),
+                      onChanged: (v) {
+                        if (v != null) setSheetState(() => selectedMealType = v);
+                      },
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Способ добавления',
-                      style: Theme.of(ctx).textTheme.titleSmall?.copyWith(
-                        color: Colors.grey.shade600,
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _CompactActionTile(
+                            icon: Icons.search,
+                            label: 'Найти в базе',
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              context.push('/search?meal_type=$selectedMealType&date=$dateStr');
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _CompactActionTile(
+                            icon: Icons.photo_library_outlined,
+                            label: 'Из галереи',
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              CameraScreen.showAsSheet(
+                                context,
+                                mealType: selectedMealType,
+                                dateStr: dateStr,
+                                autoSource: 'gallery',
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          CameraScreen.showAsSheet(
+                            context,
+                            mealType: selectedMealType,
+                            dateStr: dateStr,
+                            autoSource: 'camera',
+                          );
+                        },
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Распознать по фото'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 52),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    _ActionTile(
-                      icon: Icons.search,
-                      label: 'Найти в базе',
-                      subtitle: 'Поиск среди 5500+ продуктов',
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        context.push('/search?meal_type=$selectedMealType&date=$dateStr');
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    _ActionTile(
-                      icon: Icons.camera_alt,
-                      label: 'Сфотографировать',
-                      subtitle: 'AI распознает блюдо по фото',
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        context.push('/camera?meal_type=$selectedMealType&date=$dateStr&source=camera');
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    _ActionTile(
-                      icon: Icons.photo_library,
-                      label: 'Выбрать из галереи',
-                      subtitle: 'Загрузить фото из галереи',
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        context.push('/camera?meal_type=$selectedMealType&date=$dateStr&source=gallery');
-                      },
                     ),
                   ],
                 ),
@@ -221,77 +220,77 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ),
           ],
         ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (action) => _onMenuAction(action),
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'copy_day', child: Text('Копировать день')),
-              const PopupMenuItem(value: 'history', child: Text('История')),
-            ],
-          ),
-        ],
       ),
-      body: StreamBuilder<List<FoodLog>>(
-        stream: _db.watchFoodLogsForDate(_selectedDate),
-        builder: (context, snapshot) {
-          final logs = snapshot.data ?? [];
-          final grouped = {
-            'breakfast': logs.where((l) => l.mealType == 'breakfast').toList(),
-            'lunch': logs.where((l) => l.mealType == 'lunch').toList(),
-            'dinner': logs.where((l) => l.mealType == 'dinner').toList(),
-            'snack': logs.where((l) => l.mealType == 'snack').toList(),
-          };
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          final velocity = details.primaryVelocity ?? 0;
+          if (velocity > 300) {
+            _changeDate(-1);
+          } else if (velocity < -300) {
+            _changeDate(1);
+          }
+        },
+        child: StreamBuilder<List<FoodLog>>(
+          stream: _db.watchFoodLogsForDate(_selectedDate),
+          builder: (context, snapshot) {
+            final logs = snapshot.data ?? [];
+            final grouped = {
+              'breakfast': logs.where((l) => l.mealType == 'breakfast').toList(),
+              'lunch': logs.where((l) => l.mealType == 'lunch').toList(),
+              'dinner': logs.where((l) => l.mealType == 'dinner').toList(),
+              'snack': logs.where((l) => l.mealType == 'snack').toList(),
+            };
 
-          const sections = [
-            (key: 'breakfast', title: 'Завтрак', icon: Icons.wb_sunny_outlined),
-            (key: 'lunch', title: 'Обед', icon: Icons.wb_cloudy_outlined),
-            (key: 'dinner', title: 'Ужин', icon: Icons.nights_stay_outlined),
-            (key: 'snack', title: 'Перекус', icon: Icons.cookie_outlined),
-          ];
+            const sections = [
+              (key: 'breakfast', title: 'Завтрак', icon: Icons.wb_sunny_outlined),
+              (key: 'lunch', title: 'Обед', icon: Icons.wb_cloudy_outlined),
+              (key: 'dinner', title: 'Ужин', icon: Icons.nights_stay_outlined),
+              (key: 'snack', title: 'Перекус', icon: Icons.cookie_outlined),
+            ];
 
-          final nonEmpty = sections.where((s) => grouped[s.key]!.isNotEmpty).toList();
+            final nonEmpty = sections.where((s) => grouped[s.key]!.isNotEmpty).toList();
 
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 100),
-            children: [
-              DailySummaryCard(logs: logs),
-              if (nonEmpty.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(Icons.restaurant_outlined, size: 48, color: Colors.grey.shade400),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Нет записей за этот день',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.grey.shade500,
+            return ListView(
+              padding: const EdgeInsets.only(bottom: 100),
+              children: [
+                DailySummaryCard(logs: logs),
+                if (nonEmpty.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.restaurant_outlined, size: 48, color: Colors.grey.shade400),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Нет записей за этот день',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: Colors.grey.shade500,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Нажмите кнопку ниже, чтобы добавить приём пищи',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade400,
+                          const SizedBox(height: 4),
+                          Text(
+                            'Нажмите кнопку ниже, чтобы добавить приём пищи',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey.shade400,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ...nonEmpty.map((s) => MealSection(
-                title: s.title,
-                icon: s.icon,
-                mealType: s.key,
-                logs: grouped[s.key]!,
-                dateStr: dateStr,
-                onDelete: (id) => _db.deleteFoodLog(id),
-              )),
-            ],
-          );
-        },
+                ...nonEmpty.map((s) => MealSection(
+                  title: s.title,
+                  icon: s.icon,
+                  mealType: s.key,
+                  logs: grouped[s.key]!,
+                  dateStr: dateStr,
+                  onDelete: (id) => _db.deleteFoodLog(id),
+                )),
+              ],
+            );
+          },
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -313,16 +312,14 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 }
 
-class _ActionTile extends StatelessWidget {
+class _CompactActionTile extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String subtitle;
   final VoidCallback onTap;
 
-  const _ActionTile({
+  const _CompactActionTile({
     required this.icon,
     required this.label,
-    required this.subtitle,
     required this.onTap,
   });
 
@@ -335,26 +332,19 @@ class _ActionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
+              Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey.shade400),
             ],
           ),
         ),
