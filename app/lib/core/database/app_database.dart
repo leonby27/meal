@@ -12,6 +12,7 @@ part 'app_database.g.dart';
 class Products extends Table {
   IntColumn get productId => integer().named('product_id')();
   TextColumn get name => text()();
+  TextColumn get searchName => text().withDefault(const Constant('')).named('search_name')();
   RealColumn get weightGrams => real().nullable().named('weight_grams')();
   RealColumn get proteinPer100g => real().nullable().named('protein_per_100g')();
   RealColumn get fatPer100g => real().nullable().named('fat_per_100g')();
@@ -28,6 +29,12 @@ class Products extends Table {
 
   @override
   Set<Column> get primaryKey => {productId};
+}
+
+String buildSearchName(String name, [String? brand]) {
+  final parts = <String>[name];
+  if (brand != null && brand.isNotEmpty) parts.add(brand);
+  return parts.join(' ').toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 }
 
 class FoodLogs extends Table {
@@ -90,7 +97,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,7 +105,23 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await _importPrebuiltProducts();
     },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        await m.addColumn(products, products.searchName);
+        await _rebuildSearchIndex();
+      }
+    },
   );
+
+  Future<void> _rebuildSearchIndex() async {
+    final all = await select(products).get();
+    for (final p in all) {
+      await (update(products)..where((t) => t.productId.equals(p.productId)))
+          .write(ProductsCompanion(
+        searchName: Value(buildSearchName(p.name, p.brand)),
+      ));
+    }
+  }
 
   Future<void> _importPrebuiltProducts() async {
     final dbDir = await getApplicationDocumentsDirectory();
@@ -123,17 +146,20 @@ class AppDatabase extends _$AppDatabase {
     }
 
     for (final row in result) {
+      final name = row['name'] as String;
+      final brand = row['brand'] as String?;
       await into(products).insert(
         ProductsCompanion.insert(
           productId: Value(row['product_id'] as int),
-          name: row['name'] as String,
+          name: name,
+          searchName: Value(buildSearchName(name, brand)),
           weightGrams: Value(toDouble(row['weight_grams'])),
           proteinPer100g: Value(toDouble(row['protein_per_100g'])),
           fatPer100g: Value(toDouble(row['fat_per_100g'])),
           carbsPer100g: Value(toDouble(row['carbs_per_100g'])),
           caloriesPer100g: Value(toDouble(row['calories_per_100g'])),
           imageUrl: Value(row['image_url'] as String?),
-          brand: Value(row['brand'] as String?),
+          brand: Value(brand),
           country: Value(row['country'] as String?),
           category: Value(row['category'] as String?),
           composition: Value(row['composition'] as String?),
@@ -148,11 +174,61 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // Product queries
-  Future<List<Product>> searchProducts(String query, {int limit = 50}) {
-    return (select(products)
-      ..where((p) => p.name.like('%$query%'))
-      ..limit(limit))
-        .get();
+  Future<List<Product>> searchProducts(String query, {int limit = 50}) async {
+    final q = query.toLowerCase().trim();
+    if (q.isEmpty) return [];
+
+    final words = q.split(RegExp(r'\s+')).where((w) => w.length >= 2).toList();
+    if (words.isEmpty) return [];
+
+    // Build WHERE: every word must appear in search_name
+    final whereClauses = <String>[];
+    final vars = <Variable>[];
+    for (final word in words) {
+      whereClauses.add('search_name LIKE ?');
+      vars.add(Variable.withString('%$word%'));
+    }
+    final whereStr = whereClauses.join(' AND ');
+
+    // Relevance scoring:
+    // 3 = search_name starts with the full query
+    // 2 = search_name contains the full query as a substring
+    // 1 = all words match (already guaranteed by WHERE)
+    vars.add(Variable.withString('$q%'));
+    vars.add(Variable.withString('%$q%'));
+
+    final sql = '''
+      SELECT *, 
+        CASE 
+          WHEN search_name LIKE ? THEN 3
+          WHEN search_name LIKE ? THEN 2
+          ELSE 1
+        END AS relevance
+      FROM products
+      WHERE $whereStr
+      ORDER BY relevance DESC, LENGTH(name) ASC
+      LIMIT $limit
+    ''';
+
+    final results = await customSelect(sql, variables: vars).get();
+    return results.map((row) => Product(
+      productId: row.read<int>('product_id'),
+      name: row.read<String>('name'),
+      searchName: row.read<String>('search_name'),
+      weightGrams: row.readNullable<double>('weight_grams'),
+      proteinPer100g: row.readNullable<double>('protein_per_100g'),
+      fatPer100g: row.readNullable<double>('fat_per_100g'),
+      carbsPer100g: row.readNullable<double>('carbs_per_100g'),
+      caloriesPer100g: row.readNullable<double>('calories_per_100g'),
+      imageUrl: row.readNullable<String>('image_url'),
+      brand: row.readNullable<String>('brand'),
+      country: row.readNullable<String>('country'),
+      category: row.readNullable<String>('category'),
+      composition: row.readNullable<String>('composition'),
+      price: row.readNullable<double>('price'),
+      isFavorite: row.read<bool>('is_favorite'),
+      isUserCreated: row.read<bool>('is_user_created'),
+    )).toList();
   }
 
   Future<List<Product>> getFavoriteProducts() {
@@ -209,9 +285,12 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> addUserProduct(ProductsCompanion product) async {
     final nextId = await getNextUserProductId();
+    final name = product.name.value;
+    final brand = product.brand.present ? product.brand.value : null;
     await into(products).insert(product.copyWith(
       productId: Value(nextId),
       isUserCreated: const Value(true),
+      searchName: Value(buildSearchName(name, brand)),
     ));
     return nextId;
   }
