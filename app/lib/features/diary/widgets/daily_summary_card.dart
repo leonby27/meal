@@ -67,7 +67,7 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
                         child: CircularProgressIndicator(
                           value: (totalCalories / _goalCalories).clamp(0, 1),
                           strokeWidth: 10,
-                          backgroundColor: Colors.grey.shade200,
+                          backgroundColor: Colors.grey.shade300,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             totalCalories > _goalCalories
                                 ? Colors.red

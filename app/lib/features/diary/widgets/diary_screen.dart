@@ -293,10 +293,21 @@ class _DiaryScreenState extends State<DiaryScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddMealSheet(dateStr),
-        icon: const Icon(Icons.add),
-        label: const Text('Добавить'),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: FilledButton.icon(
+            onPressed: () => _showAddMealSheet(dateStr),
+            icon: const Icon(Icons.add),
+            label: const Text('Добавить'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -108,7 +108,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: source, maxWidth: 1024, imageQuality: 80);
+    final image = await picker.pickImage(source: source, maxWidth: 768, imageQuality: 70);
     if (image == null) return;
 
     final bytes = await image.readAsBytes();

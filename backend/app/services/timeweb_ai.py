@@ -27,8 +27,8 @@ SYSTEM_PROMPT = """Ты профессиональный диетолог-нут
   "total": {"protein": 30.0, "fat": 15.0, "carbs": 52.0, "calories": 462}
 }"""
 
-MAX_DIMENSION = 1024
-JPEG_QUALITY = 80
+MAX_DIMENSION = 512
+JPEG_QUALITY = 60
 
 
 def normalize_image(image_bytes: bytes) -> str:
@@ -88,8 +88,8 @@ async def recognize_food(image_bytes: bytes) -> dict:
                 ],
             },
         ],
-        "temperature": 0.3,
-        "max_tokens": 1000,
+        "temperature": 0.2,
+        "max_tokens": 500,
     }
 
     async with httpx.AsyncClient(timeout=60.0) as client:

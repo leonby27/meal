@@ -185,6 +185,7 @@ class _FoodLogTile extends StatelessWidget {
         'Ж ${log.fat.toStringAsFixed(1)}  У ${log.carbs.toStringAsFixed(1)}',
         style: Theme.of(context).textTheme.bodySmall,
       ),
+      contentPadding: const EdgeInsets.only(left: 16, right: 4),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
