@@ -48,9 +48,10 @@ class CameraScreen extends StatefulWidget {
   final String mealType;
   final String? dateStr;
   final String? autoSource;
+  final Uint8List? initialImageBytes;
   final ScrollController? sheetScrollController;
 
-  const CameraScreen({super.key, required this.mealType, this.dateStr, this.autoSource, this.sheetScrollController});
+  const CameraScreen({super.key, required this.mealType, this.dateStr, this.autoSource, this.initialImageBytes, this.sheetScrollController});
 
   static Future<void> showAsSheet(BuildContext context, {required String mealType, String? dateStr, String? autoSource}) {
     return showModalBottomSheet(
@@ -69,6 +70,36 @@ class CameraScreen extends StatefulWidget {
           mealType: mealType,
           dateStr: dateStr,
           autoSource: autoSource,
+          sheetScrollController: scrollController,
+        ),
+      ),
+    );
+  }
+
+  static Future<void> pickAndShow(BuildContext context, {required String mealType, String? dateStr, required ImageSource source}) async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: source, maxWidth: 768, imageQuality: 70);
+    if (image == null) return;
+
+    final bytes = await image.readAsBytes();
+    if (!context.mounted) return;
+
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (ctx, scrollController) => CameraScreen(
+          mealType: mealType,
+          dateStr: dateStr,
+          initialImageBytes: bytes,
           sheetScrollController: scrollController,
         ),
       ),
@@ -107,7 +138,12 @@ class _CameraScreenState extends State<CameraScreen> {
   void initState() {
     super.initState();
     _loadRecentPhotos();
-    if (widget.autoSource != null) {
+    if (widget.initialImageBytes != null) {
+      _imageBytes = widget.initialImageBytes;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _recognize(_imageBytes!);
+      });
+    } else if (widget.autoSource != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_autoLaunched) {
           _autoLaunched = true;

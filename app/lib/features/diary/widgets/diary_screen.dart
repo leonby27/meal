@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
@@ -135,11 +136,11 @@ class _DiaryScreenState extends State<DiaryScreen> {
                             label: 'Из галереи',
                             onTap: () {
                               Navigator.pop(ctx);
-                              CameraScreen.showAsSheet(
+                              CameraScreen.pickAndShow(
                                 context,
                                 mealType: selectedMealType,
                                 dateStr: dateStr,
-                                autoSource: 'gallery',
+                                source: ImageSource.gallery,
                               );
                             },
                           ),
@@ -152,11 +153,11 @@ class _DiaryScreenState extends State<DiaryScreen> {
                       child: FilledButton.icon(
                         onPressed: () {
                           Navigator.pop(ctx);
-                          CameraScreen.showAsSheet(
+                          CameraScreen.pickAndShow(
                             context,
                             mealType: selectedMealType,
                             dateStr: dateStr,
-                            autoSource: 'camera',
+                            source: ImageSource.camera,
                           );
                         },
                         icon: const Icon(Icons.camera_alt),
