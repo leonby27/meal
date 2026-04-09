@@ -181,21 +181,19 @@ class AppDatabase extends _$AppDatabase {
     final words = q.split(RegExp(r'\s+')).where((w) => w.length >= 2).toList();
     if (words.isEmpty) return [];
 
-    // Build WHERE: every word must appear in search_name
+    // Variables must match the order of ? in SQL text.
+    // CASE WHEN appears before WHERE, so relevance vars go first.
+    final vars = <Variable>[
+      Variable.withString('$q%'),   // CASE WHEN search_name LIKE ? THEN 3
+      Variable.withString('%$q%'),  // WHEN search_name LIKE ? THEN 2
+    ];
+
     final whereClauses = <String>[];
-    final vars = <Variable>[];
     for (final word in words) {
       whereClauses.add('search_name LIKE ?');
       vars.add(Variable.withString('%$word%'));
     }
     final whereStr = whereClauses.join(' AND ');
-
-    // Relevance scoring:
-    // 3 = search_name starts with the full query
-    // 2 = search_name contains the full query as a substring
-    // 1 = all words match (already guaranteed by WHERE)
-    vars.add(Variable.withString('$q%'));
-    vars.add(Variable.withString('%$q%'));
 
     final sql = '''
       SELECT *, 
