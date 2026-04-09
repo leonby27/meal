@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
 
@@ -116,6 +117,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Card(
             child: Column(
               children: [
+                ListTile(
+                  leading: const Icon(Icons.restaurant),
+                  title: const Text('Мои продукты и рецепты'),
+                  subtitle: const Text('Добавить или редактировать'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/my-products'),
+                ),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('О приложении'),

@@ -50,6 +50,25 @@ class FoodLogs extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+class Recipes extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  RealColumn get totalWeightGrams => real().withDefault(const Constant(0)).named('total_weight_grams')();
+  IntColumn get servings => integer().withDefault(const Constant(1))();
+  RealColumn get proteinPer100g => real().withDefault(const Constant(0)).named('protein_per_100g')();
+  RealColumn get fatPer100g => real().withDefault(const Constant(0)).named('fat_per_100g')();
+  RealColumn get carbsPer100g => real().withDefault(const Constant(0)).named('carbs_per_100g')();
+  RealColumn get caloriesPer100g => real().withDefault(const Constant(0)).named('calories_per_100g')();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime).named('created_at')();
+}
+
+class RecipeIngredients extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get recipeId => integer().named('recipe_id')();
+  IntColumn get productId => integer().named('product_id')();
+  RealColumn get grams => real()();
+}
+
 class UserSettings extends Table {
   TextColumn get key => text()();
   TextColumn get value => text()();
@@ -58,7 +77,7 @@ class UserSettings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [Products, FoodLogs, UserSettings])
+@DriftDatabase(tables: [Products, FoodLogs, Recipes, RecipeIngredients, UserSettings])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal(super.e);
 
@@ -178,6 +197,74 @@ class AppDatabase extends _$AppDatabase {
       ..orderBy([(l) => OrderingTerm.desc(l.createdAt)])
       ..limit(limit))
         .get();
+  }
+
+  // User products
+  Future<int> getNextUserProductId() async {
+    final result = await customSelect(
+      'SELECT COALESCE(MAX(product_id), 99999) + 1 AS next_id FROM products WHERE product_id >= 100000',
+    ).getSingle();
+    return result.read<int>('next_id');
+  }
+
+  Future<int> addUserProduct(ProductsCompanion product) async {
+    final nextId = await getNextUserProductId();
+    await into(products).insert(product.copyWith(
+      productId: Value(nextId),
+      isUserCreated: const Value(true),
+    ));
+    return nextId;
+  }
+
+  Future<void> updateProduct(int productId, ProductsCompanion companion) {
+    return (update(products)..where((p) => p.productId.equals(productId)))
+        .write(companion);
+  }
+
+  Future<List<Product>> getUserProducts() {
+    return (select(products)
+      ..where((p) => p.isUserCreated.equals(true))
+      ..orderBy([(p) => OrderingTerm.desc(p.productId)]))
+        .get();
+  }
+
+  Future<void> deleteUserProduct(int productId) {
+    return (delete(products)
+      ..where((p) => p.productId.equals(productId) & p.isUserCreated.equals(true)))
+        .go();
+  }
+
+  // Recipes
+  Future<int> addRecipe(RecipesCompanion recipe) {
+    return into(recipes).insert(recipe);
+  }
+
+  Future<List<Recipe>> getAllRecipes() {
+    return (select(recipes)..orderBy([(r) => OrderingTerm.desc(r.createdAt)])).get();
+  }
+
+  Future<Recipe> getRecipe(int id) {
+    return (select(recipes)..where((r) => r.id.equals(id))).getSingle();
+  }
+
+  Future<void> deleteRecipe(int id) async {
+    await (delete(recipeIngredients)..where((ri) => ri.recipeId.equals(id))).go();
+    await (delete(recipes)..where((r) => r.id.equals(id))).go();
+    await (delete(products)
+      ..where((p) => p.isUserCreated.equals(true) & p.category.equals('recipe_$id')))
+        .go();
+  }
+
+  Future<void> addRecipeIngredient(RecipeIngredientsCompanion ingredient) {
+    return into(recipeIngredients).insert(ingredient);
+  }
+
+  Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId) {
+    return (select(recipeIngredients)..where((ri) => ri.recipeId.equals(recipeId))).get();
+  }
+
+  Future<Product?> getProductById(int productId) {
+    return (select(products)..where((p) => p.productId.equals(productId))).getSingleOrNull();
   }
 
   // Settings

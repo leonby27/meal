@@ -7,6 +7,9 @@ import 'package:meal_tracker/features/stats/widgets/stats_screen.dart';
 import 'package:meal_tracker/features/profile/widgets/profile_screen.dart';
 import 'package:meal_tracker/features/favorites/widgets/favorites_screen.dart';
 import 'package:meal_tracker/features/camera/widgets/camera_screen.dart';
+import 'package:meal_tracker/features/products/widgets/my_products_screen.dart';
+import 'package:meal_tracker/features/products/widgets/add_product_screen.dart';
+import 'package:meal_tracker/features/products/widgets/add_recipe_screen.dart';
 import 'package:meal_tracker/app/shell_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -63,6 +66,21 @@ final router = GoRouter(
         final dateStr = state.uri.queryParameters['date'];
         return CameraScreen(mealType: mealType, dateStr: dateStr);
       },
+    ),
+    GoRoute(
+      path: '/my-products',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const MyProductsScreen(),
+    ),
+    GoRoute(
+      path: '/add-product',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddProductScreen(),
+    ),
+    GoRoute(
+      path: '/add-recipe',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddRecipeScreen(),
     ),
   ],
 );

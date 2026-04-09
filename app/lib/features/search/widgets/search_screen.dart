@@ -156,6 +156,14 @@ class _SearchScreenState extends State<SearchScreen> {
           : showRecent
               ? _buildRecentList()
               : _buildSearchResults(),
+      floatingActionButton: FloatingActionButton.small(
+        onPressed: () async {
+          final result = await context.push('/add-product');
+          if (result == true) _search(_searchController.text);
+        },
+        tooltip: 'Создать продукт',
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
