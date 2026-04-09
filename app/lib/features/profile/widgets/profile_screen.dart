@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:meal_tracker/core/build_info.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
@@ -200,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('О приложении'),
-                  subtitle: const Text('MealTracker v1.0.0'),
+                  subtitle: Text('MealTracker v$appVersion (build $buildNumber, $buildDate)'),
                 ),
                 ListTile(
                   leading: const Icon(Icons.storage),

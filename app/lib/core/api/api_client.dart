@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiClient {
   static const String _baseUrlKey = 'api_base_url';
   static const String _tokenKey = 'auth_token';
-  static const String defaultBaseUrl = 'http://192.168.10.78:8000';
+  static const String defaultBaseUrl = 'https://leonby27-meal-29f6.twc1.net';
 
   final http.Client _client = http.Client();
   String _baseUrl = defaultBaseUrl;
@@ -22,8 +22,16 @@ class ApiClient {
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _baseUrl = prefs.getString(_baseUrlKey) ?? defaultBaseUrl;
-    _token = prefs.getString(_tokenKey);
+    final savedUrl = prefs.getString(_baseUrlKey);
+    if (savedUrl != null && savedUrl.contains('192.168.')) {
+      await prefs.remove(_baseUrlKey);
+      await prefs.remove(_tokenKey);
+      _baseUrl = defaultBaseUrl;
+      _token = null;
+    } else {
+      _baseUrl = savedUrl ?? defaultBaseUrl;
+      _token = prefs.getString(_tokenKey);
+    }
   }
 
   Future<void> setBaseUrl(String url) async {
@@ -32,8 +40,9 @@ class ApiClient {
     await prefs.setString(_baseUrlKey, url);
   }
 
-  Future<void> ensureAuthenticated() async {
-    if (_token != null) return;
+  Future<void> ensureAuthenticated({bool forceRefresh = false}) async {
+    if (_token != null && !forceRefresh) return;
+    if (forceRefresh) await clearToken();
     try {
       final result = await post('/api/auth/register', {
         'email': 'local@device.app',
@@ -92,29 +101,48 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> uploadImage(String path, Uint8List imageBytes) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl$path'));
-    request.headers.addAll({
-      if (_token != null) 'Authorization': 'Bearer $_token',
-    });
-    request.files.add(http.MultipartFile.fromBytes(
-      'file',
-      imageBytes,
-      filename: 'photo.jpg',
-      contentType: MediaType('image', 'jpeg'),
-    ));
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
+    Future<http.Response> doRequest() async {
+      final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl$path'));
+      request.headers.addAll({
+        if (_token != null) 'Authorization': 'Bearer $_token',
+      });
+      request.files.add(http.MultipartFile.fromBytes(
+        'file',
+        imageBytes,
+        filename: 'photo.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      ));
+      final streamedResponse = await request.send();
+      return http.Response.fromStream(streamedResponse);
+    }
+
+    var response = await doRequest();
+    if (response.statusCode == 401) {
+      await ensureAuthenticated(forceRefresh: true);
+      response = await doRequest();
+    }
     return _handleResponse(response);
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {
-    final body = jsonDecode(response.body);
+    dynamic body;
+    try {
+      body = jsonDecode(response.body);
+    } catch (_) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return {'raw': response.body};
+      }
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: response.body.isNotEmpty ? response.body : 'Server error',
+      );
+    }
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return body as Map<String, dynamic>;
     }
     throw ApiException(
       statusCode: response.statusCode,
-      message: body['detail']?.toString() ?? 'Unknown error',
+      message: body is Map ? (body['detail']?.toString() ?? 'Unknown error') : response.body,
     );
   }
 }

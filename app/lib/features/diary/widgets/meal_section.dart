@@ -387,13 +387,32 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
 
   String _fmt(double v) => v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 
-  void _onGramsChanged(String _) {
-    final g = double.tryParse(_gramsCtl.text) ?? 0;
-    final f = g / 100;
-    _proteinCtl.text = _fmt(_proteinPer100g * f);
-    _fatCtl.text = _fmt(_fatPer100g * f);
-    _carbsCtl.text = _fmt(_carbsPer100g * f);
-    _caloriesCtl.text = _fmt(_caloriesPer100g * f);
+  void _recalcFrom(TextEditingController source) {
+    if (source == _gramsCtl) {
+      // Граммы → масштабировать всё по значениям на 100г
+      final g = double.tryParse(_gramsCtl.text) ?? 0;
+      final f = g / 100;
+      _proteinCtl.text = _fmt(_proteinPer100g * f);
+      _fatCtl.text = _fmt(_fatPer100g * f);
+      _carbsCtl.text = _fmt(_carbsPer100g * f);
+      _caloriesCtl.text = _fmt(_caloriesPer100g * f);
+    } else if (source == _proteinCtl || source == _fatCtl || source == _carbsCtl) {
+      // Б/Ж/У → пересчитать только калории: К = Б×4 + Ж×9 + У×4
+      final p = double.tryParse(_proteinCtl.text) ?? 0;
+      final f = double.tryParse(_fatCtl.text) ?? 0;
+      final c = double.tryParse(_carbsCtl.text) ?? 0;
+      _caloriesCtl.text = _fmt(p * 4 + f * 9 + c * 4);
+    } else {
+      // Калории → масштабировать граммы, Б, Ж, У пропорционально
+      final currentCal = _val(_caloriesCtl);
+      final oldCal = _val(_proteinCtl) * 4 + _val(_fatCtl) * 9 + _val(_carbsCtl) * 4;
+      if (oldCal <= 0) { setState(() {}); return; }
+      final factor = currentCal / oldCal;
+      _gramsCtl.text = _fmt(_val(_gramsCtl) * factor);
+      _proteinCtl.text = _fmt(_val(_proteinCtl) * factor);
+      _fatCtl.text = _fmt(_val(_fatCtl) * factor);
+      _carbsCtl.text = _fmt(_val(_carbsCtl) * factor);
+    }
     setState(() {});
   }
 
@@ -429,7 +448,7 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
                 labelText: 'Граммы',
                 suffixText: 'г',
               ),
-              onChanged: _onGramsChanged,
+              onChanged: (_) => _recalcFrom(_gramsCtl),
             ),
             const SizedBox(height: 12),
             Row(
@@ -439,7 +458,7 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
                     controller: _proteinCtl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(labelText: 'Белки'),
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (_) => _recalcFrom(_proteinCtl),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -448,7 +467,7 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
                     controller: _fatCtl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(labelText: 'Жиры'),
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (_) => _recalcFrom(_fatCtl),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -457,7 +476,7 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
                     controller: _carbsCtl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(labelText: 'Углев.'),
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (_) => _recalcFrom(_carbsCtl),
                   ),
                 ),
               ],
@@ -467,7 +486,7 @@ class _EditFoodLogDialogState extends State<_EditFoodLogDialog> {
               controller: _caloriesCtl,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(labelText: 'Калории', suffixText: 'ккал'),
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) => _recalcFrom(_caloriesCtl),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(

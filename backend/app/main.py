@@ -13,17 +13,17 @@ logger = logging.getLogger(__name__)
 
 
 async def _init_db():
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database tables verified / created")
-    except Exception as e:
-        logger.error("Failed to initialize database on startup: %s", e)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables verified / created")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    asyncio.create_task(_init_db())
+    try:
+        await asyncio.wait_for(_init_db(), timeout=15)
+    except Exception as e:
+        logger.error("DB init failed (app will still start): %s", e)
     yield
     await engine.dispose()
 
