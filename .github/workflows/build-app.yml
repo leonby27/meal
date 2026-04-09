@@ -1,14 +1,7 @@
 name: Build Flutter App
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'app/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'app/**'
+  workflow_dispatch:
 
 jobs:
   build-android:
