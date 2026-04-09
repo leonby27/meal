@@ -230,6 +230,11 @@ class _CameraScreenState extends State<CameraScreen> {
         _result = result;
         _loading = false;
       });
+    } on NetworkException catch (e) {
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
     } catch (e) {
       setState(() {
         _error = 'Не удалось распознать: $e';

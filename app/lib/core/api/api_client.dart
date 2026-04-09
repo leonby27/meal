@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -9,6 +11,10 @@ class ApiClient {
   static const String _baseUrlKey = 'api_base_url';
   static const String _tokenKey = 'auth_token';
   static const String defaultBaseUrl = 'https://leonby27-meal-29f6.twc1.net';
+
+  static const int _maxRetries = 3;
+  static const Duration _requestTimeout = Duration(seconds: 30);
+  static const Duration _uploadTimeout = Duration(seconds: 60);
 
   final http.Client _client = http.Client();
   String _baseUrl = defaultBaseUrl;
@@ -83,10 +89,12 @@ class ApiClient {
   };
 
   Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
-    final response = await _client.post(
-      Uri.parse('$_baseUrl$path'),
-      headers: _headers,
-      body: jsonEncode(body),
+    final response = await _withRetry(() =>
+      _client.post(
+        Uri.parse('$_baseUrl$path'),
+        headers: _headers,
+        body: jsonEncode(body),
+      ).timeout(_requestTimeout),
     );
     return _handleResponse(response);
   }
@@ -96,7 +104,9 @@ class ApiClient {
     if (params != null) {
       uri = uri.replace(queryParameters: params);
     }
-    final response = await _client.get(uri, headers: _headers);
+    final response = await _withRetry(() =>
+      _client.get(uri, headers: _headers).timeout(_requestTimeout),
+    );
     return _handleResponse(response);
   }
 
@@ -112,16 +122,58 @@ class ApiClient {
         filename: 'photo.jpg',
         contentType: MediaType('image', 'jpeg'),
       ));
-      final streamedResponse = await request.send();
+      final streamedResponse = await request.send().timeout(_uploadTimeout);
       return http.Response.fromStream(streamedResponse);
     }
 
-    var response = await doRequest();
+    var response = await _withRetry(doRequest);
     if (response.statusCode == 401) {
       await ensureAuthenticated(forceRefresh: true);
-      response = await doRequest();
+      response = await _withRetry(doRequest);
     }
     return _handleResponse(response);
+  }
+
+  Future<http.Response> _withRetry(Future<http.Response> Function() request) async {
+    for (var attempt = 0; attempt < _maxRetries; attempt++) {
+      try {
+        return await request();
+      } on SocketException catch (e) {
+        if (attempt == _maxRetries - 1) throw NetworkException(_friendlyNetworkError(e));
+        await _backoff(attempt);
+      } on TimeoutException {
+        if (attempt == _maxRetries - 1) {
+          throw const NetworkException('Сервер не отвечает. Проверьте подключение к интернету.');
+        }
+        await _backoff(attempt);
+      } on HandshakeException {
+        if (attempt == _maxRetries - 1) {
+          throw const NetworkException('Ошибка SSL-соединения. Попробуйте позже.');
+        }
+        await _backoff(attempt);
+      } on http.ClientException catch (e) {
+        if (attempt == _maxRetries - 1) throw NetworkException('Ошибка соединения: ${e.message}');
+        await _backoff(attempt);
+      }
+    }
+    throw const NetworkException('Не удалось связаться с сервером.');
+  }
+
+  Future<void> _backoff(int attempt) =>
+      Future.delayed(Duration(milliseconds: 500 * (1 << attempt)));
+
+  String _friendlyNetworkError(SocketException e) {
+    final msg = e.message.toLowerCase();
+    if (msg.contains('host lookup') || msg.contains('no address associated')) {
+      return 'Сервер временно недоступен. Проверьте интернет или попробуйте через минуту.';
+    }
+    if (msg.contains('connection refused')) {
+      return 'Сервер не принимает соединения. Попробуйте позже.';
+    }
+    if (msg.contains('connection reset') || msg.contains('broken pipe')) {
+      return 'Соединение разорвано. Попробуйте ещё раз.';
+    }
+    return 'Ошибка сети. Проверьте подключение к интернету.';
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {
@@ -155,4 +207,13 @@ class ApiException implements Exception {
 
   @override
   String toString() => 'ApiException($statusCode): $message';
+}
+
+class NetworkException implements Exception {
+  final String message;
+
+  const NetworkException(this.message);
+
+  @override
+  String toString() => message;
 }
