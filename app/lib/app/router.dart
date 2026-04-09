@@ -10,6 +10,8 @@ import 'package:meal_tracker/features/camera/widgets/camera_screen.dart';
 import 'package:meal_tracker/features/products/widgets/my_products_screen.dart';
 import 'package:meal_tracker/features/products/widgets/add_product_screen.dart';
 import 'package:meal_tracker/features/products/widgets/add_recipe_screen.dart';
+import 'package:meal_tracker/features/history/widgets/history_screen.dart';
+import 'package:meal_tracker/features/profile/widgets/reminders_screen.dart';
 import 'package:meal_tracker/app/shell_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -81,6 +83,16 @@ final router = GoRouter(
       path: '/add-recipe',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AddRecipeScreen(),
+    ),
+    GoRoute(
+      path: '/history',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const HistoryScreen(),
+    ),
+    GoRoute(
+      path: '/reminders',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const RemindersScreen(),
     ),
   ],
 );

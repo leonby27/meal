@@ -126,6 +126,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const Divider(height: 1),
                 ListTile(
+                  leading: const Icon(Icons.notifications_outlined),
+                  title: const Text('Напоминания'),
+                  subtitle: const Text('Push-уведомления о приемах пищи'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/reminders'),
+                ),
+                const Divider(height: 1),
+                ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('О приложении'),
                   subtitle: const Text('MealTracker v1.0.0'),

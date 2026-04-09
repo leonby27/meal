@@ -267,6 +267,50 @@ class AppDatabase extends _$AppDatabase {
     return (select(products)..where((p) => p.productId.equals(productId))).getSingleOrNull();
   }
 
+  // Copy meal logs from one date to another
+  Future<int> copyMealLogs({
+    required DateTime fromDate,
+    required DateTime toDate,
+    String? mealType,
+  }) async {
+    final logs = await getFoodLogsForDate(fromDate);
+    final filtered = mealType != null
+        ? logs.where((l) => l.mealType == mealType).toList()
+        : logs;
+
+    int count = 0;
+    for (final log in filtered) {
+      final newDate = DateTime(toDate.year, toDate.month, toDate.day, 12);
+      await addFoodLog(FoodLogsCompanion.insert(
+        id: '${DateTime.now().microsecondsSinceEpoch}_$count',
+        productId: Value(log.productId),
+        productName: log.productName,
+        mealType: log.mealType,
+        mealDate: newDate,
+        grams: log.grams,
+        protein: Value(log.protein),
+        fat: Value(log.fat),
+        carbs: Value(log.carbs),
+        calories: Value(log.calories),
+        imageUrl: Value(log.imageUrl),
+      ));
+      count++;
+    }
+    return count;
+  }
+
+  // History — all logged days
+  Future<List<DateTime>> getLoggedDates({int limit = 60}) async {
+    final result = await customSelect(
+      'SELECT DISTINCT DATE(meal_date) as d FROM food_logs ORDER BY d DESC LIMIT ?',
+      variables: [Variable.withInt(limit)],
+    ).get();
+    return result.map((r) {
+      final dateStr = r.read<String>('d');
+      return DateTime.parse(dateStr);
+    }).toList();
+  }
+
   // Settings
   Future<String?> getSetting(String key) async {
     final result = await (select(userSettings)..where((s) => s.key.equals(key))).getSingleOrNull();

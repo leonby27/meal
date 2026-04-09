@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
 
@@ -20,6 +21,32 @@ class MealSection extends StatelessWidget {
     required this.dateStr,
     required this.onDelete,
   });
+
+  Future<void> _copyMeal(BuildContext context) async {
+    final targetDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+      locale: const Locale('ru'),
+      helpText: 'Скопировать $title в…',
+    );
+    if (targetDate == null || !context.mounted) return;
+
+    final db = await AppDatabase.getInstance();
+    final sourceDate = DateFormat('yyyy-MM-dd').parse(dateStr);
+    final count = await db.copyMealLogs(
+      fromDate: sourceDate,
+      toDate: targetDate,
+      mealType: mealType,
+    );
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Скопировано $count записей в ${DateFormat('d MMM', 'ru').format(targetDate)}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +69,12 @@ class MealSection extends StatelessWidget {
                       color: Colors.grey.shade600,
                     ),
                   ),
-                const SizedBox(width: 8),
+                if (logs.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 20),
+                    tooltip: 'Копировать $title',
+                    onPressed: () => _copyMeal(context),
+                  ),
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline),
                   onPressed: () {

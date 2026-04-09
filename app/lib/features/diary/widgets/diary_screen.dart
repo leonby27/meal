@@ -35,6 +35,28 @@ class _DiaryScreenState extends State<DiaryScreen> {
     });
   }
 
+  void _onMenuAction(String action) async {
+    if (action == 'copy_day') {
+      final target = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2020),
+        lastDate: DateTime.now().add(const Duration(days: 30)),
+        locale: const Locale('ru'),
+        helpText: 'Скопировать весь день в…',
+      );
+      if (target == null || !mounted) return;
+      final count = await _db.copyMealLogs(fromDate: _selectedDate, toDate: target);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Скопировано $count записей в ${DateFormat('d MMM', 'ru').format(target)}')),
+        );
+      }
+    } else if (action == 'history') {
+      context.push('/history');
+    }
+  }
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -87,6 +109,16 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ),
           ],
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (action) => _onMenuAction(action),
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'copy_day', child: Text('Копировать день')),
+              const PopupMenuItem(value: 'history', child: Text('История')),
+            ],
+          ),
+        ],
       ),
       body: StreamBuilder<List<FoodLog>>(
         stream: _db.watchFoodLogsForDate(_selectedDate),
