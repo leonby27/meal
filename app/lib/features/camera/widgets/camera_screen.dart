@@ -50,8 +50,9 @@ class CameraScreen extends StatefulWidget {
   final String? autoSource;
   final Uint8List? initialImageBytes;
   final ScrollController? sheetScrollController;
+  final Map<String, dynamic>? initialResult;
 
-  const CameraScreen({super.key, required this.mealType, this.dateStr, this.autoSource, this.initialImageBytes, this.sheetScrollController});
+  const CameraScreen({super.key, required this.mealType, this.dateStr, this.autoSource, this.initialImageBytes, this.sheetScrollController, this.initialResult});
 
   static Future<void> showAsSheet(BuildContext context, {required String mealType, String? dateStr, String? autoSource}) {
     return showModalBottomSheet(
@@ -106,6 +107,35 @@ class CameraScreen extends StatefulWidget {
     );
   }
 
+  static Future<void> showWithResult(
+    BuildContext context, {
+    required String mealType,
+    String? dateStr,
+    required Map<String, dynamic> result,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      useRootNavigator: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (ctx, scrollController) => CameraScreen(
+          mealType: mealType,
+          dateStr: dateStr,
+          initialResult: result,
+          sheetScrollController: scrollController,
+        ),
+      ),
+    );
+  }
+
   @override
   State<CameraScreen> createState() => _CameraScreenState();
 }
@@ -137,22 +167,27 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void initState() {
     super.initState();
-    _loadRecentPhotos();
-    if (widget.initialImageBytes != null) {
-      _imageBytes = widget.initialImageBytes;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _recognize(_imageBytes!);
-      });
-    } else if (widget.autoSource != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_autoLaunched) {
-          _autoLaunched = true;
-          final source = widget.autoSource == 'gallery'
-              ? ImageSource.gallery
-              : ImageSource.camera;
-          _pickImage(source);
-        }
-      });
+    if (widget.initialResult != null) {
+      _initResultControllers(widget.initialResult!);
+      _result = widget.initialResult;
+    } else {
+      _loadRecentPhotos();
+      if (widget.initialImageBytes != null) {
+        _imageBytes = widget.initialImageBytes;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _recognize(_imageBytes!);
+        });
+      } else if (widget.autoSource != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_autoLaunched) {
+            _autoLaunched = true;
+            final source = widget.autoSource == 'gallery'
+                ? ImageSource.gallery
+                : ImageSource.camera;
+            _pickImage(source);
+          }
+        });
+      }
     }
   }
 
@@ -448,7 +483,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
     final body = ListView(
       controller: widget.sheetScrollController,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       children: [
         if (isSheet) ...[
           Center(

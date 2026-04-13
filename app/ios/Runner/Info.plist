@@ -54,6 +54,10 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Нужен доступ к камере для распознавания еды</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Нужен доступ к микрофону для голосового ввода</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Нужен доступ к распознаванию речи для голосового ввода еды</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Нужен доступ к фото для выбора изображения еды</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

@@ -134,6 +134,28 @@ class ApiClient {
     return _handleResponse(response);
   }
 
+  Future<Map<String, dynamic>> recognizeText(String text) async {
+    await ensureAuthenticated();
+    var response = await _withRetry(() =>
+      _client.post(
+        Uri.parse('$_baseUrl/api/recognize-text'),
+        headers: _headers,
+        body: jsonEncode({'text': text}),
+      ).timeout(_uploadTimeout),
+    );
+    if (response.statusCode == 401) {
+      await ensureAuthenticated(forceRefresh: true);
+      response = await _withRetry(() =>
+        _client.post(
+          Uri.parse('$_baseUrl/api/recognize-text'),
+          headers: _headers,
+          body: jsonEncode({'text': text}),
+        ).timeout(_uploadTimeout),
+      );
+    }
+    return _handleResponse(response);
+  }
+
   Future<http.Response> _withRetry(Future<http.Response> Function() request) async {
     for (var attempt = 0; attempt < _maxRetries; attempt++) {
       try {
