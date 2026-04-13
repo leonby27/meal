@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from app.routers.deps import get_current_user_id
-from app.services.timeweb_ai import recognize_food
+from app.services.timeweb_ai import recognize_food, recognize_food_from_text
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,10 @@ class RecognitionResponse(BaseModel):
     ingredients: List[Ingredient]
     per_100g: NutritionInfo
     total: NutritionInfo
+
+
+class TextRecognitionRequest(BaseModel):
+    text: str
 
 
 IMAGE_SIGNATURES = [
@@ -82,6 +86,31 @@ async def recognize(
         return RecognitionResponse(**result)
     except Exception as e:
         logger.exception("AI recognition failed")
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI recognition failed: {str(e)}",
+        )
+
+
+@router.post("/recognize-text", response_model=RecognitionResponse)
+async def recognize_text(
+    request: TextRecognitionRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is empty")
+
+    if len(text) > 2000:
+        raise HTTPException(status_code=400, detail="Text too long (max 2000 chars)")
+
+    logger.info("recognize_text: user=%s text=%r", user_id, text[:100])
+
+    try:
+        result = await recognize_food_from_text(text)
+        return RecognitionResponse(**result)
+    except Exception as e:
+        logger.exception("AI text recognition failed")
         raise HTTPException(
             status_code=502,
             detail=f"AI recognition failed: {str(e)}",
