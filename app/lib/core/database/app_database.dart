@@ -24,6 +24,8 @@ class Products extends Table {
   TextColumn get category => text().nullable()();
   TextColumn get composition => text().nullable()();
   RealColumn get price => real().nullable()();
+  TextColumn get barcode => text().nullable()();
+  TextColumn get source => text().nullable()();
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false)).named('is_favorite')();
   BoolColumn get isUserCreated => boolean().withDefault(const Constant(false)).named('is_user_created')();
 
@@ -97,7 +99,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -109,6 +111,10 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.addColumn(products, products.searchName);
         await _rebuildSearchIndex();
+      }
+      if (from < 3) {
+        await m.addColumn(products, products.barcode);
+        await m.addColumn(products, products.source);
       }
     },
   );
@@ -224,6 +230,8 @@ class AppDatabase extends _$AppDatabase {
       category: row.readNullable<String>('category'),
       composition: row.readNullable<String>('composition'),
       price: row.readNullable<double>('price'),
+      barcode: row.readNullable<String>('barcode'),
+      source: row.readNullable<String>('source'),
       isFavorite: row.read<bool>('is_favorite'),
       isUserCreated: row.read<bool>('is_user_created'),
     )).toList();
@@ -237,6 +245,33 @@ class AppDatabase extends _$AppDatabase {
     final product = await (select(products)..where((p) => p.productId.equals(productId))).getSingle();
     await (update(products)..where((p) => p.productId.equals(productId)))
         .write(ProductsCompanion(isFavorite: Value(!product.isFavorite)));
+  }
+
+  Future<Product> cacheServerProduct(Map<String, dynamic> json) async {
+    final id = json['id'] as int? ?? 0;
+    final name = json['name'] as String;
+    final brand = json['brand'] as String?;
+    final productId = id > 0 ? id : await getNextUserProductId();
+
+    final companion = ProductsCompanion.insert(
+      productId: Value(productId),
+      name: name,
+      searchName: Value(buildSearchName(name, brand)),
+      weightGrams: Value((json['weight_grams'] as num?)?.toDouble()),
+      proteinPer100g: Value((json['protein_per_100g'] as num?)?.toDouble()),
+      fatPer100g: Value((json['fat_per_100g'] as num?)?.toDouble()),
+      carbsPer100g: Value((json['carbs_per_100g'] as num?)?.toDouble()),
+      caloriesPer100g: Value((json['calories_per_100g'] as num?)?.toDouble()),
+      imageUrl: Value(json['image_url'] as String?),
+      brand: Value(brand),
+      country: Value(json['country'] as String?),
+      category: Value(json['category'] as String?),
+      barcode: Value(json['barcode'] as String?),
+      source: Value(json['source'] as String?),
+    );
+
+    await into(products).insert(companion, mode: InsertMode.insertOrReplace);
+    return (await (select(products)..where((p) => p.productId.equals(productId))).getSingle());
   }
 
   // Food log queries

@@ -14,20 +14,35 @@ import 'package:meal_tracker/features/products/widgets/add_product_screen.dart';
 import 'package:meal_tracker/features/products/widgets/add_recipe_screen.dart';
 import 'package:meal_tracker/features/history/widgets/history_screen.dart';
 import 'package:meal_tracker/features/profile/widgets/reminders_screen.dart';
-import 'package:meal_tracker/app/shell_screen.dart';
+import 'package:meal_tracker/features/onboarding/widgets/onboarding_flow.dart';
+import 'package:meal_tracker/features/onboarding/widgets/paywall_screen.dart';
+import 'package:meal_tracker/features/scanner/widgets/barcode_scanner_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/diary',
   refreshListenable: AuthService(),
   redirect: (context, state) {
-    final loggedIn = AuthService().isLoggedIn;
-    final isLoginRoute = state.matchedLocation == '/login';
+    final auth = AuthService();
+    final loggedIn = auth.isLoggedIn;
+    final location = state.matchedLocation;
+    final isLoginRoute = location == '/login';
+    final isOnboardingRoute = location == '/onboarding';
+    final isPaywallRoute = location == '/paywall';
+
     if (!loggedIn && !isLoginRoute) return '/login';
-    if (loggedIn && isLoginRoute) return '/diary';
+
+    if (loggedIn && isLoginRoute) {
+      if (!auth.onboardingCompleted) return '/onboarding';
+      return '/diary';
+    }
+
+    if (loggedIn && !auth.onboardingCompleted && !isOnboardingRoute && !isPaywallRoute) {
+      return '/onboarding';
+    }
+
     return null;
   },
   routes: [
@@ -35,35 +50,35 @@ final router = GoRouter(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
-    ShellRoute(
-      navigatorKey: _shellNavigatorKey,
-      builder: (context, state, child) => ShellScreen(child: child),
-      routes: [
-        GoRoute(
-          path: '/diary',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: DiaryScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/stats',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: StatsScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/favorites',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: FavoritesScreen(),
-          ),
-        ),
-        GoRoute(
-          path: '/profile',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: ProfileScreen(),
-          ),
-        ),
-      ],
+    GoRoute(
+      path: '/onboarding',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const OnboardingFlow(),
+    ),
+    GoRoute(
+      path: '/paywall',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const PaywallScreen(),
+    ),
+    GoRoute(
+      path: '/diary',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const DiaryScreen(),
+    ),
+    GoRoute(
+      path: '/profile',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: '/stats',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const StatsScreen(),
+    ),
+    GoRoute(
+      path: '/favorites',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const FavoritesScreen(),
     ),
     GoRoute(
       path: '/search',
@@ -71,7 +86,8 @@ final router = GoRouter(
       builder: (context, state) {
         final mealType = state.uri.queryParameters['meal_type'] ?? 'snack';
         final dateStr = state.uri.queryParameters['date'];
-        return SearchScreen(mealType: mealType, dateStr: dateStr);
+        final query = state.uri.queryParameters['query'];
+        return SearchScreen(mealType: mealType, dateStr: dateStr, initialQuery: query);
       },
     ),
     GoRoute(
@@ -103,6 +119,15 @@ final router = GoRouter(
       path: '/reminders',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const RemindersScreen(),
+    ),
+    GoRoute(
+      path: '/scanner',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final mealType = state.uri.queryParameters['meal_type'] ?? 'snack';
+        final dateStr = state.uri.queryParameters['date'];
+        return BarcodeScannerScreen(mealType: mealType, dateStr: dateStr);
+      },
     ),
   ],
 );

@@ -23,6 +23,8 @@ class Product(Base):
     category: Mapped[Optional[str]] = mapped_column(String(300), index=True, nullable=True)
     composition: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    barcode: Mapped[Optional[str]] = mapped_column(String(50), index=True, nullable=True)
+    source: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     is_user_created: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()

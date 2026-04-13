@@ -20,6 +20,30 @@ async def _init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables verified / created")
+    await _run_migrations()
+
+
+async def _run_migrations():
+    """Add columns that create_all cannot add to existing tables."""
+    migrations = [
+        ("products", "barcode", "VARCHAR(50)"),
+        ("products", "source", "VARCHAR(50)"),
+    ]
+    async with engine.begin() as conn:
+        for table, column, col_type in migrations:
+            try:
+                await conn.execute(text(
+                    f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {col_type}"
+                ))
+                logger.info("Migration: ensured column %s.%s exists", table, column)
+            except Exception as e:
+                logger.warning("Migration for %s.%s skipped: %s", table, column, e)
+        try:
+            await conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_products_barcode ON products (barcode)"
+            ))
+        except Exception as e:
+            logger.warning("Index creation skipped: %s", e)
 
 
 async def _keep_alive():
