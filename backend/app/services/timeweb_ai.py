@@ -91,9 +91,17 @@ def _parse_ai_response(data: dict) -> dict:
     return json.loads(content)
 
 
-async def recognize_food(image_bytes: bytes) -> dict:
-    """Отправляет фото еды в Timeweb Cloud AI-агент для распознавания."""
+async def recognize_food(image_bytes: bytes, *, text: str | None = None) -> dict:
+    """Отправляет фото еды в Timeweb Cloud AI-агент для распознавания.
+
+    Если передан text, он используется как сопроводительное описание к фото.
+    """
     image_base64 = normalize_image(image_bytes)
+
+    if text:
+        user_text = f"Вот фото еды. Описание от пользователя: «{text}». Определи блюдо и его БЖУ. Ответь JSON."
+    else:
+        user_text = "Определи блюдо на фото и его БЖУ. Ответь JSON."
 
     payload = {
         "messages": [
@@ -109,7 +117,7 @@ async def recognize_food(image_bytes: bytes) -> dict:
                     },
                     {
                         "type": "text",
-                        "text": "Определи блюдо на фото и его БЖУ. Ответь JSON.",
+                        "text": user_text,
                     },
                 ],
             },

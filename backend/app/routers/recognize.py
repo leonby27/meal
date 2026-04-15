@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from app.routers.deps import get_current_user_id
@@ -58,12 +58,16 @@ def detect_image_type(data: bytes) -> str:
 @router.post("/recognize", response_model=RecognitionResponse)
 async def recognize(
     file: UploadFile = File(...),
+    text: str = Form(default=""),
     user_id: str = Depends(get_current_user_id),
 ):
     image_bytes = await file.read()
+    user_text = text.strip() if text else ""
     logger.info(
-        "recognize: filename=%s content_type=%s size=%d bytes_head=%s",
-        file.filename, file.content_type, len(image_bytes), image_bytes[:8].hex() if image_bytes else "empty",
+        "recognize: filename=%s content_type=%s size=%d text=%r bytes_head=%s",
+        file.filename, file.content_type, len(image_bytes),
+        user_text[:100] if user_text else "",
+        image_bytes[:8].hex() if image_bytes else "empty",
     )
 
     if len(image_bytes) == 0:
@@ -82,7 +86,7 @@ async def recognize(
         raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
 
     try:
-        result = await recognize_food(image_bytes)
+        result = await recognize_food(image_bytes, text=user_text or None)
         return RecognitionResponse(**result)
     except Exception as e:
         logger.exception("AI recognition failed")
