@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,6 +14,7 @@ import 'package:lottie/lottie.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:uuid/uuid.dart';
 
+import 'package:meal_tracker/app/route_observer.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
@@ -24,6 +25,86 @@ import 'package:meal_tracker/features/diary/widgets/meal_section.dart';
 import 'package:meal_tracker/features/camera/widgets/ai_meal_result_sheet.dart';
 import 'package:meal_tracker/features/camera/widgets/camera_screen.dart';
 
+/// Не даёт [PageView] дневника или недели прокрутиться правее страницы «сегодня»
+/// (как clamp, без отката).
+class _ClampedForwardPageScrollPhysics extends PageScrollPhysics {
+  const _ClampedForwardPageScrollPhysics({required this.maxPage, super.parent});
+
+  final int maxPage;
+
+  @override
+  _ClampedForwardPageScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _ClampedForwardPageScrollPhysics(maxPage: maxPage, parent: buildParent(ancestor));
+  }
+
+  double _maxPixels(ScrollMetrics position) {
+    if (position.viewportDimension <= 0) return 0;
+    return _pixelsForPage(position, maxPage.toDouble());
+  }
+
+  double _pixelsForPage(ScrollMetrics position, double page) {
+    if (position is PageMetrics) {
+      final vf = position.viewportFraction;
+      final initialOffset = math.max(0.0, position.viewportDimension * (vf - 1) / 2);
+      return page * position.viewportDimension * vf + initialOffset;
+    }
+    return page * position.viewportDimension;
+  }
+
+  double _getPage(ScrollMetrics position) {
+    if (position is PageMetrics) {
+      final p = position.page;
+      if (p != null) return p;
+    }
+    if (position.viewportDimension <= 0.0) {
+      return 0.0;
+    }
+    return position.pixels / position.viewportDimension;
+  }
+
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    if (position.viewportDimension <= 0) {
+      return super.applyBoundaryConditions(position, value);
+    }
+    final maxPx = _maxPixels(position);
+    if (value > maxPx) {
+      return value - maxPx;
+    }
+    return super.applyBoundaryConditions(position, value);
+  }
+
+  @override
+  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
+    if (position.viewportDimension <= 0.0) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+    if (velocity <= 0.0 && position.pixels <= position.minScrollExtent) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+    final maxPx = _maxPixels(position);
+    final Tolerance tolerance = toleranceFor(position);
+    double page = _getPage(position);
+    if (velocity < -tolerance.velocity) {
+      page -= 0.5;
+    } else if (velocity > tolerance.velocity) {
+      page += 0.5;
+    }
+    var target = _pixelsForPage(position, page.roundToDouble());
+    target = math.min(target, maxPx);
+    if (target != position.pixels) {
+      return ScrollSpringSimulation(
+        spring,
+        position.pixels,
+        target,
+        velocity,
+        tolerance: tolerance,
+      );
+    }
+    return null;
+  }
+}
+
 class DiaryScreen extends StatefulWidget {
   const DiaryScreen({super.key});
 
@@ -31,7 +112,7 @@ class DiaryScreen extends StatefulWidget {
   State<DiaryScreen> createState() => _DiaryScreenState();
 }
 
-class _DiaryScreenState extends State<DiaryScreen> {
+class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   DateTime _selectedDate = DateTime.now();
   late AppDatabase _db;
   bool _dbReady = false;
@@ -68,6 +149,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   bool _isSearching = false;
   bool _isRecognizing = false;
   bool _hasSearchText = false;
+  Uint8List? _attachedImageBytes;
   int _preSearchTab = 0;
 
   @override
@@ -82,6 +164,25 @@ class _DiaryScreenState extends State<DiaryScreen> {
     _initSpeech();
     _inputCtl.addListener(_onSearchTextChanged);
     _inputFocus.addListener(_onSearchFocusChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<void>) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPushNext() {
+    _inputFocus.unfocus();
+  }
+
+  @override
+  void didPopNext() {
+    _scheduleUnfocusInputBar();
   }
 
   Future<void> _initSpeech() async {
@@ -129,6 +230,17 @@ class _DiaryScreenState extends State<DiaryScreen> {
     }
   }
 
+  /// Нижнее поле ввода не должно самопроизвольно получать фокус при возврате с другого экрана.
+  void _scheduleUnfocusInputBar() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final route = ModalRoute.of(context);
+      if (route?.isCurrent != true) return;
+      _inputFocus.unfocus();
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
+  }
+
   void _activateSearch() {
     if (_searchMode) return;
     setState(() => _searchMode = true);
@@ -142,7 +254,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
     }
   }
 
-  void _deactivateSearch() {
+  String get _todayDateStr =>
+      DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  void _deactivateSearch({bool syncCalendarToToday = true}) {
     _inputFocus.unfocus();
     _inputCtl.clear();
     setState(() {
@@ -151,6 +266,15 @@ class _DiaryScreenState extends State<DiaryScreen> {
       _isSearching = false;
       _isRecognizing = false;
       _hasSearchText = false;
+      _attachedImageBytes = null;
+    });
+    if (!syncCalendarToToday) return;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final sel = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    if (sel == today) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _selectDate(today);
     });
   }
 
@@ -183,7 +307,17 @@ class _DiaryScreenState extends State<DiaryScreen> {
     }
   }
 
+  bool _checkFreeLimit() {
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      context.go('/paywall');
+      return true;
+    }
+    return false;
+  }
+
   Future<void> _recognizeWithAI(String dateStr) async {
+    if (_checkFreeLimit()) return;
     final text = _inputCtl.text.trim();
     if (text.isEmpty) return;
 
@@ -191,30 +325,131 @@ class _DiaryScreenState extends State<DiaryScreen> {
     _inputFocus.unfocus();
 
     final savedText = text;
+    final savedImage = _attachedImageBytes;
 
     if (_searchMode) {
-      _deactivateSearch();
+      _deactivateSearch(syncCalendarToToday: false);
     } else {
       _inputCtl.clear();
       setState(() {
         _isRecognizing = false;
         _hasSearchText = false;
+        _attachedImageBytes = null;
       });
     }
 
-    await AiMealResultSheet.showWithTextLoading(
-      context,
-      mealType: defaultMealType(),
-      dateStr: dateStr,
-      text: savedText,
-    );
+    if (savedImage != null) {
+      await AiMealResultSheet.showWithTextAndImageLoading(
+        context,
+        mealType: defaultMealType(),
+        dateStr: dateStr,
+        text: savedText,
+        imageBytes: savedImage,
+      );
+    } else {
+      await AiMealResultSheet.showWithTextLoading(
+        context,
+        mealType: defaultMealType(),
+        dateStr: dateStr,
+        text: savedText,
+      );
+    }
 
     if (mounted) {
       setState(() => _isRecognizing = false);
     }
   }
 
+  Future<void> _addFromLog(FoodLog log, String dateStr) async {
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (mounted) context.go('/paywall');
+      return;
+    }
+
+    final defaultGrams = log.grams > 0 ? log.grams : 100.0;
+    final calPer100 = log.grams > 0 ? log.calories / log.grams * 100 : log.calories;
+    final pPer100 = log.grams > 0 ? log.protein / log.grams * 100 : log.protein;
+    final fPer100 = log.grams > 0 ? log.fat / log.grams * 100 : log.fat;
+    final cPer100 = log.grams > 0 ? log.carbs / log.grams * 100 : log.carbs;
+
+    final controller = TextEditingController(text: defaultGrams.toInt().toString());
+    final grams = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(log.productName, maxLines: 2, overflow: TextOverflow.ellipsis),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              ctx.l10n.per100gInfo(
+                calPer100.toInt(),
+                pPer100.toStringAsFixed(1),
+                fPer100.toStringAsFixed(1),
+                cPer100.toStringAsFixed(1),
+              ),
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: ctx.l10n.gramsDialogLabel,
+                suffixText: ctx.l10n.gramsUnit,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final g = double.tryParse(controller.text);
+              Navigator.pop(ctx, g);
+            },
+            child: Text(ctx.l10n.add),
+          ),
+        ],
+      ),
+    );
+    if (grams == null || grams <= 0) return;
+
+    final factor = grams / 100.0;
+    final date = DateFormat('yyyy-MM-dd').parse(dateStr);
+
+    await _db.addFoodLog(FoodLogsCompanion.insert(
+      id: const Uuid().v4(),
+      productId: drift.Value(log.productId),
+      productName: log.productName,
+      mealType: defaultMealType(),
+      mealDate: DateTime(date.year, date.month, date.day, 12),
+      grams: grams,
+      protein: drift.Value(pPer100 * factor),
+      fat: drift.Value(fPer100 * factor),
+      carbs: drift.Value(cPer100 * factor),
+      calories: drift.Value(calPer100 * factor),
+      imageUrl: drift.Value(log.imageUrl),
+    ));
+
+    if (mounted) _deactivateSearch();
+
+    if (!auth.isPremium) {
+      await auth.incrementFreeEntry();
+    }
+  }
+
   Future<void> _addProductFromSearch(Product product, String dateStr) async {
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (mounted) context.go('/paywall');
+      return;
+    }
+
     final grams = await _showGramsDialog(product);
     if (grams == null || grams <= 0) return;
 
@@ -236,6 +471,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
     ));
 
     if (mounted) _deactivateSearch();
+
+    if (!auth.isPremium) {
+      await auth.incrementFreeEntry();
+    }
   }
 
   Future<double?> _showGramsDialog(Product product) {
@@ -443,6 +682,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
   @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     _weekPageCtl.dispose();
     _dayPageCtl.dispose();
     _inputCtl.removeListener(_onSearchTextChanged);
@@ -529,22 +769,16 @@ class _DiaryScreenState extends State<DiaryScreen> {
     }
 
     _loadWeekCalories();
-    _syncingPages = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncingPages = false;
+    });
   }
 
   void _selectDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final target = DateTime(date.year, date.month, date.day);
-    if (target.isAfter(today)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.dayNotYet),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
+    if (target.isAfter(today)) return;
     setState(() => _selectedDate = date);
 
     if (_dayPageCtl.hasClients) {
@@ -563,8 +797,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
   String _formatHeaderDate() {
     final d = _selectedDate;
-    final dayName = DateFormat('E', 'ru').format(d);
-    final month = DateFormat('MMM', 'ru').format(d);
+    final locale = Localizations.localeOf(context).languageCode;
+    final dayName = DateFormat('E', locale).format(d);
+    final month = DateFormat('MMM', locale).format(d);
     return '${d.day} $month, $dayName';
   }
 
@@ -574,7 +809,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      locale: const Locale('ru'),
+      locale: Localizations.localeOf(context),
     );
     if (picked != null) {
       _selectDate(picked);
@@ -582,6 +817,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   void _showAddMealSheet(String dateStr) {
+    if (_checkFreeLimit()) return;
     String selectedMealType = defaultMealType();
 
     final mealTypes = [
@@ -725,50 +961,24 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final onBack4 = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
-    return PopScope(
-      canPop: !_searchMode,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _searchMode) _deactivateSearch();
-      },
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: back2,
-        body: Column(
-          children: [
-            if (_searchMode)
-              ColoredBox(
-                color: isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
-                child: SizedBox(height: MediaQuery.of(context).padding.top),
-              )
-            else
-              SizedBox(height: MediaQuery.of(context).padding.top),
-            Expanded(
-              child: FocusScope(
-                autofocus: false,
-                child: Column(
-                  children: [
-                    if (_searchMode)
-                      _buildSearchHeader(context, isDark)
-                    else
-                      _buildHeader(context),
-                if (!_searchMode) ...[
-                  const SizedBox(height: 16),
-                  _buildWeekStrip(context, isDark),
-                  _buildConnectorLine(context, isDark),
-                ],
+        body: SafeArea(
+          child: FocusScope(
+            autofocus: false,
+            child: Column(
+              children: [
+                _buildHeader(context),
+                _buildWeekStripWithConnector(context, isDark),
                 Expanded(
-                  child: _searchMode
-                      ? _buildSearchBody(context, dateStr, isDark)
-                      : _buildDayPageView(context, isDark, onBack4),
+                  child: _buildDayPageView(context, isDark, onBack4),
                 ),
                 _buildInputBar(context, dateStr, isDark),
               ],
             ),
           ),
         ),
-          ],
-        ),
-      ),
-    );
+      );
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -778,10 +988,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
         ? auth.userName![0].toUpperCase()
         : (auth.userEmail?.isNotEmpty == true)
             ? auth.userEmail![0].toUpperCase()
-            : '?';
+            : 'M';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Row(
         children: [
           GestureDetector(
@@ -820,16 +1030,16 @@ class _DiaryScreenState extends State<DiaryScreen> {
             child: Icon(
               Icons.bar_chart_rounded,
               size: 24,
-              color: cs.onSurfaceVariant,
+              color: cs.onSurface,
             ),
           ),
           const SizedBox(width: 24),
           GestureDetector(
             onTap: () => context.push('/favorites'),
             child: Icon(
-              Icons.favorite_border,
+              Icons.favorite,
               size: 24,
-              color: cs.onSurfaceVariant,
+              color: cs.onSurface,
             ),
           ),
           const SizedBox(width: 24),
@@ -852,33 +1062,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   color: Colors.white,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchHeader(BuildContext context, bool isDark) {
-    final cs = Theme.of(context).colorScheme;
-    final bgColor = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-
-    return Container(
-      color: bgColor,
-      padding: const EdgeInsets.fromLTRB(4, 8, 16, 8),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: _deactivateSearch,
-            icon: Icon(Icons.arrow_back, color: cs.onSurface),
-          ),
-          Text(
-            context.l10n.searchTitle,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              height: 28 / 20,
-              color: cs.onSurface,
             ),
           ),
         ],
@@ -1050,11 +1233,13 @@ class _DiaryScreenState extends State<DiaryScreen> {
           child: GestureDetector(
             onTap: () async {
               if (log.productId != null) {
-                final products = await _db.searchProducts(log.productName, limit: 1);
-                if (products.isNotEmpty && mounted) {
-                  _addProductFromSearch(products.first, dateStr);
+                final product = await _db.getProductById(log.productId!);
+                if (product != null && mounted) {
+                  _addProductFromSearch(product, _todayDateStr);
+                  return;
                 }
               }
+              if (mounted) _addFromLog(log, _todayDateStr);
             },
             child: Container(
               padding: const EdgeInsets.all(16),
@@ -1139,7 +1324,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
         return Padding(
           padding: EdgeInsets.only(bottom: index < _favoriteProducts.length - 1 ? 8 : 0),
           child: GestureDetector(
-            onTap: () => _addProductFromSearch(product, dateStr),
+            onTap: () => _addProductFromSearch(product, _todayDateStr),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1248,46 +1433,93 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Widget _buildDayPageView(BuildContext context, bool isDark, Color onBack4) {
-    final maxPage = _dayPageCenter;
-    final mq = MediaQuery.of(context);
-    final defaultSlop = mq.gestureSettings.touchSlop ?? 18.0;
+    // Без верхней границы itemCount — иначе при большом initialPage возможен assert
+    // в SliverFixedExtentList (рассинхрон scrollOffset и дочерних слотов).
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final maxDayPage = _dayPageForDate(today);
 
-    return MediaQuery(
-      data: mq.copyWith(
-        gestureSettings: DeviceGestureSettings(
-          touchSlop: defaultSlop * 2.0,
-        ),
-      ),
-      child: PageView.builder(
+    return PageView.builder(
         controller: _dayPageCtl,
+        physics: _ClampedForwardPageScrollPhysics(maxPage: maxDayPage),
         onPageChanged: _onDayPageChanged,
-        itemCount: maxPage + 1,
+        itemCount: null,
         itemBuilder: (_, page) {
           final date = _dateForDayPage(page);
           final dateStr = DateFormat('yyyy-MM-dd').format(date);
 
-          return MediaQuery(
-            data: mq,
-            child: StreamBuilder<List<FoodLog>>(
-              stream: _db.watchFoodLogsForDate(date),
-              builder: (context, snapshot) {
-                final logs = snapshot.data ?? [];
-                final d = DateTime(date.year, date.month, date.day);
-                final sel = DateTime(
-                  _selectedDate.year, _selectedDate.month, _selectedDate.day,
-                );
-                if (d == sel) _syncWeekCalories(logs);
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    return _buildDayContent(
-                      context, logs, dateStr, isDark, onBack4, constraints.maxHeight,
-                    );
-                  },
-                );
-              },
-            ),
+          return StreamBuilder<List<FoodLog>>(
+            stream: _db.watchFoodLogsForDate(date),
+            builder: (context, snapshot) {
+              final logs = snapshot.data ?? [];
+              final d = DateTime(date.year, date.month, date.day);
+              final sel = DateTime(
+                _selectedDate.year, _selectedDate.month, _selectedDate.day,
+              );
+              if (d == sel) _syncWeekCalories(logs);
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return _buildDayContent(
+                    context, logs, dateStr, isDark, onBack4, constraints.maxHeight,
+                  );
+                },
+              );
+            },
           );
         },
+    );
+  }
+
+  Widget _buildFreeEntriesBanner(BuildContext context, AuthService auth) {
+    final cs = Theme.of(context).colorScheme;
+    final remaining = auth.freeEntriesRemaining;
+    final isUrgent = remaining <= 2;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isUrgent ? cs.errorContainer : cs.primaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.l10n.freeEntriesRemaining(remaining),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isUrgent
+                        ? cs.onErrorContainer
+                        : cs.onPrimaryContainer,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.push('/paywall'),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  context.l10n.getPro,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isUrgent
+                        ? cs.onErrorContainer
+                        : cs.onPrimaryContainer,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1295,7 +1527,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
   Widget _buildDayContent(BuildContext context, List<FoodLog> logs,
       String dateStr, bool isDark, Color back2, double viewportHeight) {
     final cs = Theme.of(context).colorScheme;
-    final borderColor = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
 
     final grouped = {
       'breakfast': logs.where((l) => l.mealType == 'breakfast').toList(),
@@ -1315,10 +1546,17 @@ class _DiaryScreenState extends State<DiaryScreen> {
         sections.where((s) => grouped[s.key]!.isNotEmpty).toList();
     final date = DateFormat('yyyy-MM-dd').parse(dateStr);
 
+    final auth = AuthService();
+    final showBanner = !auth.isPremium &&
+        auth.freeEntriesUsed >= 6 &&
+        !auth.freeTrialExhausted;
+
     return ListView(
       padding: const EdgeInsets.only(bottom: 16),
       children: [
         DailySummaryCard(logs: logs, selectedDate: date),
+        if (showBanner)
+          _buildFreeEntriesBanner(context, auth),
         if (nonEmpty.isNotEmpty) ...[
           const SizedBox(height: 24),
           Padding(
@@ -1340,14 +1578,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 grouped[s.key]!,
                 s.key,
                 dateStr,
-                isDark,
                 back2,
-                borderColor,
               )),
         ] else ...[
           Builder(
             builder: (context) {
-              const fixedAbove = 120.0;
+              const fixedAbove = 220.0;
               final emptyHeight =
                   (viewportHeight - fixedAbove).clamp(200.0, viewportHeight);
               return SizedBox(
@@ -1406,19 +1642,51 @@ class _DiaryScreenState extends State<DiaryScreen> {
     }
 
     _loadWeekCalories();
-    _syncingPages = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncingPages = false;
+    });
+  }
+
+  /// Соединительная линия под обводкой ячеек: рисуется ниже слоя недели в [Stack].
+  Widget _buildWeekStripWithConnector(BuildContext context, bool isDark) {
+    return SizedBox(
+      height: 64 + 16,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: 64,
+            left: 0,
+            right: 0,
+            height: 16,
+            child: _buildConnectorLine(context, isDark),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 64,
+            child: _buildWeekStrip(context, isDark),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildWeekStrip(BuildContext context, bool isDark) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final maxWeekPage = _pageForDate(today);
 
     return SizedBox(
       height: 64,
       child: PageView.builder(
         controller: _weekPageCtl,
+        physics: _ClampedForwardPageScrollPhysics(maxPage: maxWeekPage),
         onPageChanged: _onWeekPageChanged,
-        itemCount: _pageForDate(today) + 1,
+        // Не ограничиваем число страниц через itemCount — иначе граница
+        // + огромный scrollOffset дают падение layout у PageView; граница через physics.
+        itemCount: null,
         itemBuilder: (context, page) {
           return _buildWeekPage(context, page, isDark, today);
         },
@@ -1434,8 +1702,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
       _selectedDate.year, _selectedDate.month, _selectedDate.day,
     );
 
-    final trackDefault = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-    final trackSelected = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
+    final calendarLine =
+        isDark ? AppColors.lineDT200 : AppColors.lineLight200;
     final cs = Theme.of(context).colorScheme;
 
     final dayLabels = [
@@ -1490,7 +1758,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
 
           return Expanded(
             child: GestureDetector(
-              onTap: () => _selectDate(date),
+              onTap: isFuture ? null : () => _selectDate(date),
               child: Opacity(
                 opacity: (isToday || isSelected) ? 1.0 : 0.5,
                 child: Padding(
@@ -1503,7 +1771,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     child: showBorder
                         ? CustomPaint(
                             painter: _DayCellBorderPainter(
-                              trackColor: isSelected ? trackSelected : trackDefault,
+                              trackColor: calendarLine,
                               gradientColors: const [Color(0xFF22D33A), Color(0xFF1EBF92)],
                               progress: progress,
                               borderRadius: 12,
@@ -1541,21 +1809,22 @@ class _DiaryScreenState extends State<DiaryScreen> {
             final totalWidth = constraints.maxWidth;
             final cellWidth = totalWidth / 7;
             final centerX = cellWidth * dayIndex + cellWidth / 2;
+            const lineWidth = 2.0;
+            // Вылезаем на 1px вверх (к обводке дня) и вниз (к обводке карточки), без зазора.
+            const extend = 1.0;
 
             return Stack(
+              clipBehavior: Clip.none,
               children: [
                 Positioned(
-                  left: centerX - 1,
-                  top: 0,
+                  left: centerX - lineWidth / 2,
+                  top: -extend,
                   child: Container(
-                    width: 2,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.lineDT100
-                          : AppColors.lineLight100,
-                      borderRadius: BorderRadius.circular(1),
-                    ),
+                    width: lineWidth,
+                    height: 16 + extend * 2,
+                    color: isDark
+                        ? AppColors.lineDT200
+                        : AppColors.lineLight200,
                   ),
                 ),
               ],
@@ -1571,9 +1840,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
     List<FoodLog> logs,
     String mealType,
     String dateStr,
-    bool isDark,
     Color back2,
-    Color borderColor,
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1588,7 +1855,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
               dateStr: dateStr,
               onDelete: (id) => _db.deleteFoodLog(id),
               back2: back2,
-              borderColor: borderColor,
             ),
           );
         }).toList(),
@@ -1597,14 +1863,14 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Widget _buildInputBar(BuildContext context, String dateStr, bool isDark) {
-    final btnBack = isDark
-        ? AppColors.neutralBtnBack
-        : AppColors.neutralBtnBackLight;
+    final onBack = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final placeholderColor = isDark
         ? const Color(0xFF9CA0B2)
         : const Color(0xFF676E85);
     final iconColor = isDark ? AppColors.darkSecondaryDark : AppColors.lightSecondaryDark;
     final textColor = isDark ? Colors.white : AppColors.lightOnSurface;
+    final lineBorder =
+        isDark ? AppColors.lineDT200 : AppColors.lineLight200;
     const double iconSize = 36.0;
 
     return Padding(
@@ -1612,28 +1878,33 @@ class _DiaryScreenState extends State<DiaryScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            if (!_searchMode)
-              GestureDetector(
-                onTap: _activateSearch,
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: btnBack,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Icon(Icons.search, size: 22, color: iconColor),
-                  ),
+            GestureDetector(
+              onTap: () {
+                if (_checkFreeLimit()) return;
+                final mealType = defaultMealType();
+                context.push('/search?meal_type=$mealType&date=$dateStr');
+              },
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: onBack,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: lineBorder, width: 1),
+                ),
+                child: Center(
+                  child: Icon(Icons.search, size: 22, color: iconColor),
                 ),
               ),
-            if (!_searchMode) const SizedBox(width: 6),
+            ),
+            const SizedBox(width: 6),
             Expanded(
               child: Container(
                 constraints: const BoxConstraints(minHeight: 44),
                 decoration: BoxDecoration(
-                  color: btnBack,
+                  color: onBack,
                   borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: lineBorder, width: 1),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 child: Row(
@@ -1653,9 +1924,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           color: textColor,
                         ),
                         decoration: InputDecoration(
-                          hintText: _searchMode
-                              ? context.l10n.productNameOrDish
-                              : context.l10n.addEntry,
+                          hintText: context.l10n.addEntry,
                           hintStyle: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
@@ -1669,13 +1938,14 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           filled: false,
                           contentPadding: const EdgeInsets.symmetric(vertical: 8),
                         ),
-                        onChanged: _searchMode ? _onSearchChanged : null,
+                        onChanged: null,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    if (!_searchMode && !_hasSearchText)
+                    if (!_hasSearchText)
                       GestureDetector(
                         onTap: () {
+                          if (_checkFreeLimit()) return;
                           context.push('/scanner?meal_type=${defaultMealType()}&date=$dateStr');
                         },
                         child: SizedBox(
@@ -1691,9 +1961,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           ),
                         ),
                       ),
-                    if (!_searchMode && !_hasSearchText)
+                    if (!_hasSearchText)
                       GestureDetector(
                         onTap: () {
+                          if (_checkFreeLimit()) return;
                           CameraScreen.pickAndShow(
                             context,
                             mealType: defaultMealType(),
@@ -1714,6 +1985,47 @@ class _DiaryScreenState extends State<DiaryScreen> {
                           ),
                         ),
                       ),
+                    if (_hasSearchText)
+                      GestureDetector(
+                        onTap: () async {
+                          final picker = ImagePicker();
+                          final picked = await picker.pickImage(
+                            source: ImageSource.gallery,
+                            maxWidth: 768,
+                            imageQuality: 70,
+                          );
+                          if (picked == null) return;
+                          final bytes = await picked.readAsBytes();
+                          if (mounted) setState(() => _attachedImageBytes = bytes);
+                        },
+                        child: SizedBox(
+                          width: iconSize,
+                          height: iconSize,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Icon(
+                                Icons.attach_file,
+                                size: 22,
+                                color: iconColor,
+                              ),
+                              if (_attachedImageBytes != null)
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1723,6 +2035,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 onTap: _hasSearchText
                     ? () => _recognizeWithAI(dateStr)
                     : () {
+                        if (_checkFreeLimit()) return;
                         CameraScreen.pickAndShow(
                           context,
                           mealType: defaultMealType(),
