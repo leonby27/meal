@@ -1,4 +1,4 @@
-package by.mealtracker.meal_tracker
+package by.mealtracker.calories
 
 import io.flutter.embedding.android.FlutterActivity
 
