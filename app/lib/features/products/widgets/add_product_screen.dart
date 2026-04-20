@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -48,12 +49,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
       caloriesPer100g: drift.Value(double.tryParse(_caloriesController.text)),
       weightGrams: drift.Value(double.tryParse(_weightController.text)),
       brand: drift.Value(_brandController.text.isNotEmpty ? _brandController.text.trim() : null),
-      category: const drift.Value('Мои продукты'),
+      category: drift.Value(context.l10n.myProductsCategory),
     ));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Продукт добавлен')),
+        SnackBar(content: Text(context.l10n.productAdded)),
       );
       context.pop(true);
     }
@@ -62,11 +63,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Новый продукт')),
+      appBar: AppBar(title: Text(context.l10n.newProduct)),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           children: [
             Card(
               child: Padding(
@@ -74,31 +75,31 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Основное', style: Theme.of(context).textTheme.titleMedium),
+                    Text(context.l10n.basicInfo, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Название *',
-                        prefixIcon: Icon(Icons.restaurant),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.productNameRequired,
+                        prefixIcon: const Icon(Icons.restaurant),
                       ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Введите название' : null,
+                      validator: (v) => v == null || v.trim().isEmpty ? context.l10n.enterName : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _brandController,
-                      decoration: const InputDecoration(
-                        labelText: 'Бренд (необязательно)',
-                        prefixIcon: Icon(Icons.label_outline),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.brandOptional,
+                        prefixIcon: const Icon(Icons.label_outline),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _weightController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Вес порции (г)',
-                        prefixIcon: Icon(Icons.scale),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.servingWeightG,
+                        prefixIcon: const Icon(Icons.scale),
                       ),
                     ),
                   ],
@@ -112,7 +113,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('БЖУ на 100 г', style: Theme.of(context).textTheme.titleMedium),
+                    Text(context.l10n.macrosPer100g, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -120,7 +121,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           child: TextFormField(
                             controller: _proteinController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(labelText: 'Белки'),
+                            decoration: InputDecoration(labelText: context.l10n.proteinLabel),
                             onChanged: (_) => _onMacroChanged(),
                           ),
                         ),
@@ -129,7 +130,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           child: TextFormField(
                             controller: _fatController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(labelText: 'Жиры'),
+                            decoration: InputDecoration(labelText: context.l10n.fatLabel),
                             onChanged: (_) => _onMacroChanged(),
                           ),
                         ),
@@ -138,7 +139,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           child: TextFormField(
                             controller: _carbsController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: const InputDecoration(labelText: 'Углев.'),
+                            decoration: InputDecoration(labelText: context.l10n.carbsLabelShort),
                             onChanged: (_) => _onMacroChanged(),
                           ),
                         ),
@@ -148,10 +149,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     TextFormField(
                       controller: _caloriesController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'Калории (ккал)',
-                        prefixIcon: Icon(Icons.local_fire_department),
-                        helperText: 'Рассчитается автоматически из БЖУ',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.caloriesKcalInputLabel,
+                        prefixIcon: const Icon(Icons.local_fire_department),
+                        helperText: context.l10n.caloriesAutoCalc,
                       ),
                     ),
                   ],
@@ -164,7 +165,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               icon: _saving
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.add),
-              label: const Text('Сохранить продукт'),
+              label: Text(context.l10n.saveProduct),
             ),
           ],
         ),

@@ -36,7 +36,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get cmUnit => 'cm';
 
   @override
-  String get yearsUnit => 'anos';
+  String get yearsUnit => 'ano de nascimento';
 
   @override
   String kcalValue(String count) {
@@ -151,6 +151,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pushNotifications => 'Notificações push';
 
   @override
+  String get pushNotificationsShortOn => 'Ativado';
+
+  @override
+  String get pushNotificationsShortOff => 'Desativado';
+
+  @override
   String get themeSystem => 'Sistema';
 
   @override
@@ -197,10 +203,24 @@ class AppLocalizationsPt extends AppLocalizations {
   String get signedInSnackbar => 'Conectado com sucesso';
 
   @override
+  String get signInTitle => 'Entre na sua conta';
+
+  @override
   String get signInGoogle => 'Entrar com Google';
 
   @override
   String get signInEmail => 'Entrar com Email';
+
+  @override
+  String get startOverOnboarding => 'Começar de novo';
+
+  @override
+  String get startOverOnboardingConfirm =>
+      'Refazer o onboarding desde o início?';
+
+  @override
+  String get startOverOnboardingHint =>
+      'As respostas do questionário serão redefinidas. Os dados do diário neste dispositivo são mantidos.';
 
   @override
   String get skipLogin => 'Continuar sem entrar';
@@ -262,6 +282,72 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get forgotPassword => 'Esqueceu a senha?';
+
+  @override
+  String get resetPasswordTitle => 'Redefinir senha';
+
+  @override
+  String get resetPasswordHint =>
+      'Digite o email usado no cadastro. Enviaremos um código de 6 dígitos.';
+
+  @override
+  String get sendResetCode => 'Enviar código';
+
+  @override
+  String get enterCodeTitle => 'Digite o código';
+
+  @override
+  String resetCodeSentTo(String email) {
+    return 'Enviamos um código de 6 dígitos para $email';
+  }
+
+  @override
+  String get enterSixDigitCode => 'Digite o código de 6 dígitos';
+
+  @override
+  String get verifyCode => 'Verificar';
+
+  @override
+  String get resendCode => 'Reenviar código';
+
+  @override
+  String resendCodeIn(int seconds) {
+    return 'Reenviar em $seconds s';
+  }
+
+  @override
+  String get resetCodeResent => 'Código reenviado';
+
+  @override
+  String get newPasswordTitle => 'Nova senha';
+
+  @override
+  String get newPasswordHint => 'Crie uma nova senha para sua conta.';
+
+  @override
+  String get newPasswordLabel => 'Nova senha';
+
+  @override
+  String get confirmPasswordLabel => 'Confirmar senha';
+
+  @override
+  String get passwordsDoNotMatch => 'As senhas não coincidem';
+
+  @override
+  String get resetPasswordButton => 'Redefinir senha';
+
+  @override
+  String get passwordResetSuccess =>
+      'Senha redefinida. Entre com sua nova senha.';
+
+  @override
+  String get emailNotFound => 'Nenhuma conta com este email';
+
+  @override
+  String get invalidResetCode => 'Código inválido ou expirado';
+
+  @override
   String get proTitle => 'MealTracker Pro';
 
   @override
@@ -284,6 +370,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get planWeekly => 'Semanal';
+
+  @override
+  String get planYearly => 'Anual';
 
   @override
   String get billingLabel => 'Próxima cobrança:';
@@ -700,16 +789,53 @@ class AppLocalizationsPt extends AppLocalizations {
   String get onboardingMeasurementsTitle => 'Suas medidas';
 
   @override
+  String get onboardingUnitsTitle => 'Unidades de medida';
+
+  @override
+  String get onboardingUnitsHint => 'Pode alterar depois nas configurações';
+
+  @override
+  String get unitsMetricTitle => 'Métrica';
+
+  @override
+  String get unitsMetricExamples => 'cm, kg, ml';
+
+  @override
+  String get unitsImperialTitle => 'Imperial';
+
+  @override
+  String get unitsImperialExamples => 'ft, lb, fl oz';
+
+  @override
+  String get onboardingHeightTitle => 'Qual é a sua altura?';
+
+  @override
+  String get onboardingHeightHint => 'Usada para calcular o metabolismo basal';
+
+  @override
+  String get onboardingWeightTitle => 'Qual é o seu peso?';
+
+  @override
+  String get onboardingWeightHint => 'O ponto de partida para o seu plano';
+
+  @override
   String get heightLabel => 'Altura';
 
   @override
   String get currentWeightLabel => 'Peso atual';
 
   @override
-  String get onboardingAgeTitle => 'Quantos anos você tem?';
+  String get onboardingAgeTitle => 'Quando é o seu aniversário?';
+
+  @override
+  String get onboardingAgeHint => 'A idade influencia a taxa metabólica';
 
   @override
   String get onboardingGoalTitle => 'Qual é o seu objetivo?';
+
+  @override
+  String get onboardingGoalHint =>
+      'Vamos criar um plano nutricional sob medida';
 
   @override
   String get goalLoseWeight => 'Perder peso';
@@ -722,6 +848,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get onboardingActivityTitle => 'Qual é o seu nível de atividade?';
+
+  @override
+  String get onboardingActivityHint =>
+      'Seu nível de atividade determina a meta calórica diária';
 
   @override
   String get activitySedentary => 'Sedentário';
@@ -751,6 +881,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get onboardingTargetWeightTitle => 'Qual é o seu peso alvo?';
 
   @override
+  String get onboardingTargetWeightHint => 'Calcularemos prazos e ritmo';
+
+  @override
   String get safeWeightLossPace => 'Ritmo seguro — 0,5 kg por semana';
 
   @override
@@ -768,6 +901,39 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get onboardingResultTitle => 'Seu Plano Pessoal';
+
+  @override
+  String get resultCongratsTitle => 'Parabéns!';
+
+  @override
+  String get resultCongratsSubtitle =>
+      'Seu plano de saúde personalizado está pronto!';
+
+  @override
+  String get resultCanChange => 'Você pode alterar isso a qualquer momento';
+
+  @override
+  String get resultHowToTitle => 'Como alcançar seus objetivos';
+
+  @override
+  String get resultTip1 => 'Registre suas refeições — crie um hábito saudável!';
+
+  @override
+  String get resultTip2 => 'Siga as recomendações diárias de calorias';
+
+  @override
+  String get resultTip3 => 'Equilibre carboidratos, proteínas e gorduras';
+
+  @override
+  String get resultImprovementsTitle => 'Em breve você notará melhorias';
+
+  @override
+  String get resultImprovementsBody =>
+      'Menor risco de diabetes, pressão arterial mais baixa, melhor nível de colesterol';
+
+  @override
+  String get resultDisclaimer =>
+      'Este aplicativo fornece informações nutricionais, mas não se destina ao diagnóstico, tratamento ou prevenção de doenças. Não substitui aconselhamento médico profissional.';
 
   @override
   String get kcalPerDay => 'kcal/dia';
@@ -805,84 +971,130 @@ class AppLocalizationsPt extends AppLocalizations {
   String get onboardingStart => 'Começar';
 
   @override
-  String get paywallTitle => 'Comece sua jornada\nrumo aos resultados';
+  String get paywallTitle =>
+      'Para continuar, inicie seu teste GRATUITO de 3 dias';
 
   @override
-  String get paywallAiRecognition => 'Reconhecimento de alimentos por IA';
+  String get paywallTimelineTodayTitle => 'Hoje';
 
   @override
-  String get paywallAiRecognitionDesc =>
-      'Tire uma foto e descubra as calorias em um segundo';
+  String get paywallTimelineTodayDesc =>
+      'Desbloqueie todos os recursos — escaneamento de calorias com IA e muito mais';
 
   @override
-  String get paywallPersonalGoals => 'Objetivos pessoais';
+  String get paywallTimelineReminderTitle => 'Em 2 dias — lembrete';
 
   @override
-  String get paywallPersonalGoalsDesc =>
-      'Norma calculada para o seu corpo e objetivo';
+  String get paywallTimelineReminderDesc =>
+      'Vamos lembrá-lo de que o período de teste está terminando';
 
   @override
-  String get paywallProgressTracking => 'Acompanhamento de progresso';
+  String get paywallTimelinePayTitle => 'Em 3 dias — pagamento começa';
 
   @override
-  String get paywallProgressTrackingDesc =>
-      'Estatísticas visuais por dias e semanas';
+  String paywallTimelinePayDesc(String date) {
+    return 'A cobrança será em $date se não cancelar antes';
+  }
 
   @override
-  String get paywallWeekly => 'Semanal';
+  String get paywallMonthly => 'Mensal';
 
   @override
-  String get paywallWeeklyPrice => '\$2.99/semana';
-
-  @override
-  String get paywallWeeklyTrial => 'Primeiros 3 dias — grátis';
-
-  @override
-  String get paywallPopular => 'Popular';
+  String get paywallMonthlyPrice => '\$3.99 / mês';
 
   @override
   String get paywallYearly => 'Anual';
 
   @override
-  String get paywallYearlyPrice => '\$19.99/ano';
+  String get paywallYearlyPrice => '\$0.99 / mês';
 
   @override
-  String get paywallYearlySavings => '≈ \$0.05/dia · Economize 85%';
+  String get paywallTrialBadge => '3 DIAS GRÁTIS';
 
   @override
-  String get paywallRating => '4,8 · Mais de 10.000 usuários';
+  String get paywallNoPaymentNow => 'Nenhum pagamento necessário agora';
 
   @override
-  String get paywallToday => 'Hoje';
+  String get paywallStartTrial => 'Iniciar teste gratuito de 3 dias';
 
   @override
-  String get paywallFullAccess => 'Acesso completo';
+  String get paywallTrialDisclaimer =>
+      '3 dias grátis, depois \$11.99/ano (\$0.99/mês)';
 
   @override
-  String get paywallDay2 => 'Dia 2';
+  String get paywallRestore => 'Restaurar';
 
   @override
-  String get paywallReminder => 'Lembrete';
+  String get paywallTerms => 'Termos';
 
   @override
-  String get paywallDay3 => 'Dia 3';
+  String get paywallPrivacy => 'Privacidade';
 
   @override
-  String get paywallDay3Price => '\$2.99';
+  String get paywallHaveCode => 'Tem um código?';
 
   @override
-  String get paywallContinue => 'Continuar';
+  String get promoCodeApply => 'Aplicar';
 
   @override
-  String get paywallDisclaimer =>
-      'Cancele a qualquer momento. Sem cobrança\ndurante o período de teste.';
+  String get promoCodeInvalid => 'Código inválido';
 
   @override
   String get paywallSkip => 'Pular';
+
+  @override
+  String get paywallRestoreSuccess => 'Assinatura restaurada';
+
+  @override
+  String get paywallRestoreNotFound => 'Nenhuma assinatura ativa encontrada';
+
+  @override
+  String get paywallSubscriptionError =>
+      'Não foi possível carregar as assinaturas. Tente novamente mais tarde.';
+
+  @override
+  String get restartOnboarding => 'Recomeçar';
+
+  @override
+  String get proActive => 'Ativa';
+
+  @override
+  String get signInToSaveData => 'Faça login para salvar seus dados';
+
+  @override
+  String get dataStoredLocally =>
+      'Seus dados são armazenados apenas neste dispositivo';
 
   @override
   String get barcodeScannerTitle => 'Scanner de código de barras';
 
   @override
   String get barcodeScanHint => 'Aponte a câmera para o código de barras';
+
+  @override
+  String get paywallSubscribeNow => 'Assinar';
+
+  @override
+  String get paywallHardDisclaimer =>
+      'Renovação automática. Cancele a qualquer momento.';
+
+  @override
+  String get paywallHardTitle => 'Gostou do app?\nContinue com Pro';
+
+  @override
+  String freeEntriesRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entradas gratuitas restantes',
+      one: '1 entrada gratuita restante',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get getPro => 'Obter Pro';
+
+  @override
+  String get freeLimitReached => 'Todas as entradas gratuitas foram usadas';
 }

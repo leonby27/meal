@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "title": "BodyMeal — KI-gestützter Ernährungstracker",
+    "description": "Kalorien und Makros einfach zählen. Fotografiere dein Essen — die KI erkennt es in Sekunden. 3.000.000+ Produkte, Statistiken, persönlicher Plan.",
+    "keywords": "Ernährungstracker, Kalorienzähler, Makros, KI-Erkennung, Ernährungstagebuch, bodymeal",
+    "ogTitle": "BodyMeal — KI-Ernährungstracker",
+    "ogDescription": "Fotografiere dein Essen — erhalte Kalorien und Makros in Sekunden. Kostenlos."
+  },
+  "nav": {
+    "features": "Funktionen",
+    "howItWorks": "So funktioniert's",
+    "pricing": "Preise",
+    "download": "Herunterladen"
+  },
+  "hero": {
+    "badge": "KI-gestützte Essenserkennung",
+    "titleStart": "Kalorien zählen ",
+    "titleAccent": "ohne Aufwand",
+    "subtitle": "Fotografiere dein Essen — die KI erkennt Zutaten und berechnet Kalorien in Sekunden. Über 3.000.000 Produkte in der Datenbank.",
+    "cta": "Kostenlos herunterladen",
+    "ctaSecondary": "So funktioniert's",
+    "screenshotAlt": "BodyMeal App Screenshot"
+  },
+  "socialProof": {
+    "products": "3.000.000+",
+    "productsLabel": "Produkte in der Datenbank",
+    "aiSpeed": "< 5 Sek.",
+    "aiSpeedLabel": "Fotoerkennung",
+    "languages": "6",
+    "languagesLabel": "Sprachen",
+    "inputMethods": "6",
+    "inputMethodsLabel": "Eingabemethoden"
+  },
+  "features": {
+    "title": "Alles für die Ernährungskontrolle",
+    "subtitle": "Von KI-Erkennung bis zum persönlichen Plan — alle Werkzeuge in einer App",
+    "ai": {
+      "title": "KI-Fotoerkennung",
+      "description": "Fotografiere dein Essen und die KI erkennt Zutaten, Kalorien und Makros in Sekunden."
+    },
+    "multiInput": {
+      "title": "6 Eingabemethoden",
+      "description": "Kamera, Galerie, Spracheingabe, Text, Barcode-Scanner oder Datenbanksuche — wähle die bequemste Methode."
+    },
+    "plan": {
+      "title": "Persönlicher Ernährungsplan",
+      "description": "Durchlaufe das Onboarding — wir berechnen deine tägliche Kalorien- und Makronährstoffziele basierend auf deinem Körper und deinen Zielen."
+    },
+    "diary": {
+      "title": "Ernährungstagebuch",
+      "description": "Praktisches Tagebuch mit Mahlzeitenaufteilung, Fortschrittsbalken und Wochenübersicht direkt auf dem Startbildschirm."
+    },
+    "recipes": {
+      "title": "Eigene Produkte & Rezepte",
+      "description": "Erstelle eigene Produkte und Rezepte mit automatischer Nährwertberechnung pro Portion und pro 100g."
+    },
+    "stats": {
+      "title": "Statistik & Diagramme",
+      "description": "Übersichtliche Diagramme für Woche und Monat. Verfolge Trends bei Kalorien, Eiweiß, Fett und Kohlenhydraten."
+    }
+  },
+  "howItWorks": {
+    "title": "Drei einfache Schritte",
+    "subtitle": "Beginne jetzt mit der Ernährungserfassung — es dauert weniger als eine Minute",
+    "step1": {
+      "title": "Essen fotografieren",
+      "description": "Öffne die Kamera und mache ein Foto. Du kannst auch aus der Galerie wählen, per Sprache diktieren oder den Namen eingeben."
+    },
+    "step2": {
+      "title": "KI erkennt das Essen",
+      "description": "Das neuronale Netzwerk analysiert das Foto, erkennt Zutaten und berechnet Kalorien, Eiweiß, Fett und Kohlenhydrate."
+    },
+    "step3": {
+      "title": "Fortschritt verfolgen",
+      "description": "Einträge werden ins Tagebuch aufgenommen. Sieh dir Statistiken nach Tag, Woche oder Monat an und folge deinem persönlichen Plan."
+    }
+  },
+  "lifestyle": {
+    "title": "Gesunde Ernährung leicht gemacht",
+    "subtitle": "Ob zu Hause kochen, auswärts essen oder schnell zwischendurch — BodyMeal passt in Ihren Alltag. Verfolgen Sie Ihre Ernährung mühelos.",
+    "bullet1": "Funktioniert mit jeder Diät und Ernährungsweise",
+    "bullet2": "Schnelle Eingabe — unter 10 Sekunden pro Mahlzeit",
+    "bullet3": "Helles und dunkles Design für jeden Moment",
+    "imageAlt": "Person bereitet gesundes Essen zu"
+  },
+  "pricing": {
+    "title": "Kostenlos starten",
+    "subtitle": "Teste alle Funktionen 3 Tage lang ohne Einschränkungen",
+    "free": {
+      "name": "Kostenlos",
+      "price": "0 €",
+      "period": "für immer",
+      "features": [
+        "10 Tagebucheinträge",
+        "Produktdatenbanksuche",
+        "Persönlicher Ernährungsplan",
+        "Helles und dunkles Design"
+      ],
+      "cta": "Herunterladen"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "0,99 $",
+      "period": "/Monat",
+      "yearlyNote": "11,99 $/Jahr bei jährlicher Zahlung",
+      "badge": "3 Tage kostenlos",
+      "features": [
+        "Unbegrenzte Einträge",
+        "Unbegrenzte KI-Erkennung",
+        "Barcode-Scanner",
+        "Erweiterte Statistiken",
+        "Eigene Produkte & Rezepte",
+        "Prioritäts-Support"
+      ],
+      "cta": "3 Tage kostenlos testen"
+    }
+  },
+  "faq": {
+    "title": "Häufig gestellte Fragen",
+    "items": [
+      {
+        "q": "Wie genau ist die KI-Erkennung?",
+        "a": "Die KI analysiert Fotos mit dem Gemini-Neuronalnetzwerk und erkennt Zutaten mit hoher Genauigkeit. Du kannst das Ergebnis vor dem Speichern immer bearbeiten."
+      },
+      {
+        "q": "Funktioniert die App offline?",
+        "a": "Ja! Das Ernährungstagebuch, die lokale Datenbanksuche und alle Kernfunktionen funktionieren offline. Internet wird nur für die KI-Fotoerkennung und die Gerätesynchronisierung benötigt."
+      },
+      {
+        "q": "Welche Sprachen werden unterstützt?",
+        "a": "Die App ist in 6 Sprachen verfügbar: Russisch, Englisch, Deutsch, Spanisch, Französisch und Portugiesisch."
+      },
+      {
+        "q": "Kann ich es kostenlos nutzen?",
+        "a": "Ja, du erhältst 10 kostenlose Einträge ohne Funktionseinschränkungen. Für unbegrenzte Nutzung gibt es das Pro-Abonnement mit 3-tägiger kostenloser Testphase."
+      },
+      {
+        "q": "Wie werden meine Daten geschützt?",
+        "a": "Deine Daten werden lokal auf deinem Gerät gespeichert. Bei Anmeldung werden die Daten verschlüsselt und über eine sichere Verbindung synchronisiert."
+      },
+      {
+        "q": "Woher stammen die Produktdaten?",
+        "a": "Wir nutzen die OpenFoodFacts-Datenbank mit über 3 Millionen Produkten weltweit sowie unsere eigene kuratierte Datenbank."
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Beginne heute mit dem Kalorienzählen",
+    "subtitle": "Lade BodyMeal kostenlos herunter und übernimm die Kontrolle über deine Ernährung. Die ersten 3 Tage Pro — kostenlos.",
+    "cta": "Bei Google Play herunterladen",
+    "comingSoon": "Bald im App Store",
+    "note": "Android 8+. Kostenlos mit optionalem Pro-Abonnement."
+  },
+  "footer": {
+    "privacy": "Datenschutzrichtlinie",
+    "terms": "Nutzungsbedingungen",
+    "support": "Support",
+    "rights": "Alle Rechte vorbehalten."
+  }
+}

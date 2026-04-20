@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class BarcodeScannerScreen extends StatefulWidget {
@@ -163,6 +164,12 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       return;
     }
 
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (mounted) context.go('/paywall');
+      return;
+    }
+
     final factor = grams / 100.0;
     final date = widget.dateStr != null
         ? DateFormat('yyyy-MM-dd').parse(widget.dateStr!)
@@ -182,6 +189,10 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       calories: drift.Value((product.caloriesPer100g ?? 0) * factor),
       imageUrl: drift.Value(product.imageUrl),
     ));
+
+    if (!auth.isPremium) {
+      await auth.incrementFreeEntry();
+    }
 
     if (mounted) context.pop();
   }

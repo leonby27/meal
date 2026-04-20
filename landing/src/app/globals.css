@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #317BFF;
+  --primary-hover: #2763CE;
+  --primary-light: #EAF2FF;
+  --primary-light-rgb: 234 242 255;
+  --accent-green: #3DA43B;
+  --accent-orange: #F0681B;
+  --accent-purple: #B13AFB;
+
+  --background: #F5F6F8;
+  --foreground: #0A1B39;
+  --muted: #83899F;
+  --surface: #FFFFFF;
+  --surface-2: #F5F6F8;
+  --divider: #E6E7EC;
+  --card: #FFFFFF;
+  --card-hover: #F5F6F8;
+  --inverse: #31394A;
+}
+
+.dark {
+  --primary: #5B9AFF;
+  --primary-hover: #83B0FF;
+  --primary-light: rgba(49, 123, 255, 0.13);
+  --primary-light-rgb: 33 49 75;
+  --accent-green: #63C662;
+  --accent-orange: #F0681B;
+  --accent-purple: #C76EFC;
+
+  --background: #14161B;
+  --foreground: #FFFFFF;
+  --muted: #686F87;
+  --surface: #21262D;
+  --surface-2: #292E37;
+  --divider: #313843;
+  --card: #21262D;
+  --card-hover: #292E37;
+  --inverse: #FFFFFF;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-accent-green: var(--accent-green);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-purple: var(--accent-purple);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-divider: var(--divider);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-inverse: var(--inverse);
+  --font-sans: var(--font-sans);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

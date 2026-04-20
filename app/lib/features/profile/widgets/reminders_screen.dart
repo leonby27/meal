@@ -2,26 +2,25 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/notification_service.dart';
+import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class _ReminderConfig {
   final String key;
-  final String label;
   final IconData icon;
   final TimeOfDay defaultTime;
 
   const _ReminderConfig({
     required this.key,
-    required this.label,
     required this.icon,
     required this.defaultTime,
   });
 }
 
 const _reminders = [
-  _ReminderConfig(key: 'breakfast', label: 'Завтрак', icon: Icons.wb_sunny_outlined, defaultTime: TimeOfDay(hour: 8, minute: 30)),
-  _ReminderConfig(key: 'lunch', label: 'Обед', icon: Icons.wb_cloudy_outlined, defaultTime: TimeOfDay(hour: 13, minute: 0)),
-  _ReminderConfig(key: 'dinner', label: 'Ужин', icon: Icons.nights_stay_outlined, defaultTime: TimeOfDay(hour: 19, minute: 0)),
-  _ReminderConfig(key: 'snack', label: 'Перекус', icon: Icons.cookie_outlined, defaultTime: TimeOfDay(hour: 16, minute: 0)),
+  _ReminderConfig(key: 'breakfast', icon: Icons.wb_sunny_outlined, defaultTime: TimeOfDay(hour: 8, minute: 30)),
+  _ReminderConfig(key: 'lunch', icon: Icons.wb_cloudy_outlined, defaultTime: TimeOfDay(hour: 13, minute: 0)),
+  _ReminderConfig(key: 'dinner', icon: Icons.nights_stay_outlined, defaultTime: TimeOfDay(hour: 19, minute: 0)),
+  _ReminderConfig(key: 'snack', icon: Icons.cookie_outlined, defaultTime: TimeOfDay(hour: 16, minute: 0)),
 ];
 
 class RemindersScreen extends StatefulWidget {
@@ -94,6 +93,16 @@ class _RemindersScreenState extends State<RemindersScreen> {
   String _formatTime(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
+  String _reminderLabel(BuildContext context, String key) {
+    switch (key) {
+      case 'breakfast': return context.l10n.mealBreakfast;
+      case 'lunch':     return context.l10n.mealLunch;
+      case 'dinner':    return context.l10n.mealDinner;
+      case 'snack':     return context.l10n.mealSnack;
+      default:          return key;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_dbReady) {
@@ -101,9 +110,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Напоминания')),
+      appBar: AppBar(title: Text(context.l10n.remindersTitle)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         children: [
           Card(
             child: Padding(
@@ -113,7 +122,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                   final isEnabled = _times.containsKey(r.key);
                   return ListTile(
                     leading: Icon(r.icon),
-                    title: Text(r.label),
+                    title: Text(_reminderLabel(context, r.key)),
                     subtitle: isEnabled
                         ? GestureDetector(
                             onTap: () => _changeTime(r.key),
@@ -125,7 +134,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                               ),
                             ),
                           )
-                        : const Text('Выключено'),
+                        : Text(context.l10n.reminderOff),
                     trailing: Switch(
                       value: isEnabled,
                       onChanged: (v) => _toggleReminder(r.key, v, r.defaultTime),
@@ -140,8 +149,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Напоминания будут приходить ежедневно в указанное время, '
-                'чтобы вы не забыли записать приемы пищи.',
+                context.l10n.remindersDescription,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.grey.shade600,
                 ),

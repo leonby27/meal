@@ -1,9 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/utils/meal_type_helper.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -17,6 +21,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   late AppDatabase _db;
   bool _dbReady = false;
   List<Product> _favorites = [];
+  final Set<int> _pendingRemoval = {};
 
   @override
   void initState() {
@@ -32,9 +37,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Future<void> _loadFavorites() async {
     _favorites = await _db.getFavoriteProducts();
+    _pendingRemoval.clear();
   }
 
   Future<void> _addToMeal(Product product) async {
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (mounted) context.go('/paywall');
+      return;
+    }
+
     final result = await showModalBottomSheet<(String, double)?>(
       context: context,
       isScrollControlled: true,
@@ -64,10 +76,25 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       imageUrl: drift.Value(product.imageUrl),
     ));
 
+    if (!auth.isPremium) {
+      await auth.incrementFreeEntry();
+    }
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${product.name} добавлен')),
+        SnackBar(content: Text(context.l10n.productAddedToMeal(product.name))),
       );
+    }
+  }
+
+  Future<void> _toggleFavorite(Product product) async {
+    final id = product.productId;
+    if (_pendingRemoval.contains(id)) {
+      await _db.toggleFavorite(id);
+      setState(() => _pendingRemoval.remove(id));
+    } else {
+      await _db.toggleFavorite(id);
+      setState(() => _pendingRemoval.add(id));
     }
   }
 
@@ -77,68 +104,144 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineBorder =
+        isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Избранное')),
+      appBar: AppBar(title: Text(context.l10n.favoritesTitle)),
       body: _favorites.isEmpty
           ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.favorite_border, size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Нет избранных продуктов',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Добавляйте продукты в избранное при поиске',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                  ),
-                ],
+              child: Text(
+                context.l10n.noFavoriteProducts,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.grey.shade500,
+                ),
               ),
             )
           : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
               itemCount: _favorites.length,
               itemBuilder: (context, index) {
                 final product = _favorites[index];
-                return ListTile(
-                  onTap: () => _addToMeal(product),
-                  leading: product.imageUrl != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: CachedNetworkImage(
-                            imageUrl: product.imageUrl!,
-                            width: 48, height: 48, fit: BoxFit.cover,
-                            errorWidget: (context, url, error) => Container(
-                              width: 48, height: 48,
-                              color: Colors.grey.shade200,
-                              child: const Icon(Icons.restaurant, color: Colors.grey),
+                final isRemoved = _pendingRemoval.contains(product.productId);
+                final grams = product.weightGrams?.toInt() ?? 100;
+                final factor = grams / 100.0;
+                final cal = ((product.caloriesPer100g ?? 0) * factor).toInt();
+
+                return Padding(
+                  padding: EdgeInsets.only(bottom: index < _favorites.length - 1 ? 8 : 0),
+                  child: GestureDetector(
+                    onTap: () => _addToMeal(product),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cs.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: lineBorder, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                _buildPhoto(product),
+                                const SizedBox(width: 11),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                          height: 20 / 15,
+                                          color: cs.onSurface,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            context.l10n.gramsValue(grams),
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              height: 18 / 14,
+                                              color: cs.onSurface,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            context.l10n.kcalValueInt(cal),
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w400,
+                                              height: 18 / 14,
+                                              color: cs.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        )
-                      : CircleAvatar(
-                          backgroundColor: Colors.grey.shade200,
-                          child: const Icon(Icons.restaurant, color: Colors.grey),
-                        ),
-                  title: Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis),
-                  subtitle: Text(
-                    '${product.caloriesPer100g?.toInt() ?? "-"} ккал/100г  •  '
-                    'Б${product.proteinPer100g?.toStringAsFixed(1) ?? "-"} '
-                    'Ж${product.fatPer100g?.toStringAsFixed(1) ?? "-"} '
-                    'У${product.carbsPer100g?.toStringAsFixed(1) ?? "-"}',
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.favorite, color: Colors.red),
-                    onPressed: () async {
-                      await _db.toggleFavorite(product.productId);
-                      await _loadFavorites();
-                      setState(() {});
-                    },
+                          const SizedBox(width: 12),
+                          GestureDetector(
+                            onTap: () => _toggleFavorite(product),
+                            behavior: HitTestBehavior.opaque,
+                            child: SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: Center(
+                                child: Icon(
+                                  isRemoved ? Icons.favorite_border : Icons.favorite,
+                                  color: isRemoved ? cs.onSurfaceVariant : Colors.red,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
             ),
+    );
+  }
+
+  Widget _buildPhoto(Product product) {
+    if (product.imageUrl != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: CachedNetworkImage(
+          imageUrl: product.imageUrl!,
+          width: 40, height: 40, fit: BoxFit.cover,
+          errorWidget: (context, url, error) => _placeholderIcon(),
+        ),
+      );
+    }
+    return _placeholderIcon();
+  }
+
+  Widget _placeholderIcon() {
+    return Container(
+      width: 40, height: 40,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(Icons.restaurant, size: 20,
+        color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 }
@@ -155,11 +258,11 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
   String _mealType = defaultMealType();
   late final TextEditingController _gramsCtl;
 
-  static const _meals = [
-    (key: 'breakfast', label: 'Завтрак', icon: Icons.wb_sunny_outlined),
-    (key: 'lunch', label: 'Обед', icon: Icons.wb_cloudy_outlined),
-    (key: 'dinner', label: 'Ужин', icon: Icons.nights_stay_outlined),
-    (key: 'snack', label: 'Перекус', icon: Icons.cookie_outlined),
+  List<({String key, String label, IconData icon})> _getMeals(BuildContext context) => [
+    (key: 'breakfast', label: context.l10n.mealBreakfast, icon: Icons.wb_sunny_outlined),
+    (key: 'lunch', label: context.l10n.mealLunch, icon: Icons.wb_cloudy_outlined),
+    (key: 'dinner', label: context.l10n.mealDinner, icon: Icons.nights_stay_outlined),
+    (key: 'snack', label: context.l10n.mealSnack, icon: Icons.cookie_outlined),
   ];
 
   @override
@@ -179,6 +282,14 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
   @override
   Widget build(BuildContext context) {
     final p = widget.product;
+    final cs = Theme.of(context).colorScheme;
+    final grams = int.tryParse(_gramsCtl.text) ?? p.weightGrams?.toInt() ?? 100;
+    final factor = grams / 100.0;
+    final cal = ((p.caloriesPer100g ?? 0) * factor).toInt();
+    final prot = ((p.proteinPer100g ?? 0) * factor).toInt();
+    final fat = ((p.fatPer100g ?? 0) * factor).toInt();
+    final carbs = ((p.carbsPer100g ?? 0) * factor).toInt();
+
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
@@ -193,76 +304,154 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
               child: Container(
                 width: 40, height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: cs.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              p.name,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (p.caloriesPer100g != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                'На 100 г: ${p.caloriesPer100g!.toInt()} ккал  '
-                'Б${p.proteinPer100g?.toStringAsFixed(1) ?? "-"} '
-                'Ж${p.fatPer100g?.toStringAsFixed(1) ?? "-"} '
-                'У${p.carbsPer100g?.toStringAsFixed(1) ?? "-"}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
+            Row(
+              children: [
+                _buildSheetPhoto(p),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          height: 20 / 15,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            context.l10n.gramsValue(grams),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              height: 18 / 14,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            context.l10n.kcalValueInt(cal),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              height: 18 / 14,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${context.l10n.proteinShort}$prot ${context.l10n.fatShort}$fat ${context.l10n.carbsShort}$carbs',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              height: 18 / 14,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            Text(
-              'Приём пищи',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Colors.grey.shade600,
-              ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: _meals.map((m) {
-                return ChoiceChip(
-                  avatar: Icon(m.icon, size: 18),
-                  label: Text(m.label),
-                  selected: _mealType == m.key,
-                  onSelected: (_) => setState(() => _mealType = m.key),
+            const SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: _mealType,
+              decoration: InputDecoration(
+                labelText: context.l10n.mealTypeLabel,
+                prefixIcon: const Icon(Icons.restaurant),
+              ),
+              items: _getMeals(context).map((m) {
+                return DropdownMenuItem(
+                  value: m.key,
+                  child: Row(
+                    children: [
+                      Icon(m.icon, size: 20),
+                      const SizedBox(width: 8),
+                      Text(m.label),
+                    ],
+                  ),
                 );
               }).toList(),
+              onChanged: (v) {
+                if (v != null) setState(() => _mealType = v);
+              },
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _gramsCtl,
               keyboardType: TextInputType.number,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Граммы',
-                suffixText: 'г',
+              decoration: InputDecoration(
+                labelText: context.l10n.gramsDialogLabel,
+                suffixText: context.l10n.gramsUnit,
               ),
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  final grams = double.tryParse(_gramsCtl.text);
-                  if (grams == null || grams <= 0) return;
-                  Navigator.pop(context, (_mealType, grams));
-                },
-                child: const Text('Добавить'),
+            FilledButton.icon(
+              onPressed: () {
+                final grams = double.tryParse(_gramsCtl.text);
+                if (grams == null || grams <= 0) return;
+                Navigator.pop(context, (_mealType, grams));
+              },
+              icon: const Icon(Icons.restaurant_outlined, size: 20),
+              label: Text(
+                context.l10n.addEntry,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  height: 22 / 16,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSheetPhoto(Product p) {
+    if (p.imageUrl != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: CachedNetworkImage(
+          imageUrl: p.imageUrl!,
+          width: 40, height: 40, fit: BoxFit.cover,
+          errorWidget: (_, __, ___) => _sheetPlaceholder(),
+        ),
+      );
+    }
+    return _sheetPlaceholder();
+  }
+
+  Widget _sheetPlaceholder() {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      width: 40, height: 40,
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(Icons.restaurant, size: 20, color: cs.onSurfaceVariant),
     );
   }
 }

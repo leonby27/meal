@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/features/camera/widgets/ai_meal_result_sheet.dart';
 
@@ -115,6 +116,11 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _recognizeWithAI() async {
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (mounted) context.go('/paywall');
+      return;
+    }
     final text = _searchController.text.trim();
     if (text.isEmpty) return;
 
@@ -133,7 +139,98 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  Future<void> _addFromLog(FoodLog log) async {
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (mounted) context.go('/paywall');
+      return;
+    }
+
+    final defaultGrams = log.grams > 0 ? log.grams : 100.0;
+    final calPer100 = log.grams > 0 ? log.calories / log.grams * 100 : log.calories;
+    final pPer100 = log.grams > 0 ? log.protein / log.grams * 100 : log.protein;
+    final fPer100 = log.grams > 0 ? log.fat / log.grams * 100 : log.fat;
+    final cPer100 = log.grams > 0 ? log.carbs / log.grams * 100 : log.carbs;
+
+    final controller = TextEditingController(text: defaultGrams.toInt().toString());
+    final grams = await showDialog<double>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(log.productName, maxLines: 2, overflow: TextOverflow.ellipsis),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              context.l10n.per100gInfo(
+                calPer100.toInt(),
+                pPer100.toStringAsFixed(1),
+                fPer100.toStringAsFixed(1),
+                cPer100.toStringAsFixed(1),
+              ),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: context.l10n.gramsDialogLabel,
+                suffixText: context.l10n.gramsUnit,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final g = double.tryParse(controller.text);
+              Navigator.pop(context, g);
+            },
+            child: Text(context.l10n.add),
+          ),
+        ],
+      ),
+    );
+    if (grams == null || grams <= 0) return;
+
+    final factor = grams / 100.0;
+    final date = widget.dateStr != null
+        ? DateFormat('yyyy-MM-dd').parse(widget.dateStr!)
+        : DateTime.now();
+
+    await _db.addFoodLog(FoodLogsCompanion.insert(
+      id: const Uuid().v4(),
+      productId: drift.Value(log.productId),
+      productName: log.productName,
+      mealType: widget.mealType,
+      mealDate: DateTime(date.year, date.month, date.day, 12),
+      grams: grams,
+      protein: drift.Value(pPer100 * factor),
+      fat: drift.Value(fPer100 * factor),
+      carbs: drift.Value(cPer100 * factor),
+      calories: drift.Value(calPer100 * factor),
+      imageUrl: drift.Value(log.imageUrl),
+    ));
+
+    if (mounted) context.pop();
+
+    if (!auth.isPremium) {
+      await auth.incrementFreeEntry();
+    }
+  }
+
   Future<void> _addProduct(Product product) async {
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (mounted) context.go('/paywall');
+      return;
+    }
+
     final grams = await _showGramsDialog(product);
     if (grams == null || grams <= 0) return;
 
@@ -157,6 +254,10 @@ class _SearchScreenState extends State<SearchScreen> {
     ));
 
     if (mounted) context.pop();
+
+    if (!auth.isPremium) {
+      await auth.incrementFreeEntry();
+    }
   }
 
   Future<double?> _showGramsDialog(Product product) {
@@ -220,6 +321,8 @@ class _SearchScreenState extends State<SearchScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final appBarBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final scaffoldBg = isDark ? AppColors.darkBack2 : AppColors.lightBack2;
+    final lineBorder =
+        isDark ? AppColors.lineDT200 : AppColors.lineLight200;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -239,19 +342,20 @@ class _SearchScreenState extends State<SearchScreen> {
                 hintText: context.l10n.searchHint,
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                fillColor:
+                    isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: lineBorder, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: lineBorder, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: lineBorder, width: 1),
                 ),
               ),
               onChanged: _search,
@@ -379,11 +483,13 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           onTap: () async {
             if (log.productId != null) {
-              final products = await _db.searchProducts(log.productName, limit: 1);
-              if (products.isNotEmpty) {
-                _addProduct(products.first);
+              final product = await _db.getProductById(log.productId!);
+              if (product != null) {
+                _addProduct(product);
+                return;
               }
             }
+            _addFromLog(log);
           },
         );
       },
@@ -487,6 +593,12 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _addFavoriteToMeal(Product product) async {
+    final auth = AuthService();
+    if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (mounted) context.go('/paywall');
+      return;
+    }
+
     final result = await showModalBottomSheet<(String, double)?>(
       context: context,
       isScrollControlled: true,
@@ -518,6 +630,10 @@ class _SearchScreenState extends State<SearchScreen> {
     ));
 
     if (mounted) context.pop();
+
+    if (!auth.isPremium) {
+      await auth.incrementFreeEntry();
+    }
   }
 
   Future<void> _addServerProduct(Map<String, dynamic> json) async {

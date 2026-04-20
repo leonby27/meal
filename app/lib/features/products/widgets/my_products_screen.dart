@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class MyProductsScreen extends StatefulWidget {
   const MyProductsScreen({super.key});
@@ -39,7 +40,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Мои продукты'),
+        title: Text(context.l10n.myProducts),
       ),
       body: _buildProductsList(),
       floatingActionButton: FloatingActionButton.extended(
@@ -51,7 +52,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           }
         },
         icon: const Icon(Icons.add),
-        label: const Text('Продукт'),
+        label: Text(context.l10n.productLabel),
       ),
     );
   }
@@ -65,12 +66,12 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             Icon(Icons.add_circle_outline, size: 64, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
-              'Нет своих продуктов',
+              context.l10n.noOwnProducts,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
             ),
             const SizedBox(height: 8),
             Text(
-              'Создайте продукт с указанием БЖУ',
+              context.l10n.createProductWithMacros,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
           ],
@@ -92,7 +93,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: const Icon(Icons.delete, color: Colors.white),
           ),
-          confirmDismiss: (_) => _confirmDelete('продукт "${p.name}"'),
+          confirmDismiss: (_) => _confirmDelete('${context.l10n.productLabel.toLowerCase()} "${p.name}"'),
           onDismissed: (_) async {
             await _db.deleteUserProduct(p.productId);
             await _reload();
@@ -105,10 +106,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             ),
             title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             subtitle: Text(
-              '${p.caloriesPer100g?.toInt() ?? "-"} ккал/100г  •  '
-              'Б${p.proteinPer100g?.toStringAsFixed(1) ?? "-"} '
-              'Ж${p.fatPer100g?.toStringAsFixed(1) ?? "-"} '
-              'У${p.carbsPer100g?.toStringAsFixed(1) ?? "-"}',
+              '${context.l10n.kcalPer100g('${p.caloriesPer100g?.toInt() ?? "-"}')}  •  '
+              '${context.l10n.proteinShort}${p.proteinPer100g?.toStringAsFixed(1) ?? "-"} '
+              '${context.l10n.fatShort}${p.fatPer100g?.toStringAsFixed(1) ?? "-"} '
+              '${context.l10n.carbsShort}${p.carbsPer100g?.toStringAsFixed(1) ?? "-"}',
             ),
             trailing: p.brand != null
                 ? Chip(label: Text(p.brand!, style: Theme.of(context).textTheme.bodySmall))
@@ -119,19 +120,18 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     );
   }
 
-
   Future<bool?> _confirmDelete(String what) {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Удалить?'),
-        content: Text('Удалить $what?'),
+        title: Text(ctx.l10n.deleteConfirm),
+        content: Text(ctx.l10n.deleteWhat(what)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ctx.l10n.cancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Удалить'),
+            child: Text(ctx.l10n.delete),
           ),
         ],
       ),

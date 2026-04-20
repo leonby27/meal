@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "title": "BodyMeal — AI-Powered Nutrition Tracker",
+    "description": "Track calories and macros effortlessly. Snap a photo — AI identifies the meal in seconds. 3,000,000+ products, statistics, personal plan.",
+    "keywords": "nutrition tracker, calorie counter, macros, AI food recognition, food diary, bodymeal",
+    "ogTitle": "BodyMeal — AI Nutrition Tracker",
+    "ogDescription": "Snap your food — get calories and macros in seconds. Free."
+  },
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How It Works",
+    "pricing": "Pricing",
+    "download": "Download"
+  },
+  "hero": {
+    "badge": "AI-powered food recognition",
+    "titleStart": "Track calories ",
+    "titleAccent": "effortlessly",
+    "subtitle": "Snap a photo of your meal — AI identifies ingredients and calculates calories in seconds. Over 3,000,000 products in the database.",
+    "cta": "Download for free",
+    "ctaSecondary": "How it works",
+    "screenshotAlt": "BodyMeal app screenshot"
+  },
+  "socialProof": {
+    "products": "3,000,000+",
+    "productsLabel": "Products in database",
+    "aiSpeed": "< 5 sec",
+    "aiSpeedLabel": "Photo recognition",
+    "languages": "6",
+    "languagesLabel": "Interface languages",
+    "inputMethods": "6",
+    "inputMethodsLabel": "Ways to log food"
+  },
+  "features": {
+    "title": "Everything for nutrition tracking",
+    "subtitle": "From AI recognition to a personal plan — all the tools in one app",
+    "ai": {
+      "title": "AI photo recognition",
+      "description": "Take a photo of your meal and the AI identifies ingredients, calories, and macros in seconds."
+    },
+    "multiInput": {
+      "title": "6 input methods",
+      "description": "Camera, gallery, voice, text, barcode scanner, or database search — choose what works for you."
+    },
+    "plan": {
+      "title": "Personal nutrition plan",
+      "description": "Complete the onboarding and we'll calculate your daily calorie and macro targets based on your body and goals."
+    },
+    "diary": {
+      "title": "Food diary",
+      "description": "Convenient diary with meal breakdowns, progress bars, and a weekly overview right on the home screen."
+    },
+    "recipes": {
+      "title": "Custom products & recipes",
+      "description": "Create your own products and recipes with automatic macro calculations per serving and per 100g."
+    },
+    "stats": {
+      "title": "Statistics & charts",
+      "description": "Clear charts for the week and month. Track trends for calories, protein, fat, and carbs."
+    }
+  },
+  "howItWorks": {
+    "title": "Three simple steps",
+    "subtitle": "Start tracking your nutrition right now — it takes less than a minute",
+    "step1": {
+      "title": "Snap a photo",
+      "description": "Open the camera and take a photo. You can also pick from gallery, dictate by voice, or type the name."
+    },
+    "step2": {
+      "title": "AI identifies the meal",
+      "description": "The neural network analyzes the photo, identifies ingredients, and calculates calories, protein, fat, and carbs."
+    },
+    "step3": {
+      "title": "Track your progress",
+      "description": "Entries are added to your diary. View statistics by day, week, or month and follow your personal plan."
+    }
+  },
+  "lifestyle": {
+    "title": "Healthy eating made simple",
+    "subtitle": "Whether you're cooking at home, eating out, or grabbing a quick snack — BodyMeal fits into your daily routine. Track nutrition effortlessly without changing the way you live.",
+    "bullet1": "Works with any diet or eating style",
+    "bullet2": "Quick logging — under 10 seconds per meal",
+    "bullet3": "Light and dark themes for comfort anytime",
+    "imageAlt": "Person preparing a healthy meal"
+  },
+  "pricing": {
+    "title": "Start for free",
+    "subtitle": "Try all features without limits for 3 days",
+    "free": {
+      "name": "Free",
+      "price": "$0",
+      "period": "forever",
+      "features": [
+        "10 diary entries",
+        "Product database search",
+        "Personal nutrition plan",
+        "Light and dark theme"
+      ],
+      "cta": "Download"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "$0.99",
+      "period": "/mo",
+      "yearlyNote": "$11.99/year when billed annually",
+      "badge": "3 days free",
+      "features": [
+        "Unlimited entries",
+        "Unlimited AI recognition",
+        "Barcode scanner",
+        "Extended statistics",
+        "Custom products & recipes",
+        "Priority support"
+      ],
+      "cta": "Try free for 3 days"
+    }
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "items": [
+      {
+        "q": "How accurate is the AI food recognition?",
+        "a": "The AI analyzes photos using the Gemini neural network and identifies ingredients with high accuracy. You can always edit the result before saving — adjust weight, composition, or add ingredients."
+      },
+      {
+        "q": "Does the app work offline?",
+        "a": "Yes! The food diary, local database search, and all core features work offline. Internet is only needed for AI photo recognition and cross-device sync."
+      },
+      {
+        "q": "What languages are supported?",
+        "a": "The app is available in 6 languages: Russian, English, German, Spanish, French, and Portuguese. The language is detected automatically from your device settings."
+      },
+      {
+        "q": "Can I use it for free?",
+        "a": "Yes, you get 10 free entries with no feature restrictions. For unlimited use, the Pro subscription is available with a 3-day free trial."
+      },
+      {
+        "q": "How is my data protected?",
+        "a": "Your data is stored locally on your device. When signed in, data is encrypted and synced over a secure connection. We don't share data with third parties."
+      },
+      {
+        "q": "Where does the product data come from?",
+        "a": "We use the OpenFoodFacts database with over 3 million products worldwide, plus our own curated database. Nutrition data is verified and regularly updated."
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Start tracking calories today",
+    "subtitle": "Download BodyMeal for free and take control of your nutrition. First 3 days of Pro — free.",
+    "cta": "Get it on Google Play",
+    "comingSoon": "Coming soon to App Store",
+    "note": "Android 8+. Free with optional Pro subscription."
+  },
+  "footer": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "support": "Support",
+    "rights": "All rights reserved."
+  }
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:meal_tracker/app/route_observer.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/features/auth/widgets/login_screen.dart';
 import 'package:meal_tracker/features/diary/widgets/diary_screen.dart';
@@ -22,25 +23,33 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
+  observers: [appRouteObserver],
   initialLocation: '/diary',
   refreshListenable: AuthService(),
   redirect: (context, state) {
     final auth = AuthService();
-    final loggedIn = auth.isLoggedIn;
     final location = state.matchedLocation;
-    final isLoginRoute = location == '/login';
     final isOnboardingRoute = location == '/onboarding';
     final isPaywallRoute = location == '/paywall';
 
-    if (!loggedIn && !isLoginRoute) return '/login';
-
-    if (loggedIn && isLoginRoute) {
-      if (!auth.onboardingCompleted) return '/onboarding';
-      return '/diary';
+    // 1. Онбординг не пройден → онбординг
+    if (!auth.onboardingCompleted && !isOnboardingRoute) {
+      return '/onboarding';
     }
 
-    if (loggedIn && !auth.onboardingCompleted && !isOnboardingRoute && !isPaywallRoute) {
-      return '/onboarding';
+    // 2. Не premium + лимит исчерпан → hard paywall
+    if (auth.onboardingCompleted &&
+        !auth.isPremium &&
+        auth.freeTrialExhausted &&
+        !isPaywallRoute) {
+      return '/paywall';
+    }
+
+    // 3. Premium — не пускать на paywall/onboarding
+    if (auth.onboardingCompleted &&
+        auth.isPremium &&
+        (isPaywallRoute || isOnboardingRoute)) {
+      return '/diary';
     }
 
     return null;

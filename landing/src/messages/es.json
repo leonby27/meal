@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "title": "BodyMeal — Contador de calorías con IA",
+    "description": "Cuenta calorías y macros fácilmente. Fotografía tu comida — la IA la identifica en segundos. 3.000.000+ productos, estadísticas, plan personal.",
+    "keywords": "contador de calorías, macros, IA reconocimiento de alimentos, diario de alimentación, bodymeal",
+    "ogTitle": "BodyMeal — Contador de calorías con IA",
+    "ogDescription": "Fotografía tu comida — obtén calorías y macros en segundos. Gratis."
+  },
+  "nav": {
+    "features": "Funciones",
+    "howItWorks": "Cómo funciona",
+    "pricing": "Precios",
+    "download": "Descargar"
+  },
+  "hero": {
+    "badge": "Reconocimiento de alimentos con IA",
+    "titleStart": "Cuenta calorías ",
+    "titleAccent": "sin esfuerzo",
+    "subtitle": "Fotografía tu comida — la inteligencia artificial identifica ingredientes y calcula calorías en segundos. Más de 3.000.000 de productos en la base de datos.",
+    "cta": "Descargar gratis",
+    "ctaSecondary": "Cómo funciona",
+    "screenshotAlt": "Captura de pantalla de BodyMeal"
+  },
+  "socialProof": {
+    "products": "3.000.000+",
+    "productsLabel": "Productos en la base de datos",
+    "aiSpeed": "< 5 seg",
+    "aiSpeedLabel": "Reconocimiento por foto",
+    "languages": "6",
+    "languagesLabel": "Idiomas de interfaz",
+    "inputMethods": "6",
+    "inputMethodsLabel": "Formas de registrar comida"
+  },
+  "features": {
+    "title": "Todo para el control nutricional",
+    "subtitle": "Desde el reconocimiento con IA hasta el plan personal — todas las herramientas en una sola app",
+    "ai": {
+      "title": "Reconocimiento por foto con IA",
+      "description": "Fotografía tu comida y la IA identificará ingredientes, calorías y macros en segundos."
+    },
+    "multiInput": {
+      "title": "6 métodos de entrada",
+      "description": "Cámara, galería, voz, texto, escáner de código de barras o búsqueda en la base de datos — elige lo que te convenga."
+    },
+    "plan": {
+      "title": "Plan nutricional personal",
+      "description": "Completa el onboarding y calcularemos tus objetivos diarios de calorías y macros basados en tu cuerpo y metas."
+    },
+    "diary": {
+      "title": "Diario de alimentación",
+      "description": "Diario cómodo con desglose por comidas, barras de progreso y resumen semanal en la pantalla principal."
+    },
+    "recipes": {
+      "title": "Productos y recetas propios",
+      "description": "Crea tus propios productos y recetas con cálculo automático de macros por porción y por 100g."
+    },
+    "stats": {
+      "title": "Estadísticas y gráficos",
+      "description": "Gráficos claros por semana y mes. Sigue las tendencias de calorías, proteínas, grasas y carbohidratos."
+    }
+  },
+  "howItWorks": {
+    "title": "Tres pasos sencillos",
+    "subtitle": "Empieza a llevar tu diario nutricional ahora — te llevará menos de un minuto",
+    "step1": {
+      "title": "Fotografía tu comida",
+      "description": "Abre la cámara y toma una foto. También puedes elegir de la galería, dictar por voz o escribir el nombre."
+    },
+    "step2": {
+      "title": "La IA identifica la comida",
+      "description": "La red neuronal analiza la foto, identifica ingredientes y calcula calorías, proteínas, grasas y carbohidratos."
+    },
+    "step3": {
+      "title": "Sigue tu progreso",
+      "description": "Las entradas se añaden a tu diario. Consulta estadísticas por día, semana o mes y sigue tu plan personal."
+    }
+  },
+  "lifestyle": {
+    "title": "Alimentación saludable, simplificada",
+    "subtitle": "Ya sea cocinando en casa, comiendo fuera o tomando un snack rápido — BodyMeal se adapta a tu rutina diaria. Controla tu nutrición sin esfuerzo.",
+    "bullet1": "Compatible con cualquier dieta o estilo alimentario",
+    "bullet2": "Registro rápido — menos de 10 segundos por comida",
+    "bullet3": "Temas claro y oscuro para mayor comodidad",
+    "imageAlt": "Persona preparando una comida saludable"
+  },
+  "pricing": {
+    "title": "Empieza gratis",
+    "subtitle": "Prueba todas las funciones sin límites durante 3 días",
+    "free": {
+      "name": "Gratis",
+      "price": "0 $",
+      "period": "para siempre",
+      "features": [
+        "10 entradas en el diario",
+        "Búsqueda en la base de productos",
+        "Plan nutricional personal",
+        "Tema claro y oscuro"
+      ],
+      "cta": "Descargar"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "$0.99",
+      "period": "/mes",
+      "yearlyNote": "$11.99/año con facturación anual",
+      "badge": "3 días gratis",
+      "features": [
+        "Entradas ilimitadas",
+        "Reconocimiento IA ilimitado",
+        "Escáner de código de barras",
+        "Estadísticas extendidas",
+        "Productos y recetas propios",
+        "Soporte prioritario"
+      ],
+      "cta": "Probar gratis 3 días"
+    }
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "items": [
+      {
+        "q": "¿Qué tan preciso es el reconocimiento con IA?",
+        "a": "La IA analiza fotos usando la red neuronal Gemini e identifica ingredientes con alta precisión. Siempre puedes editar el resultado antes de guardar."
+      },
+      {
+        "q": "¿La app funciona sin internet?",
+        "a": "¡Sí! El diario, la búsqueda local y todas las funciones principales funcionan offline. Se necesita internet solo para el reconocimiento por foto y la sincronización."
+      },
+      {
+        "q": "¿Qué idiomas se admiten?",
+        "a": "La app está disponible en 6 idiomas: ruso, inglés, alemán, español, francés y portugués."
+      },
+      {
+        "q": "¿Se puede usar gratis?",
+        "a": "Sí, obtienes 10 entradas gratuitas sin restricciones de funciones. Para uso ilimitado, la suscripción Pro incluye 3 días de prueba gratis."
+      },
+      {
+        "q": "¿Cómo se protegen mis datos?",
+        "a": "Tus datos se almacenan localmente en tu dispositivo. Al iniciar sesión, los datos se cifran y sincronizan a través de una conexión segura."
+      },
+      {
+        "q": "¿De dónde provienen los datos de productos?",
+        "a": "Usamos la base de datos OpenFoodFacts con más de 3 millones de productos de todo el mundo, además de nuestra propia base curada."
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Empieza a contar calorías hoy",
+    "subtitle": "Descarga BodyMeal gratis y toma el control de tu nutrición. Los primeros 3 días de Pro — gratis.",
+    "cta": "Obtener en Google Play",
+    "comingSoon": "Próximamente en App Store",
+    "note": "Android 8+. Gratis con suscripción Pro opcional."
+  },
+  "footer": {
+    "privacy": "Política de privacidad",
+    "terms": "Términos de uso",
+    "support": "Soporte",
+    "rights": "Todos los derechos reservados."
+  }
+}

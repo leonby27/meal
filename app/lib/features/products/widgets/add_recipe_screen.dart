@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class _Ingredient {
   final Product product;
@@ -74,13 +75,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           controller: controller,
           keyboardType: TextInputType.number,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Граммы', suffixText: 'г'),
+          decoration: InputDecoration(
+            labelText: ctx.l10n.gramsDialogLabel,
+            suffixText: ctx.l10n.gramsUnit,
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ctx.l10n.cancel)),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, double.tryParse(controller.text)),
-            child: const Text('Добавить'),
+            child: Text(ctx.l10n.add),
           ),
         ],
       ),
@@ -90,13 +94,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Future<void> _save() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите название рецепта')),
+        SnackBar(content: Text(context.l10n.enterRecipeName)),
       );
       return;
     }
     if (_ingredients.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Добавьте хотя бы один ингредиент')),
+        SnackBar(content: Text(context.l10n.addAtLeastOneIngredient)),
       );
       return;
     }
@@ -134,7 +138,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Рецепт сохранён')),
+        SnackBar(content: Text(context.l10n.recipeSaved)),
       );
       context.pop(true);
     }
@@ -144,17 +148,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Новый рецепт'),
+        title: Text(context.l10n.newRecipe),
         actions: [
           TextButton.icon(
             onPressed: _saving ? null : _save,
             icon: const Icon(Icons.check),
-            label: const Text('Сохранить'),
+            label: Text(context.l10n.save),
           ),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         children: [
           Card(
             child: Padding(
@@ -164,18 +168,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 children: [
                   TextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Название рецепта *',
-                      prefixIcon: Icon(Icons.menu_book),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.recipeNameRequired,
+                      prefixIcon: const Icon(Icons.menu_book),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _servingsController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Количество порций',
-                      prefixIcon: Icon(Icons.people),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.servingsCount,
+                      prefixIcon: const Icon(Icons.people),
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
@@ -191,28 +195,28 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                   child: Row(
                     children: [
-                      Text('Ингредиенты (${_ingredients.length})',
+                      Text(context.l10n.ingredientsCount(_ingredients.length),
                           style: Theme.of(context).textTheme.titleMedium),
                       const Spacer(),
                       FilledButton.tonalIcon(
                         onPressed: _addIngredient,
                         icon: const Icon(Icons.add),
-                        label: const Text('Добавить'),
+                        label: Text(context.l10n.add),
                       ),
                     ],
                   ),
                 ),
                 if (_ingredients.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(32),
+                  Padding(
+                    padding: const EdgeInsets.all(32),
                     child: Center(
                       child: Text(
-                        'Нажмите «Добавить» чтобы\nвыбрать продукты',
+                        context.l10n.tapAddToSelect,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
+                        style: const TextStyle(color: Colors.grey),
                       ),
                     ),
                   )
@@ -232,11 +236,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       child: ListTile(
                         title: Text(ing.product.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                         subtitle: Text(
-                          '${ing.grams.toInt()} г  •  '
-                          'Б ${ing.protein.toStringAsFixed(1)} '
-                          'Ж ${ing.fat.toStringAsFixed(1)} '
-                          'У ${ing.carbs.toStringAsFixed(1)}  •  '
-                          '${ing.calories.toInt()} ккал',
+                          '${ing.grams.toInt()} ${context.l10n.gramsUnit}  •  '
+                          '${context.l10n.proteinShort} ${ing.protein.toStringAsFixed(1)} '
+                          '${context.l10n.fatShort} ${ing.fat.toStringAsFixed(1)} '
+                          '${context.l10n.carbsShort} ${ing.carbs.toStringAsFixed(1)}  •  '
+                          '${context.l10n.kcalValue(ing.calories.toInt().toString())}',
                         ),
                         trailing: SizedBox(
                           width: 70,
@@ -244,10 +248,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                             controller: TextEditingController(text: ing.grams.toInt().toString()),
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.center,
-                            decoration: const InputDecoration(
-                              suffixText: 'г',
+                            decoration: InputDecoration(
+                              suffixText: context.l10n.gramsUnit,
                               isDense: true,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             ),
                             onChanged: (v) {
                               final g = double.tryParse(v);
@@ -277,42 +281,42 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Итого на весь рецепт', style: Theme.of(context).textTheme.titleSmall),
+            Text(context.l10n.totalForRecipe, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _MacroChip('Вес', '${_totalGrams.toInt()} г'),
-                _MacroChip('Ккал', _totalCalories.toInt().toString()),
-                _MacroChip('Б', '${_totalProtein.toStringAsFixed(1)} г'),
-                _MacroChip('Ж', '${_totalFat.toStringAsFixed(1)} г'),
-                _MacroChip('У', '${_totalCarbs.toStringAsFixed(1)} г'),
+                _MacroChip(context.l10n.weightLabel, '${_totalGrams.toInt()} ${context.l10n.gramsUnit}'),
+                _MacroChip(context.l10n.caloriesLabel, _totalCalories.toInt().toString()),
+                _MacroChip(context.l10n.proteinShort, '${_totalProtein.toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
+                _MacroChip(context.l10n.fatShort, '${_totalFat.toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
+                _MacroChip(context.l10n.carbsShort, '${_totalCarbs.toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
               ],
             ),
             const Divider(height: 24),
-            Text('На 100 г:', style: Theme.of(context).textTheme.titleSmall),
+            Text(context.l10n.per100g, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _MacroChip('Ккал', _per100gCalories.toInt().toString()),
-                _MacroChip('Б', '${_per100gProtein.toStringAsFixed(1)} г'),
-                _MacroChip('Ж', '${_per100gFat.toStringAsFixed(1)} г'),
-                _MacroChip('У', '${_per100gCarbs.toStringAsFixed(1)} г'),
+                _MacroChip(context.l10n.caloriesLabel, _per100gCalories.toInt().toString()),
+                _MacroChip(context.l10n.proteinShort, '${_per100gProtein.toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
+                _MacroChip(context.l10n.fatShort, '${_per100gFat.toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
+                _MacroChip(context.l10n.carbsShort, '${_per100gCarbs.toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
               ],
             ),
             if (_servings > 1) ...[
               const Divider(height: 24),
-              Text('На порцию (${_perServingGrams.toInt()} г):',
+              Text(context.l10n.perServing(_perServingGrams.toInt()),
                   style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _MacroChip('Ккал', (_totalCalories / _servings).toInt().toString()),
-                  _MacroChip('Б', '${(_totalProtein / _servings).toStringAsFixed(1)} г'),
-                  _MacroChip('Ж', '${(_totalFat / _servings).toStringAsFixed(1)} г'),
-                  _MacroChip('У', '${(_totalCarbs / _servings).toStringAsFixed(1)} г'),
+                  _MacroChip(context.l10n.caloriesLabel, (_totalCalories / _servings).toInt().toString()),
+                  _MacroChip(context.l10n.proteinShort, '${(_totalProtein / _servings).toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
+                  _MacroChip(context.l10n.fatShort, '${(_totalFat / _servings).toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
+                  _MacroChip(context.l10n.carbsShort, '${(_totalCarbs / _servings).toStringAsFixed(1)} ${context.l10n.gramsUnit}'),
                 ],
               ),
             ],
@@ -404,9 +408,9 @@ class _IngredientSearchSheetState extends State<_IngredientSearchSheet> {
             child: TextField(
               controller: _controller,
               autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Поиск ингредиента...',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: context.l10n.ingredientSearchHint,
+                prefixIcon: const Icon(Icons.search),
               ),
               onChanged: _search,
             ),
@@ -420,7 +424,7 @@ class _IngredientSearchSheetState extends State<_IngredientSearchSheet> {
               child: _results.isEmpty
                   ? Center(
                       child: Text(
-                        _controller.text.length < 2 ? 'Начните вводить название' : 'Ничего не найдено',
+                        _controller.text.length < 2 ? context.l10n.startTypingName : context.l10n.nothingFound,
                         style: const TextStyle(color: Colors.grey),
                       ),
                     )
@@ -432,10 +436,10 @@ class _IngredientSearchSheetState extends State<_IngredientSearchSheet> {
                         return ListTile(
                           title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                           subtitle: Text(
-                            '${p.caloriesPer100g?.toInt() ?? "-"} ккал/100г  •  '
-                            'Б${p.proteinPer100g?.toStringAsFixed(1) ?? "-"} '
-                            'Ж${p.fatPer100g?.toStringAsFixed(1) ?? "-"} '
-                            'У${p.carbsPer100g?.toStringAsFixed(1) ?? "-"}',
+                            '${context.l10n.kcalPer100g('${p.caloriesPer100g?.toInt() ?? "-"}')}  •  '
+                            '${context.l10n.proteinShort}${p.proteinPer100g?.toStringAsFixed(1) ?? "-"} '
+                            '${context.l10n.fatShort}${p.fatPer100g?.toStringAsFixed(1) ?? "-"} '
+                            '${context.l10n.carbsShort}${p.carbsPer100g?.toStringAsFixed(1) ?? "-"}',
                           ),
                           onTap: () => Navigator.pop(context, p),
                         );

@@ -3,17 +3,29 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
-  static const _mealReminders = {
-    'breakfast': (id: 100, title: 'Завтрак', body: 'Время записать завтрак'),
-    'lunch': (id: 101, title: 'Обед', body: 'Время записать обед'),
-    'dinner': (id: 102, title: 'Ужин', body: 'Время записать ужин'),
-    'snack': (id: 103, title: 'Перекус', body: 'Не забудьте записать перекус'),
+  static const _mealIds = {
+    'breakfast': 100,
+    'lunch': 101,
+    'dinner': 102,
+    'snack': 103,
   };
+
+  static ({String title, String body}) _mealReminderText(String mealType) {
+    final l10n = currentL10n;
+    return switch (mealType) {
+      'breakfast' => (title: l10n.mealBreakfast, body: l10n.notifBreakfastBody),
+      'lunch' => (title: l10n.mealLunch, body: l10n.notifLunchBody),
+      'dinner' => (title: l10n.mealDinner, body: l10n.notifDinnerBody),
+      'snack' => (title: l10n.mealSnack, body: l10n.notifSnackBody),
+      _ => (title: mealType, body: ''),
+    };
+  }
 
   static Future<void> init() async {
     if (_initialized) return;
@@ -44,19 +56,22 @@ class NotificationService {
   }
 
   static Future<void> scheduleMealReminder(String mealType, int hour, int minute) async {
-    final reminder = _mealReminders[mealType];
-    if (reminder == null) return;
+    final id = _mealIds[mealType];
+    if (id == null) return;
+
+    final text = _mealReminderText(mealType);
+    final l10n = currentL10n;
 
     await _plugin.zonedSchedule(
-      id: reminder.id,
-      title: reminder.title,
-      body: reminder.body,
+      id: id,
+      title: text.title,
+      body: text.body,
       scheduledDate: _nextInstanceOfTime(hour, minute),
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'meal_reminders',
-          'Напоминания о приемах пищи',
-          channelDescription: 'Напоминания записать приемы пищи',
+          l10n.notifChannelName,
+          channelDescription: l10n.notifChannelDesc,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
@@ -71,9 +86,9 @@ class NotificationService {
   }
 
   static Future<void> cancelMealReminder(String mealType) async {
-    final reminder = _mealReminders[mealType];
-    if (reminder == null) return;
-    await _plugin.cancel(id: reminder.id);
+    final id = _mealIds[mealType];
+    if (id == null) return;
+    await _plugin.cancel(id: id);
 
     final db = await AppDatabase.getInstance();
     await db.setSetting('reminder_$mealType', '');
@@ -81,7 +96,7 @@ class NotificationService {
 
   static Future<void> restoreReminders() async {
     final db = await AppDatabase.getInstance();
-    for (final entry in _mealReminders.entries) {
+    for (final entry in _mealIds.entries) {
       final val = await db.getSetting('reminder_${entry.key}');
       if (val != null && val.isNotEmpty && val.contains(':')) {
         final parts = val.split(':');

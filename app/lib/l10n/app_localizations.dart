@@ -163,7 +163,7 @@ abstract class AppLocalizations {
   /// No description provided for @yearsUnit.
   ///
   /// In ru, this message translates to:
-  /// **'лет'**
+  /// **'год рождения'**
   String get yearsUnit;
 
   /// No description provided for @kcalValue.
@@ -358,6 +358,18 @@ abstract class AppLocalizations {
   /// **'Push-уведомления'**
   String get pushNotifications;
 
+  /// No description provided for @pushNotificationsShortOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вкл'**
+  String get pushNotificationsShortOn;
+
+  /// No description provided for @pushNotificationsShortOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выкл'**
+  String get pushNotificationsShortOff;
+
   /// No description provided for @themeSystem.
   ///
   /// In ru, this message translates to:
@@ -448,6 +460,12 @@ abstract class AppLocalizations {
   /// **'Вы вошли в аккаунт'**
   String get signedInSnackbar;
 
+  /// No description provided for @signInTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите в аккаунт'**
+  String get signInTitle;
+
   /// No description provided for @signInGoogle.
   ///
   /// In ru, this message translates to:
@@ -459,6 +477,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Войти по Email'**
   String get signInEmail;
+
+  /// No description provided for @startOverOnboarding.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать сначала'**
+  String get startOverOnboarding;
+
+  /// No description provided for @startOverOnboardingConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пройти онбординг сначала?'**
+  String get startOverOnboardingConfirm;
+
+  /// No description provided for @startOverOnboardingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ответы в анкете сбросятся. Дневник на устройстве сохранится.'**
+  String get startOverOnboardingHint;
 
   /// No description provided for @skipLogin.
   ///
@@ -568,6 +604,126 @@ abstract class AppLocalizations {
   /// **'Ошибка регистрации: {error}'**
   String registerError(String error);
 
+  /// No description provided for @forgotPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забыли пароль?'**
+  String get forgotPassword;
+
+  /// No description provided for @resetPasswordTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сброс пароля'**
+  String get resetPasswordTitle;
+
+  /// No description provided for @resetPasswordHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите email, указанный при регистрации. Мы отправим 6-значный код для сброса пароля.'**
+  String get resetPasswordHint;
+
+  /// No description provided for @sendResetCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить код'**
+  String get sendResetCode;
+
+  /// No description provided for @enterCodeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите код'**
+  String get enterCodeTitle;
+
+  /// No description provided for @resetCodeSentTo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы отправили 6-значный код на {email}'**
+  String resetCodeSentTo(String email);
+
+  /// No description provided for @enterSixDigitCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите 6-значный код'**
+  String get enterSixDigitCode;
+
+  /// No description provided for @verifyCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердить'**
+  String get verifyCode;
+
+  /// No description provided for @resendCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить код повторно'**
+  String get resendCode;
+
+  /// No description provided for @resendCodeIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторно через {seconds} с'**
+  String resendCodeIn(int seconds);
+
+  /// No description provided for @resetCodeResent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код отправлен повторно'**
+  String get resetCodeResent;
+
+  /// No description provided for @newPasswordTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый пароль'**
+  String get newPasswordTitle;
+
+  /// No description provided for @newPasswordHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Придумайте новый пароль для вашего аккаунта.'**
+  String get newPasswordHint;
+
+  /// No description provided for @newPasswordLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый пароль'**
+  String get newPasswordLabel;
+
+  /// No description provided for @confirmPasswordLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердите пароль'**
+  String get confirmPasswordLabel;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароли не совпадают'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @resetPasswordButton.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбросить пароль'**
+  String get resetPasswordButton;
+
+  /// No description provided for @passwordResetSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль успешно сброшен. Войдите с новым паролем.'**
+  String get passwordResetSuccess;
+
+  /// No description provided for @emailNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт с таким email не найден'**
+  String get emailNotFound;
+
+  /// No description provided for @invalidResetCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неверный или просроченный код'**
+  String get invalidResetCode;
+
   /// No description provided for @proTitle.
   ///
   /// In ru, this message translates to:
@@ -615,6 +771,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Еженедельный'**
   String get planWeekly;
+
+  /// No description provided for @planYearly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Годовой'**
+  String get planYearly;
 
   /// No description provided for @billingLabel.
   ///
@@ -1390,6 +1552,66 @@ abstract class AppLocalizations {
   /// **'Ваши параметры'**
   String get onboardingMeasurementsTitle;
 
+  /// No description provided for @onboardingUnitsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Единицы измерения'**
+  String get onboardingUnitsTitle;
+
+  /// No description provided for @onboardingUnitsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно изменить позже в настройках'**
+  String get onboardingUnitsHint;
+
+  /// No description provided for @unitsMetricTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Метрическая'**
+  String get unitsMetricTitle;
+
+  /// No description provided for @unitsMetricExamples.
+  ///
+  /// In ru, this message translates to:
+  /// **'см, кг, мл'**
+  String get unitsMetricExamples;
+
+  /// No description provided for @unitsImperialTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Имперская'**
+  String get unitsImperialTitle;
+
+  /// No description provided for @unitsImperialExamples.
+  ///
+  /// In ru, this message translates to:
+  /// **'ft, lb, fl oz'**
+  String get unitsImperialExamples;
+
+  /// No description provided for @onboardingHeightTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Какой у вас рост?'**
+  String get onboardingHeightTitle;
+
+  /// No description provided for @onboardingHeightHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нужен для расчёта базового обмена веществ'**
+  String get onboardingHeightHint;
+
+  /// No description provided for @onboardingWeightTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Какой у вас вес?'**
+  String get onboardingWeightTitle;
+
+  /// No description provided for @onboardingWeightHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправная точка для вашего плана'**
+  String get onboardingWeightHint;
+
   /// No description provided for @heightLabel.
   ///
   /// In ru, this message translates to:
@@ -1405,14 +1627,26 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingAgeTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сколько вам лет?'**
+  /// **'Когда у вас день рождения?'**
   String get onboardingAgeTitle;
+
+  /// No description provided for @onboardingAgeHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возраст влияет на скорость метаболизма'**
+  String get onboardingAgeHint;
 
   /// No description provided for @onboardingGoalTitle.
   ///
   /// In ru, this message translates to:
   /// **'Какая у вас цель?'**
   String get onboardingGoalTitle;
+
+  /// No description provided for @onboardingGoalHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подберём план питания под вашу задачу'**
+  String get onboardingGoalHint;
 
   /// No description provided for @goalLoseWeight.
   ///
@@ -1437,6 +1671,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Насколько вы активны?'**
   String get onboardingActivityTitle;
+
+  /// No description provided for @onboardingActivityHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активность определяет суточную норму калорий'**
+  String get onboardingActivityHint;
 
   /// No description provided for @activitySedentary.
   ///
@@ -1492,6 +1732,12 @@ abstract class AppLocalizations {
   /// **'Какой вес — ваша цель?'**
   String get onboardingTargetWeightTitle;
 
+  /// No description provided for @onboardingTargetWeightHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рассчитаем сроки и темп достижения'**
+  String get onboardingTargetWeightHint;
+
   /// No description provided for @safeWeightLossPace.
   ///
   /// In ru, this message translates to:
@@ -1527,6 +1773,66 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ваш персональный план'**
   String get onboardingResultTitle;
+
+  /// No description provided for @resultCongratsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поздравляем!'**
+  String get resultCongratsTitle;
+
+  /// No description provided for @resultCongratsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш персональный план здоровья готов!'**
+  String get resultCongratsSubtitle;
+
+  /// No description provided for @resultCanChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это можно изменить в любой момент'**
+  String get resultCanChange;
+
+  /// No description provided for @resultHowToTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как достигать целей'**
+  String get resultHowToTitle;
+
+  /// No description provided for @resultTip1.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ведите учёт еды — сформируйте полезную привычку!'**
+  String get resultTip1;
+
+  /// No description provided for @resultTip2.
+  ///
+  /// In ru, this message translates to:
+  /// **'Следуйте дневной рекомендации по калориям'**
+  String get resultTip2;
+
+  /// No description provided for @resultTip3.
+  ///
+  /// In ru, this message translates to:
+  /// **'Балансируйте углеводы, белки и жиры'**
+  String get resultTip3;
+
+  /// No description provided for @resultImprovementsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скоро вы заметите улучшения в самочувствии'**
+  String get resultImprovementsTitle;
+
+  /// No description provided for @resultImprovementsBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ниже риск диабета, ниже давление, лучше уровень холестерина'**
+  String get resultImprovementsBody;
+
+  /// No description provided for @resultDisclaimer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приложение предоставляет информацию о питании, но не предназначено для диагностики, лечения или профилактики заболеваний. Оно не заменяет консультацию врача. При проблемах со здоровьем обращайтесь к специалисту.'**
+  String get resultDisclaimer;
 
   /// No description provided for @kcalPerDay.
   ///
@@ -1585,146 +1891,176 @@ abstract class AppLocalizations {
   /// No description provided for @paywallTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Начните свой путь\nк результату'**
+  /// **'Чтобы продолжить, начните 3-дневный БЕСПЛАТНЫЙ пробный период'**
   String get paywallTitle;
 
-  /// No description provided for @paywallAiRecognition.
+  /// No description provided for @paywallTimelineTodayTitle.
   ///
   /// In ru, this message translates to:
-  /// **'ИИ-распознавание еды'**
-  String get paywallAiRecognition;
+  /// **'Сегодня'**
+  String get paywallTimelineTodayTitle;
 
-  /// No description provided for @paywallAiRecognitionDesc.
+  /// No description provided for @paywallTimelineTodayDesc.
   ///
   /// In ru, this message translates to:
-  /// **'Сфотографируй блюдо и узнай калории за секунду'**
-  String get paywallAiRecognitionDesc;
+  /// **'Откройте все функции приложения — например, AI-сканирование калорий и многое другое'**
+  String get paywallTimelineTodayDesc;
 
-  /// No description provided for @paywallPersonalGoals.
+  /// No description provided for @paywallTimelineReminderTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Персональные цели'**
-  String get paywallPersonalGoals;
+  /// **'Через 2 дня — напоминание'**
+  String get paywallTimelineReminderTitle;
 
-  /// No description provided for @paywallPersonalGoalsDesc.
+  /// No description provided for @paywallTimelineReminderDesc.
   ///
   /// In ru, this message translates to:
-  /// **'Норма рассчитана под ваше тело и цель'**
-  String get paywallPersonalGoalsDesc;
+  /// **'Мы напомним, что пробный период скоро закончится'**
+  String get paywallTimelineReminderDesc;
 
-  /// No description provided for @paywallProgressTracking.
+  /// No description provided for @paywallTimelinePayTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Отслеживание прогресса'**
-  String get paywallProgressTracking;
+  /// **'Через 3 дня — начнётся оплата'**
+  String get paywallTimelinePayTitle;
 
-  /// No description provided for @paywallProgressTrackingDesc.
+  /// No description provided for @paywallTimelinePayDesc.
   ///
   /// In ru, this message translates to:
-  /// **'Наглядная статистика по дням и неделям'**
-  String get paywallProgressTrackingDesc;
+  /// **'Списание будет {date}, если вы не отмените подписку до этого'**
+  String paywallTimelinePayDesc(String date);
 
-  /// No description provided for @paywallWeekly.
+  /// No description provided for @paywallMonthly.
   ///
   /// In ru, this message translates to:
-  /// **'Еженедельно'**
-  String get paywallWeekly;
+  /// **'Ежемесячно'**
+  String get paywallMonthly;
 
-  /// No description provided for @paywallWeeklyPrice.
+  /// No description provided for @paywallMonthlyPrice.
   ///
   /// In ru, this message translates to:
-  /// **'299 ₽/неделю'**
-  String get paywallWeeklyPrice;
-
-  /// No description provided for @paywallWeeklyTrial.
-  ///
-  /// In ru, this message translates to:
-  /// **'Первые 3 дня — бесплатно'**
-  String get paywallWeeklyTrial;
-
-  /// No description provided for @paywallPopular.
-  ///
-  /// In ru, this message translates to:
-  /// **'Популярный'**
-  String get paywallPopular;
+  /// **'399,00 ₽ / мес'**
+  String get paywallMonthlyPrice;
 
   /// No description provided for @paywallYearly.
   ///
   /// In ru, this message translates to:
-  /// **'На год'**
+  /// **'Ежегодно'**
   String get paywallYearly;
 
   /// No description provided for @paywallYearlyPrice.
   ///
   /// In ru, this message translates to:
-  /// **'1 990 ₽/год'**
+  /// **'99,92 ₽ / мес'**
   String get paywallYearlyPrice;
 
-  /// No description provided for @paywallYearlySavings.
+  /// No description provided for @paywallTrialBadge.
   ///
   /// In ru, this message translates to:
-  /// **'≈ 5 ₽/день · Экономия 85%'**
-  String get paywallYearlySavings;
+  /// **'3 ДНЯ БЕСПЛАТНО'**
+  String get paywallTrialBadge;
 
-  /// No description provided for @paywallRating.
+  /// No description provided for @paywallNoPaymentNow.
   ///
   /// In ru, this message translates to:
-  /// **'4.8 · Более 10 000 пользователей'**
-  String get paywallRating;
+  /// **'Платёж сейчас не требуется'**
+  String get paywallNoPaymentNow;
 
-  /// No description provided for @paywallToday.
+  /// No description provided for @paywallStartTrial.
   ///
   /// In ru, this message translates to:
-  /// **'Сегодня'**
-  String get paywallToday;
+  /// **'Начать 3-дневный бесплатный пробный период'**
+  String get paywallStartTrial;
 
-  /// No description provided for @paywallFullAccess.
+  /// No description provided for @paywallTrialDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'Полный доступ'**
-  String get paywallFullAccess;
+  /// **'3 дня бесплатно, затем 1 199,00 ₽ в год (99,92 ₽ / мес)'**
+  String get paywallTrialDisclaimer;
 
-  /// No description provided for @paywallDay2.
+  /// No description provided for @paywallRestore.
   ///
   /// In ru, this message translates to:
-  /// **'День 2'**
-  String get paywallDay2;
+  /// **'Восстановить'**
+  String get paywallRestore;
 
-  /// No description provided for @paywallReminder.
+  /// No description provided for @paywallTerms.
   ///
   /// In ru, this message translates to:
-  /// **'Напомним'**
-  String get paywallReminder;
+  /// **'Условия'**
+  String get paywallTerms;
 
-  /// No description provided for @paywallDay3.
+  /// No description provided for @paywallPrivacy.
   ///
   /// In ru, this message translates to:
-  /// **'День 3'**
-  String get paywallDay3;
+  /// **'Конфиденциальность'**
+  String get paywallPrivacy;
 
-  /// No description provided for @paywallDay3Price.
+  /// No description provided for @paywallHaveCode.
   ///
   /// In ru, this message translates to:
-  /// **'299 ₽'**
-  String get paywallDay3Price;
+  /// **'Есть код?'**
+  String get paywallHaveCode;
 
-  /// No description provided for @paywallContinue.
+  /// No description provided for @promoCodeApply.
   ///
   /// In ru, this message translates to:
-  /// **'Продолжить'**
-  String get paywallContinue;
+  /// **'Применить'**
+  String get promoCodeApply;
 
-  /// No description provided for @paywallDisclaimer.
+  /// No description provided for @promoCodeInvalid.
   ///
   /// In ru, this message translates to:
-  /// **'Отмена в любое время. Оплата не списывается\nв течение пробного периода.'**
-  String get paywallDisclaimer;
+  /// **'Неверный код'**
+  String get promoCodeInvalid;
 
   /// No description provided for @paywallSkip.
   ///
   /// In ru, this message translates to:
   /// **'Пропустить'**
   String get paywallSkip;
+
+  /// No description provided for @paywallRestoreSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подписка восстановлена'**
+  String get paywallRestoreSuccess;
+
+  /// No description provided for @paywallRestoreNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активных подписок не найдено'**
+  String get paywallRestoreNotFound;
+
+  /// No description provided for @paywallSubscriptionError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить подписки. Попробуйте позже.'**
+  String get paywallSubscriptionError;
+
+  /// No description provided for @restartOnboarding.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать заново'**
+  String get restartOnboarding;
+
+  /// No description provided for @proActive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активна'**
+  String get proActive;
+
+  /// No description provided for @signInToSaveData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите для сохранения данных'**
+  String get signInToSaveData;
+
+  /// No description provided for @dataStoredLocally.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваши данные хранятся только на этом устройстве'**
+  String get dataStoredLocally;
 
   /// No description provided for @barcodeScannerTitle.
   ///
@@ -1737,6 +2073,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Наведите камеру на штрих-код'**
   String get barcodeScanHint;
+
+  /// No description provided for @paywallSubscribeNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оформить подписку'**
+  String get paywallSubscribeNow;
+
+  /// No description provided for @paywallHardDisclaimer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автопродление. Отмена в любой момент.'**
+  String get paywallHardDisclaimer;
+
+  /// No description provided for @paywallHardTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Понравилось?\nПродолжите с Pro'**
+  String get paywallHardTitle;
+
+  /// No description provided for @freeEntriesRemaining.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, =1{Осталась 1 бесплатная запись} few{Осталось {count} бесплатные записи} many{Осталось {count} бесплатных записей} other{Осталось {count} бесплатных записей}}'**
+  String freeEntriesRemaining(int count);
+
+  /// No description provided for @getPro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Получить Pro'**
+  String get getPro;
+
+  /// No description provided for @freeLimitReached.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бесплатные записи закончились'**
+  String get freeLimitReached;
 }
 
 class _AppLocalizationsDelegate

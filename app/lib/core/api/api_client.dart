@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:meal_tracker/core/utils/l10n_extension.dart';
+
 class ApiClient {
   static const String _baseUrlKey = 'api_base_url';
   static const String _tokenKey = 'auth_token';
@@ -110,12 +112,18 @@ class ApiClient {
     return _handleResponse(response);
   }
 
-  Future<Map<String, dynamic>> uploadImage(String path, Uint8List imageBytes) async {
+  Future<Map<String, dynamic>> uploadImage(String path, Uint8List imageBytes, {String? locale, String? text}) async {
     Future<http.Response> doRequest() async {
       final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl$path'));
       request.headers.addAll({
         if (_token != null) 'Authorization': 'Bearer $_token',
       });
+      if (locale != null) {
+        request.fields['locale'] = locale;
+      }
+      if (text != null && text.isNotEmpty) {
+        request.fields['text'] = text;
+      }
       request.files.add(http.MultipartFile.fromBytes(
         'file',
         imageBytes,
@@ -134,13 +142,15 @@ class ApiClient {
     return _handleResponse(response);
   }
 
-  Future<Map<String, dynamic>> recognizeText(String text) async {
+  Future<Map<String, dynamic>> recognizeText(String text, {String? locale}) async {
     await ensureAuthenticated();
+    final bodyMap = <String, dynamic>{'text': text};
+    if (locale != null) bodyMap['locale'] = locale;
     var response = await _withRetry(() =>
       _client.post(
         Uri.parse('$_baseUrl/api/recognize-text'),
         headers: _headers,
-        body: jsonEncode({'text': text}),
+        body: jsonEncode(bodyMap),
       ).timeout(_uploadTimeout),
     );
     if (response.statusCode == 401) {
@@ -149,7 +159,7 @@ class ApiClient {
         _client.post(
           Uri.parse('$_baseUrl/api/recognize-text'),
           headers: _headers,
-          body: jsonEncode({'text': text}),
+          body: jsonEncode(bodyMap),
         ).timeout(_uploadTimeout),
       );
     }
@@ -165,20 +175,20 @@ class ApiClient {
         await _backoff(attempt);
       } on TimeoutException {
         if (attempt == _maxRetries - 1) {
-          throw const NetworkException('Сервер не отвечает. Проверьте подключение к интернету.');
+          throw NetworkException(currentL10n.networkTimeout);
         }
         await _backoff(attempt);
       } on HandshakeException {
         if (attempt == _maxRetries - 1) {
-          throw const NetworkException('Ошибка SSL-соединения. Попробуйте позже.');
+          throw NetworkException(currentL10n.networkSslError);
         }
         await _backoff(attempt);
       } on http.ClientException catch (e) {
-        if (attempt == _maxRetries - 1) throw NetworkException('Ошибка соединения: ${e.message}');
+        if (attempt == _maxRetries - 1) throw NetworkException(currentL10n.networkConnectionError(e.message));
         await _backoff(attempt);
       }
     }
-    throw const NetworkException('Не удалось связаться с сервером.');
+    throw NetworkException(currentL10n.networkRetryFailed);
   }
 
   Future<void> _backoff(int attempt) =>
@@ -187,15 +197,15 @@ class ApiClient {
   String _friendlyNetworkError(SocketException e) {
     final msg = e.message.toLowerCase();
     if (msg.contains('host lookup') || msg.contains('no address associated')) {
-      return 'Сервер временно недоступен. Проверьте интернет или попробуйте через минуту.';
+      return currentL10n.networkHostLookup;
     }
     if (msg.contains('connection refused')) {
-      return 'Сервер не принимает соединения. Попробуйте позже.';
+      return currentL10n.networkConnectionRefused;
     }
     if (msg.contains('connection reset') || msg.contains('broken pipe')) {
-      return 'Соединение разорвано. Попробуйте ещё раз.';
+      return currentL10n.networkConnectionReset;
     }
-    return 'Ошибка сети. Проверьте подключение к интернету.';
+    return currentL10n.networkGenericError;
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {

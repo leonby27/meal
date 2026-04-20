@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/features/auth/widgets/email_auth_sheet.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +24,15 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
     await AuthService().skipLogin();
     if (mounted) setState(() => _loading = false);
+  }
+
+  void _openEmailAuth() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const EmailAuthSheet(),
+    );
   }
 
   @override
@@ -50,14 +61,17 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Учёт питания и калорий',
+                context.l10n.calorieTracking,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const Spacer(flex: 2),
               if (_loading)
-                const CircularProgressIndicator()
+                const SizedBox(
+                  height: 176,
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else ...[
                 SizedBox(
                   width: double.infinity,
@@ -65,28 +79,41 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: FilledButton.icon(
                     onPressed: _signInWithGoogle,
                     icon: const Icon(Icons.account_circle, size: 24),
-                    label: const Text(
-                      'Войти через Google',
-                      style: TextStyle(fontSize: 16),
+                    label: Text(
+                      context.l10n.signInGoogle,
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton.tonalIcon(
+                    onPressed: _openEmailAuth,
+                    icon: const Icon(Icons.email_outlined, size: 22),
+                    label: Text(
+                      context.l10n.signInEmail,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: OutlinedButton(
                     onPressed: _skipLogin,
-                    child: const Text(
-                      'Продолжить без входа',
-                      style: TextStyle(fontSize: 15),
+                    child: Text(
+                      context.l10n.skipLogin,
+                      style: const TextStyle(fontSize: 15),
                     ),
                   ),
                 ),
               ],
               const Spacer(),
               Text(
-                'Вход позволяет синхронизировать данные\nмежду устройствами',
+                context.l10n.signInSyncHint,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,

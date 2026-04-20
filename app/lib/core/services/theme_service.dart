@@ -14,6 +14,7 @@ class ThemeNotifier extends ValueNotifier<ThemeMode> {
     final mode = switch (stored) {
       'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
+      'system' => ThemeMode.system,
       _ => ThemeMode.system,
     };
     _instance = ThemeNotifier._(mode);

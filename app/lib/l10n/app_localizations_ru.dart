@@ -36,7 +36,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cmUnit => 'см';
 
   @override
-  String get yearsUnit => 'лет';
+  String get yearsUnit => 'год рождения';
 
   @override
   String kcalValue(String count) {
@@ -151,6 +151,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pushNotifications => 'Push-уведомления';
 
   @override
+  String get pushNotificationsShortOn => 'Вкл';
+
+  @override
+  String get pushNotificationsShortOff => 'Выкл';
+
+  @override
   String get themeSystem => 'Системная';
 
   @override
@@ -197,10 +203,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get signedInSnackbar => 'Вы вошли в аккаунт';
 
   @override
+  String get signInTitle => 'Войдите в аккаунт';
+
+  @override
   String get signInGoogle => 'Войти через Google';
 
   @override
   String get signInEmail => 'Войти по Email';
+
+  @override
+  String get startOverOnboarding => 'Начать сначала';
+
+  @override
+  String get startOverOnboardingConfirm => 'Пройти онбординг сначала?';
+
+  @override
+  String get startOverOnboardingHint =>
+      'Ответы в анкете сбросятся. Дневник на устройстве сохранится.';
 
   @override
   String get skipLogin => 'Продолжить без входа';
@@ -262,6 +281,72 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get forgotPassword => 'Забыли пароль?';
+
+  @override
+  String get resetPasswordTitle => 'Сброс пароля';
+
+  @override
+  String get resetPasswordHint =>
+      'Введите email, указанный при регистрации. Мы отправим 6-значный код для сброса пароля.';
+
+  @override
+  String get sendResetCode => 'Отправить код';
+
+  @override
+  String get enterCodeTitle => 'Введите код';
+
+  @override
+  String resetCodeSentTo(String email) {
+    return 'Мы отправили 6-значный код на $email';
+  }
+
+  @override
+  String get enterSixDigitCode => 'Введите 6-значный код';
+
+  @override
+  String get verifyCode => 'Подтвердить';
+
+  @override
+  String get resendCode => 'Отправить код повторно';
+
+  @override
+  String resendCodeIn(int seconds) {
+    return 'Повторно через $seconds с';
+  }
+
+  @override
+  String get resetCodeResent => 'Код отправлен повторно';
+
+  @override
+  String get newPasswordTitle => 'Новый пароль';
+
+  @override
+  String get newPasswordHint => 'Придумайте новый пароль для вашего аккаунта.';
+
+  @override
+  String get newPasswordLabel => 'Новый пароль';
+
+  @override
+  String get confirmPasswordLabel => 'Подтвердите пароль';
+
+  @override
+  String get passwordsDoNotMatch => 'Пароли не совпадают';
+
+  @override
+  String get resetPasswordButton => 'Сбросить пароль';
+
+  @override
+  String get passwordResetSuccess =>
+      'Пароль успешно сброшен. Войдите с новым паролем.';
+
+  @override
+  String get emailNotFound => 'Аккаунт с таким email не найден';
+
+  @override
+  String get invalidResetCode => 'Неверный или просроченный код';
+
+  @override
   String get proTitle => 'MealTracker Pro';
 
   @override
@@ -284,6 +369,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get planWeekly => 'Еженедельный';
+
+  @override
+  String get planYearly => 'Годовой';
 
   @override
   String get billingLabel => 'Списание:';
@@ -697,16 +785,53 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onboardingMeasurementsTitle => 'Ваши параметры';
 
   @override
+  String get onboardingUnitsTitle => 'Единицы измерения';
+
+  @override
+  String get onboardingUnitsHint => 'Можно изменить позже в настройках';
+
+  @override
+  String get unitsMetricTitle => 'Метрическая';
+
+  @override
+  String get unitsMetricExamples => 'см, кг, мл';
+
+  @override
+  String get unitsImperialTitle => 'Имперская';
+
+  @override
+  String get unitsImperialExamples => 'ft, lb, fl oz';
+
+  @override
+  String get onboardingHeightTitle => 'Какой у вас рост?';
+
+  @override
+  String get onboardingHeightHint =>
+      'Нужен для расчёта базового обмена веществ';
+
+  @override
+  String get onboardingWeightTitle => 'Какой у вас вес?';
+
+  @override
+  String get onboardingWeightHint => 'Отправная точка для вашего плана';
+
+  @override
   String get heightLabel => 'Рост';
 
   @override
   String get currentWeightLabel => 'Текущий вес';
 
   @override
-  String get onboardingAgeTitle => 'Сколько вам лет?';
+  String get onboardingAgeTitle => 'Когда у вас день рождения?';
+
+  @override
+  String get onboardingAgeHint => 'Возраст влияет на скорость метаболизма';
 
   @override
   String get onboardingGoalTitle => 'Какая у вас цель?';
+
+  @override
+  String get onboardingGoalHint => 'Подберём план питания под вашу задачу';
 
   @override
   String get goalLoseWeight => 'Похудеть';
@@ -719,6 +844,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get onboardingActivityTitle => 'Насколько вы активны?';
+
+  @override
+  String get onboardingActivityHint =>
+      'Активность определяет суточную норму калорий';
 
   @override
   String get activitySedentary => 'Малоподвижный';
@@ -748,6 +877,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onboardingTargetWeightTitle => 'Какой вес — ваша цель?';
 
   @override
+  String get onboardingTargetWeightHint => 'Рассчитаем сроки и темп достижения';
+
+  @override
   String get safeWeightLossPace => 'Безопасный темп — 0.5 кг в неделю';
 
   @override
@@ -765,6 +897,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get onboardingResultTitle => 'Ваш персональный план';
+
+  @override
+  String get resultCongratsTitle => 'Поздравляем!';
+
+  @override
+  String get resultCongratsSubtitle => 'Ваш персональный план здоровья готов!';
+
+  @override
+  String get resultCanChange => 'Это можно изменить в любой момент';
+
+  @override
+  String get resultHowToTitle => 'Как достигать целей';
+
+  @override
+  String get resultTip1 => 'Ведите учёт еды — сформируйте полезную привычку!';
+
+  @override
+  String get resultTip2 => 'Следуйте дневной рекомендации по калориям';
+
+  @override
+  String get resultTip3 => 'Балансируйте углеводы, белки и жиры';
+
+  @override
+  String get resultImprovementsTitle =>
+      'Скоро вы заметите улучшения в самочувствии';
+
+  @override
+  String get resultImprovementsBody =>
+      'Ниже риск диабета, ниже давление, лучше уровень холестерина';
+
+  @override
+  String get resultDisclaimer =>
+      'Приложение предоставляет информацию о питании, но не предназначено для диагностики, лечения или профилактики заболеваний. Оно не заменяет консультацию врача. При проблемах со здоровьем обращайтесь к специалисту.';
 
   @override
   String get kcalPerDay => 'ккал/день';
@@ -802,84 +967,131 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onboardingStart => 'Начать';
 
   @override
-  String get paywallTitle => 'Начните свой путь\nк результату';
+  String get paywallTitle =>
+      'Чтобы продолжить, начните 3-дневный БЕСПЛАТНЫЙ пробный период';
 
   @override
-  String get paywallAiRecognition => 'ИИ-распознавание еды';
+  String get paywallTimelineTodayTitle => 'Сегодня';
 
   @override
-  String get paywallAiRecognitionDesc =>
-      'Сфотографируй блюдо и узнай калории за секунду';
+  String get paywallTimelineTodayDesc =>
+      'Откройте все функции приложения — например, AI-сканирование калорий и многое другое';
 
   @override
-  String get paywallPersonalGoals => 'Персональные цели';
+  String get paywallTimelineReminderTitle => 'Через 2 дня — напоминание';
 
   @override
-  String get paywallPersonalGoalsDesc =>
-      'Норма рассчитана под ваше тело и цель';
+  String get paywallTimelineReminderDesc =>
+      'Мы напомним, что пробный период скоро закончится';
 
   @override
-  String get paywallProgressTracking => 'Отслеживание прогресса';
+  String get paywallTimelinePayTitle => 'Через 3 дня — начнётся оплата';
 
   @override
-  String get paywallProgressTrackingDesc =>
-      'Наглядная статистика по дням и неделям';
+  String paywallTimelinePayDesc(String date) {
+    return 'Списание будет $date, если вы не отмените подписку до этого';
+  }
 
   @override
-  String get paywallWeekly => 'Еженедельно';
+  String get paywallMonthly => 'Ежемесячно';
 
   @override
-  String get paywallWeeklyPrice => '299 ₽/неделю';
+  String get paywallMonthlyPrice => '399,00 ₽ / мес';
 
   @override
-  String get paywallWeeklyTrial => 'Первые 3 дня — бесплатно';
+  String get paywallYearly => 'Ежегодно';
 
   @override
-  String get paywallPopular => 'Популярный';
+  String get paywallYearlyPrice => '99,92 ₽ / мес';
 
   @override
-  String get paywallYearly => 'На год';
+  String get paywallTrialBadge => '3 ДНЯ БЕСПЛАТНО';
 
   @override
-  String get paywallYearlyPrice => '1 990 ₽/год';
+  String get paywallNoPaymentNow => 'Платёж сейчас не требуется';
 
   @override
-  String get paywallYearlySavings => '≈ 5 ₽/день · Экономия 85%';
+  String get paywallStartTrial => 'Начать 3-дневный бесплатный пробный период';
 
   @override
-  String get paywallRating => '4.8 · Более 10 000 пользователей';
+  String get paywallTrialDisclaimer =>
+      '3 дня бесплатно, затем 1 199,00 ₽ в год (99,92 ₽ / мес)';
 
   @override
-  String get paywallToday => 'Сегодня';
+  String get paywallRestore => 'Восстановить';
 
   @override
-  String get paywallFullAccess => 'Полный доступ';
+  String get paywallTerms => 'Условия';
 
   @override
-  String get paywallDay2 => 'День 2';
+  String get paywallPrivacy => 'Конфиденциальность';
 
   @override
-  String get paywallReminder => 'Напомним';
+  String get paywallHaveCode => 'Есть код?';
 
   @override
-  String get paywallDay3 => 'День 3';
+  String get promoCodeApply => 'Применить';
 
   @override
-  String get paywallDay3Price => '299 ₽';
-
-  @override
-  String get paywallContinue => 'Продолжить';
-
-  @override
-  String get paywallDisclaimer =>
-      'Отмена в любое время. Оплата не списывается\nв течение пробного периода.';
+  String get promoCodeInvalid => 'Неверный код';
 
   @override
   String get paywallSkip => 'Пропустить';
+
+  @override
+  String get paywallRestoreSuccess => 'Подписка восстановлена';
+
+  @override
+  String get paywallRestoreNotFound => 'Активных подписок не найдено';
+
+  @override
+  String get paywallSubscriptionError =>
+      'Не удалось загрузить подписки. Попробуйте позже.';
+
+  @override
+  String get restartOnboarding => 'Начать заново';
+
+  @override
+  String get proActive => 'Активна';
+
+  @override
+  String get signInToSaveData => 'Войдите для сохранения данных';
+
+  @override
+  String get dataStoredLocally =>
+      'Ваши данные хранятся только на этом устройстве';
 
   @override
   String get barcodeScannerTitle => 'Сканер штрих-кода';
 
   @override
   String get barcodeScanHint => 'Наведите камеру на штрих-код';
+
+  @override
+  String get paywallSubscribeNow => 'Оформить подписку';
+
+  @override
+  String get paywallHardDisclaimer => 'Автопродление. Отмена в любой момент.';
+
+  @override
+  String get paywallHardTitle => 'Понравилось?\nПродолжите с Pro';
+
+  @override
+  String freeEntriesRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Осталось $count бесплатных записей',
+      many: 'Осталось $count бесплатных записей',
+      few: 'Осталось $count бесплатные записи',
+      one: 'Осталась 1 бесплатная запись',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get getPro => 'Получить Pro';
+
+  @override
+  String get freeLimitReached => 'Бесплатные записи закончились';
 }
