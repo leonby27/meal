@@ -67,6 +67,7 @@
   "signedInSnackbar": "Connecté avec succès",
   "signInTitle": "Connectez-vous",
   "signInGoogle": "Se connecter avec Google",
+  "signInApple": "Se connecter avec Apple",
   "signInEmail": "Se connecter avec Email",
   "startOverOnboarding": "Recommencer",
   "startOverOnboardingConfirm": "Recommencer l’intégration depuis le début ?",

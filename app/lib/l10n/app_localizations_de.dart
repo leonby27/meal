@@ -209,6 +209,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get signInGoogle => 'Mit Google anmelden';
 
   @override
+  String get signInApple => 'Mit Apple anmelden';
+
+  @override
   String get signInEmail => 'Mit E-Mail anmelden';
 
   @override

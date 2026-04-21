@@ -472,6 +472,12 @@ abstract class AppLocalizations {
   /// **'Войти через Google'**
   String get signInGoogle;
 
+  /// No description provided for @signInApple.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти через Apple'**
+  String get signInApple;
+
   /// No description provided for @signInEmail.
   ///
   /// In ru, this message translates to:

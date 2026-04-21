@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/core/services/auth_service.dart';
@@ -14,9 +17,18 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
 
+  bool get _showAppleSignIn =>
+      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
+
   Future<void> _signInWithGoogle() async {
     setState(() => _loading = true);
     await AuthService().signInWithGoogle();
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() => _loading = true);
+    await AuthService().signInWithApple();
     if (mounted) setState(() => _loading = false);
   }
 
@@ -85,6 +97,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+                if (_showAppleSignIn) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: FilledButton.icon(
+                      onPressed: _signInWithApple,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.apple, size: 26),
+                      label: Text(
+                        context.l10n.signInApple,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,

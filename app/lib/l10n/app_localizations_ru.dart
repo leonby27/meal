@@ -209,6 +209,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get signInGoogle => 'Войти через Google';
 
   @override
+  String get signInApple => 'Войти через Apple';
+
+  @override
   String get signInEmail => 'Войти по Email';
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/build_info.dart';
@@ -123,6 +124,53 @@ class AuthService extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint('Google sign-in error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> signInWithApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final composedName = [
+        credential.givenName,
+        credential.familyName,
+      ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
+      final displayName = composedName.isEmpty ? null : composedName;
+
+      final api = ApiClient();
+      try {
+        final backendResult = await api.post('/api/auth/apple', {
+          'identity_token': credential.identityToken ?? '',
+          'authorization_code': credential.authorizationCode,
+          'user_identifier': credential.userIdentifier,
+          'name': displayName,
+          'email': credential.email,
+        });
+        await api.setToken(backendResult['access_token'] as String);
+      } catch (_) {
+        // Backend may not be available yet — save locally, sync later
+      }
+
+      _userName = displayName ?? _userName;
+      _userEmail = credential.email ?? _userEmail;
+      _userPhotoUrl = null;
+      _isLoggedIn = true;
+
+      await _persistUser();
+      notifyListeners();
+      return true;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // User cancelled or other auth error — not a crash
+      debugPrint('Apple sign-in authorization error: ${e.code} ${e.message}');
+      return false;
+    } catch (e) {
+      debugPrint('Apple sign-in error: $e');
       return false;
     }
   }

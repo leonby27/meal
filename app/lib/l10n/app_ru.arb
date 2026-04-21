@@ -75,6 +75,7 @@
   "signedInSnackbar": "Вы вошли в аккаунт",
   "signInTitle": "Войдите в аккаунт",
   "signInGoogle": "Войти через Google",
+  "signInApple": "Войти через Apple",
   "signInEmail": "Войти по Email",
   "startOverOnboarding": "Начать сначала",
   "startOverOnboardingConfirm": "Пройти онбординг сначала?",

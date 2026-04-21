@@ -67,6 +67,7 @@
   "signedInSnackbar": "Sesión iniciada correctamente",
   "signInTitle": "Inicia sesión",
   "signInGoogle": "Iniciar sesión con Google",
+  "signInApple": "Iniciar sesión con Apple",
   "signInEmail": "Iniciar sesión con Email",
   "startOverOnboarding": "Empezar de nuevo",
   "startOverOnboardingConfirm": "¿Volver a hacer el onboarding desde el principio?",

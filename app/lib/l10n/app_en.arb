@@ -67,6 +67,7 @@
   "signedInSnackbar": "Signed in successfully",
   "signInTitle": "Sign in to your account",
   "signInGoogle": "Sign in with Google",
+  "signInApple": "Sign in with Apple",
   "signInEmail": "Sign in with Email",
   "startOverOnboarding": "Start over",
   "startOverOnboardingConfirm": "Start onboarding from the beginning?",
