@@ -224,9 +224,23 @@ class ApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return body as Map<String, dynamic>;
     }
+    String? kind;
+    String message = 'Unknown error';
+    if (body is Map) {
+      final detail = body['detail'];
+      if (detail is Map) {
+        kind = detail['kind']?.toString();
+        message = detail['message']?.toString() ?? message;
+      } else if (detail != null) {
+        message = detail.toString();
+      }
+    } else {
+      message = response.body;
+    }
     throw ApiException(
       statusCode: response.statusCode,
-      message: body is Map ? (body['detail']?.toString() ?? 'Unknown error') : response.body,
+      message: message,
+      kind: kind,
     );
   }
 }
@@ -234,11 +248,12 @@ class ApiClient {
 class ApiException implements Exception {
   final int statusCode;
   final String message;
+  final String? kind;
 
-  ApiException({required this.statusCode, required this.message});
+  ApiException({required this.statusCode, required this.message, this.kind});
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() => 'ApiException($statusCode${kind != null ? '/$kind' : ''}): $message';
 }
 
 class NetworkException implements Exception {

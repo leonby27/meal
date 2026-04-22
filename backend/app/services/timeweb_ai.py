@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import io
 import json
@@ -39,8 +40,22 @@ TEXT_SYSTEM_PROMPT = f"""Ты профессиональный диетолог-
 Ответь СТРОГО в формате JSON (без markdown, без текста до/после):
 {_JSON_SCHEMA}"""
 
-MAX_DIMENSION = 512
-JPEG_QUALITY = 60
+MAX_DIMENSION = 768
+JPEG_QUALITY = 75
+MAX_TOKENS = 1800
+
+HTTP_TIMEOUT = 60.0
+MAX_ATTEMPTS = 3
+RETRY_BASE_DELAY = 1.0
+
+
+class AIRecognitionError(Exception):
+    """Raised when AI recognition fails after retries or returns unparseable output."""
+
+    def __init__(self, message: str, *, kind: str = "unknown", raw: str | None = None):
+        super().__init__(message)
+        self.kind = kind
+        self.raw = raw
 
 
 def normalize_image(image_bytes: bytes) -> str:
@@ -83,12 +98,160 @@ def _ai_headers() -> dict:
     }
 
 
+_CODE_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IGNORECASE)
+_TRAILING_COMMA_RE = re.compile(r",(\s*[}\]])")
+_LINE_COMMENT_RE = re.compile(r"//[^\n]*")
+_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
+
+
+def _extract_json_candidate(content: str) -> str | None:
+    """Try to pull a JSON object out of a noisy LLM response."""
+    if not content:
+        return None
+
+    fence = _CODE_FENCE_RE.search(content)
+    if fence:
+        return fence.group(1)
+
+    start = content.find('{')
+    if start == -1:
+        return None
+
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(content)):
+        ch = content[i]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == '\\':
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0:
+                return content[start:i + 1]
+
+    return content[start:]
+
+
+def _clean_json_text(text: str) -> str:
+    text = _BLOCK_COMMENT_RE.sub('', text)
+    text = _LINE_COMMENT_RE.sub('', text)
+    text = _TRAILING_COMMA_RE.sub(r'\1', text)
+    return text.strip()
+
+
 def _parse_ai_response(data: dict) -> dict:
-    content = data["choices"][0]["message"]["content"]
-    json_match = re.search(r"\{.*\}", content, re.DOTALL)
-    if json_match:
-        return json.loads(json_match.group())
-    return json.loads(content)
+    try:
+        content = data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as e:
+        logger.error("AI response has unexpected shape: %s", json.dumps(data)[:500])
+        raise AIRecognitionError(
+            "Модель вернула некорректный ответ",
+            kind="bad_response",
+            raw=json.dumps(data)[:500],
+        ) from e
+
+    finish_reason = None
+    try:
+        finish_reason = data["choices"][0].get("finish_reason")
+    except (KeyError, IndexError, TypeError):
+        pass
+
+    candidate = _extract_json_candidate(content or "")
+    if candidate is None:
+        logger.error("AI response has no JSON object. finish_reason=%s content=%r", finish_reason, content[:500])
+        raise AIRecognitionError(
+            "Модель не вернула JSON",
+            kind="no_json",
+            raw=content[:500],
+        )
+
+    cleaned = _clean_json_text(candidate)
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        truncated = finish_reason == "length"
+        logger.error(
+            "AI JSON decode failed: %s | finish_reason=%s | content=%r",
+            e, finish_reason, content[:1000],
+        )
+        raise AIRecognitionError(
+            "Ответ модели не разобрался как JSON"
+            + (" (ответ обрезан — превышен лимит токенов)" if truncated else ""),
+            kind="truncated" if truncated else "parse_error",
+            raw=content[:1000],
+        ) from e
+
+
+async def _post_with_retries(payload: dict) -> dict:
+    last_exc: Exception | None = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
+                response = await client.post(_ai_url(), headers=_ai_headers(), json=payload)
+
+            if response.status_code >= 500:
+                snippet = response.text[:300]
+                logger.warning(
+                    "Timeweb AI returned %d on attempt %d/%d: %s",
+                    response.status_code, attempt, MAX_ATTEMPTS, snippet,
+                )
+                last_exc = AIRecognitionError(
+                    f"AI сервис временно недоступен (HTTP {response.status_code})",
+                    kind="upstream_5xx",
+                    raw=snippet,
+                )
+            elif response.status_code == 429:
+                snippet = response.text[:300]
+                logger.warning(
+                    "Timeweb AI rate-limited on attempt %d/%d: %s",
+                    attempt, MAX_ATTEMPTS, snippet,
+                )
+                last_exc = AIRecognitionError(
+                    "AI сервис ограничил частоту запросов, попробуйте позже",
+                    kind="rate_limited",
+                    raw=snippet,
+                )
+            elif response.status_code >= 400:
+                snippet = response.text[:500]
+                logger.error(
+                    "Timeweb AI returned %d (non-retryable): %s",
+                    response.status_code, snippet,
+                )
+                raise AIRecognitionError(
+                    f"AI сервис отклонил запрос (HTTP {response.status_code})",
+                    kind="upstream_4xx",
+                    raw=snippet,
+                )
+            else:
+                return response.json()
+        except (httpx.TimeoutException, httpx.TransportError, httpx.NetworkError) as e:
+            logger.warning(
+                "Timeweb AI network error on attempt %d/%d: %s: %s",
+                attempt, MAX_ATTEMPTS, type(e).__name__, e,
+            )
+            last_exc = AIRecognitionError(
+                "Не удалось связаться с AI сервисом",
+                kind="network",
+                raw=str(e),
+            )
+
+        if attempt < MAX_ATTEMPTS:
+            delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
+            await asyncio.sleep(delay)
+
+    assert last_exc is not None
+    raise last_exc
 
 
 async def recognize_food(image_bytes: bytes, *, text: str | None = None) -> dict:
@@ -123,14 +286,11 @@ async def recognize_food(image_bytes: bytes, *, text: str | None = None) -> dict
             },
         ],
         "temperature": 0.2,
-        "max_tokens": 500,
+        "max_tokens": MAX_TOKENS,
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(_ai_url(), headers=_ai_headers(), json=payload)
-        response.raise_for_status()
-
-    return _parse_ai_response(response.json())
+    data = await _post_with_retries(payload)
+    return _parse_ai_response(data)
 
 
 async def recognize_food_from_text(text: str) -> dict:
@@ -141,11 +301,8 @@ async def recognize_food_from_text(text: str) -> dict:
             {"role": "user", "content": text},
         ],
         "temperature": 0.2,
-        "max_tokens": 500,
+        "max_tokens": MAX_TOKENS,
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(_ai_url(), headers=_ai_headers(), json=payload)
-        response.raise_for_status()
-
-    return _parse_ai_response(response.json())
+    data = await _post_with_retries(payload)
+    return _parse_ai_response(data)

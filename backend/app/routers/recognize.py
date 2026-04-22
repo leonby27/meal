@@ -5,7 +5,11 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from app.routers.deps import get_current_user_id
-from app.services.timeweb_ai import recognize_food, recognize_food_from_text
+from app.services.timeweb_ai import (
+    AIRecognitionError,
+    recognize_food,
+    recognize_food_from_text,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +52,22 @@ IMAGE_SIGNATURES = [
 ]
 
 
+_KIND_TO_STATUS = {
+    "rate_limited": 429,
+    "upstream_5xx": 502,
+    "upstream_4xx": 502,
+    "network": 504,
+    "truncated": 502,
+    "parse_error": 502,
+    "no_json": 502,
+    "bad_response": 502,
+}
+
+
+def _status_for_kind(kind: str) -> int:
+    return _KIND_TO_STATUS.get(kind, 502)
+
+
 def detect_image_type(data: bytes) -> str:
     for sig, mime in IMAGE_SIGNATURES:
         if data[:len(sig)] == sig:
@@ -88,11 +108,18 @@ async def recognize(
     try:
         result = await recognize_food(image_bytes, text=user_text or None)
         return RecognitionResponse(**result)
+    except AIRecognitionError as e:
+        logger.warning("AI recognition failed: kind=%s msg=%s", e.kind, e)
+        status = _status_for_kind(e.kind)
+        raise HTTPException(
+            status_code=status,
+            detail={"kind": e.kind, "message": str(e)},
+        )
     except Exception as e:
-        logger.exception("AI recognition failed")
+        logger.exception("AI recognition crashed")
         raise HTTPException(
             status_code=502,
-            detail=f"AI recognition failed: {str(e)}",
+            detail={"kind": "unknown", "message": f"AI recognition failed: {e}"},
         )
 
 
@@ -113,9 +140,16 @@ async def recognize_text(
     try:
         result = await recognize_food_from_text(text)
         return RecognitionResponse(**result)
+    except AIRecognitionError as e:
+        logger.warning("AI text recognition failed: kind=%s msg=%s", e.kind, e)
+        status = _status_for_kind(e.kind)
+        raise HTTPException(
+            status_code=status,
+            detail={"kind": e.kind, "message": str(e)},
+        )
     except Exception as e:
-        logger.exception("AI text recognition failed")
+        logger.exception("AI text recognition crashed")
         raise HTTPException(
             status_code=502,
-            detail=f"AI recognition failed: {str(e)}",
+            detail={"kind": "unknown", "message": f"AI recognition failed: {e}"},
         )
