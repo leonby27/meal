@@ -16,19 +16,49 @@ _JSON_SCHEMA = """{
   "name": "Название блюда",
   "total_grams": 350,
   "ingredients": [
-    {"name": "Ингредиент 1", "grams": 200, "protein": 10.0, "fat": 5.0, "carbs": 20.0, "calories": 165}
+    {"name": "Куриное яйцо (2 шт.)", "grams": 110, "protein": 14.0, "fat": 11.0, "carbs": 0.8, "calories": 155},
+    {"name": "Помидоры", "grams": 80, "protein": 0.9, "fat": 0.2, "carbs": 3.2, "calories": 18},
+    {"name": "Сыр твёрдый", "grams": 30, "protein": 7.5, "fat": 8.4, "carbs": 0.0, "calories": 105}
   ],
-  "per_100g": {"protein": 8.5, "fat": 4.2, "carbs": 15.0, "calories": 132},
-  "total": {"protein": 30.0, "fat": 15.0, "carbs": 52.0, "calories": 462}
+  "per_100g": {"protein": 10.5, "fat": 8.5, "carbs": 2.2, "calories": 127},
+  "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278}
 }"""
+
+# Shared instructions used by both the image and text prompts.
+#
+# IMPORTANT — piece-count format:
+# For countable ingredients (eggs, sausages, cutlets, meatballs, shrimp,
+# dumplings, cookies, slices of bread/pizza, etc.) the client parses
+# "(N шт.)" out of the `name` field via regex r'\((\d+)\s*шт\.?\)' and shows
+# a +/- stepper so the user can tweak the count. When the stepper is used,
+# the client assumes `grams` = total weight for ALL pieces, and computes
+# per-unit grams as grams / N.
+#
+# Do NOT add "(N шт.)" to bulk / non-countable ingredients (sauce, oil,
+# grated cheese, salad leaves, rice, pasta, mince, etc.) — those should
+# stay as free-form grams only.
+_COMMON_RULES = """Правила формата ингредиентов:
+- Для штучных ингредиентов (яйца, сосиски, котлеты, фрикадельки,
+  креветки, пельмени, печенье, куски пиццы/хлеба и т.п.) добавь в конец
+  name «(N шт.)», где N — целое количество штук.
+  А в поле grams укажи СУММАРНЫЙ вес всех штук.
+  Пример: "name": "Куриное яйцо (2 шт.)", "grams": 110.
+- Для НЕштучных / массовых ингредиентов (соус, масло, тёртый сыр,
+  листья салата, рис, макароны, фарш, порезанные овощи) «(N шт.)» НЕ
+  добавляй — оставь просто название и вес в граммах.
+- Считай БЖУ/калории для КАЖДОГО ингредиента отдельно — это нужно,
+  чтобы при изменении количества штук клиент пересчитал итог.
+- total должен быть равен сумме по ингредиентам (с точностью до 1–2%).
+
+Ответь СТРОГО в формате JSON (без markdown, без текста до/после):
+""" + _JSON_SCHEMA
 
 SYSTEM_PROMPT = f"""Ты профессиональный диетолог-нутрициолог. Проанализируй фотографию еды и определи:
 1. Название блюда
 2. Список ингредиентов с примерными граммовками
 3. БЖУ и калории на всю порцию и на 100 г
 
-Ответь СТРОГО в формате JSON (без markdown, без текста до/после):
-{_JSON_SCHEMA}"""
+{_COMMON_RULES}"""
 
 TEXT_SYSTEM_PROMPT = f"""Ты профессиональный диетолог-нутрициолог. По текстовому описанию еды определи:
 1. Название блюда
@@ -37,8 +67,7 @@ TEXT_SYSTEM_PROMPT = f"""Ты профессиональный диетолог-
 
 Если пользователь указал граммовку — используй её. Если нет — оцени стандартную порцию.
 
-Ответь СТРОГО в формате JSON (без markdown, без текста до/после):
-{_JSON_SCHEMA}"""
+{_COMMON_RULES}"""
 
 MAX_DIMENSION = 768
 JPEG_QUALITY = 75
