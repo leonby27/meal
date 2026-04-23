@@ -158,6 +158,11 @@ class ApiClient {
       _cupertinoClient ?? _ioClient; // active client — swapped by probe
   bool _uploadClientSelected = false;
 
+  // Short tag identifying which transport last served a request.
+  // Embedded into network error messages so failing devices can be
+  // triaged from a screenshot without needing a diagnostic panel.
+  String _activeClientTag = 'init';
+
   String _baseUrl = defaultBaseUrl;
   String? _token;
 
@@ -331,22 +336,32 @@ class ApiClient {
     return _handleResponse(response);
   }
 
+  /// Picks a working transport by probing /health in order: IO → DoH →
+  /// Cupertino (iOS/macOS only). The choice is pinned in [_client] for
+  /// the rest of the session, unless [_invalidateClient] is called after
+  /// a network failure — in which case the next call re-probes.
+  ///
+  /// On Android (and other non-Apple platforms) we skip probing entirely
+  /// because only IOClient is meaningful there.
   Future<void> _selectUploadClient() async {
     if (_uploadClientSelected) return;
     if (!(Platform.isIOS || Platform.isMacOS)) {
       _client = _ioClient;
+      _activeClientTag = 'io';
       _uploadClientSelected = true;
       return;
     }
 
     if (await _probeHealth(_ioClient)) {
       _client = _ioClient;
+      _activeClientTag = 'io';
       _uploadClientSelected = true;
       return;
     }
 
     if (await _probeHealth(_dohClient)) {
       _client = _dohClient;
+      _activeClientTag = 'doh';
       _uploadClientSelected = true;
       return;
     }
@@ -354,11 +369,22 @@ class ApiClient {
     final cupertinoClient = _cupertinoClient;
     if (cupertinoClient != null && await _probeHealth(cupertinoClient)) {
       _client = cupertinoClient;
+      _activeClientTag = 'cup';
       _uploadClientSelected = true;
       return;
     }
 
-    throw NetworkException(currentL10n.networkRetryFailed);
+    _activeClientTag = 'none';
+    throw NetworkException(
+      '${currentL10n.networkRetryFailed} [all/probe]',
+    );
+  }
+
+  /// Forget the currently-pinned client so the next request re-probes
+  /// and may fall back to a different transport. Called from [_withRetry]
+  /// whenever a network-level failure hits the active client.
+  void _invalidateClient() {
+    _uploadClientSelected = false;
   }
 
   Future<bool> _probeHealth(http.Client client) async {
@@ -381,33 +407,67 @@ class ApiClient {
 
   Future<http.Response> _withRetry(Future<http.Response> Function() request) async {
     for (var attempt = 0; attempt < _maxRetries; attempt++) {
+      final lastAttempt = attempt == _maxRetries - 1;
       try {
         final response = await request();
-        if (_retriableStatuses.contains(response.statusCode) &&
-            attempt < _maxRetries - 1) {
+        if (_retriableStatuses.contains(response.statusCode) && !lastAttempt) {
           await _backoff(attempt);
           continue;
         }
         return response;
       } on SocketException catch (e) {
-        if (attempt == _maxRetries - 1) throw NetworkException(_friendlyNetworkError(e));
+        _invalidateClient();
+        if (lastAttempt) {
+          throw NetworkException(
+            '${_friendlyNetworkError(e)} [$_activeClientTag/sock]',
+          );
+        }
         await _backoff(attempt);
+        await _rerollClientBeforeRetry();
       } on TimeoutException {
-        if (attempt == _maxRetries - 1) {
-          throw NetworkException(currentL10n.networkTimeout);
+        _invalidateClient();
+        if (lastAttempt) {
+          throw NetworkException(
+            '${currentL10n.networkTimeout} [$_activeClientTag/timeout]',
+          );
         }
         await _backoff(attempt);
+        await _rerollClientBeforeRetry();
       } on HandshakeException {
-        if (attempt == _maxRetries - 1) {
-          throw NetworkException(currentL10n.networkSslError);
+        _invalidateClient();
+        if (lastAttempt) {
+          throw NetworkException(
+            '${currentL10n.networkSslError} [$_activeClientTag/tls]',
+          );
         }
         await _backoff(attempt);
+        await _rerollClientBeforeRetry();
       } on http.ClientException catch (e) {
-        if (attempt == _maxRetries - 1) throw NetworkException(currentL10n.networkConnectionError(e.message));
+        _invalidateClient();
+        if (lastAttempt) {
+          throw NetworkException(
+            '${currentL10n.networkConnectionError(e.message)} [$_activeClientTag/client]',
+          );
+        }
         await _backoff(attempt);
+        await _rerollClientBeforeRetry();
       }
     }
-    throw NetworkException(currentL10n.networkRetryFailed);
+    throw NetworkException('${currentL10n.networkRetryFailed} [$_activeClientTag/loop]');
+  }
+
+  /// Re-probe transports between retries so that a flaky pinned client
+  /// can be swapped out mid-request instead of failing all 3 attempts
+  /// against the same broken transport. Swallows probe errors — if
+  /// everything still fails, the next `request()` will throw and we
+  /// will surface that error normally.
+  Future<void> _rerollClientBeforeRetry() async {
+    try {
+      await _selectUploadClient();
+    } catch (_) {
+      // Intentionally ignored: the retry will attempt the request
+      // anyway, and if that also fails we surface the real exception.
+    }
   }
 
   Future<void> _backoff(int attempt) =>
