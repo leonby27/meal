@@ -161,8 +161,6 @@
   "favoriteUpdated": "Favoritos atualizados",
   "addToFavorite": "Adicionar aos favoritos",
   "dayNotYet": "Este dia ainda não chegou!",
-  "voiceUnavailable": "Entrada de voz indisponível. Verifique as permissões do microfone.",
-  "holdToRecord": "Segure para gravar voz",
   "copyMealTo": "Copiar {meal} para…",
   "copiedRecords": "{count} registros copiados para {date}",
 
@@ -337,14 +335,22 @@
       "date": {"type": "String"}
     }
   },
-  "paywallMonthly": "Mensal",
-  "paywallMonthlyPrice": "$3.99 / mês",
+  "paywallMonthly": "Semanal",
+  "paywallMonthlyPrice": "$4.99 / semana",
   "paywallYearly": "Anual",
-  "paywallYearlyPrice": "$0.99 / mês",
+  "paywallYearlyPrice": "$39.99 / ano",
+  "paywallPerWeek": "semana",
+  "paywallPerYear": "ano",
+  "paywallTrialDisclaimerFmt": "3 dias grátis, depois {price}/ano",
+  "@paywallTrialDisclaimerFmt": {
+    "placeholders": {
+      "price": {"type": "String"}
+    }
+  },
   "paywallTrialBadge": "3 DIAS GRÁTIS",
   "paywallNoPaymentNow": "Nenhum pagamento necessário agora",
   "paywallStartTrial": "Iniciar teste gratuito de 3 dias",
-  "paywallTrialDisclaimer": "3 dias grátis, depois $11.99/ano ($0.99/mês)",
+  "paywallTrialDisclaimer": "3 dias grátis, depois $39.99/ano",
   "paywallRestore": "Restaurar",
   "paywallTerms": "Termos",
   "paywallPrivacy": "Privacidade",

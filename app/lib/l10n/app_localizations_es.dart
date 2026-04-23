@@ -482,13 +482,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dayNotYet => '¡Este día aún no ha llegado!';
 
   @override
-  String get voiceUnavailable =>
-      'Entrada de voz no disponible. Comprueba los permisos del micrófono.';
-
-  @override
-  String get holdToRecord => 'Mantén pulsado para grabar voz';
-
-  @override
   String copyMealTo(String meal) {
     return 'Copiar $meal a…';
   }
@@ -999,16 +992,22 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get paywallMonthly => 'Mensual';
+  String get paywallMonthly => 'Semanal';
 
   @override
-  String get paywallMonthlyPrice => '\$3.99 / mes';
+  String get paywallMonthlyPrice => '\$4.99 / semana';
 
   @override
   String get paywallYearly => 'Anual';
 
   @override
-  String get paywallYearlyPrice => '\$0.99 / mes';
+  String get paywallYearlyPrice => '\$39.99 / año';
+
+  @override
+  String get paywallPerWeek => 'semana';
+
+  @override
+  String get paywallPerYear => 'año';
 
   @override
   String get paywallTrialBadge => '3 DÍAS GRATIS';
@@ -1020,8 +1019,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get paywallStartTrial => 'Iniciar prueba gratuita de 3 días';
 
   @override
-  String get paywallTrialDisclaimer =>
-      '3 días gratis, luego \$11.99/año (\$0.99/mes)';
+  String get paywallTrialDisclaimer => '3 días gratis, luego \$39.99/año';
+
+  @override
+  String paywallTrialDisclaimerFmt(String price) {
+    return '3 días gratis, luego $price/año';
+  }
 
   @override
   String get paywallRestore => 'Restaurar';

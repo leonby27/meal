@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
-import 'package:meal_tracker/features/auth/widgets/email_auth_sheet.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,8 +16,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
 
+  /// Apple sign-in is available only on iOS/macOS.
   bool get _showAppleSignIn =>
       !kIsWeb && (Platform.isIOS || Platform.isMacOS);
+
+  /// Google sign-in is configured for Android only. The iOS build lacks
+  /// the URL-scheme / Firebase setup and previously crashed when tapped.
+  bool get _showGoogleSignIn => kIsWeb || !Platform.isIOS;
 
   Future<void> _signInWithGoogle() async {
     setState(() => _loading = true);
@@ -36,15 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
     await AuthService().skipLogin();
     if (mounted) setState(() => _loading = false);
-  }
-
-  void _openEmailAuth() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => const EmailAuthSheet(),
-    );
   }
 
   @override
@@ -85,20 +80,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else ...[
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton.icon(
-                    onPressed: _signInWithGoogle,
-                    icon: const Icon(Icons.account_circle, size: 24),
-                    label: Text(
-                      context.l10n.signInGoogle,
-                      style: const TextStyle(fontSize: 16),
+                if (_showGoogleSignIn)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: FilledButton.icon(
+                      onPressed: _signInWithGoogle,
+                      icon: const Icon(Icons.account_circle, size: 24),
+                      label: Text(
+                        context.l10n.signInGoogle,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
-                ),
                 if (_showAppleSignIn) ...[
-                  const SizedBox(height: 12),
+                  if (_showGoogleSignIn) const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -116,19 +112,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton.tonalIcon(
-                    onPressed: _openEmailAuth,
-                    icon: const Icon(Icons.email_outlined, size: 22),
-                    label: Text(
-                      context.l10n.signInEmail,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,

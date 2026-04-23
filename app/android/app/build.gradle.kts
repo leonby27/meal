@@ -45,6 +45,13 @@ android {
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
             }
+            // Some sideloading flows and older Android versions reject APKs
+            // that carry only the v2 signature ("Package invalid or corrupted"
+            // during update). Enable v1 (JAR) + v2 + v3 so the APK installs
+            // and updates cleanly everywhere.
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
 

@@ -481,13 +481,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dayNotYet => 'Этот день ещё не наступил!';
 
   @override
-  String get voiceUnavailable =>
-      'Голосовой ввод недоступен. Проверьте разрешения микрофона.';
-
-  @override
-  String get holdToRecord => 'Удерживайте для записи голоса';
-
-  @override
   String copyMealTo(String meal) {
     return 'Скопировать $meal в…';
   }
@@ -996,16 +989,22 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get paywallMonthly => 'Ежемесячно';
+  String get paywallMonthly => 'Еженедельно';
 
   @override
-  String get paywallMonthlyPrice => '399,00 ₽ / мес';
+  String get paywallMonthlyPrice => '\$4.99 / нед';
 
   @override
   String get paywallYearly => 'Ежегодно';
 
   @override
-  String get paywallYearlyPrice => '99,92 ₽ / мес';
+  String get paywallYearlyPrice => '\$39.99 / год';
+
+  @override
+  String get paywallPerWeek => 'нед';
+
+  @override
+  String get paywallPerYear => 'год';
 
   @override
   String get paywallTrialBadge => '3 ДНЯ БЕСПЛАТНО';
@@ -1017,8 +1016,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paywallStartTrial => 'Начать 3-дневный бесплатный пробный период';
 
   @override
-  String get paywallTrialDisclaimer =>
-      '3 дня бесплатно, затем 1 199,00 ₽ в год (99,92 ₽ / мес)';
+  String get paywallTrialDisclaimer => '3 дня бесплатно, затем \$39.99/год';
+
+  @override
+  String paywallTrialDisclaimerFmt(String price) {
+    return '3 дня бесплатно, затем $price/год';
+  }
 
   @override
   String get paywallRestore => 'Восстановить';

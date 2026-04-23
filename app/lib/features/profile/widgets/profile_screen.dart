@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +13,6 @@ import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
-import 'package:meal_tracker/features/auth/widgets/email_auth_sheet.dart';
 
 /// When `true`, Profile shows the app theme row again (`ThemeNotifier` + picker).
 const bool kShowAppThemePicker = true;
@@ -151,18 +152,17 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
     }
   }
 
-  void _signInWithEmailFromGuest() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => const EmailAuthSheet(),
-    ).then((_) {
-      if (mounted) setState(() {});
-    });
+  Future<void> _signInWithAppleFromGuest() async {
+    final success = await AuthService().signInWithApple();
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.signedInSnackbar)),
+      );
+      setState(() {});
+    }
   }
 
-  Future<void> _startOverOnboardingFromGuest() async {
+  Future<void> _startOverOnboarding() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -346,7 +346,16 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   // ── User Card ───────────────────────────────────────────────
 
   Widget _buildUserCard(AuthService auth) {
-    final hasAccount = auth.userEmail != null;
+    // Apple only returns email on the FIRST authorization, so we can't rely
+    // on `userEmail`. `hasSocialAccount` tracks whether a real sign-in
+    // (Google/Apple) completed, independent of what fields Apple returned.
+    final hasAccount = auth.hasSocialAccount;
+    final subtitle = auth.userEmail ??
+        (hasAccount
+            ? (auth.authProvider == AuthService.providerApple
+                ? 'Apple ID'
+                : context.l10n.defaultUserName)
+            : context.l10n.guestMode);
 
     return _card(
       child: Padding(
@@ -402,9 +411,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        hasAccount
-                            ? auth.userEmail!
-                            : context.l10n.guestMode,
+                        subtitle,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
@@ -427,23 +434,18 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
             ),
             if (!hasAccount) ...[
               const SizedBox(height: 15),
-              _neutralButton(
-                label: context.l10n.signInGoogle,
-                icon: Icons.account_circle,
-                onTap: _signInFromGuest,
-              ),
-              const SizedBox(height: 8),
-              _neutralButton(
-                label: context.l10n.signInEmail,
-                icon: Icons.email_outlined,
-                onTap: _signInWithEmailFromGuest,
-              ),
-              const SizedBox(height: 8),
-              _neutralButton(
-                label: context.l10n.startOverOnboarding,
-                icon: Icons.restart_alt,
-                onTap: _startOverOnboardingFromGuest,
-              ),
+              if (Platform.isIOS)
+                _neutralButton(
+                  label: context.l10n.signInApple,
+                  icon: Icons.apple,
+                  onTap: _signInWithAppleFromGuest,
+                )
+              else
+                _neutralButton(
+                  label: context.l10n.signInGoogle,
+                  icon: Icons.account_circle,
+                  onTap: _signInFromGuest,
+                ),
             ],
           ],
         ),
@@ -999,15 +1001,42 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   // ── Version Footer ──────────────────────────────────────────
 
   Widget _buildVersionFooter() {
+    final mutedColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return Center(
-      child: Text(
-        'MealTracker v$appVersion',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          height: 18 / 14,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'MealTracker v$appVersion',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 18 / 14,
+              color: mutedColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: _startOverOnboarding,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: mutedColor,
+            ),
+            child: Text(
+              context.l10n.startOverOnboarding,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 16 / 12,
+                color: mutedColor.withValues(alpha: 0.7),
+                decoration: TextDecoration.underline,
+                decorationColor: mutedColor.withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

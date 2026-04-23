@@ -161,8 +161,6 @@
   "favoriteUpdated": "Favorites updated",
   "addToFavorite": "Add to favorites",
   "dayNotYet": "This day hasn't come yet!",
-  "voiceUnavailable": "Voice input unavailable. Check microphone permissions.",
-  "holdToRecord": "Hold to record voice",
   "copyMealTo": "Copy {meal} to…",
   "copiedRecords": "Copied {count} entries to {date}",
 
@@ -337,14 +335,22 @@
       "date": {"type": "String"}
     }
   },
-  "paywallMonthly": "Monthly",
-  "paywallMonthlyPrice": "$3.99 / mo",
+  "paywallMonthly": "Weekly",
+  "paywallMonthlyPrice": "$4.99 / week",
   "paywallYearly": "Yearly",
-  "paywallYearlyPrice": "$0.99 / mo",
+  "paywallYearlyPrice": "$39.99 / year",
+  "paywallPerWeek": "week",
+  "paywallPerYear": "year",
   "paywallTrialBadge": "3 DAYS FREE",
   "paywallNoPaymentNow": "No payment required now",
   "paywallStartTrial": "Start 3-day free trial",
-  "paywallTrialDisclaimer": "3 days free, then $11.99/year ($0.99/mo)",
+  "paywallTrialDisclaimer": "3 days free, then $39.99/year",
+  "paywallTrialDisclaimerFmt": "3 days free, then {price}/year",
+  "@paywallTrialDisclaimerFmt": {
+    "placeholders": {
+      "price": {"type": "String"}
+    }
+  },
   "paywallRestore": "Restore",
   "paywallTerms": "Terms",
   "paywallPrivacy": "Privacy",

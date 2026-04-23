@@ -988,18 +988,6 @@ abstract class AppLocalizations {
   /// **'Этот день ещё не наступил!'**
   String get dayNotYet;
 
-  /// No description provided for @voiceUnavailable.
-  ///
-  /// In ru, this message translates to:
-  /// **'Голосовой ввод недоступен. Проверьте разрешения микрофона.'**
-  String get voiceUnavailable;
-
-  /// No description provided for @holdToRecord.
-  ///
-  /// In ru, this message translates to:
-  /// **'Удерживайте для записи голоса'**
-  String get holdToRecord;
-
   /// No description provided for @copyMealTo.
   ///
   /// In ru, this message translates to:
@@ -1939,13 +1927,13 @@ abstract class AppLocalizations {
   /// No description provided for @paywallMonthly.
   ///
   /// In ru, this message translates to:
-  /// **'Ежемесячно'**
+  /// **'Еженедельно'**
   String get paywallMonthly;
 
   /// No description provided for @paywallMonthlyPrice.
   ///
   /// In ru, this message translates to:
-  /// **'399,00 ₽ / мес'**
+  /// **'\$4.99 / нед'**
   String get paywallMonthlyPrice;
 
   /// No description provided for @paywallYearly.
@@ -1957,8 +1945,20 @@ abstract class AppLocalizations {
   /// No description provided for @paywallYearlyPrice.
   ///
   /// In ru, this message translates to:
-  /// **'99,92 ₽ / мес'**
+  /// **'\$39.99 / год'**
   String get paywallYearlyPrice;
+
+  /// No description provided for @paywallPerWeek.
+  ///
+  /// In ru, this message translates to:
+  /// **'нед'**
+  String get paywallPerWeek;
+
+  /// No description provided for @paywallPerYear.
+  ///
+  /// In ru, this message translates to:
+  /// **'год'**
+  String get paywallPerYear;
 
   /// No description provided for @paywallTrialBadge.
   ///
@@ -1981,8 +1981,14 @@ abstract class AppLocalizations {
   /// No description provided for @paywallTrialDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'3 дня бесплатно, затем 1 199,00 ₽ в год (99,92 ₽ / мес)'**
+  /// **'3 дня бесплатно, затем \$39.99/год'**
   String get paywallTrialDisclaimer;
+
+  /// No description provided for @paywallTrialDisclaimerFmt.
+  ///
+  /// In ru, this message translates to:
+  /// **'3 дня бесплатно, затем {price}/год'**
+  String paywallTrialDisclaimerFmt(String price);
 
   /// No description provided for @paywallRestore.
   ///

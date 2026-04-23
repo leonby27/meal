@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -18,9 +19,8 @@ class PaywallScreen extends StatefulWidget {
 
 class _PaywallScreenState extends State<PaywallScreen>
     with SingleTickerProviderStateMixin {
-  // TODO: заменить на реальные URL перед публикацией
-  static const _termsUrl = 'https://example.com/terms';
-  static const _privacyUrl = 'https://example.com/privacy';
+  static const _termsUrl = 'https://leonby27.github.io/meal/terms-of-use.html';
+  static const _privacyUrl = 'https://leonby27.github.io/meal/privacy-policy.html';
 
   int _selectedPlan = 1; // yearly pre-selected
   bool _restoring = false;
@@ -67,6 +67,40 @@ class _PaywallScreenState extends State<PaywallScreen>
     final end = DateTime.now().add(const Duration(days: 3));
     return DateFormat.yMMMMd(Localizations.localeOf(context).toString())
         .format(end);
+  }
+
+  ProductDetails? get _weeklyProduct {
+    final products = SubscriptionService().products;
+    for (final p in products) {
+      if (p.id == SubscriptionService.weeklyId) return p;
+    }
+    return null;
+  }
+
+  ProductDetails? get _yearlyProduct {
+    final products = SubscriptionService().products;
+    for (final p in products) {
+      if (p.id == SubscriptionService.yearlyId) return p;
+    }
+    return null;
+  }
+
+  String get _weeklyPriceLabel {
+    final p = _weeklyProduct;
+    if (p == null) return context.l10n.paywallMonthlyPrice;
+    return '${p.price} / ${context.l10n.paywallPerWeek}';
+  }
+
+  String get _yearlyPriceLabel {
+    final p = _yearlyProduct;
+    if (p == null) return context.l10n.paywallYearlyPrice;
+    return '${p.price} / ${context.l10n.paywallPerYear}';
+  }
+
+  String get _trialDisclaimer {
+    final p = _yearlyProduct;
+    if (p == null) return context.l10n.paywallTrialDisclaimer;
+    return context.l10n.paywallTrialDisclaimerFmt(p.price);
   }
 
   Future<void> _subscribe() async {
@@ -343,7 +377,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                               Expanded(
                                 child: _PlanCard(
                                   title: context.l10n.paywallMonthly,
-                                  price: context.l10n.paywallMonthlyPrice,
+                                  price: _weeklyPriceLabel,
                                   badge: null,
                                   isSelected: _selectedPlan == 0,
                                   onTap: () =>
@@ -354,7 +388,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                               Expanded(
                                 child: _PlanCard(
                                   title: context.l10n.paywallYearly,
-                                  price: context.l10n.paywallYearlyPrice,
+                                  price: _yearlyPriceLabel,
                                   badge: isHard ? null : context.l10n.paywallTrialBadge,
                                   isSelected: _selectedPlan == 1,
                                   onTap: () =>
@@ -443,7 +477,7 @@ class _PaywallScreenState extends State<PaywallScreen>
           Text(
             isHard
                 ? context.l10n.paywallHardDisclaimer
-                : context.l10n.paywallTrialDisclaimer,
+                : _trialDisclaimer,
             style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),

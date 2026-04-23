@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,7 +7,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/build_info.dart';
-import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._();
@@ -22,7 +23,12 @@ class AuthService extends ChangeNotifier {
   static const String _nextBillingDateKey = 'next_billing_date';
   static const String _freeEntriesUsedKey = 'free_entries_used';
   static const String _lastSeenBuildKey = 'last_seen_build';
+  static const String _authProviderKey = 'auth_provider';
   static const int freeEntryLimit = 10;
+
+  /// Values stored in [_authProviderKey].
+  static const String providerGoogle = 'google';
+  static const String providerApple = 'apple';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email'],
@@ -40,6 +46,7 @@ class AuthService extends ChangeNotifier {
   String? _userPhotoUrl;
   String? _planName;
   String? _nextBillingDate;
+  String? _authProvider;
 
   bool get isLoggedIn => _isLoggedIn;
   bool get onboardingCompleted => _onboardingCompleted;
@@ -53,6 +60,13 @@ class AuthService extends ChangeNotifier {
   String? get userPhotoUrl => _userPhotoUrl;
   String? get planName => _planName;
   String? get nextBillingDate => _nextBillingDate;
+  String? get authProvider => _authProvider;
+
+  /// True when the user completed Google/Apple sign-in (as opposed to
+  /// a guest "skip login" session). Apple only returns email/name on the
+  /// very first authorization, so UI must NOT rely on [userEmail] alone
+  /// to detect a signed-in social account.
+  bool get hasSocialAccount => _authProvider != null;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -74,6 +88,7 @@ class AuthService extends ChangeNotifier {
     _userPhotoUrl = prefs.getString(_userPhotoKey);
     _planName = prefs.getString(_planNameKey);
     _nextBillingDate = prefs.getString(_nextBillingDateKey);
+    _authProvider = prefs.getString(_authProviderKey);
     notifyListeners();
   }
 
@@ -94,6 +109,13 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<bool> signInWithGoogle() async {
+    // Keep Google sign-in Android-only. On iOS the native Google Sign-In
+    // plugin requires extra iOS configuration (URL scheme / Firebase) that
+    // is not set up here, and calling it crashes the app.
+    if (!kIsWeb && Platform.isIOS) {
+      debugPrint('Google sign-in disabled on iOS.');
+      return false;
+    }
     try {
       final account = await _googleSignIn.signIn();
       if (account == null) return false;
@@ -118,6 +140,7 @@ class AuthService extends ChangeNotifier {
       _userEmail = account.email;
       _userPhotoUrl = account.photoUrl;
       _isLoggedIn = true;
+      _authProvider = providerGoogle;
 
       await _persistUser();
       notifyListeners();
@@ -161,6 +184,7 @@ class AuthService extends ChangeNotifier {
       _userEmail = credential.email ?? _userEmail;
       _userPhotoUrl = null;
       _isLoggedIn = true;
+      _authProvider = providerApple;
 
       await _persistUser();
       notifyListeners();
@@ -187,124 +211,16 @@ class AuthService extends ChangeNotifier {
     _userEmail = null;
     _userPhotoUrl = null;
     _isLoggedIn = false;
+    _authProvider = null;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userNameKey);
     await prefs.remove(_userEmailKey);
     await prefs.remove(_userPhotoKey);
+    await prefs.remove(_authProviderKey);
     await prefs.setBool(_isLoggedInKey, false);
 
     notifyListeners();
-  }
-
-  Future<({bool ok, String? error})> signInWithEmail(String email, String password) async {
-    try {
-      final api = ApiClient();
-      final result = await api.post('/api/auth/login', {
-        'email': email,
-        'password': password,
-      });
-      await api.setToken(result['access_token'] as String);
-
-      _userName = result['name'] as String?;
-      _userEmail = result['email'] as String?;
-      _userPhotoUrl = null;
-      _isLoggedIn = true;
-
-      await _persistUser();
-      notifyListeners();
-      return (ok: true, error: null);
-    } on ApiException catch (e) {
-      if (e.statusCode == 401) {
-        return (ok: false, error: currentL10n.wrongCredentials);
-      }
-      return (ok: false, error: e.message);
-    } on NetworkException catch (e) {
-      return (ok: false, error: e.message);
-    } catch (e) {
-      return (ok: false, error: currentL10n.signInError('$e'));
-    }
-  }
-
-  Future<({bool ok, String? error})> registerWithEmail(String email, String password, {String? name}) async {
-    try {
-      final api = ApiClient();
-      final result = await api.post('/api/auth/register', {
-        'email': email,
-        'password': password,
-        if (name != null && name.isNotEmpty) 'name': name,
-      });
-      await api.setToken(result['access_token'] as String);
-
-      _userName = result['name'] as String? ?? name;
-      _userEmail = result['email'] as String?;
-      _userPhotoUrl = null;
-      _isLoggedIn = true;
-
-      await _persistUser();
-      notifyListeners();
-      return (ok: true, error: null);
-    } on ApiException catch (e) {
-      if (e.statusCode == 409) {
-        return (ok: false, error: currentL10n.emailAlreadyRegistered);
-      }
-      return (ok: false, error: e.message);
-    } on NetworkException catch (e) {
-      return (ok: false, error: e.message);
-    } catch (e) {
-      return (ok: false, error: currentL10n.registerError('$e'));
-    }
-  }
-
-  Future<({bool ok, String? error})> forgotPassword(String email) async {
-    try {
-      await ApiClient().post('/api/auth/forgot-password', {'email': email});
-      return (ok: true, error: null);
-    } on ApiException catch (e) {
-      if (e.statusCode == 404) {
-        return (ok: false, error: currentL10n.emailNotFound);
-      }
-      return (ok: false, error: e.message);
-    } on NetworkException catch (e) {
-      return (ok: false, error: e.message);
-    } catch (e) {
-      return (ok: false, error: '$e');
-    }
-  }
-
-  Future<({bool ok, String? resetToken, String? error})> verifyResetCode(String email, String code) async {
-    try {
-      final result = await ApiClient().post('/api/auth/verify-reset-code', {
-        'email': email,
-        'code': code,
-      });
-      return (ok: true, resetToken: result['reset_token'] as String?, error: null);
-    } on ApiException catch (e) {
-      if (e.statusCode == 400) {
-        return (ok: false, resetToken: null, error: currentL10n.invalidResetCode);
-      }
-      return (ok: false, resetToken: null, error: e.message);
-    } on NetworkException catch (e) {
-      return (ok: false, resetToken: null, error: e.message);
-    } catch (e) {
-      return (ok: false, resetToken: null, error: '$e');
-    }
-  }
-
-  Future<({bool ok, String? error})> resetPassword(String resetToken, String newPassword) async {
-    try {
-      await ApiClient().post('/api/auth/reset-password', {
-        'reset_token': resetToken,
-        'new_password': newPassword,
-      });
-      return (ok: true, error: null);
-    } on ApiException catch (e) {
-      return (ok: false, error: e.message);
-    } on NetworkException catch (e) {
-      return (ok: false, error: e.message);
-    } catch (e) {
-      return (ok: false, error: '$e');
-    }
   }
 
   Future<void> incrementFreeEntry() async {
@@ -331,6 +247,11 @@ class AuthService extends ChangeNotifier {
       await prefs.setString(_userPhotoKey, _userPhotoUrl!);
     } else {
       await prefs.remove(_userPhotoKey);
+    }
+    if (_authProvider != null) {
+      await prefs.setString(_authProviderKey, _authProvider!);
+    } else {
+      await prefs.remove(_authProviderKey);
     }
   }
 

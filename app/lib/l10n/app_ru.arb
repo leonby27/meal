@@ -171,8 +171,6 @@
   "favoriteUpdated": "Избранное обновлено",
   "addToFavorite": "В избранное",
   "dayNotYet": "Этот день ещё не наступил!",
-  "voiceUnavailable": "Голосовой ввод недоступен. Проверьте разрешения микрофона.",
-  "holdToRecord": "Удерживайте для записи голоса",
   "copyMealTo": "Скопировать {meal} в…",
   "@copyMealTo": { "placeholders": { "meal": { "type": "String" } } },
   "copiedRecords": "Скопировано {count} записей в {date}",
@@ -359,14 +357,22 @@
       "date": {"type": "String"}
     }
   },
-  "paywallMonthly": "Ежемесячно",
-  "paywallMonthlyPrice": "399,00 ₽ / мес",
+  "paywallMonthly": "Еженедельно",
+  "paywallMonthlyPrice": "$4.99 / нед",
   "paywallYearly": "Ежегодно",
-  "paywallYearlyPrice": "99,92 ₽ / мес",
+  "paywallYearlyPrice": "$39.99 / год",
+  "paywallPerWeek": "нед",
+  "paywallPerYear": "год",
   "paywallTrialBadge": "3 ДНЯ БЕСПЛАТНО",
   "paywallNoPaymentNow": "Платёж сейчас не требуется",
   "paywallStartTrial": "Начать 3-дневный бесплатный пробный период",
-  "paywallTrialDisclaimer": "3 дня бесплатно, затем 1 199,00 ₽ в год (99,92 ₽ / мес)",
+  "paywallTrialDisclaimer": "3 дня бесплатно, затем $39.99/год",
+  "paywallTrialDisclaimerFmt": "3 дня бесплатно, затем {price}/год",
+  "@paywallTrialDisclaimerFmt": {
+    "placeholders": {
+      "price": {"type": "String"}
+    }
+  },
   "paywallRestore": "Восстановить",
   "paywallTerms": "Условия",
   "paywallPrivacy": "Конфиденциальность",

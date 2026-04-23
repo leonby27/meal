@@ -11,7 +11,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:uuid/uuid.dart';
 
 import 'package:meal_tracker/app/route_observer.dart';
@@ -131,16 +130,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
   final _inputCtl = TextEditingController();
   final _inputFocus = FocusNode();
-  final stt.SpeechToText _speech = stt.SpeechToText();
-  bool _isListening = false;
-  bool _speechAvailable = false;
-  bool _voiceLocked = false;
-  Offset _voiceDragOrigin = Offset.zero;
-  double _voiceSlideX = 0;
-  Timer? _voiceTimer;
-  String _voiceDuration = '0:00';
-  final _micKey = GlobalKey();
-  OverlayEntry? _micTooltip;
 
   bool _searchMode = false;
   List<Product> _searchResults = [];
@@ -161,7 +150,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     _dayAnchor = DateTime(now.year, now.month, now.day);
     _dayPageCtl = PageController(initialPage: _dayPageCenter);
     _initDb();
-    _initSpeech();
     _inputCtl.addListener(_onSearchTextChanged);
     _inputFocus.addListener(_onSearchFocusChanged);
   }
@@ -183,40 +171,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   @override
   void didPopNext() {
     _scheduleUnfocusInputBar();
-  }
-
-  Future<void> _initSpeech() async {
-    try {
-      _speechAvailable = await _speech.initialize(
-        onStatus: (status) {
-          debugPrint('[STT] status: $status');
-          if (!mounted) return;
-          if (status == 'done' || status == 'notListening') {
-            if (_voiceLocked && !_listenCancelled) {
-              _doFinalizeVoice();
-            }
-          }
-        },
-        onError: (error) {
-          debugPrint('[STT] error: ${error.errorMsg} (permanent: ${error.permanent})');
-          if (!mounted) return;
-          _stopVoiceTimer();
-          setState(() {
-            _isListening = false;
-            _voiceLocked = false;
-            _voiceSlideX = 0;
-          });
-        },
-      );
-      debugPrint('[STT] initialized, available: $_speechAvailable');
-      if (_speechAvailable) {
-        final locales = await _speech.locales();
-        debugPrint('[STT] locales: ${locales.map((l) => l.localeId).join(', ')}');
-      }
-    } catch (e) {
-      debugPrint('[STT] init exception: $e');
-      _speechAvailable = false;
-    }
   }
 
   void _onSearchTextChanged() {
@@ -528,151 +482,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     );
   }
 
-  String _preListenText = '';
-  bool _listenCancelled = false;
-
-  void _startVoiceTimer() {
-    _voiceTimer?.cancel();
-    final start = DateTime.now();
-    _voiceDuration = '0:00';
-    _voiceTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      final elapsed = DateTime.now().difference(start);
-      setState(() {
-        _voiceDuration =
-            '${elapsed.inMinutes}:${(elapsed.inSeconds % 60).toString().padLeft(2, '0')}';
-      });
-    });
-  }
-
-  void _stopVoiceTimer() {
-    _voiceTimer?.cancel();
-    _voiceTimer = null;
-  }
-
-  void _showMicTooltip() {
-    _micTooltip?.remove();
-    _micTooltip = null;
-
-    final renderBox = _micKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-
-    final pos = renderBox.localToGlobal(Offset.zero);
-    final size = renderBox.size;
-    final centerX = pos.dx + size.width / 2;
-
-    _micTooltip = OverlayEntry(
-      builder: (ctx) => _MicTooltipOverlay(
-        centerX: centerX,
-        bottomY: pos.dy - 10,
-        onDismiss: _dismissMicTooltip,
-      ),
-    );
-    Overlay.of(context).insert(_micTooltip!);
-  }
-
-  void _dismissMicTooltip() {
-    _micTooltip?.remove();
-    _micTooltip = null;
-  }
-
-  void _onVoiceLongPressStart(LongPressStartDetails details) {
-    if (!_speechAvailable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.voiceUnavailable),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-      return;
-    }
-    if (_isListening) return;
-    HapticFeedback.mediumImpact();
-    _voiceDragOrigin = details.globalPosition;
-    _voiceSlideX = 0;
-    _voiceLocked = false;
-    _preListenText = _inputCtl.text;
-    _listenCancelled = false;
-    setState(() => _isListening = true);
-    _startVoiceTimer();
-    debugPrint('[STT] starting listen...');
-    _speech.listen(
-      localeId: 'ru_RU',
-      listenFor: const Duration(seconds: 30),
-      pauseFor: const Duration(seconds: 3),
-      partialResults: true,
-      listenMode: stt.ListenMode.dictation,
-      onResult: (result) {
-        debugPrint('[STT] result: "${result.recognizedWords}" final=${result.finalResult}');
-        if (_listenCancelled || !mounted) return;
-        setState(() {
-          _inputCtl.text = _preListenText.isEmpty
-              ? result.recognizedWords
-              : '$_preListenText ${result.recognizedWords}';
-          _inputCtl.selection = TextSelection.fromPosition(
-            TextPosition(offset: _inputCtl.text.length),
-          );
-        });
-      },
-    );
-  }
-
-  void _onVoiceLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
-    if (!_isListening || _voiceLocked) return;
-    final dx = details.globalPosition.dx - _voiceDragOrigin.dx;
-    final dy = details.globalPosition.dy - _voiceDragOrigin.dy;
-
-    setState(() => _voiceSlideX = dx.clamp(-200.0, 0.0));
-
-    if (dy < -80) {
-      HapticFeedback.mediumImpact();
-      setState(() {
-        _voiceLocked = true;
-        _voiceSlideX = 0;
-      });
-      return;
-    }
-
-    if (dx < -100) {
-      HapticFeedback.lightImpact();
-      _doCancelVoice();
-    }
-  }
-
-  void _onVoiceLongPressEnd(LongPressEndDetails details) {
-    if (_voiceLocked) return;
-    _doFinalizeVoice();
-  }
-
-  void _doCancelVoice() {
-    _listenCancelled = true;
-    _speech.cancel();
-    _stopVoiceTimer();
-    _inputCtl.text = _preListenText;
-    _inputCtl.selection = TextSelection.fromPosition(
-      TextPosition(offset: _inputCtl.text.length),
-    );
-    setState(() {
-      _isListening = false;
-      _voiceLocked = false;
-      _voiceSlideX = 0;
-    });
-  }
-
-  void _doFinalizeVoice() {
-    if (!_isListening && !_voiceLocked) return;
-    _speech.stop();
-    _stopVoiceTimer();
-    setState(() {
-      _isListening = false;
-      _voiceLocked = false;
-      _voiceSlideX = 0;
-    });
-    if (_inputCtl.text.trim().isNotEmpty) {
-      _activateSearch();
-    }
-  }
-
   Future<void> _initDb() async {
     _db = await AppDatabase.getInstance();
     await _loadGoal();
@@ -689,9 +498,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     _inputCtl.dispose();
     _inputFocus.removeListener(_onSearchFocusChanged);
     _inputFocus.dispose();
-    _speech.stop();
-    _voiceTimer?.cancel();
-    _micTooltip?.remove();
     super.dispose();
   }
 
@@ -2231,138 +2037,3 @@ class _PulsingDotState extends State<_PulsingDot>
   }
 }
 
-class _MicTooltipOverlay extends StatefulWidget {
-  final double centerX;
-  final double bottomY;
-  final VoidCallback onDismiss;
-
-  const _MicTooltipOverlay({
-    required this.centerX,
-    required this.bottomY,
-    required this.onDismiss,
-  });
-
-  @override
-  State<_MicTooltipOverlay> createState() => _MicTooltipOverlayState();
-}
-
-class _MicTooltipOverlayState extends State<_MicTooltipOverlay>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _anim;
-  late final Animation<double> _opacity;
-  late final Animation<double> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _opacity = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
-    _slide = Tween<double>(begin: 8, end: 0).animate(
-      CurvedAnimation(parent: _anim, curve: Curves.easeOut),
-    );
-    _anim.forward();
-    Future.delayed(const Duration(milliseconds: 1800), _hide);
-  }
-
-  void _hide() {
-    if (!mounted) return;
-    _anim.reverse().then((_) {
-      if (mounted) widget.onDismiss();
-    });
-  }
-
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const double tooltipWidth = 230;
-    const double arrowSize = 7;
-
-    final left = (widget.centerX - tooltipWidth / 2)
-        .clamp(12.0, MediaQuery.of(context).size.width - tooltipWidth - 12);
-    final arrowLeft = widget.centerX - left - arrowSize;
-
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: _hide,
-          behavior: HitTestBehavior.translucent,
-          child: const SizedBox.expand(),
-        ),
-        AnimatedBuilder(
-          animation: _anim,
-          builder: (context, _) => Positioned(
-            left: left,
-            top: widget.bottomY - 40 + _slide.value,
-            child: Opacity(
-              opacity: _opacity.value,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: tooltipWidth,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: AppColors.darkSurface,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(50),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      context.l10n.holdToRecord,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        height: 18 / 13,
-                        decoration: TextDecoration.none,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: arrowLeft.clamp(12.0, tooltipWidth - 24)),
-                    child: CustomPaint(
-                      size: const Size(arrowSize * 2, arrowSize),
-                      painter: _ArrowPainter(color: AppColors.darkSurface),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ArrowPainter extends CustomPainter {
-  final Color color;
-  _ArrowPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-    final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..lineTo(size.width, 0)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ArrowPainter old) => old.color != color;
-}
