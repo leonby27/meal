@@ -235,7 +235,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
         if (_imageBytes != null) ...[
           ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             child: Image.memory(_imageBytes!, height: 250, fit: BoxFit.cover),
           ),
           const SizedBox(height: 16),

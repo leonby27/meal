@@ -674,7 +674,7 @@ class _PlanCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: cs.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isSelected ? cs.onSurface : cs.outline.withAlpha(80),
                 width: isSelected ? 2 : 1,

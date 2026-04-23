@@ -900,7 +900,7 @@ class _AddFavToMealSheetState extends State<_AddFavToMealSheet> {
               style: FilledButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
             ),

@@ -85,7 +85,7 @@ class _ActivityCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: isSelected ? cs.primaryContainer : cardBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isSelected ? AppColors.primary : lineColor,
               width: isSelected ? 1.5 : 1,

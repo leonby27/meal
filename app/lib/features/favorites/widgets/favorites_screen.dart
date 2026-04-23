@@ -138,7 +138,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: cs.surface,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: lineBorder, width: 1),
                       ),
                       child: Row(
@@ -419,7 +419,7 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
               style: FilledButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
             ),

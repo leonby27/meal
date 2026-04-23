@@ -368,7 +368,7 @@ class _StatsScreenState extends State<StatsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: lineBorder, width: 1),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
@@ -499,7 +499,7 @@ class _StatsScreenState extends State<StatsScreen> {
       height: 180,
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: lineBorder, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
@@ -625,7 +625,7 @@ class _StatsScreenState extends State<StatsScreen> {
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: lineBorder, width: 1),
         boxShadow: [
           BoxShadow(

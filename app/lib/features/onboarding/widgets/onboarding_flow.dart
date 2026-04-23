@@ -262,7 +262,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     ],
                     Expanded(
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                         child: TweenAnimationBuilder<double>(
                           tween: Tween(
                             begin: (_currentPage + 1) / _totalSteps,
@@ -344,7 +344,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                           ? Colors.white
                           : (isDark ? AppColors.darkDisabledContent : AppColors.lightDisabledContent),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       elevation: 0,
                     ),

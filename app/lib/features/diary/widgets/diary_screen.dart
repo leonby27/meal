@@ -1051,7 +1051,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: cs.surface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 children: [
@@ -1135,7 +1135,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: cs.surface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 children: [
@@ -1358,7 +1358,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         !auth.freeTrialExhausted;
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 16),
+      // top: 16 сохраняет тот же визуальный зазор, что раньше занимала
+      // соединительная линия между неделей и карточкой КБЖУ.
+      padding: const EdgeInsets.only(top: 16, bottom: 16),
       children: [
         DailySummaryCard(logs: logs, selectedDate: date),
         if (showBanner)
@@ -1453,29 +1455,13 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     });
   }
 
-  /// Соединительная линия под обводкой ячеек: рисуется ниже слоя недели в [Stack].
+  /// Ранее здесь была соединительная линия между выбранным днём и карточкой
+  /// КБЖУ. Убрали по дизайн-решению — теперь неделя просто занимает свою
+  /// высоту, а зазор до карточки ниже задаётся обычным SizedBox.
   Widget _buildWeekStripWithConnector(BuildContext context, bool isDark) {
     return SizedBox(
-      height: 64 + 16,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            top: 64,
-            left: 0,
-            right: 0,
-            height: 16,
-            child: _buildConnectorLine(context, isDark),
-          ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 64,
-            child: _buildWeekStrip(context, isDark),
-          ),
-        ],
-      ),
+      height: 64,
+      child: _buildWeekStrip(context, isDark),
     );
   }
 
@@ -1562,11 +1548,15 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
             ),
           );
 
+          final dayOpacity = (isToday || isSelected)
+              ? 1.0
+              : (isFuture ? 0.5 : 0.35); // past dates — dimmer by ~15%
+
           return Expanded(
             child: GestureDetector(
               onTap: isFuture ? null : () => _selectDate(date),
               child: Opacity(
-                opacity: (isToday || isSelected) ? 1.0 : 0.5,
+                opacity: dayOpacity,
                 child: Padding(
                   padding: EdgeInsets.only(
                     left: i == 0 ? 0 : 2,
@@ -1596,51 +1586,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     );
   }
 
-  Widget _buildConnectorLine(BuildContext context, bool isDark) {
-    final weekStart = _weekStart(_selectedDate);
-    final selectedDay = DateTime(
-      _selectedDate.year, _selectedDate.month, _selectedDate.day,
-    );
-    final weekStartDay = DateTime(
-      weekStart.year, weekStart.month, weekStart.day,
-    );
-    final dayIndex = selectedDay.difference(weekStartDay).inDays.clamp(0, 6);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SizedBox(
-        height: 16,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final totalWidth = constraints.maxWidth;
-            final cellWidth = totalWidth / 7;
-            final centerX = cellWidth * dayIndex + cellWidth / 2;
-            const lineWidth = 2.0;
-            // Вылезаем на 1px вверх (к обводке дня) и вниз (к обводке карточки), без зазора.
-            const extend = 1.0;
-
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  left: centerX - lineWidth / 2,
-                  top: -extend,
-                  child: Container(
-                    width: lineWidth,
-                    height: 16 + extend * 2,
-                    color: isDark
-                        ? AppColors.lineDT200
-                        : AppColors.lineLight200,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
   Widget _buildFoodCards(
     BuildContext context,
     List<FoodLog> logs,
@@ -1653,7 +1598,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
       child: Column(
         children: logs.map((log) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.only(bottom: 8),
             child: MealSection.buildSingleCard(
               context: context,
               log: log,
@@ -1767,6 +1712,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                           ),
                         ),
                       ),
+                    if (!_hasSearchText) const SizedBox(width: 4),
                     if (!_hasSearchText)
                       GestureDetector(
                         onTap: () {

@@ -284,7 +284,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                       height: scanAreaSize,
                       decoration: BoxDecoration(
                         color: Colors.red,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                   ),
@@ -298,7 +298,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                 width: scanAreaSize,
                 height: scanAreaSize,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
                 ),
               ),

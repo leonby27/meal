@@ -320,7 +320,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: _isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: lineBorder, width: 1),
         boxShadow: const [
           BoxShadow(
@@ -518,7 +518,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

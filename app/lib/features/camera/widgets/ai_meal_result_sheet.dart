@@ -1016,7 +1016,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           decoration: BoxDecoration(
             color: c.cardBg,
             border: Border.all(color: c.borderColor),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           alignment: Alignment.centerLeft,
@@ -1059,7 +1059,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         Container(
           decoration: BoxDecoration(
             color: c.cardBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -1230,7 +1230,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         Container(
           decoration: BoxDecoration(
             color: c.cardBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -1410,7 +1410,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             disabledBackgroundColor: AppColors.primary.withAlpha(100),
             disabledForegroundColor: Colors.white54,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
             textStyle: const TextStyle(
               fontSize: 16,

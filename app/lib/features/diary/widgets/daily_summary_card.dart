@@ -81,7 +81,6 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final back2 = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-    final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final trackColor = isDark ? AppColors.lineDT100 : cs.outlineVariant;
     final secondaryTextColor = cs.onSurfaceVariant;
     final primaryTextColor = cs.onSurface;
@@ -99,8 +98,7 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
       child: Container(
         decoration: BoxDecoration(
           color: back2,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: lineBorder, width: 1),
+          borderRadius: BorderRadius.circular(20),
         ),
         padding: const EdgeInsets.all(12),
         child: Column(

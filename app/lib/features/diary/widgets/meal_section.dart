@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/features/camera/widgets/ai_meal_result_sheet.dart';
@@ -73,8 +72,6 @@ class MealSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final totalCalories = logs.fold(0.0, (sum, l) => sum + l.calories);
 
     return Padding(
@@ -116,8 +113,7 @@ class MealSection extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: cs.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: lineBorder, width: 1),
+              borderRadius: BorderRadius.circular(20),
             ),
             clipBehavior: Clip.antiAlias,
             padding: const EdgeInsets.symmetric(vertical: 5),
@@ -371,17 +367,14 @@ class _FoodLogCard extends StatelessWidget {
         ? const Color(0xFF9CA0B2)
         : const Color(0xFF676E85);
 
-    final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-
     return Container(
       height: 72,
       decoration: BoxDecoration(
         color: back2,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: lineBorder, width: 1),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         onTap: () => AiMealResultSheet.showForDuplicate(context, log: log, dateStr: dateStr),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
