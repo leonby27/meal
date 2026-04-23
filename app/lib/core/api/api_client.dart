@@ -299,10 +299,10 @@ class ApiClient {
           .timeout(_uploadTimeout);
     }
 
-    var response = await manualUpload();
+    var response = await _withRetry(manualUpload);
     if (response.statusCode == 401) {
       await ensureAuthenticated(forceRefresh: true);
-      response = await manualUpload();
+      response = await _withRetry(manualUpload);
     }
     return _handleResponse(response);
   }
