@@ -128,18 +128,30 @@ class AiMealResultSheet extends StatefulWidget {
     );
   }
 
+  /// Kicks off AI recognition and opens the result sheet IMMEDIATELY.
+  ///
+  /// IMPORTANT: all network work (auth + upload) MUST happen inside the
+  /// future passed as [pendingResult], never awaited before opening the
+  /// sheet. Otherwise, a slow/failed auth call leaves the user staring at
+  /// nothing and any thrown exception is swallowed by the postFrame callback
+  /// that invoked us — the exact "tap photo, nothing happens" bug we keep
+  /// hitting after every refactor. Do NOT add `await` calls before
+  /// [showModalBottomSheet] here.
   static Future<void> showWithLoading(
     BuildContext context, {
     required String mealType,
     String? dateStr,
     required Uint8List imageBytes,
-  }) async {
-    final api = ApiClient();
-    await api.ensureAuthenticated();
-    final locale = LocaleNotifier.instance.value.languageCode;
-    final future = api.uploadImage('/api/recognize', imageBytes, locale: locale);
-
-    if (!context.mounted) return;
+  }) {
+    final future = _runRecognition(() async {
+      final api = ApiClient();
+      final locale = LocaleNotifier.instance.value.languageCode;
+      return api.uploadImage(
+        '/api/recognize',
+        imageBytes,
+        locale: locale,
+      );
+    });
 
     return showModalBottomSheet(
       context: context,
@@ -164,13 +176,13 @@ class AiMealResultSheet extends StatefulWidget {
     required String mealType,
     String? dateStr,
     required String text,
-  }) async {
-    final api = ApiClient();
-    await api.ensureAuthenticated();
-    final locale = LocaleNotifier.instance.value.languageCode;
-    final future = api.recognizeText(text, locale: locale);
-
-    if (!context.mounted) return;
+  }) {
+    final future = _runRecognition(() async {
+      final api = ApiClient();
+      await api.ensureAuthenticated();
+      final locale = LocaleNotifier.instance.value.languageCode;
+      return api.recognizeText(text, locale: locale);
+    });
 
     return showModalBottomSheet(
       context: context,
@@ -195,13 +207,17 @@ class AiMealResultSheet extends StatefulWidget {
     String? dateStr,
     required String text,
     required Uint8List imageBytes,
-  }) async {
-    final api = ApiClient();
-    await api.ensureAuthenticated();
-    final locale = LocaleNotifier.instance.value.languageCode;
-    final future = api.uploadImage('/api/recognize', imageBytes, locale: locale, text: text);
-
-    if (!context.mounted) return;
+  }) {
+    final future = _runRecognition(() async {
+      final api = ApiClient();
+      final locale = LocaleNotifier.instance.value.languageCode;
+      return api.uploadImage(
+        '/api/recognize',
+        imageBytes,
+        locale: locale,
+        text: text,
+      );
+    });
 
     return showModalBottomSheet(
       context: context,
@@ -219,6 +235,19 @@ class AiMealResultSheet extends StatefulWidget {
         pendingResult: future,
       ),
     );
+  }
+
+  /// Wraps a recognition call in a Future that logs failures. Uses
+  /// `Future.sync` so that even synchronous throws inside [body] become a
+  /// rejected Future instead of breaking the call site before the sheet
+  /// is shown.
+  static Future<Map<String, dynamic>> _runRecognition(
+    Future<Map<String, dynamic>> Function() body,
+  ) {
+    return Future.sync(body).catchError((Object e, StackTrace st) {
+      debugPrint('AI recognition failed: $e\n$st');
+      throw e;
+    });
   }
 
   /// After popping a root sheet, Flutter may restore primary focus to the diary
@@ -390,6 +419,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         _initResultControllers(result);
       });
     } on NetworkException catch (e) {
+      debugPrint('AI recognition network error: ${e.message}');
       if (!mounted) return;
       _textTimer?.cancel();
       _spinController.stop();
@@ -397,7 +427,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         _isLoading = false;
         _loadingError = e.message;
       });
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('AI recognition error: $e\n$st');
       if (!mounted) return;
       _textTimer?.cancel();
       _spinController.stop();
@@ -634,6 +665,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   Future<void> _saveResult() async {
     if (_saving) return;
+    final l10n = context.l10n;
 
     if (!_isEditing) {
       final auth = AuthService();
@@ -654,7 +686,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         : DateTime.now();
 
     final productName = _nameCtl.text.trim().isEmpty
-        ? context.l10n.unknownDish
+        ? l10n.unknownDish
         : _nameCtl.text.trim();
 
     if (_isEditing) {
@@ -782,93 +814,108 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   Widget _buildLoadingBody(_AiSheetColors c) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 56,
-              height: 56,
-              child: CircularProgressIndicator(
-                strokeWidth: 4,
-                strokeCap: StrokeCap.round,
-                valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                backgroundColor: AppColors.primary.withAlpha(40),
-              ),
-            ),
-            const SizedBox(height: 24),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Text(
-                _loadingTexts[_textIndex],
-                key: ValueKey(_textIndex),
-                style: TextStyle(
-                  color: c.secondaryText,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  height: 20 / 15,
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4,
+                    strokeCap: StrokeCap.round,
+                    valueColor:
+                        const AlwaysStoppedAnimation(AppColors.primary),
+                    backgroundColor: AppColors.primary.withAlpha(40),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 24),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    _loadingTexts[_textIndex],
+                    key: ValueKey(_textIndex),
+                    style: TextStyle(
+                      color: c.secondaryText,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      height: 20 / 15,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildErrorBody(_AiSheetColors c) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: const BoxDecoration(
-                color: _warningBg,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.error_outline_rounded,
-                color: _warningIcon,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _loadingError!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: c.onSurface,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                height: 20 / 15,
-              ),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  color: c.surfaceBg,
-                  borderRadius: BorderRadius.circular(12),
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: _warningBg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.error_outline_rounded,
+                    color: _warningIcon,
+                    size: 28,
+                  ),
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  _loadingError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: c.onSurface,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    height: 20 / 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: c.surfaceBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
                 child: Text(
                   context.l10n.close,
                   style: TextStyle(
                     color: c.onSurface,
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -885,14 +932,14 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       imageWidget = CachedNetworkImage(
         imageUrl: _networkImageUrl!,
         fit: BoxFit.contain,
-        placeholder: (_, __) => const Center(
+        placeholder: (context, url) => const Center(
           child: SizedBox(
             width: 24,
             height: 24,
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        errorWidget: (_, __, ___) => Center(
+        errorWidget: (context, url, error) => Center(
           child: Icon(Icons.broken_image_outlined, color: c.secondaryText, size: 40),
         ),
       );

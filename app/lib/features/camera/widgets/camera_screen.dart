@@ -23,7 +23,12 @@ class CameraScreen extends StatefulWidget {
     this.sheetScrollController,
   });
 
-  static Future<void> showAsSheet(BuildContext context, {required String mealType, String? dateStr, String? autoSource}) {
+  static Future<void> showAsSheet(
+    BuildContext context, {
+    required String mealType,
+    String? dateStr,
+    String? autoSource,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -46,33 +51,44 @@ class CameraScreen extends StatefulWidget {
     );
   }
 
-  static Future<void> pickAndShow(BuildContext context, {required String mealType, String? dateStr, required ImageSource source}) async {
+  /// Opens the native image picker and goes straight to the AI result
+  /// sheet. No intermediate CameraScreen modal — every extra navigator
+  /// hop between picker and result sheet has historically been a source
+  /// of "tap photo, nothing happens" bugs.
+  static Future<void> pickAndShow(
+    BuildContext context, {
+    required String mealType,
+    String? dateStr,
+    required ImageSource source,
+  }) async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: source, maxWidth: 768, imageQuality: 70);
+    final XFile? image;
+    try {
+      image = await picker.pickImage(
+        source: source,
+        maxWidth: 768,
+        imageQuality: 70,
+      );
+    } catch (e, st) {
+      debugPrint('ImagePicker failed: $e\n$st');
+      return;
+    }
     if (image == null) return;
 
-    final bytes = await image.readAsBytes();
+    final Uint8List bytes;
+    try {
+      bytes = await image.readAsBytes();
+    } catch (e, st) {
+      debugPrint('Failed to read picked image bytes: $e\n$st');
+      return;
+    }
     if (!context.mounted) return;
 
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (ctx, scrollController) => CameraScreen(
-          mealType: mealType,
-          dateStr: dateStr,
-          initialImageBytes: bytes,
-          sheetScrollController: scrollController,
-        ),
-      ),
+    return AiMealResultSheet.showWithLoading(
+      context,
+      mealType: mealType,
+      dateStr: dateStr,
+      imageBytes: bytes,
     );
   }
 
@@ -131,8 +147,12 @@ class _CameraScreenState extends State<CameraScreen> {
     final albums = await PhotoManager.getAssetPathList(
       type: RequestType.image,
       filterOption: FilterOptionGroup(
-        imageOption: const FilterOption(sizeConstraint: SizeConstraint(ignoreSize: true)),
-        orders: [const OrderOption(type: OrderOptionType.createDate, asc: false)],
+        imageOption: const FilterOption(
+          sizeConstraint: SizeConstraint(ignoreSize: true),
+        ),
+        orders: [
+          const OrderOption(type: OrderOptionType.createDate, asc: false),
+        ],
       ),
     );
     if (albums.isEmpty) return;
@@ -152,7 +172,11 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: source, maxWidth: 768, imageQuality: 70);
+    final image = await picker.pickImage(
+      source: source,
+      maxWidth: 768,
+      imageQuality: 70,
+    );
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
@@ -161,11 +185,19 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _recognize(Uint8List bytes) async {
-    Navigator.of(context).pop();
-    if (!context.mounted) return;
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    final currentNavigator = Navigator.of(context);
+    final presenterContext = rootNavigator.context;
+
+    if (currentNavigator.canPop()) {
+      currentNavigator.pop();
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    if (!presenterContext.mounted) return;
 
     await AiMealResultSheet.showWithLoading(
-      context,
+      presenterContext,
       mealType: widget.mealType,
       dateStr: widget.dateStr,
       imageBytes: bytes,
@@ -183,7 +215,8 @@ class _CameraScreenState extends State<CameraScreen> {
         if (isSheet) ...[
           Center(
             child: Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
@@ -193,7 +226,9 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
           Text(
             context.l10n.recognizeDish,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
         ],
@@ -206,8 +241,7 @@ class _CameraScreenState extends State<CameraScreen> {
           const SizedBox(height: 16),
         ],
 
-        if (_imageBytes == null)
-          _buildGalleryGrid(),
+        if (_imageBytes == null) _buildGalleryGrid(),
       ],
     );
 
@@ -247,7 +281,10 @@ class _CameraScreenState extends State<CameraScreen> {
                 children: [
                   const Icon(Icons.camera_alt, color: Colors.white, size: 32),
                   const SizedBox(height: 4),
-                  Text(context.l10n.cameraLabel, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  Text(
+                    context.l10n.cameraLabel,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ],
               ),
             ),
@@ -260,10 +297,17 @@ class _CameraScreenState extends State<CameraScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: FutureBuilder<Uint8List?>(
-              future: asset.thumbnailDataWithSize(const ThumbnailSize.square(300)),
+              future: asset.thumbnailDataWithSize(
+                const ThumbnailSize.square(300),
+              ),
               builder: (context, snap) {
                 if (snap.data != null) {
-                  return Image.memory(snap.data!, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
+                  return Image.memory(
+                    snap.data!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  );
                 }
                 return Container(color: Colors.grey.shade200);
               },

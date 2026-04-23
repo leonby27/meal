@@ -9,9 +9,9 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
-  - CwlCatchException (2.2.1):
-    - CwlCatchExceptionSupport (~> 2.2.1)
-  - CwlCatchExceptionSupport (2.2.1)
+  - cupertino_http (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - Flutter (1.0.0)
   - flutter_local_notifications (0.0.1):
     - Flutter
@@ -95,10 +95,6 @@ PODS:
     - FlutterMacOS
   - sign_in_with_apple (0.0.1):
     - Flutter
-  - speech_to_text (7.2.0):
-    - CwlCatchException
-    - Flutter
-    - FlutterMacOS
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
@@ -106,6 +102,7 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
+  - cupertino_http (from `.symlinks/plugins/cupertino_http/darwin`)
   - Flutter (from `Flutter`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
@@ -115,7 +112,6 @@ DEPENDENCIES:
   - photo_manager (from `.symlinks/plugins/photo_manager/darwin`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
-  - speech_to_text (from `.symlinks/plugins/speech_to_text/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
 
@@ -123,8 +119,6 @@ SPEC REPOS:
   trunk:
     - AppAuth
     - AppCheckCore
-    - CwlCatchException
-    - CwlCatchExceptionSupport
     - GoogleDataTransport
     - GoogleMLKit
     - GoogleSignIn
@@ -140,6 +134,8 @@ SPEC REPOS:
     - PromisesObjC
 
 EXTERNAL SOURCES:
+  cupertino_http:
+    :path: ".symlinks/plugins/cupertino_http/darwin"
   Flutter:
     :path: Flutter
   flutter_local_notifications:
@@ -158,8 +154,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   sign_in_with_apple:
     :path: ".symlinks/plugins/sign_in_with_apple/ios"
-  speech_to_text:
-    :path: ".symlinks/plugins/speech_to_text/darwin"
   sqflite_darwin:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
   url_launcher_ios:
@@ -168,8 +162,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
-  CwlCatchException: 7acc161b299a6de7f0a46a6ed741eae2c8b4d75a
-  CwlCatchExceptionSupport: 54ccab8d8c78907b57f99717fb19d4cc3bce02dc
+  cupertino_http: 94ac07f5ff090b8effa6c5e2c47871d48ab7c86c
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_local_notifications: 643a3eda1ce1c0599413ca31672536d423dee214
   google_sign_in_ios: b48bb9af78576358a168361173155596c845f0b9
@@ -192,7 +185,6 @@ SPEC CHECKSUMS:
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
-  speech_to_text: 3b313d98516d3d0406cea424782ec25470c59d19
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
 
