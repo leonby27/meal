@@ -69,12 +69,16 @@ flutter build ipa --release
 IPA_PATH=$(ls -t "$IPA_DIR"/*.ipa 2>/dev/null | head -n1 || true)
 [[ -n "$IPA_PATH" && -f "$IPA_PATH" ]] || die "No .ipa found in $IPA_DIR — build or export failed. Check logs and your Xcode signing (Xcode → Settings → Accounts)."
 
-# Extract CFBundleVersion / CFBundleShortVersionString from the freshly built IPA
-INFO_PLIST=$(unzip -p "$IPA_PATH" "Payload/Runner.app/Info.plist")
-[[ -n "$INFO_PLIST" ]] || die "Could not read Info.plist inside $IPA_PATH"
+# Extract CFBundleVersion / CFBundleShortVersionString from the freshly built IPA.
+# Info.plist is stored in binary form inside the IPA, so extract to a temp file
+# (plutil cannot read binary plist from stdin reliably).
+TMP_PLIST=$(mktemp -t mealtracker-info.XXXXXX).plist
+trap 'rm -f "$TMP_PLIST"' EXIT
+unzip -p "$IPA_PATH" "Payload/Runner.app/Info.plist" > "$TMP_PLIST"
+[[ -s "$TMP_PLIST" ]] || die "Could not read Info.plist inside $IPA_PATH"
 
-ACTUAL_BUILD=$(echo "$INFO_PLIST" | plutil -extract CFBundleVersion raw -)
-ACTUAL_NAME=$(echo "$INFO_PLIST" | plutil -extract CFBundleShortVersionString raw -)
+ACTUAL_BUILD=$(plutil -extract CFBundleVersion raw "$TMP_PLIST")
+ACTUAL_NAME=$(plutil -extract CFBundleShortVersionString raw "$TMP_PLIST")
 
 info "IPA CFBundleShortVersionString : $ACTUAL_NAME"
 info "IPA CFBundleVersion            : $ACTUAL_BUILD"
