@@ -42,6 +42,7 @@ class RecognitionResponse(BaseModel):
 
 class TextRecognitionRequest(BaseModel):
     text: str
+    locale: str | None = None
 
 
 IMAGE_SIGNATURES = [
@@ -79,14 +80,17 @@ def detect_image_type(data: bytes) -> str:
 async def recognize(
     file: UploadFile = File(...),
     text: str = Form(default=""),
+    locale: str = Form(default=""),
     user_id: str = Depends(get_current_user_id),
 ):
     image_bytes = await file.read()
     user_text = text.strip() if text else ""
+    user_locale = locale.strip() or None
     logger.info(
-        "recognize: filename=%s content_type=%s size=%d text=%r bytes_head=%s",
+        "recognize: filename=%s content_type=%s size=%d text=%r locale=%s bytes_head=%s",
         file.filename, file.content_type, len(image_bytes),
         user_text[:100] if user_text else "",
+        user_locale,
         image_bytes[:8].hex() if image_bytes else "empty",
     )
 
@@ -106,7 +110,11 @@ async def recognize(
         raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
 
     try:
-        result = await recognize_food(image_bytes, text=user_text or None)
+        result = await recognize_food(
+            image_bytes,
+            text=user_text or None,
+            locale=user_locale,
+        )
         return RecognitionResponse(**result)
     except AIRecognitionError as e:
         logger.warning("AI recognition failed: kind=%s msg=%s", e.kind, e)
@@ -135,10 +143,14 @@ async def recognize_text(
     if len(text) > 2000:
         raise HTTPException(status_code=400, detail="Text too long (max 2000 chars)")
 
-    logger.info("recognize_text: user=%s text=%r", user_id, text[:100])
+    user_locale = (request.locale or "").strip() or None
+    logger.info(
+        "recognize_text: user=%s locale=%s text=%r",
+        user_id, user_locale, text[:100],
+    )
 
     try:
-        result = await recognize_food_from_text(text)
+        result = await recognize_food_from_text(text, locale=user_locale)
         return RecognitionResponse(**result)
     except AIRecognitionError as e:
         logger.warning("AI text recognition failed: kind=%s msg=%s", e.kind, e)

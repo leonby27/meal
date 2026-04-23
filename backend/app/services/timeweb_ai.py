@@ -13,18 +13,42 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 _JSON_SCHEMA = """{
-  "name": "Название блюда",
+  "name": "Dish name",
   "total_grams": 350,
   "ingredients": [
-    {"name": "Куриное яйцо (2 шт.)", "grams": 110, "protein": 14.0, "fat": 11.0, "carbs": 0.8, "calories": 155},
-    {"name": "Помидоры", "grams": 80, "protein": 0.9, "fat": 0.2, "carbs": 3.2, "calories": 18},
-    {"name": "Сыр твёрдый", "grams": 30, "protein": 7.5, "fat": 8.4, "carbs": 0.0, "calories": 105}
+    {"name": "Chicken egg (2 шт.)", "grams": 110, "protein": 14.0, "fat": 11.0, "carbs": 0.8, "calories": 155},
+    {"name": "Tomatoes", "grams": 80, "protein": 0.9, "fat": 0.2, "carbs": 3.2, "calories": 18},
+    {"name": "Hard cheese", "grams": 30, "protein": 7.5, "fat": 8.4, "carbs": 0.0, "calories": 105}
   ],
   "per_100g": {"protein": 10.5, "fat": 8.5, "carbs": 2.2, "calories": 127},
   "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278}
 }"""
 
-# Shared instructions used by both the image and text prompts.
+# BCP-47 / ISO 639-1 language code → full English language name.
+# Used to explicitly tell the model which language to respond in.
+# Everything the model produces for the user (dish name, ingredient
+# names) must be in this language; only the "(N шт.)" piece-count
+# marker stays constant across languages so the client-side regex
+# (see ai_meal_result_sheet.dart: RegExp(r'\((\d+)\s*шт\.?\)')) still
+# matches regardless of UI language.
+_LANGUAGE_NAMES = {
+    "ru": "Russian",
+    "en": "English",
+    "de": "German",
+    "es": "Spanish",
+    "fr": "French",
+    "pt": "Portuguese",
+}
+
+
+def _language_name(locale: str | None) -> str:
+    if not locale:
+        return "Russian"
+    code = locale.lower().split("-")[0].split("_")[0]
+    return _LANGUAGE_NAMES.get(code, "English")
+
+
+# Shared rules used by both the image and text prompts.
 #
 # IMPORTANT — piece-count format:
 # For countable ingredients (eggs, sausages, cutlets, meatballs, shrimp,
@@ -34,40 +58,64 @@ _JSON_SCHEMA = """{
 # the client assumes `grams` = total weight for ALL pieces, and computes
 # per-unit grams as grams / N.
 #
-# Do NOT add "(N шт.)" to bulk / non-countable ingredients (sauce, oil,
-# grated cheese, salad leaves, rice, pasta, mince, etc.) — those should
-# stay as free-form grams only.
-_COMMON_RULES = """Правила формата ингредиентов:
-- Для штучных ингредиентов (яйца, сосиски, котлеты, фрикадельки,
-  креветки, пельмени, печенье, куски пиццы/хлеба и т.п.) добавь в конец
-  name «(N шт.)», где N — целое количество штук.
-  А в поле grams укажи СУММАРНЫЙ вес всех штук.
-  Пример: "name": "Куриное яйцо (2 шт.)", "grams": 110.
-- Для НЕштучных / массовых ингредиентов (соус, масло, тёртый сыр,
-  листья салата, рис, макароны, фарш, порезанные овощи) «(N шт.)» НЕ
-  добавляй — оставь просто название и вес в граммах.
-- Считай БЖУ/калории для КАЖДОГО ингредиента отдельно — это нужно,
-  чтобы при изменении количества штук клиент пересчитал итог.
-- total должен быть равен сумме по ингредиентам (с точностью до 1–2%).
+# The "шт." suffix is Cyrillic on purpose and is the ONLY format the
+# client currently recognises — do not localise it to "pcs" / "units"
+# / etc., or the stepper will never appear for non-Russian UI locales.
+_COMMON_RULES_EN = """Ingredient formatting rules:
+- For countable ingredients (eggs, sausages, cutlets, meatballs, shrimp,
+  dumplings, cookies, slices of bread/pizza, etc.) append "(N шт.)" to
+  the `name`, where N is the integer number of pieces. The literal
+  characters "шт." (Cyrillic) MUST be used verbatim regardless of the
+  response language — the client parses this exact marker to show a
+  +/- stepper. Put the TOTAL combined weight of all pieces into
+  `grams`. Example: {"name": "Chicken egg (2 шт.)", "grams": 110}.
+- For bulk / non-countable ingredients (sauce, oil, grated cheese,
+  lettuce, rice, pasta, minced meat, chopped vegetables, etc.) do NOT
+  add "(N шт.)" — just use the name and weight in grams.
+- Compute protein / fat / carbs / calories for EACH ingredient
+  separately so the client can re-total when the user changes piece
+  counts.
+- `total` must equal the sum across ingredients (within 1–2%).
 
-Ответь СТРОГО в формате JSON (без markdown, без текста до/после):
+Respond STRICTLY as JSON (no markdown, no text before or after):
 """ + _JSON_SCHEMA
 
-SYSTEM_PROMPT = f"""Ты профессиональный диетолог-нутрициолог. Проанализируй фотографию еды и определи:
-1. Название блюда
-2. Список ингредиентов с примерными граммовками
-3. БЖУ и калории на всю порцию и на 100 г
+_IMAGE_TASK_EN = """You are a professional dietitian / nutritionist. Analyse the food photograph and determine:
+1. Dish name
+2. Ingredient list with approximate weights
+3. Protein / fat / carbs / calories for the whole portion and per 100 g"""
 
-{_COMMON_RULES}"""
+_TEXT_TASK_EN = """You are a professional dietitian / nutritionist. From the user's textual description of food, determine:
+1. Dish name
+2. Ingredient list with approximate weights
+3. Protein / fat / carbs / calories for the whole portion and per 100 g
 
-TEXT_SYSTEM_PROMPT = f"""Ты профессиональный диетолог-нутрициолог. По текстовому описанию еды определи:
-1. Название блюда
-2. Список ингредиентов с примерными граммовками
-3. БЖУ и калории на всю порцию и на 100 г
+If the user gave an explicit weight — use it. Otherwise estimate a
+standard portion."""
 
-Если пользователь указал граммовку — используй её. Если нет — оцени стандартную порцию.
 
-{_COMMON_RULES}"""
+def build_image_prompt(locale: str | None) -> str:
+    lang = _language_name(locale)
+    return (
+        f"{_IMAGE_TASK_EN}\n\n"
+        f"Respond entirely in {lang}. All dish names, ingredient names and "
+        f"any free-form text you produce must be in {lang}. The only "
+        f"exception is the literal Cyrillic \"шт.\" marker described below, "
+        f"which stays the same in every language.\n\n"
+        f"{_COMMON_RULES_EN}"
+    )
+
+
+def build_text_prompt(locale: str | None) -> str:
+    lang = _language_name(locale)
+    return (
+        f"{_TEXT_TASK_EN}\n\n"
+        f"Respond entirely in {lang}. All dish names, ingredient names and "
+        f"any free-form text you produce must be in {lang}. The only "
+        f"exception is the literal Cyrillic \"шт.\" marker described below, "
+        f"which stays the same in every language.\n\n"
+        f"{_COMMON_RULES_EN}"
+    )
 
 MAX_DIMENSION = 768
 JPEG_QUALITY = 75
@@ -283,21 +331,34 @@ async def _post_with_retries(payload: dict) -> dict:
     raise last_exc
 
 
-async def recognize_food(image_bytes: bytes, *, text: str | None = None) -> dict:
+async def recognize_food(
+    image_bytes: bytes,
+    *,
+    text: str | None = None,
+    locale: str | None = None,
+) -> dict:
     """Отправляет фото еды в Timeweb Cloud AI-агент для распознавания.
 
     Если передан text, он используется как сопроводительное описание к фото.
+    locale — код языка UI (ru/en/de/es/fr/pt); модель должна отвечать именно на нём.
     """
     image_base64 = normalize_image(image_bytes)
+    lang = _language_name(locale)
 
     if text:
-        user_text = f"Вот фото еды. Описание от пользователя: «{text}». Определи блюдо и его БЖУ. Ответь JSON."
+        user_text = (
+            f"Here is a photo of food. User-provided description: \"{text}\". "
+            f"Identify the dish and its nutrition. Reply as JSON, in {lang}."
+        )
     else:
-        user_text = "Определи блюдо на фото и его БЖУ. Ответь JSON."
+        user_text = (
+            f"Identify the dish in the photo and its nutrition. "
+            f"Reply as JSON, in {lang}."
+        )
 
     payload = {
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": build_image_prompt(locale)},
             {
                 "role": "user",
                 "content": [
@@ -322,12 +383,24 @@ async def recognize_food(image_bytes: bytes, *, text: str | None = None) -> dict
     return _parse_ai_response(data)
 
 
-async def recognize_food_from_text(text: str) -> dict:
-    """Отправляет текстовое описание еды в Timeweb Cloud AI-агент для оценки КБЖУ."""
+async def recognize_food_from_text(
+    text: str,
+    *,
+    locale: str | None = None,
+) -> dict:
+    """Отправляет текстовое описание еды в Timeweb Cloud AI-агент для оценки КБЖУ.
+
+    locale — код языка UI (ru/en/de/es/fr/pt); модель должна отвечать именно на нём.
+    """
+    lang = _language_name(locale)
+    user_text = (
+        f"User description of the food: \"{text}\".\n"
+        f"Identify the dish and its nutrition. Reply as JSON, in {lang}."
+    )
     payload = {
         "messages": [
-            {"role": "system", "content": TEXT_SYSTEM_PROMPT},
-            {"role": "user", "content": text},
+            {"role": "system", "content": build_text_prompt(locale)},
+            {"role": "user", "content": user_text},
         ],
         "temperature": 0.2,
         "max_tokens": MAX_TOKENS,
