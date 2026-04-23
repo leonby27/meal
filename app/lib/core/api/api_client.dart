@@ -372,10 +372,23 @@ class ApiClient {
     }
   }
 
+  /// Transient HTTP statuses that we retry automatically. 502/503/504 are
+  /// classic "upstream hiccup" codes (our server surfaces Gemini outages as
+  /// 502/503). 429 is rate-limit — a small backoff is enough most of the time.
+  /// 500 is conservatively included because our backend sometimes returns it
+  /// on transient Gemini failures.
+  static const Set<int> _retriableStatuses = {429, 500, 502, 503, 504};
+
   Future<http.Response> _withRetry(Future<http.Response> Function() request) async {
     for (var attempt = 0; attempt < _maxRetries; attempt++) {
       try {
-        return await request();
+        final response = await request();
+        if (_retriableStatuses.contains(response.statusCode) &&
+            attempt < _maxRetries - 1) {
+          await _backoff(attempt);
+          continue;
+        }
+        return response;
       } on SocketException catch (e) {
         if (attempt == _maxRetries - 1) throw NetworkException(_friendlyNetworkError(e));
         await _backoff(attempt);
