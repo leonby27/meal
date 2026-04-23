@@ -343,6 +343,15 @@ class ApiClient {
   ///
   /// On Android (and other non-Apple platforms) we skip probing entirely
   /// because only IOClient is meaningful there.
+  ///
+  /// IMPORTANT: this method is best-effort and MUST NOT fail the caller.
+  /// If every probe fails (e.g. the backend happens to be in the middle
+  /// of an auto-deploy restart, or the Wi-Fi momentarily blinked), we
+  /// fall back to a sane default transport without pinning it. The
+  /// subsequent [_withRetry] then gets a chance to actually hit the
+  /// server a few times — any one of those attempts succeeding is much
+  /// better than surfacing an immediate "could not reach the server"
+  /// to the user on a transient hiccup.
   Future<void> _selectUploadClient() async {
     if (_uploadClientSelected) return;
     if (!(Platform.isIOS || Platform.isMacOS)) {
@@ -374,10 +383,18 @@ class ApiClient {
       return;
     }
 
-    _activeClientTag = 'none';
-    throw NetworkException(
-      '${currentL10n.networkRetryFailed} [all/probe]',
-    );
+    // All probes failed. Instead of failing the request outright, fall
+    // back to the platform-native transport and let _withRetry take
+    // over. We do NOT pin (_uploadClientSelected stays false) so the
+    // next request / retry can re-probe and possibly find a working
+    // client now that the transient blip is over.
+    if (cupertinoClient != null) {
+      _client = cupertinoClient;
+      _activeClientTag = 'cup?';
+    } else {
+      _client = _ioClient;
+      _activeClientTag = 'io?';
+    }
   }
 
   /// Forget the currently-pinned client so the next request re-probes
