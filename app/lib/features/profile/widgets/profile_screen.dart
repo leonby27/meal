@@ -719,8 +719,11 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
               label: context.l10n.manageSubscription,
               svgAsset: 'assets/icons/settings_adjust.svg',
               onTap: () {
+                final url = Platform.isIOS
+                    ? 'https://apps.apple.com/account/subscriptions'
+                    : 'https://play.google.com/store/account/subscriptions';
                 launchUrl(
-                  Uri.parse('https://play.google.com/store/account/subscriptions'),
+                  Uri.parse(url),
                   mode: LaunchMode.externalApplication,
                 );
               },
