@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -23,10 +25,11 @@ class _PaywallScreenState extends State<PaywallScreen>
   static const _privacyUrl = 'https://leonby27.github.io/meal/privacy-policy.html';
 
   int _selectedPlan = 1; // yearly pre-selected
-  bool _restoring = false;
   late final AnimationController _enterController;
   late final Animation<double> _fadeIn;
   late final Animation<Offset> _slideUp;
+
+  StreamSubscription<SubEvent>? _eventsSub;
 
   @override
   void initState() {
@@ -47,7 +50,15 @@ class _PaywallScreenState extends State<PaywallScreen>
       curve: Curves.easeOutCubic,
     ));
     _enterController.forward();
+
     AuthService().addListener(_onAuthChanged);
+
+    final sub = SubscriptionService();
+    sub.addListener(_onStateChanged);
+    _eventsSub = sub.events.listen(_onSubEvent);
+
+    // Make sure products are fetched by the time the user taps the CTA.
+    sub.ensureProductsLoaded();
   }
 
   void _onAuthChanged() {
@@ -56,9 +67,53 @@ class _PaywallScreenState extends State<PaywallScreen>
     }
   }
 
+  /// Fires on every [SubscriptionService] state change — triggers a rebuild
+  /// so the CTA can reflect loading / disabled / ready states.
+  void _onStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Handles one-shot events delivered via the broadcast event stream.
+  /// Every event corresponds to exactly one UI reaction (dialog or snackbar).
+  void _onSubEvent(SubEvent event) {
+    if (!mounted) return;
+    final l = context.l10n;
+
+    switch (event) {
+      case StoreUnavailableEvent():
+        _showErrorDialog(l.paywallErrorStoreUnavailable);
+      case ProductsEmptyEvent():
+        _showErrorDialog(l.paywallErrorProductsEmpty);
+      case ProductsLoadFailedEvent(details: final d):
+        _showErrorDialog(l.paywallErrorQueryFailed, debugDetails: d);
+      case PurchaseFailedEvent(details: final d):
+        _showErrorDialog(l.paywallErrorPurchaseFailed, debugDetails: d);
+      case PaymentPendingEvent():
+        _showErrorDialog(l.paywallErrorPaymentPending, showRetry: false);
+      case PurchaseCanceledEvent():
+        // Silent — user explicitly dismissed the Apple sheet.
+        break;
+      case PurchaseSuccessEvent():
+        // Navigation happens via AuthService listener when premium flips on.
+        break;
+      case RestoreCompletedEvent(foundActive: final found):
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(found
+                ? l.paywallRestoreSuccess
+                : l.paywallRestoreNotFound),
+          ),
+        );
+      case RestoreFailedEvent(details: final d):
+        _showErrorDialog(l.paywallErrorRestoreFailed, debugDetails: d);
+    }
+  }
+
   @override
   void dispose() {
     AuthService().removeListener(_onAuthChanged);
+    SubscriptionService().removeListener(_onStateChanged);
+    _eventsSub?.cancel();
     _enterController.dispose();
     super.dispose();
   }
@@ -69,35 +124,25 @@ class _PaywallScreenState extends State<PaywallScreen>
         .format(end);
   }
 
-  ProductDetails? get _weeklyProduct {
-    final products = SubscriptionService().products;
-    for (final p in products) {
-      if (p.id == SubscriptionService.weeklyId) return p;
-    }
-    return null;
-  }
+  ProductDetails? get _weeklyProduct =>
+      SubscriptionService().productById(SubscriptionService.weeklyId);
 
-  ProductDetails? get _yearlyProduct {
-    final products = SubscriptionService().products;
-    for (final p in products) {
-      if (p.id == SubscriptionService.yearlyId) return p;
-    }
-    return null;
-  }
+  ProductDetails? get _yearlyProduct =>
+      SubscriptionService().productById(SubscriptionService.yearlyId);
 
-  String get _weeklyPriceLabel {
+  String _weeklyPriceLabel() {
     final p = _weeklyProduct;
-    if (p == null) return context.l10n.paywallMonthlyPrice;
+    if (p == null) return context.l10n.paywallLoadingPrice;
     return '${p.price} / ${context.l10n.paywallPerWeek}';
   }
 
-  String get _yearlyPriceLabel {
+  String _yearlyPriceLabel() {
     final p = _yearlyProduct;
-    if (p == null) return context.l10n.paywallYearlyPrice;
+    if (p == null) return context.l10n.paywallLoadingPrice;
     return '${p.price} / ${context.l10n.paywallPerYear}';
   }
 
-  String get _trialDisclaimer {
+  String _trialDisclaimer() {
     final p = _yearlyProduct;
     if (p == null) return context.l10n.paywallTrialDisclaimer;
     return context.l10n.paywallTrialDisclaimerFmt(p.price);
@@ -105,66 +150,24 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   Future<void> _subscribe() async {
     final sub = SubscriptionService();
-    if (sub.products.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.paywallSubscriptionError)),
-      );
-      return;
-    }
+    // The CTA is only enabled when products are ready; this guard is a
+    // belt-and-braces safety net rather than an expected code path.
+    if (sub.products.isEmpty) return;
 
     final productId = _selectedPlan == 0
         ? SubscriptionService.weeklyId
         : SubscriptionService.yearlyId;
 
-    final product = sub.products.firstWhere(
-      (p) => p.id == productId,
-      orElse: () => sub.products.first,
-    );
-
-    try {
-      await sub.buy(product);
-    } catch (e) {
-      debugPrint('Subscribe error: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.paywallSubscriptionError)),
-      );
-    }
+    final product = sub.productById(productId) ?? sub.products.first;
+    await sub.buy(product);
+    // Success / failure / cancel are delivered via the events stream.
   }
 
-  Future<void> _restore() async {
-    final sub = SubscriptionService();
-    if (!sub.isAvailable) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.paywallSubscriptionError)),
-      );
-      return;
-    }
-
-    setState(() => _restoring = true);
-    try {
-      await sub.restore();
-      if (!mounted) return;
-      setState(() => _restoring = false);
-
-      if (AuthService().isPremium) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.paywallRestoreSuccess)),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.paywallRestoreNotFound)),
-        );
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _restoring = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.paywallSubscriptionError)),
-      );
-    }
+  /// Triggers a user-initiated restore. The service emits a
+  /// [RestoreCompletedEvent] or [RestoreFailedEvent] which is handled in
+  /// [_onSubEvent] — this function just fires and forgets.
+  void _restore() {
+    SubscriptionService().restore();
   }
 
   bool get _isHardPaywall => AuthService().freeTrialExhausted;
@@ -196,11 +199,58 @@ class _PaywallScreenState extends State<PaywallScreen>
     }
   }
 
+  Future<void> _showErrorDialog(
+    String message, {
+    String? debugDetails,
+    bool showRetry = true,
+  }) async {
+    if (!mounted) return;
+    final l = context.l10n;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(l.paywallErrorTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message),
+              if (kDebugMode && debugDetails != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  debugDetails,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(l.close),
+            ),
+            if (showRetry)
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  SubscriptionService().ensureProductsLoaded();
+                },
+                child: Text(l.paywallTryAgain),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isHard = _isHardPaywall;
     final canGoBack = !isHard && Navigator.of(context).canPop();
+    final sub = SubscriptionService();
 
     return PopScope(
       canPop: canGoBack,
@@ -214,236 +264,260 @@ class _PaywallScreenState extends State<PaywallScreen>
                   position: _slideUp,
                   child: Column(
                     children: [
-                  // --- Top bar ---
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      children: [
-                        if (canGoBack)
-                          IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: Icon(Icons.arrow_back,
-                                color: cs.onSurface, size: 24),
-                          )
-                        else
-                          const SizedBox(width: 48),
-                        const Spacer(),
-                        PopupMenuButton<String>(
-                          icon: Icon(Icons.more_vert,
-                              color: cs.onSurfaceVariant, size: 24),
-                          onSelected: (value) {
-                            switch (value) {
-                              case 'restore':
-                                _restore();
-                              case 'terms':
-                                launchUrl(Uri.parse(_termsUrl),
-                                    mode: LaunchMode.externalApplication);
-                              case 'privacy':
-                                launchUrl(Uri.parse(_privacyUrl),
-                                    mode: LaunchMode.externalApplication);
-                              case 'code':
-                                _redeemCode();
-                              case 'restart':
-                                AuthService().resetOnboarding();
-                            }
-                          },
-                          itemBuilder: (_) => [
-                            PopupMenuItem(
-                              value: 'restore',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.refresh,
-                                      size: 20, color: cs.onSurface),
-                                  const SizedBox(width: 12),
-                                  Text(context.l10n.paywallRestore),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'terms',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.description_outlined,
-                                      size: 20, color: cs.onSurface),
-                                  const SizedBox(width: 12),
-                                  Text(context.l10n.paywallTerms),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'privacy',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.lock_outline,
-                                      size: 20, color: cs.onSurface),
-                                  const SizedBox(width: 12),
-                                  Text(context.l10n.paywallPrivacy),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'code',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.card_giftcard,
-                                      size: 20, color: cs.onSurface),
-                                  const SizedBox(width: 12),
-                                  Text(context.l10n.paywallHaveCode),
-                                ],
-                              ),
-                            ),
-                            if (kDebugMode) ...[
-                              const PopupMenuDivider(),
-                              PopupMenuItem(
-                                value: 'restart',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.restart_alt,
-                                        size: 20, color: cs.onSurface),
-                                    const SizedBox(width: 12),
-                                    Text(context.l10n.restartOnboarding),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // --- Scrollable content ---
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 8),
-
-                          // --- Title ---
-                          Text(
-                            isHard
-                                ? context.l10n.paywallHardTitle
-                                : context.l10n.paywallTitle,
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              height: 1.25,
-                              color: cs.onSurface,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 32),
-
-                          // --- Vertical timeline (only for trial offer) ---
-                          if (!isHard) ...[
-                            _TimelineItem(
-                              svgAsset: 'assets/icons/lock_unlocked.svg',
-                              iconBg: cs.primary,
-                              title: context.l10n.paywallTimelineTodayTitle,
-                              description:
-                                  context.l10n.paywallTimelineTodayDesc,
-                              isFirst: true,
-                              isLast: false,
-                            ),
-                            _TimelineItem(
-                              svgAsset: 'assets/icons/bell.svg',
-                              iconBg: cs.primary,
-                              title:
-                                  context.l10n.paywallTimelineReminderTitle,
-                              description:
-                                  context.l10n.paywallTimelineReminderDesc,
-                              isFirst: false,
-                              isLast: false,
-                            ),
-                            _TimelineItem(
-                              svgAsset: 'assets/icons/crown.svg',
-                              iconBg: cs.inverseSurface,
-                              iconColor: cs.surface,
-                              title: context.l10n.paywallTimelinePayTitle,
-                              description: context.l10n
-                                  .paywallTimelinePayDesc(_trialEndDate),
-                              isFirst: false,
-                              isLast: true,
-                            ),
-                            const SizedBox(height: 28),
-                          ],
-
-                          // --- Plan cards side by side ---
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _PlanCard(
-                                  title: context.l10n.paywallMonthly,
-                                  price: _weeklyPriceLabel,
-                                  badge: null,
-                                  isSelected: _selectedPlan == 0,
-                                  onTap: () =>
-                                      setState(() => _selectedPlan = 0),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _PlanCard(
-                                  title: context.l10n.paywallYearly,
-                                  price: _yearlyPriceLabel,
-                                  badge: isHard ? null : context.l10n.paywallTrialBadge,
-                                  isSelected: _selectedPlan == 1,
-                                  onTap: () =>
-                                      setState(() => _selectedPlan = 1),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          // --- No payment now (trial only) ---
-                          if (!isHard)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check,
-                                    size: 18, color: cs.onSurface),
-                                const SizedBox(width: 6),
-                                Text(
-                                  context.l10n.paywallNoPaymentNow,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: cs.onSurface,
+                      // --- Top bar ---
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        child: Row(
+                          children: [
+                            if (canGoBack)
+                              IconButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                icon: Icon(Icons.arrow_back,
+                                    color: cs.onSurface, size: 24),
+                              )
+                            else
+                              const SizedBox(width: 48),
+                            const Spacer(),
+                            PopupMenuButton<String>(
+                              icon: Icon(Icons.more_vert,
+                                  color: cs.onSurfaceVariant, size: 24),
+                              onSelected: (value) {
+                                switch (value) {
+                                  case 'restore':
+                                    _restore();
+                                  case 'terms':
+                                    launchUrl(Uri.parse(_termsUrl),
+                                        mode: LaunchMode.externalApplication);
+                                  case 'privacy':
+                                    launchUrl(Uri.parse(_privacyUrl),
+                                        mode: LaunchMode.externalApplication);
+                                  case 'code':
+                                    _redeemCode();
+                                  case 'diagnostics':
+                                    _showDiagnostics();
+                                  case 'restart':
+                                    AuthService().resetOnboarding();
+                                }
+                              },
+                              itemBuilder: (_) => [
+                                PopupMenuItem(
+                                  value: 'restore',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.refresh,
+                                          size: 20, color: cs.onSurface),
+                                      const SizedBox(width: 12),
+                                      Text(context.l10n.paywallRestore),
+                                    ],
                                   ),
                                 ),
+                                PopupMenuItem(
+                                  value: 'terms',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.description_outlined,
+                                          size: 20, color: cs.onSurface),
+                                      const SizedBox(width: 12),
+                                      Text(context.l10n.paywallTerms),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'privacy',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.lock_outline,
+                                          size: 20, color: cs.onSurface),
+                                      const SizedBox(width: 12),
+                                      Text(context.l10n.paywallPrivacy),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'code',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.card_giftcard,
+                                          size: 20, color: cs.onSurface),
+                                      const SizedBox(width: 12),
+                                      Text(context.l10n.paywallHaveCode),
+                                    ],
+                                  ),
+                                ),
+                                if (kDebugMode) ...[
+                                  const PopupMenuDivider(),
+                                  PopupMenuItem(
+                                    value: 'diagnostics',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.bug_report_outlined,
+                                            size: 20, color: cs.onSurface),
+                                        const SizedBox(width: 12),
+                                        const Text('IAP diagnostics'),
+                                      ],
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'restart',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.restart_alt,
+                                            size: 20, color: cs.onSurface),
+                                        const SizedBox(width: 12),
+                                        Text(context.l10n.restartOnboarding),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
-                          const SizedBox(height: 24),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
 
-                  // --- Bottom CTA ---
-                  _buildBottomCTA(context),
-                ],
+                      // --- Scrollable content ---
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 8),
+
+                              // --- Title ---
+                              Text(
+                                isHard
+                                    ? context.l10n.paywallHardTitle
+                                    : context.l10n.paywallTitle,
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.25,
+                                  color: cs.onSurface,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 32),
+
+                              if (!isHard) ...[
+                                _TimelineItem(
+                                  svgAsset: 'assets/icons/lock_unlocked.svg',
+                                  iconBg: cs.primary,
+                                  title: context
+                                      .l10n.paywallTimelineTodayTitle,
+                                  description: context
+                                      .l10n.paywallTimelineTodayDesc,
+                                  isFirst: true,
+                                  isLast: false,
+                                ),
+                                _TimelineItem(
+                                  svgAsset: 'assets/icons/bell.svg',
+                                  iconBg: cs.primary,
+                                  title: context
+                                      .l10n.paywallTimelineReminderTitle,
+                                  description: context
+                                      .l10n.paywallTimelineReminderDesc,
+                                  isFirst: false,
+                                  isLast: false,
+                                ),
+                                _TimelineItem(
+                                  svgAsset: 'assets/icons/crown.svg',
+                                  iconBg: cs.inverseSurface,
+                                  iconColor: cs.surface,
+                                  title:
+                                      context.l10n.paywallTimelinePayTitle,
+                                  description: context.l10n
+                                      .paywallTimelinePayDesc(_trialEndDate),
+                                  isFirst: false,
+                                  isLast: true,
+                                ),
+                                const SizedBox(height: 28),
+                              ],
+
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _PlanCard(
+                                      title: context.l10n.paywallMonthly,
+                                      price: _weeklyPriceLabel(),
+                                      badge: null,
+                                      isSelected: _selectedPlan == 0,
+                                      isLoading: _weeklyProduct == null,
+                                      onTap: () => setState(
+                                          () => _selectedPlan = 0),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _PlanCard(
+                                      title: context.l10n.paywallYearly,
+                                      price: _yearlyPriceLabel(),
+                                      badge: isHard
+                                          ? null
+                                          : context.l10n.paywallTrialBadge,
+                                      isSelected: _selectedPlan == 1,
+                                      isLoading: _yearlyProduct == null,
+                                      onTap: () => setState(
+                                          () => _selectedPlan = 1),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              if (!isHard)
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.check,
+                                        size: 18, color: cs.onSurface),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      context.l10n.paywallNoPaymentNow,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: cs.onSurface,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      _buildBottomCTA(context, sub),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        if (_restoring)
-          Container(
-            color: Colors.black26,
-            child: const Center(child: CircularProgressIndicator()),
-          ),
+            if (sub.state == SubState.restoring)
+              Container(
+                color: Colors.black26,
+                child: const Center(child: CircularProgressIndicator()),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBottomCTA(BuildContext context) {
+  Widget _buildBottomCTA(BuildContext context, SubscriptionService sub) {
     final cs = Theme.of(context).colorScheme;
     final isHard = _isHardPaywall;
+
+    // The main CTA is tappable only when products are loaded and no purchase
+    // is currently in flight.
+    final bool canTap = sub.state == SubState.ready && sub.products.isNotEmpty;
+    final bool isPurchasing = sub.state == SubState.purchasing;
+    final bool isLoading =
+        sub.state == SubState.initializing || sub.products.isEmpty;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
@@ -454,30 +528,41 @@ class _PaywallScreenState extends State<PaywallScreen>
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _subscribe,
+              onPressed: canTap && !isPurchasing ? _subscribe : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: cs.onSurface,
                 foregroundColor: cs.surface,
+                disabledBackgroundColor: cs.onSurface.withAlpha(90),
+                disabledForegroundColor: cs.surface,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(28),
                 ),
                 elevation: 0,
               ),
-              child: Text(
-                isHard
-                    ? context.l10n.paywallSubscribeNow
-                    : context.l10n.paywallStartTrial,
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
-              ),
+              child: (isPurchasing || isLoading)
+                  ? SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        valueColor: AlwaysStoppedAnimation(cs.surface),
+                      ),
+                    )
+                  : Text(
+                      isHard
+                          ? context.l10n.paywallSubscribeNow
+                          : context.l10n.paywallStartTrial,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600),
+                      textAlign: TextAlign.center,
+                    ),
             ),
           ),
           const SizedBox(height: 10),
           Text(
             isHard
                 ? context.l10n.paywallHardDisclaimer
-                : _trialDisclaimer,
+                : _trialDisclaimer(),
             style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -500,8 +585,8 @@ class _PaywallScreenState extends State<PaywallScreen>
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: Text('·',
-                    style:
-                        TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+                    style: TextStyle(
+                        fontSize: 11, color: cs.onSurfaceVariant)),
               ),
               GestureDetector(
                 onTap: () => launchUrl(Uri.parse(_privacyUrl),
@@ -534,6 +619,60 @@ class _PaywallScreenState extends State<PaywallScreen>
           const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+
+  Future<void> _showDiagnostics() async {
+    final sub = SubscriptionService();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('IAP diagnostics'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('state: ${sub.state}'),
+                  if (sub.lastFailureDetails != null)
+                    Text('lastFailure: ${sub.lastFailureDetails}'),
+                  const SizedBox(height: 8),
+                  Text(
+                      'products (${sub.products.length}): ${sub.products.map((p) => '${p.id}=${p.price}').join(', ')}'),
+                  const Divider(),
+                  const Text('logs:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  ...sub.logs.reversed.map(
+                    (line) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 1),
+                      child: Text(line,
+                          style: const TextStyle(
+                              fontSize: 11, fontFamily: 'monospace')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                SubscriptionService().ensureProductsLoaded();
+              },
+              child: const Text('Re-query products'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -607,7 +746,6 @@ class _TimelineItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Right column: text
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
@@ -650,6 +788,7 @@ class _PlanCard extends StatelessWidget {
   final String price;
   final String? badge;
   final bool isSelected;
+  final bool isLoading;
   final VoidCallback onTap;
 
   const _PlanCard({
@@ -657,6 +796,7 @@ class _PlanCard extends StatelessWidget {
     required this.price,
     required this.badge,
     required this.isSelected,
+    required this.isLoading,
     required this.onTap,
   });
 
@@ -665,7 +805,7 @@ class _PlanCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -694,7 +834,6 @@ class _PlanCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    // Radio indicator
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       width: 22,
@@ -711,32 +850,47 @@ class _PlanCard extends StatelessWidget {
                         ),
                       ),
                       child: isSelected
-                          ? Icon(Icons.check,
-                              size: 14, color: cs.surface)
+                          ? Icon(Icons.check, size: 14, color: cs.surface)
                           : null,
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  price,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: cs.onSurface,
+                if (isLoading)
+                  SizedBox(
+                    height: 22,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation(cs.onSurfaceVariant),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    price,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurface,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
-          // Badge
           if (badge != null)
             Positioned(
               top: -10,
               right: 12,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: cs.onSurface,
                   borderRadius: BorderRadius.circular(8),

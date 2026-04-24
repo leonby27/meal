@@ -1062,6 +1062,39 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de charger les abonnements. Réessayez plus tard.';
 
   @override
+  String get paywallLoadingPrice => 'Chargement…';
+
+  @override
+  String get paywallErrorTitle => 'Abonnement indisponible';
+
+  @override
+  String get paywallTryAgain => 'Réessayer';
+
+  @override
+  String get paywallErrorStoreUnavailable =>
+      'L\'App Store n\'est pas disponible. Vérifiez que vous êtes connecté à l\'App Store et réessayez.';
+
+  @override
+  String get paywallErrorProductsEmpty =>
+      'Impossible de charger les options d\'abonnement. Vérifiez votre connexion et réessayez.';
+
+  @override
+  String get paywallErrorQueryFailed =>
+      'Impossible de contacter l\'App Store. Réessayez dans un instant.';
+
+  @override
+  String get paywallErrorPurchaseFailed =>
+      'L\'achat n\'a pas pu aboutir. Veuillez réessayer.';
+
+  @override
+  String get paywallErrorRestoreFailed =>
+      'Impossible de restaurer les achats. Veuillez réessayer.';
+
+  @override
+  String get paywallErrorPaymentPending =>
+      'Votre paiement est en attente. Pro sera débloqué dès son approbation.';
+
+  @override
   String get restartOnboarding => 'Recommencer';
 
   @override

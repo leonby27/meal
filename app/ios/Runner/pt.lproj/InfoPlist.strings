@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "Meal Tracker";
+"NSCameraUsageDescription" = "Permita o acesso à câmera para reconhecer seus alimentos nas fotos.";
+"NSPhotoLibraryUsageDescription" = "Permita o acesso às suas fotos para escolher imagens de alimentos.";

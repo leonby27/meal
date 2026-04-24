@@ -1059,6 +1059,39 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível carregar as assinaturas. Tente novamente mais tarde.';
 
   @override
+  String get paywallLoadingPrice => 'Carregando…';
+
+  @override
+  String get paywallErrorTitle => 'Assinatura indisponível';
+
+  @override
+  String get paywallTryAgain => 'Tentar de novo';
+
+  @override
+  String get paywallErrorStoreUnavailable =>
+      'A App Store não está disponível no momento. Certifique-se de estar conectado à App Store e tente novamente.';
+
+  @override
+  String get paywallErrorProductsEmpty =>
+      'Não foi possível carregar as opções de assinatura. Verifique sua conexão e tente novamente.';
+
+  @override
+  String get paywallErrorQueryFailed =>
+      'Não foi possível contatar a App Store. Tente novamente em instantes.';
+
+  @override
+  String get paywallErrorPurchaseFailed =>
+      'Não foi possível concluir a compra. Tente novamente.';
+
+  @override
+  String get paywallErrorRestoreFailed =>
+      'Não foi possível restaurar as compras. Tente novamente.';
+
+  @override
+  String get paywallErrorPaymentPending =>
+      'Seu pagamento está pendente. O Pro será liberado assim que for aprovado.';
+
+  @override
   String get restartOnboarding => 'Recomeçar';
 
   @override

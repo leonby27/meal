@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "Meal Tracker";
+"NSCameraUsageDescription" = "Kamerazugriff wird benötigt, um Mahlzeiten auf Fotos zu erkennen.";
+"NSPhotoLibraryUsageDescription" = "Fotozugriff wird benötigt, um Bilder von Mahlzeiten auszuwählen.";

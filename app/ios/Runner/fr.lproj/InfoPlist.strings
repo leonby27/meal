@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "Meal Tracker";
+"NSCameraUsageDescription" = "L'accès à l'appareil photo est nécessaire pour reconnaître vos repas sur les photos.";
+"NSPhotoLibraryUsageDescription" = "L'accès aux photos est nécessaire pour choisir des images de vos repas.";

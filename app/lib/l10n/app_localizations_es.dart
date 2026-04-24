@@ -1059,6 +1059,39 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudieron cargar las suscripciones. Inténtalo más tarde.';
 
   @override
+  String get paywallLoadingPrice => 'Cargando…';
+
+  @override
+  String get paywallErrorTitle => 'Suscripción no disponible';
+
+  @override
+  String get paywallTryAgain => 'Intentar de nuevo';
+
+  @override
+  String get paywallErrorStoreUnavailable =>
+      'La App Store no está disponible ahora. Asegúrate de haber iniciado sesión en la App Store e inténtalo de nuevo.';
+
+  @override
+  String get paywallErrorProductsEmpty =>
+      'No se pudieron cargar las opciones de suscripción. Comprueba tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get paywallErrorQueryFailed =>
+      'No se pudo conectar con la App Store. Inténtalo de nuevo en un momento.';
+
+  @override
+  String get paywallErrorPurchaseFailed =>
+      'No se pudo completar la compra. Inténtalo de nuevo.';
+
+  @override
+  String get paywallErrorRestoreFailed =>
+      'No se pudieron restaurar las compras. Inténtalo de nuevo.';
+
+  @override
+  String get paywallErrorPaymentPending =>
+      'Tu pago está pendiente. Activaremos Pro en cuanto se apruebe.';
+
+  @override
   String get restartOnboarding => 'Empezar de nuevo';
 
   @override

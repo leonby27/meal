@@ -1063,6 +1063,39 @@ class AppLocalizationsDe extends AppLocalizations {
       'Abonnements konnten nicht geladen werden. Versuchen Sie es später erneut.';
 
   @override
+  String get paywallLoadingPrice => 'Lädt…';
+
+  @override
+  String get paywallErrorTitle => 'Abonnement nicht verfügbar';
+
+  @override
+  String get paywallTryAgain => 'Erneut versuchen';
+
+  @override
+  String get paywallErrorStoreUnavailable =>
+      'Der App Store ist gerade nicht erreichbar. Bitte stelle sicher, dass du im App Store angemeldet bist, und versuche es erneut.';
+
+  @override
+  String get paywallErrorProductsEmpty =>
+      'Abonnement-Optionen konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.';
+
+  @override
+  String get paywallErrorQueryFailed =>
+      'Der App Store ist nicht erreichbar. Bitte versuche es gleich noch einmal.';
+
+  @override
+  String get paywallErrorPurchaseFailed =>
+      'Der Kauf konnte nicht abgeschlossen werden. Bitte versuche es erneut.';
+
+  @override
+  String get paywallErrorRestoreFailed =>
+      'Käufe konnten nicht wiederhergestellt werden. Bitte versuche es erneut.';
+
+  @override
+  String get paywallErrorPaymentPending =>
+      'Deine Zahlung wird bearbeitet. Pro wird freigeschaltet, sobald sie bestätigt ist.';
+
+  @override
   String get restartOnboarding => 'Neu starten';
 
   @override

@@ -2050,6 +2050,60 @@ abstract class AppLocalizations {
   /// **'Не удалось загрузить подписки. Попробуйте позже.'**
   String get paywallSubscriptionError;
 
+  /// No description provided for @paywallLoadingPrice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загрузка…'**
+  String get paywallLoadingPrice;
+
+  /// No description provided for @paywallErrorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подписка недоступна'**
+  String get paywallErrorTitle;
+
+  /// No description provided for @paywallTryAgain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get paywallTryAgain;
+
+  /// No description provided for @paywallErrorStoreUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'App Store сейчас недоступен. Убедитесь, что вы вошли в App Store, и попробуйте ещё раз.'**
+  String get paywallErrorStoreUnavailable;
+
+  /// No description provided for @paywallErrorProductsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить варианты подписки. Проверьте соединение и попробуйте ещё раз.'**
+  String get paywallErrorProductsEmpty;
+
+  /// No description provided for @paywallErrorQueryFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удаётся связаться с App Store. Попробуйте через минуту.'**
+  String get paywallErrorQueryFailed;
+
+  /// No description provided for @paywallErrorPurchaseFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Покупку не удалось завершить. Попробуйте ещё раз.'**
+  String get paywallErrorPurchaseFailed;
+
+  /// No description provided for @paywallErrorRestoreFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось восстановить покупки. Попробуйте ещё раз.'**
+  String get paywallErrorRestoreFailed;
+
+  /// No description provided for @paywallErrorPaymentPending.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оплата обрабатывается. Мы откроем Pro сразу после подтверждения.'**
+  String get paywallErrorPaymentPending;
+
   /// No description provided for @restartOnboarding.
   ///
   /// In ru, this message translates to:

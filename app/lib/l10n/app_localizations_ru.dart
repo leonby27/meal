@@ -1055,6 +1055,39 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось загрузить подписки. Попробуйте позже.';
 
   @override
+  String get paywallLoadingPrice => 'Загрузка…';
+
+  @override
+  String get paywallErrorTitle => 'Подписка недоступна';
+
+  @override
+  String get paywallTryAgain => 'Повторить';
+
+  @override
+  String get paywallErrorStoreUnavailable =>
+      'App Store сейчас недоступен. Убедитесь, что вы вошли в App Store, и попробуйте ещё раз.';
+
+  @override
+  String get paywallErrorProductsEmpty =>
+      'Не удалось загрузить варианты подписки. Проверьте соединение и попробуйте ещё раз.';
+
+  @override
+  String get paywallErrorQueryFailed =>
+      'Не удаётся связаться с App Store. Попробуйте через минуту.';
+
+  @override
+  String get paywallErrorPurchaseFailed =>
+      'Покупку не удалось завершить. Попробуйте ещё раз.';
+
+  @override
+  String get paywallErrorRestoreFailed =>
+      'Не удалось восстановить покупки. Попробуйте ещё раз.';
+
+  @override
+  String get paywallErrorPaymentPending =>
+      'Оплата обрабатывается. Мы откроем Pro сразу после подтверждения.';
+
+  @override
   String get restartOnboarding => 'Начать заново';
 
   @override
