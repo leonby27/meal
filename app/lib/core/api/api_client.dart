@@ -138,7 +138,7 @@ class _DohCacheEntry {
 class ApiClient {
   static const String _baseUrlKey = 'api_base_url';
   static const String _tokenKey = 'auth_token';
-  static const String defaultBaseUrl = 'https://leonby27-meal-29f6.twc1.net';
+  static const String defaultBaseUrl = 'https://bodymealapp.ru';
 
   static const int _maxRetries = 3;
   static const Duration _requestTimeout = Duration(seconds: 30);
