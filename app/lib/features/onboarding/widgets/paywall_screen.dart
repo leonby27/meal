@@ -22,7 +22,8 @@ class PaywallScreen extends StatefulWidget {
 class _PaywallScreenState extends State<PaywallScreen>
     with SingleTickerProviderStateMixin {
   static const _termsUrl = 'https://leonby27.github.io/meal/terms-of-use.html';
-  static const _privacyUrl = 'https://leonby27.github.io/meal/privacy-policy.html';
+  static const _privacyUrl =
+      'https://leonby27.github.io/meal/privacy-policy.html';
 
   int _selectedPlan = 1; // yearly pre-selected
   late final AnimationController _enterController;
@@ -38,17 +39,11 @@ class _PaywallScreenState extends State<PaywallScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _fadeIn = CurvedAnimation(
-      parent: _enterController,
-      curve: Curves.easeOut,
-    );
-    _slideUp = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _enterController,
-      curve: Curves.easeOutCubic,
-    ));
+    _fadeIn = CurvedAnimation(parent: _enterController, curve: Curves.easeOut);
+    _slideUp = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _enterController, curve: Curves.easeOutCubic),
+        );
     _enterController.forward();
 
     AuthService().addListener(_onAuthChanged);
@@ -99,9 +94,9 @@ class _PaywallScreenState extends State<PaywallScreen>
       case RestoreCompletedEvent(foundActive: final found):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(found
-                ? l.paywallRestoreSuccess
-                : l.paywallRestoreNotFound),
+            content: Text(
+              found ? l.paywallRestoreSuccess : l.paywallRestoreNotFound,
+            ),
           ),
         );
       case RestoreFailedEvent(details: final d):
@@ -120,8 +115,9 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   String get _trialEndDate {
     final end = DateTime.now().add(const Duration(days: 3));
-    return DateFormat.yMMMMd(Localizations.localeOf(context).toString())
-        .format(end);
+    return DateFormat.yMMMMd(
+      Localizations.localeOf(context).toString(),
+    ).format(end);
   }
 
   ProductDetails? get _weeklyProduct =>
@@ -130,14 +126,27 @@ class _PaywallScreenState extends State<PaywallScreen>
   ProductDetails? get _yearlyProduct =>
       SubscriptionService().productById(SubscriptionService.yearlyId);
 
-  String _weeklyPriceLabel() {
+  bool _productsLoadFailed(SubscriptionService sub) =>
+      sub.state == SubState.noProducts || sub.state == SubState.unavailable;
+
+  bool _productsAreLoading(SubscriptionService sub) =>
+      sub.state == SubState.initializing ||
+      (sub.state == SubState.idle && sub.products.isEmpty);
+
+  String _weeklyPriceLabel(SubscriptionService sub) {
     final p = _weeklyProduct;
+    if (p == null && _productsLoadFailed(sub)) {
+      return context.l10n.paywallTryAgain;
+    }
     if (p == null) return context.l10n.paywallLoadingPrice;
     return '${p.price} / ${context.l10n.paywallPerWeek}';
   }
 
-  String _yearlyPriceLabel() {
+  String _yearlyPriceLabel(SubscriptionService sub) {
     final p = _yearlyProduct;
+    if (p == null && _productsLoadFailed(sub)) {
+      return context.l10n.paywallTryAgain;
+    }
     if (p == null) return context.l10n.paywallLoadingPrice;
     return '${p.price} / ${context.l10n.paywallPerYear}';
   }
@@ -193,9 +202,9 @@ class _PaywallScreenState extends State<PaywallScreen>
       await AuthService().setPremium(isPremium: true, planName: 'promo_$code');
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.promoCodeInvalid)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.promoCodeInvalid)));
     }
   }
 
@@ -235,7 +244,7 @@ class _PaywallScreenState extends State<PaywallScreen>
               FilledButton(
                 onPressed: () {
                   Navigator.of(ctx).pop();
-                  SubscriptionService().ensureProductsLoaded();
+                  SubscriptionService().retryProductsLoading();
                 },
                 child: Text(l.paywallTryAgain),
               ),
@@ -267,31 +276,43 @@ class _PaywallScreenState extends State<PaywallScreen>
                       // --- Top bar ---
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         child: Row(
                           children: [
                             if (canGoBack)
                               IconButton(
                                 onPressed: () => Navigator.of(context).pop(),
-                                icon: Icon(Icons.arrow_back,
-                                    color: cs.onSurface, size: 24),
+                                icon: Icon(
+                                  Icons.arrow_back,
+                                  color: cs.onSurface,
+                                  size: 24,
+                                ),
                               )
                             else
                               const SizedBox(width: 48),
                             const Spacer(),
                             PopupMenuButton<String>(
-                              icon: Icon(Icons.more_vert,
-                                  color: cs.onSurfaceVariant, size: 24),
+                              icon: Icon(
+                                Icons.more_vert,
+                                color: cs.onSurfaceVariant,
+                                size: 24,
+                              ),
                               onSelected: (value) {
                                 switch (value) {
                                   case 'restore':
                                     _restore();
                                   case 'terms':
-                                    launchUrl(Uri.parse(_termsUrl),
-                                        mode: LaunchMode.externalApplication);
+                                    launchUrl(
+                                      Uri.parse(_termsUrl),
+                                      mode: LaunchMode.externalApplication,
+                                    );
                                   case 'privacy':
-                                    launchUrl(Uri.parse(_privacyUrl),
-                                        mode: LaunchMode.externalApplication);
+                                    launchUrl(
+                                      Uri.parse(_privacyUrl),
+                                      mode: LaunchMode.externalApplication,
+                                    );
                                   case 'code':
                                     _redeemCode();
                                   case 'diagnostics':
@@ -305,8 +326,11 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   value: 'restore',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.refresh,
-                                          size: 20, color: cs.onSurface),
+                                      Icon(
+                                        Icons.refresh,
+                                        size: 20,
+                                        color: cs.onSurface,
+                                      ),
                                       const SizedBox(width: 12),
                                       Text(context.l10n.paywallRestore),
                                     ],
@@ -316,8 +340,11 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   value: 'terms',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.description_outlined,
-                                          size: 20, color: cs.onSurface),
+                                      Icon(
+                                        Icons.description_outlined,
+                                        size: 20,
+                                        color: cs.onSurface,
+                                      ),
                                       const SizedBox(width: 12),
                                       Text(context.l10n.paywallTerms),
                                     ],
@@ -327,8 +354,11 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   value: 'privacy',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.lock_outline,
-                                          size: 20, color: cs.onSurface),
+                                      Icon(
+                                        Icons.lock_outline,
+                                        size: 20,
+                                        color: cs.onSurface,
+                                      ),
                                       const SizedBox(width: 12),
                                       Text(context.l10n.paywallPrivacy),
                                     ],
@@ -338,8 +368,11 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   value: 'code',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.card_giftcard,
-                                          size: 20, color: cs.onSurface),
+                                      Icon(
+                                        Icons.card_giftcard,
+                                        size: 20,
+                                        color: cs.onSurface,
+                                      ),
                                       const SizedBox(width: 12),
                                       Text(context.l10n.paywallHaveCode),
                                     ],
@@ -351,8 +384,11 @@ class _PaywallScreenState extends State<PaywallScreen>
                                     value: 'diagnostics',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.bug_report_outlined,
-                                            size: 20, color: cs.onSurface),
+                                        Icon(
+                                          Icons.bug_report_outlined,
+                                          size: 20,
+                                          color: cs.onSurface,
+                                        ),
                                         const SizedBox(width: 12),
                                         const Text('IAP diagnostics'),
                                       ],
@@ -362,8 +398,11 @@ class _PaywallScreenState extends State<PaywallScreen>
                                     value: 'restart',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.restart_alt,
-                                            size: 20, color: cs.onSurface),
+                                        Icon(
+                                          Icons.restart_alt,
+                                          size: 20,
+                                          color: cs.onSurface,
+                                        ),
                                         const SizedBox(width: 12),
                                         Text(context.l10n.restartOnboarding),
                                       ],
@@ -379,8 +418,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                       // --- Scrollable content ---
                       Expanded(
                         child: SingleChildScrollView(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -405,20 +443,19 @@ class _PaywallScreenState extends State<PaywallScreen>
                                 _TimelineItem(
                                   svgAsset: 'assets/icons/lock_unlocked.svg',
                                   iconBg: cs.primary,
-                                  title: context
-                                      .l10n.paywallTimelineTodayTitle,
-                                  description: context
-                                      .l10n.paywallTimelineTodayDesc,
+                                  title: context.l10n.paywallTimelineTodayTitle,
+                                  description:
+                                      context.l10n.paywallTimelineTodayDesc,
                                   isFirst: true,
                                   isLast: false,
                                 ),
                                 _TimelineItem(
                                   svgAsset: 'assets/icons/bell.svg',
                                   iconBg: cs.primary,
-                                  title: context
-                                      .l10n.paywallTimelineReminderTitle,
-                                  description: context
-                                      .l10n.paywallTimelineReminderDesc,
+                                  title:
+                                      context.l10n.paywallTimelineReminderTitle,
+                                  description:
+                                      context.l10n.paywallTimelineReminderDesc,
                                   isFirst: false,
                                   isLast: false,
                                 ),
@@ -426,8 +463,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   svgAsset: 'assets/icons/crown.svg',
                                   iconBg: cs.inverseSurface,
                                   iconColor: cs.surface,
-                                  title:
-                                      context.l10n.paywallTimelinePayTitle,
+                                  title: context.l10n.paywallTimelinePayTitle,
                                   description: context.l10n
                                       .paywallTimelinePayDesc(_trialEndDate),
                                   isFirst: false,
@@ -441,26 +477,30 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   Expanded(
                                     child: _PlanCard(
                                       title: context.l10n.paywallMonthly,
-                                      price: _weeklyPriceLabel(),
+                                      price: _weeklyPriceLabel(sub),
                                       badge: null,
                                       isSelected: _selectedPlan == 0,
-                                      isLoading: _weeklyProduct == null,
-                                      onTap: () => setState(
-                                          () => _selectedPlan = 0),
+                                      isLoading:
+                                          _weeklyProduct == null &&
+                                          _productsAreLoading(sub),
+                                      onTap: () =>
+                                          setState(() => _selectedPlan = 0),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: _PlanCard(
                                       title: context.l10n.paywallYearly,
-                                      price: _yearlyPriceLabel(),
+                                      price: _yearlyPriceLabel(sub),
                                       badge: isHard
                                           ? null
                                           : context.l10n.paywallTrialBadge,
                                       isSelected: _selectedPlan == 1,
-                                      isLoading: _yearlyProduct == null,
-                                      onTap: () => setState(
-                                          () => _selectedPlan = 1),
+                                      isLoading:
+                                          _yearlyProduct == null &&
+                                          _productsAreLoading(sub),
+                                      onTap: () =>
+                                          setState(() => _selectedPlan = 1),
                                     ),
                                   ),
                                 ],
@@ -469,11 +509,13 @@ class _PaywallScreenState extends State<PaywallScreen>
 
                               if (!isHard)
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.check,
-                                        size: 18, color: cs.onSurface),
+                                    Icon(
+                                      Icons.check,
+                                      size: 18,
+                                      color: cs.onSurface,
+                                    ),
                                     const SizedBox(width: 6),
                                     Text(
                                       context.l10n.paywallNoPaymentNow,
@@ -514,10 +556,11 @@ class _PaywallScreenState extends State<PaywallScreen>
 
     // The main CTA is tappable only when products are loaded and no purchase
     // is currently in flight.
-    final bool canTap = sub.state == SubState.ready && sub.products.isNotEmpty;
     final bool isPurchasing = sub.state == SubState.purchasing;
-    final bool isLoading =
-        sub.state == SubState.initializing || sub.products.isEmpty;
+    final bool isLoading = _productsAreLoading(sub);
+    final bool canSubscribe =
+        sub.state == SubState.ready && sub.products.isNotEmpty;
+    final bool canRetry = _productsLoadFailed(sub);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
@@ -528,7 +571,13 @@ class _PaywallScreenState extends State<PaywallScreen>
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: canTap && !isPurchasing ? _subscribe : null,
+              onPressed: isPurchasing
+                  ? null
+                  : canSubscribe
+                  ? _subscribe
+                  : canRetry
+                  ? SubscriptionService().retryProductsLoading
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: cs.onSurface,
                 foregroundColor: cs.surface,
@@ -549,20 +598,22 @@ class _PaywallScreenState extends State<PaywallScreen>
                       ),
                     )
                   : Text(
-                      isHard
+                      canRetry
+                          ? context.l10n.paywallTryAgain
+                          : isHard
                           ? context.l10n.paywallSubscribeNow
                           : context.l10n.paywallStartTrial,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                       textAlign: TextAlign.center,
                     ),
             ),
           ),
           const SizedBox(height: 10),
           Text(
-            isHard
-                ? context.l10n.paywallHardDisclaimer
-                : _trialDisclaimer(),
+            isHard ? context.l10n.paywallHardDisclaimer : _trialDisclaimer(),
             style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -571,8 +622,10 @@ class _PaywallScreenState extends State<PaywallScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               GestureDetector(
-                onTap: () => launchUrl(Uri.parse(_termsUrl),
-                    mode: LaunchMode.externalApplication),
+                onTap: () => launchUrl(
+                  Uri.parse(_termsUrl),
+                  mode: LaunchMode.externalApplication,
+                ),
                 child: Text(
                   context.l10n.paywallTerms,
                   style: TextStyle(
@@ -584,13 +637,16 @@ class _PaywallScreenState extends State<PaywallScreen>
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Text('·',
-                    style: TextStyle(
-                        fontSize: 11, color: cs.onSurfaceVariant)),
+                child: Text(
+                  '·',
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                ),
               ),
               GestureDetector(
-                onTap: () => launchUrl(Uri.parse(_privacyUrl),
-                    mode: LaunchMode.externalApplication),
+                onTap: () => launchUrl(
+                  Uri.parse(_privacyUrl),
+                  mode: LaunchMode.externalApplication,
+                ),
                 child: Text(
                   context.l10n.paywallPrivacy,
                   style: TextStyle(
@@ -641,17 +697,24 @@ class _PaywallScreenState extends State<PaywallScreen>
                     Text('lastFailure: ${sub.lastFailureDetails}'),
                   const SizedBox(height: 8),
                   Text(
-                      'products (${sub.products.length}): ${sub.products.map((p) => '${p.id}=${p.price}').join(', ')}'),
+                    'products (${sub.products.length}): ${sub.products.map((p) => '${p.id}=${p.price}').join(', ')}',
+                  ),
                   const Divider(),
-                  const Text('logs:',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'logs:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 4),
                   ...sub.logs.reversed.map(
                     (line) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 1),
-                      child: Text(line,
-                          style: const TextStyle(
-                              fontSize: 11, fontFamily: 'monospace')),
+                      child: Text(
+                        line,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -840,8 +903,7 @@ class _PlanCard extends StatelessWidget {
                       height: 22,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color:
-                            isSelected ? cs.onSurface : Colors.transparent,
+                        color: isSelected ? cs.onSurface : Colors.transparent,
                         border: Border.all(
                           color: isSelected
                               ? cs.onSurface
@@ -866,8 +928,9 @@ class _PlanCard extends StatelessWidget {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation(cs.onSurfaceVariant),
+                          valueColor: AlwaysStoppedAnimation(
+                            cs.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ),
@@ -890,7 +953,9 @@ class _PlanCard extends StatelessWidget {
               right: 12,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: cs.onSurface,
                   borderRadius: BorderRadius.circular(8),
@@ -945,7 +1010,9 @@ class _PromoCodeSheetState extends State<_PromoCodeSheet> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          24, 24, 24,
+          24,
+          24,
+          24,
           MediaQuery.of(context).viewInsets.bottom + 16,
         ),
         child: Column(
@@ -990,7 +1057,8 @@ class _PromoCodeSheetState extends State<_PromoCodeSheet> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 16,
+                  horizontal: 20,
+                  vertical: 16,
                 ),
               ),
               maxLength: 4,

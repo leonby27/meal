@@ -189,20 +189,8 @@ class SubscriptionService extends ChangeNotifier {
     );
 
     // 2. Check store availability.
-    bool available = false;
-    try {
-      available = await _iap.isAvailable();
-    } catch (e) {
-      _log('isAvailable threw: $e');
-      _lastFailureDetails = '$e';
-    }
-
-    if (!available) {
-      _log('Store not available');
-      _emit(const StoreUnavailableEvent());
-      _setState(SubState.unavailable);
-      return;
-    }
+    final available = await _checkStoreAvailable();
+    if (!available) return;
 
     // 3. Load products (with retry).
     await _loadProducts();
@@ -218,26 +206,58 @@ class SubscriptionService extends ChangeNotifier {
     }
   }
 
+  Future<bool> _checkStoreAvailable() async {
+    bool available = false;
+    try {
+      available = await _iap.isAvailable();
+    } catch (e) {
+      _log('isAvailable threw: $e');
+      _lastFailureDetails = '$e';
+    }
+
+    if (!available) {
+      _log('Store not available');
+      _emit(const StoreUnavailableEvent());
+      _setState(SubState.unavailable);
+      return false;
+    }
+
+    return true;
+  }
+
   /// Make sure products are available. Safe to call at any time — it
-  /// triggers [init] if it hasn't been called yet, waits for an in-flight
-  /// init, or fires a fresh query if products are empty.
+  /// triggers [init] if it hasn't been called yet or waits for an in-flight
+  /// init. User-visible retries should go through [retryProductsLoading].
   Future<void> ensureProductsLoaded() async {
     if (products.isNotEmpty) return;
 
     if (!_initStarted) {
       await init();
-      if (products.isNotEmpty) return;
-      if (_state == SubState.unavailable) return;
+      return;
     }
-
-    if (_state == SubState.unavailable) return;
 
     if (_initCompleter != null && !_initCompleter!.isCompleted) {
       await _initCompleter!.future;
-      if (products.isNotEmpty) return;
-      if (_state == SubState.unavailable) return;
+      return;
+    }
+  }
+
+  Future<void> retryProductsLoading() async {
+    if (products.isNotEmpty) return;
+    if (_state == SubState.initializing ||
+        _state == SubState.purchasing ||
+        _state == SubState.restoring) {
+      return;
     }
 
+    if (!_initStarted || !(_initCompleter?.isCompleted ?? false)) {
+      await ensureProductsLoaded();
+      return;
+    }
+
+    _setState(SubState.initializing);
+    final available = await _checkStoreAvailable();
+    if (!available) return;
     await _loadProducts();
   }
 
@@ -261,7 +281,8 @@ class SubscriptionService extends ChangeNotifier {
 
         products = response.productDetails;
         _log(
-            'products loaded: ${products.map((p) => '${p.id}=${p.price}').join(', ')}');
+          'products loaded: ${products.map((p) => '${p.id}=${p.price}').join(', ')}',
+        );
 
         if (products.isNotEmpty) {
           _lastFailureDetails = null;
