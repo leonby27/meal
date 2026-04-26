@@ -1699,6 +1699,8 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               log: log,
               mealType: mealType,
               dateStr: dateStr,
+              duplicateDateStr: _todayDateStr,
+              onDuplicateAdded: () => _selectDate(DateTime.now()),
               onDelete: (id) => _db.deleteFoodLog(id),
               back2: back2,
               variant: _foodLogCardVariant,

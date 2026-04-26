@@ -295,7 +295,7 @@ class AiMealResultSheet extends StatefulWidget {
     _unfocusUnderlyingAfterSheetPop();
   }
 
-  static Future<void> showForDuplicate(
+  static Future<bool> showForDuplicate(
     BuildContext context, {
     required FoodLog log,
     required String dateStr,
@@ -312,7 +312,7 @@ class AiMealResultSheet extends StatefulWidget {
       'ingredients': <Map<String, dynamic>>[],
     };
 
-    await showModalBottomSheet<void>(
+    final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: false,
@@ -327,6 +327,7 @@ class AiMealResultSheet extends StatefulWidget {
       ),
     );
     _unfocusUnderlyingAfterSheetPop();
+    return saved ?? false;
   }
 
   @override
@@ -729,7 +730,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       }
     }
 
-    if (mounted) context.pop();
+    if (mounted) context.pop(true);
   }
 
   // ── Macro bar ratio ──────────────────────────────────────────

@@ -46,6 +46,21 @@ void main() async {
 class MealTrackerApp extends StatelessWidget {
   const MealTrackerApp({super.key});
 
+  void _handleGlobalPointerDown(PointerDownEvent event) {
+    final focus = FocusManager.instance.primaryFocus;
+    final context = focus?.context;
+    if (focus == null || context == null) return;
+
+    final renderObject = context.findRenderObject();
+    if (renderObject is RenderBox) {
+      final focusedBounds =
+          renderObject.localToGlobal(Offset.zero) & renderObject.size;
+      if (focusedBounds.contains(event.position)) return;
+    }
+
+    focus.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<Locale>(
@@ -69,6 +84,13 @@ class MealTrackerApp extends StatelessWidget {
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
+              builder: (context, child) {
+                return Listener(
+                  behavior: HitTestBehavior.translucent,
+                  onPointerDown: _handleGlobalPointerDown,
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
             );
           },
         );

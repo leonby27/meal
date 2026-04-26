@@ -34,6 +34,8 @@ class MealSection extends StatelessWidget {
     required FoodLog log,
     required String mealType,
     required String dateStr,
+    String? duplicateDateStr,
+    VoidCallback? onDuplicateAdded,
     required Future<void> Function(String id) onDelete,
     required Color back2,
     FoodLogCardVariant variant = FoodLogCardVariant.expanded,
@@ -43,6 +45,8 @@ class MealSection extends StatelessWidget {
       log: log,
       mealType: mealType,
       dateStr: dateStr,
+      duplicateDateStr: duplicateDateStr,
+      onDuplicateAdded: onDuplicateAdded,
       onDelete: () => onDelete(log.id),
       back2: back2,
       variant: variant,
@@ -378,6 +382,8 @@ class _FoodLogCard extends StatelessWidget {
   final FoodLog log;
   final String mealType;
   final String dateStr;
+  final String? duplicateDateStr;
+  final VoidCallback? onDuplicateAdded;
   final VoidCallback onDelete;
   final Color back2;
   final FoodLogCardVariant variant;
@@ -387,6 +393,8 @@ class _FoodLogCard extends StatelessWidget {
     required this.log,
     required this.mealType,
     required this.dateStr,
+    this.duplicateDateStr,
+    this.onDuplicateAdded,
     required this.onDelete,
     required this.back2,
     required this.variant,
@@ -424,11 +432,14 @@ class _FoodLogCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => AiMealResultSheet.showForDuplicate(
-          context,
-          log: log,
-          dateStr: dateStr,
-        ),
+        onTap: () async {
+          final saved = await AiMealResultSheet.showForDuplicate(
+            context,
+            log: log,
+            dateStr: duplicateDateStr ?? dateStr,
+          );
+          if (saved && context.mounted) onDuplicateAdded?.call();
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
@@ -571,11 +582,14 @@ class _FoodLogCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => AiMealResultSheet.showForDuplicate(
-          context,
-          log: log,
-          dateStr: dateStr,
-        ),
+        onTap: () async {
+          final saved = await AiMealResultSheet.showForDuplicate(
+            context,
+            log: log,
+            dateStr: duplicateDateStr ?? dateStr,
+          );
+          if (saved && context.mounted) onDuplicateAdded?.call();
+        },
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 13),
           child: Column(
