@@ -28,7 +28,7 @@
     "aiSpeedLabel": "Fotoerkennung",
     "languages": "6",
     "languagesLabel": "Sprachen",
-    "inputMethods": "6",
+    "inputMethods": "5",
     "inputMethodsLabel": "Eingabemethoden"
   },
   "features": {
@@ -39,8 +39,8 @@
       "description": "Fotografiere dein Essen und die KI erkennt Zutaten, Kalorien und Makros in Sekunden."
     },
     "multiInput": {
-      "title": "6 Eingabemethoden",
-      "description": "Kamera, Galerie, Spracheingabe, Text, Barcode-Scanner oder Datenbanksuche — wähle die bequemste Methode."
+      "title": "5 Eingabemethoden",
+      "description": "Kamera, Galerie, Text, Barcode-Scanner oder Datenbanksuche — wähle die bequemste Methode."
     },
     "plan": {
       "title": "Persönlicher Ernährungsplan",
@@ -64,7 +64,7 @@
     "subtitle": "Beginne jetzt mit der Ernährungserfassung — es dauert weniger als eine Minute",
     "step1": {
       "title": "Essen fotografieren",
-      "description": "Öffne die Kamera und mache ein Foto. Du kannst auch aus der Galerie wählen, per Sprache diktieren oder den Namen eingeben."
+      "description": "Öffne die Kamera und mache ein Foto. Du kannst auch aus der Galerie wählen oder den Namen eingeben."
     },
     "step2": {
       "title": "KI erkennt das Essen",

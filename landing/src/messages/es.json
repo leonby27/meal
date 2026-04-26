@@ -28,7 +28,7 @@
     "aiSpeedLabel": "Reconocimiento por foto",
     "languages": "6",
     "languagesLabel": "Idiomas de interfaz",
-    "inputMethods": "6",
+    "inputMethods": "5",
     "inputMethodsLabel": "Formas de registrar comida"
   },
   "features": {
@@ -39,8 +39,8 @@
       "description": "Fotografía tu comida y la IA identificará ingredientes, calorías y macros en segundos."
     },
     "multiInput": {
-      "title": "6 métodos de entrada",
-      "description": "Cámara, galería, voz, texto, escáner de código de barras o búsqueda en la base de datos — elige lo que te convenga."
+      "title": "5 métodos de entrada",
+      "description": "Cámara, galería, texto, escáner de código de barras o búsqueda en la base de datos — elige lo que te convenga."
     },
     "plan": {
       "title": "Plan nutricional personal",
@@ -64,7 +64,7 @@
     "subtitle": "Empieza a llevar tu diario nutricional ahora — te llevará menos de un minuto",
     "step1": {
       "title": "Fotografía tu comida",
-      "description": "Abre la cámara y toma una foto. También puedes elegir de la galería, dictar por voz o escribir el nombre."
+      "description": "Abre la cámara y toma una foto. También puedes elegir de la galería o escribir el nombre."
     },
     "step2": {
       "title": "La IA identifica la comida",

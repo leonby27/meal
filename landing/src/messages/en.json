@@ -28,7 +28,7 @@
     "aiSpeedLabel": "Photo recognition",
     "languages": "6",
     "languagesLabel": "Interface languages",
-    "inputMethods": "6",
+    "inputMethods": "5",
     "inputMethodsLabel": "Ways to log food"
   },
   "features": {
@@ -39,8 +39,8 @@
       "description": "Take a photo of your meal and the AI identifies ingredients, calories, and macros in seconds."
     },
     "multiInput": {
-      "title": "6 input methods",
-      "description": "Camera, gallery, voice, text, barcode scanner, or database search — choose what works for you."
+      "title": "5 input methods",
+      "description": "Camera, gallery, text, barcode scanner, or database search — choose what works for you."
     },
     "plan": {
       "title": "Personal nutrition plan",
@@ -64,7 +64,7 @@
     "subtitle": "Start tracking your nutrition right now — it takes less than a minute",
     "step1": {
       "title": "Snap a photo",
-      "description": "Open the camera and take a photo. You can also pick from gallery, dictate by voice, or type the name."
+      "description": "Open the camera and take a photo. You can also pick from gallery or type the name."
     },
     "step2": {
       "title": "AI identifies the meal",

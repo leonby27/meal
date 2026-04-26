@@ -28,7 +28,7 @@
     "aiSpeedLabel": "Reconnaissance photo",
     "languages": "6",
     "languagesLabel": "Langues d'interface",
-    "inputMethods": "6",
+    "inputMethods": "5",
     "inputMethodsLabel": "Méthodes de saisie"
   },
   "features": {
@@ -39,8 +39,8 @@
       "description": "Photographiez votre repas et l'IA identifie les ingrédients, calories et macros en quelques secondes."
     },
     "multiInput": {
-      "title": "6 méthodes de saisie",
-      "description": "Caméra, galerie, voix, texte, scanner de codes-barres ou recherche — choisissez ce qui vous convient."
+      "title": "5 méthodes de saisie",
+      "description": "Caméra, galerie, texte, scanner de codes-barres ou recherche — choisissez ce qui vous convient."
     },
     "plan": {
       "title": "Plan nutritionnel personnel",
@@ -64,7 +64,7 @@
     "subtitle": "Commencez votre journal nutritionnel maintenant — ça prend moins d'une minute",
     "step1": {
       "title": "Photographiez votre repas",
-      "description": "Ouvrez la caméra et prenez une photo. Vous pouvez aussi choisir dans la galerie, dicter ou taper le nom."
+      "description": "Ouvrez la caméra et prenez une photo. Vous pouvez aussi choisir dans la galerie ou taper le nom."
     },
     "step2": {
       "title": "L'IA identifie le repas",
