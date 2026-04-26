@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import copy
 import io
 import json
 import logging
@@ -9,6 +10,7 @@ import httpx
 from PIL import Image, ImageOps
 
 from app.config import settings
+from app.services import openfoodfacts
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +158,19 @@ MAX_TOKENS = 1800
 HTTP_TIMEOUT = 60.0
 MAX_ATTEMPTS = 3
 RETRY_BASE_DELAY = 1.0
+PACKAGED_ENRICH_TIMEOUT = 2.0
+PACKAGED_ENRICH_MAX_ITEMS = 3
+
+_PACKAGED_KEYWORDS = {
+    "packaged", "package", "wrapper", "wrapped", "bar", "snack", "candy",
+    "упаков", "батончик", "снэк", "снек", "сырок", "творож", "глазирован",
+}
+
+_GENERIC_MATCH_TOKENS = {
+    "packaged", "package", "wrapper", "wrapped", "bar", "snack", "sweet",
+    "dairy", "dessert", "продукт", "упаковка", "упакованный", "сладкий",
+    "молочный", "десерт", "батончик", "сырок",
+}
 
 
 class AIRecognitionError(Exception):
@@ -303,6 +318,188 @@ def _parse_ai_response(data: dict) -> dict:
         ) from e
 
 
+def _locale_code(locale: str | None) -> str:
+    if not locale:
+        return "en"
+    return locale.lower().split("-")[0].split("_")[0] or "en"
+
+
+def _normalise_product_text(value: str) -> str:
+    value = re.sub(r"\(\d+\s*(?:шт\.?|pcs?\.?|pieces?)\)", " ", value, flags=re.IGNORECASE)
+    value = value.lower()
+    value = re.sub(r"[^0-9a-zа-яё]+", " ", value, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _tokens(value: str) -> set[str]:
+    return {
+        token
+        for token in _normalise_product_text(value).split()
+        if len(token) >= 3 and token not in _GENERIC_MATCH_TOKENS
+    }
+
+
+def _looks_like_packaged_item(name: str) -> bool:
+    normalised = _normalise_product_text(name)
+    if any(keyword in normalised for keyword in _PACKAGED_KEYWORDS):
+        return True
+
+    # Visible package labels often contain a short latin brand/product token
+    # plus a flavour/count token (e.g. "TOM x2 coconut"). Avoid searching for
+    # plain unpackaged foods like "salami" or "rice".
+    latin_tokens = re.findall(r"\b[a-z0-9]{2,}\b", normalised)
+    return len(latin_tokens) >= 2 and any(char.isdigit() for char in normalised)
+
+
+def _product_match_score(query: str, product: dict) -> float:
+    product_text = " ".join(
+        str(part or "")
+        for part in (
+            product.get("brand"),
+            product.get("name"),
+            product.get("category"),
+            product.get("composition"),
+        )
+    )
+    query_tokens = _tokens(query)
+    product_tokens = _tokens(product_text)
+    if not query_tokens or not product_tokens:
+        return 0.0
+
+    overlap = query_tokens & product_tokens
+    score = len(overlap) / len(query_tokens)
+    query_norm = _normalise_product_text(query)
+    product_norm = _normalise_product_text(product_text)
+    if query_norm and query_norm in product_norm:
+        score += 0.35
+    if product.get("brand") and _normalise_product_text(str(product["brand"])) in query_norm:
+        score += 0.15
+    return score
+
+
+async def _find_packaged_product(query: str, locale: str | None) -> dict | None:
+    try:
+        products = await asyncio.wait_for(
+            openfoodfacts.search_products(
+                query,
+                page=1,
+                page_size=5,
+                locale=_locale_code(locale),
+            ),
+            timeout=PACKAGED_ENRICH_TIMEOUT,
+        )
+    except Exception as e:
+        logger.info("OFF packaged enrichment skipped for query=%r: %s", query, e)
+        return None
+
+    scored = [
+        (_product_match_score(query, product), product)
+        for product in products
+    ]
+    scored.sort(key=lambda item: item[0], reverse=True)
+    if not scored or scored[0][0] < 0.45:
+        return None
+    return scored[0][1]
+
+
+def _apply_product_nutrition(ingredient: dict, product: dict) -> bool:
+    calories = product.get("calories_per_100g")
+    if calories is None:
+        return False
+
+    grams = (ingredient.get("grams") or 0) or product.get("weight_grams") or 100
+    try:
+        grams = float(grams)
+    except (TypeError, ValueError):
+        grams = 100.0
+    if grams <= 0:
+        grams = 100.0
+
+    factor = grams / 100.0
+    ingredient["grams"] = round(grams, 1)
+    ingredient["calories"] = round(float(calories) * factor)
+
+    for source_key, target_key in (
+        ("protein_per_100g", "protein"),
+        ("fat_per_100g", "fat"),
+        ("carbs_per_100g", "carbs"),
+    ):
+        value = product.get(source_key)
+        if value is not None:
+            ingredient[target_key] = round(float(value) * factor, 1)
+
+    product_name = product.get("name")
+    brand = product.get("brand")
+    if product_name:
+        full_name = f"{brand} {product_name}".strip() if brand else product_name
+        ingredient["name"] = full_name
+
+    return True
+
+
+def _recalculate_totals(result: dict) -> None:
+    ingredients = result.get("ingredients") or []
+    total_grams = sum(float(i.get("grams") or 0) for i in ingredients)
+    totals = {
+        "protein": sum(float(i.get("protein") or 0) for i in ingredients),
+        "fat": sum(float(i.get("fat") or 0) for i in ingredients),
+        "carbs": sum(float(i.get("carbs") or 0) for i in ingredients),
+        "calories": sum(float(i.get("calories") or 0) for i in ingredients),
+    }
+
+    result["total_grams"] = round(total_grams, 1)
+    result["total"] = {
+        "protein": round(totals["protein"], 1),
+        "fat": round(totals["fat"], 1),
+        "carbs": round(totals["carbs"], 1),
+        "calories": round(totals["calories"]),
+    }
+    if total_grams > 0:
+        result["per_100g"] = {
+            "protein": round(totals["protein"] / total_grams * 100, 1),
+            "fat": round(totals["fat"] / total_grams * 100, 1),
+            "carbs": round(totals["carbs"] / total_grams * 100, 1),
+            "calories": round(totals["calories"] / total_grams * 100),
+        }
+
+
+async def _enrich_packaged_items(result: dict, locale: str | None) -> dict:
+    ingredients = result.get("ingredients")
+    if not isinstance(ingredients, list):
+        return result
+
+    candidates = [
+        (index, str(item.get("name") or ""))
+        for index, item in enumerate(ingredients)
+        if isinstance(item, dict) and _looks_like_packaged_item(str(item.get("name") or ""))
+    ][:PACKAGED_ENRICH_MAX_ITEMS]
+    if not candidates:
+        return result
+
+    enriched = copy.deepcopy(result)
+    matches = await asyncio.gather(
+        *(_find_packaged_product(query, locale) for _, query in candidates),
+        return_exceptions=True,
+    )
+
+    changed = False
+    for (index, query), match in zip(candidates, matches):
+        if isinstance(match, Exception) or not match:
+            continue
+        if _apply_product_nutrition(enriched["ingredients"][index], match):
+            changed = True
+            logger.info(
+                "OFF packaged enrichment matched query=%r to product=%r",
+                query,
+                match.get("name"),
+            )
+
+    if changed:
+        _recalculate_totals(enriched)
+        return enriched
+    return result
+
+
 async def _post_with_retries(payload: dict) -> dict:
     last_exc: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -414,7 +611,8 @@ async def recognize_food(
     }
 
     data = await _post_with_retries(payload)
-    return _parse_ai_response(data)
+    result = _parse_ai_response(data)
+    return await _enrich_packaged_items(result, locale)
 
 
 async def recognize_food_from_text(

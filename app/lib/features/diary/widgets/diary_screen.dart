@@ -139,6 +139,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   late final PageController _dayPageCtl;
   late final DateTime _dayAnchor;
   bool _syncingPages = false;
+  double _dayScrollOffset = 0;
 
   final _inputCtl = TextEditingController();
   final _inputFocus = FocusNode();
@@ -596,7 +597,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     if (d == sel) return;
 
     _syncingPages = true;
-    setState(() => _selectedDate = date);
+    setState(() {
+      _selectedDate = date;
+      _dayScrollOffset = 0;
+    });
 
     final newWeekPage = _pageForDate(date);
     if (_weekPageCtl.hasClients) {
@@ -617,7 +621,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final today = DateTime(now.year, now.month, now.day);
     final target = DateTime(date.year, date.month, date.day);
     if (target.isAfter(today)) return;
-    setState(() => _selectedDate = date);
+    setState(() {
+      _selectedDate = date;
+      _dayScrollOffset = 0;
+    });
 
     if (_dayPageCtl.hasClients) {
       final dayPage = _dayPageForDate(date);
@@ -627,6 +634,26 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     }
 
     _loadWeekCalories();
+  }
+
+  bool _onDayScrollNotification(
+    ScrollNotification notification,
+    DateTime date,
+  ) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+    final current = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+    final pageDate = DateTime(date.year, date.month, date.day);
+    if (pageDate != current) return false;
+
+    final maxOffset = _weekStripHeight + _weekContentGap;
+    final nextOffset = notification.metrics.pixels.clamp(0.0, maxOffset);
+    if ((nextOffset - _dayScrollOffset).abs() < 0.5) return false;
+    setState(() => _dayScrollOffset = nextOffset);
+    return false;
   }
 
   String _formatHeaderDate() {
@@ -820,7 +847,18 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
           child: Column(
             children: [
               _buildHeader(context),
-              Expanded(child: _buildDayPageView(context, isDark, onBack4)),
+              Expanded(
+                child: Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    _buildDayPageView(context, isDark, onBack4),
+                    Transform.translate(
+                      offset: Offset(0, -_dayScrollOffset),
+                      child: _buildWeekStripWithConnector(context, isDark),
+                    ),
+                  ],
+                ),
+              ),
               _buildInputBar(context, dateStr, isDark),
             ],
           ),
@@ -1332,13 +1370,17 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
             if (d == sel) _syncWeekCalories(logs);
             return LayoutBuilder(
               builder: (context, constraints) {
-                return _buildDayContent(
-                  context,
-                  logs,
-                  dateStr,
-                  isDark,
-                  onBack4,
-                  constraints.maxHeight,
+                return NotificationListener<ScrollNotification>(
+                  onNotification: (notification) =>
+                      _onDayScrollNotification(notification, date),
+                  child: _buildDayContent(
+                    context,
+                    logs,
+                    dateStr,
+                    isDark,
+                    onBack4,
+                    constraints.maxHeight,
+                  ),
                 );
               },
             );
@@ -1444,13 +1486,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
     final nonEmpty = sections.where((s) => grouped[s.key]!.isNotEmpty).toList();
     final date = DateFormat('yyyy-MM-dd').parse(dateStr);
-    final selectedDate = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-    );
-    final isSelectedDay = DateTime(date.year, date.month, date.day) == selectedDate;
-
     final auth = AuthService();
     final showBanner =
         !auth.isPremium &&
@@ -1459,14 +1494,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
     return ListView(
       padding: const EdgeInsets.only(
-        top: 0,
+        top: _weekStripHeight + _weekContentGap,
         bottom: 16,
       ),
       children: [
-        isSelectedDay
-            ? _buildWeekStripWithConnector(context, isDark)
-            : const SizedBox(height: _weekStripHeight),
-        const SizedBox(height: _weekContentGap),
         DailySummaryCard(logs: logs, selectedDate: date),
         if (showBanner) _buildFreeEntriesBanner(context, auth),
         if (nonEmpty.isNotEmpty) ...[
@@ -1538,7 +1569,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     if (candidate.isAfter(today)) candidate = today;
     if (candidate.isBefore(newWeekStart)) candidate = newWeekStart;
 
-    setState(() => _selectedDate = candidate);
+    setState(() {
+      _selectedDate = candidate;
+      _dayScrollOffset = 0;
+    });
 
     if (_dayPageCtl.hasClients) {
       _dayPageCtl.jumpToPage(_dayPageForDate(candidate));
