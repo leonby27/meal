@@ -121,6 +121,9 @@ class DiaryScreen extends StatefulWidget {
 }
 
 class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
+  static const double _weekStripHeight = 64.0;
+  static const double _weekContentGap = 16.0;
+
   DateTime _selectedDate = DateTime.now();
   late AppDatabase _db;
   bool _dbReady = false;
@@ -619,11 +622,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     if (_dayPageCtl.hasClients) {
       final dayPage = _dayPageForDate(date);
       if (_dayPageCtl.page?.round() != dayPage) {
-        _dayPageCtl.animateToPage(
-          dayPage,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+        _dayPageCtl.jumpToPage(dayPage);
       }
     }
 
@@ -821,7 +820,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
           child: Column(
             children: [
               _buildHeader(context),
-              _buildWeekStripWithConnector(context, isDark),
               Expanded(child: _buildDayPageView(context, isDark, onBack4)),
               _buildInputBar(context, dateStr, isDark),
             ],
@@ -1446,6 +1444,12 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
     final nonEmpty = sections.where((s) => grouped[s.key]!.isNotEmpty).toList();
     final date = DateFormat('yyyy-MM-dd').parse(dateStr);
+    final selectedDate = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+    final isSelectedDay = DateTime(date.year, date.month, date.day) == selectedDate;
 
     final auth = AuthService();
     final showBanner =
@@ -1454,10 +1458,15 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         !auth.freeTrialExhausted;
 
     return ListView(
-      // top: 16 сохраняет тот же визуальный зазор, что раньше занимала
-      // соединительная линия между неделей и карточкой КБЖУ.
-      padding: const EdgeInsets.only(top: 16, bottom: 16),
+      padding: const EdgeInsets.only(
+        top: 0,
+        bottom: 16,
+      ),
       children: [
+        isSelectedDay
+            ? _buildWeekStripWithConnector(context, isDark)
+            : const SizedBox(height: _weekStripHeight),
+        const SizedBox(height: _weekContentGap),
         DailySummaryCard(logs: logs, selectedDate: date),
         if (showBanner) _buildFreeEntriesBanner(context, auth),
         if (nonEmpty.isNotEmpty) ...[
@@ -1545,7 +1554,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   /// КБЖУ. Убрали по дизайн-решению — теперь неделя просто занимает свою
   /// высоту, а зазор до карточки ниже задаётся обычным SizedBox.
   Widget _buildWeekStripWithConnector(BuildContext context, bool isDark) {
-    return SizedBox(height: 64, child: _buildWeekStrip(context, isDark));
+    return SizedBox(
+      height: _weekStripHeight,
+      child: _buildWeekStrip(context, isDark),
+    );
   }
 
   Widget _buildWeekStrip(BuildContext context, bool isDark) {
@@ -1554,7 +1566,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final maxWeekPage = _pageForDate(today);
 
     return SizedBox(
-      height: 64,
+      height: _weekStripHeight,
       child: PageView.builder(
         controller: _weekPageCtl,
         physics: _ClampedForwardPageScrollPhysics(maxPage: maxWeekPage),

@@ -136,7 +136,7 @@ class _PaywallScreenState extends State<PaywallScreen>
   String _weeklyPriceLabel(SubscriptionService sub) {
     final p = _weeklyProduct;
     if (p == null && _productsLoadFailed(sub)) {
-      return context.l10n.paywallTryAgain;
+      return '—';
     }
     if (p == null) return context.l10n.paywallLoadingPrice;
     return '${p.price} / ${context.l10n.paywallPerWeek}';
@@ -145,7 +145,7 @@ class _PaywallScreenState extends State<PaywallScreen>
   String _yearlyPriceLabel(SubscriptionService sub) {
     final p = _yearlyProduct;
     if (p == null && _productsLoadFailed(sub)) {
-      return context.l10n.paywallTryAgain;
+      return '—';
     }
     if (p == null) return context.l10n.paywallLoadingPrice;
     return '${p.price} / ${context.l10n.paywallPerYear}';
