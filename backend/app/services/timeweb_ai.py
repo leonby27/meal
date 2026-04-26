@@ -6,7 +6,7 @@ import logging
 import re
 
 import httpx
-from PIL import Image
+from PIL import Image, ImageOps
 
 from app.config import settings
 
@@ -138,6 +138,7 @@ class AIRecognitionError(Exception):
 def normalize_image(image_bytes: bytes) -> str:
     """Convert any image to JPEG, resize if needed, return base64."""
     img = Image.open(io.BytesIO(image_bytes))
+    img = ImageOps.exif_transpose(img)
 
     if img.mode in ('RGBA', 'P', 'LA'):
         background = Image.new('RGB', img.size, (255, 255, 255))

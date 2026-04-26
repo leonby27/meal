@@ -153,6 +153,9 @@
   "notifChannelDesc": "Напоминания записать приемы пищи",
 
   "diaryRecordsForDay": "Записи за день",
+  "diaryViewLabel": "Вид",
+  "diaryViewCompact": "компактный",
+  "diaryViewExpanded": "расширенный",
   "diaryEmptyDay": "Ещё нет записей за этот день",
   "addMealTitle": "Добавить приём пищи",
   "mealTypeLabel": "Приём пищи",

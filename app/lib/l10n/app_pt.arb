@@ -143,6 +143,9 @@
   "notifChannelDesc": "Lembretes para registrar refeições",
 
   "diaryRecordsForDay": "Registros de hoje",
+  "diaryViewLabel": "Visualização",
+  "diaryViewCompact": "compacta",
+  "diaryViewExpanded": "expandida",
   "diaryEmptyDay": "Ainda sem registros para este dia",
   "addMealTitle": "Adicionar Refeição",
   "mealTypeLabel": "Tipo de refeição",

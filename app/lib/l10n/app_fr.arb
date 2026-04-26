@@ -143,6 +143,9 @@
   "notifChannelDesc": "Rappels pour enregistrer les repas",
 
   "diaryRecordsForDay": "Entrées du jour",
+  "diaryViewLabel": "Vue",
+  "diaryViewCompact": "compacte",
+  "diaryViewExpanded": "étendue",
   "diaryEmptyDay": "Aucune entrée pour ce jour",
   "addMealTitle": "Ajouter un repas",
   "mealTypeLabel": "Type de repas",

@@ -33,7 +33,10 @@ class _ClampedForwardPageScrollPhysics extends PageScrollPhysics {
 
   @override
   _ClampedForwardPageScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return _ClampedForwardPageScrollPhysics(maxPage: maxPage, parent: buildParent(ancestor));
+    return _ClampedForwardPageScrollPhysics(
+      maxPage: maxPage,
+      parent: buildParent(ancestor),
+    );
   }
 
   double _maxPixels(ScrollMetrics position) {
@@ -44,7 +47,10 @@ class _ClampedForwardPageScrollPhysics extends PageScrollPhysics {
   double _pixelsForPage(ScrollMetrics position, double page) {
     if (position is PageMetrics) {
       final vf = position.viewportFraction;
-      final initialOffset = math.max(0.0, position.viewportDimension * (vf - 1) / 2);
+      final initialOffset = math.max(
+        0.0,
+        position.viewportDimension * (vf - 1) / 2,
+      );
       return page * position.viewportDimension * vf + initialOffset;
     }
     return page * position.viewportDimension;
@@ -74,7 +80,10 @@ class _ClampedForwardPageScrollPhysics extends PageScrollPhysics {
   }
 
   @override
-  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
     if (position.viewportDimension <= 0.0) {
       return super.createBallisticSimulation(position, velocity);
     }
@@ -140,6 +149,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   bool _hasSearchText = false;
   Uint8List? _attachedImageBytes;
   int _preSearchTab = 0;
+  FoodLogCardVariant _foodLogCardVariant = FoodLogCardVariant.expanded;
 
   @override
   void initState() {
@@ -208,8 +218,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     }
   }
 
-  String get _todayDateStr =>
-      DateFormat('yyyy-MM-dd').format(DateTime.now());
+  String get _todayDateStr => DateFormat('yyyy-MM-dd').format(DateTime.now());
 
   void _deactivateSearch({bool syncCalendarToToday = true}) {
     _inputFocus.unfocus();
@@ -225,7 +234,11 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     if (!syncCalendarToToday) return;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final sel = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final sel = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
     if (sel == today) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _selectDate(today);
@@ -322,16 +335,24 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     }
 
     final defaultGrams = log.grams > 0 ? log.grams : 100.0;
-    final calPer100 = log.grams > 0 ? log.calories / log.grams * 100 : log.calories;
+    final calPer100 = log.grams > 0
+        ? log.calories / log.grams * 100
+        : log.calories;
     final pPer100 = log.grams > 0 ? log.protein / log.grams * 100 : log.protein;
     final fPer100 = log.grams > 0 ? log.fat / log.grams * 100 : log.fat;
     final cPer100 = log.grams > 0 ? log.carbs / log.grams * 100 : log.carbs;
 
-    final controller = TextEditingController(text: defaultGrams.toInt().toString());
+    final controller = TextEditingController(
+      text: defaultGrams.toInt().toString(),
+    );
     final grams = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(log.productName, maxLines: 2, overflow: TextOverflow.ellipsis),
+        title: Text(
+          log.productName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -376,19 +397,21 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final factor = grams / 100.0;
     final date = DateFormat('yyyy-MM-dd').parse(dateStr);
 
-    await _db.addFoodLog(FoodLogsCompanion.insert(
-      id: const Uuid().v4(),
-      productId: drift.Value(log.productId),
-      productName: log.productName,
-      mealType: defaultMealType(),
-      mealDate: DateTime(date.year, date.month, date.day, 12),
-      grams: grams,
-      protein: drift.Value(pPer100 * factor),
-      fat: drift.Value(fPer100 * factor),
-      carbs: drift.Value(cPer100 * factor),
-      calories: drift.Value(calPer100 * factor),
-      imageUrl: drift.Value(log.imageUrl),
-    ));
+    await _db.addFoodLog(
+      FoodLogsCompanion.insert(
+        id: const Uuid().v4(),
+        productId: drift.Value(log.productId),
+        productName: log.productName,
+        mealType: defaultMealType(),
+        mealDate: DateTime(date.year, date.month, date.day, 12),
+        grams: grams,
+        protein: drift.Value(pPer100 * factor),
+        fat: drift.Value(fPer100 * factor),
+        carbs: drift.Value(cPer100 * factor),
+        calories: drift.Value(calPer100 * factor),
+        imageUrl: drift.Value(log.imageUrl),
+      ),
+    );
 
     if (mounted) _deactivateSearch();
 
@@ -410,19 +433,21 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final factor = grams / 100.0;
     final date = DateFormat('yyyy-MM-dd').parse(dateStr);
 
-    await _db.addFoodLog(FoodLogsCompanion.insert(
-      id: const Uuid().v4(),
-      productId: drift.Value(product.productId),
-      productName: product.name,
-      mealType: defaultMealType(),
-      mealDate: DateTime(date.year, date.month, date.day, 12),
-      grams: grams,
-      protein: drift.Value((product.proteinPer100g ?? 0) * factor),
-      fat: drift.Value((product.fatPer100g ?? 0) * factor),
-      carbs: drift.Value((product.carbsPer100g ?? 0) * factor),
-      calories: drift.Value((product.caloriesPer100g ?? 0) * factor),
-      imageUrl: drift.Value(product.imageUrl),
-    ));
+    await _db.addFoodLog(
+      FoodLogsCompanion.insert(
+        id: const Uuid().v4(),
+        productId: drift.Value(product.productId),
+        productName: product.name,
+        mealType: defaultMealType(),
+        mealDate: DateTime(date.year, date.month, date.day, 12),
+        grams: grams,
+        protein: drift.Value((product.proteinPer100g ?? 0) * factor),
+        fat: drift.Value((product.fatPer100g ?? 0) * factor),
+        carbs: drift.Value((product.carbsPer100g ?? 0) * factor),
+        calories: drift.Value((product.caloriesPer100g ?? 0) * factor),
+        imageUrl: drift.Value(product.imageUrl),
+      ),
+    );
 
     if (mounted) _deactivateSearch();
 
@@ -560,7 +585,11 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     if (_syncingPages) return;
     final date = _dateForDayPage(page);
     final d = DateTime(date.year, date.month, date.day);
-    final sel = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final sel = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
     if (d == sel) return;
 
     _syncingPages = true;
@@ -627,10 +656,26 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     String selectedMealType = defaultMealType();
 
     final mealTypes = [
-      (key: 'breakfast', label: context.l10n.mealBreakfast, icon: Icons.wb_sunny_outlined),
-      (key: 'lunch', label: context.l10n.mealLunch, icon: Icons.wb_cloudy_outlined),
-      (key: 'dinner', label: context.l10n.mealDinner, icon: Icons.nights_stay_outlined),
-      (key: 'snack', label: context.l10n.mealSnack, icon: Icons.cookie_outlined),
+      (
+        key: 'breakfast',
+        label: context.l10n.mealBreakfast,
+        icon: Icons.wb_sunny_outlined,
+      ),
+      (
+        key: 'lunch',
+        label: context.l10n.mealLunch,
+        icon: Icons.wb_cloudy_outlined,
+      ),
+      (
+        key: 'dinner',
+        label: context.l10n.mealDinner,
+        icon: Icons.nights_stay_outlined,
+      ),
+      (
+        key: 'snack',
+        label: context.l10n.mealSnack,
+        icon: Icons.cookie_outlined,
+      ),
     ];
 
     showModalBottomSheet(
@@ -687,7 +732,8 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                         );
                       }).toList(),
                       onChanged: (v) {
-                        if (v != null) setSheetState(() => selectedMealType = v);
+                        if (v != null)
+                          setSheetState(() => selectedMealType = v);
                       },
                     ),
                     const SizedBox(height: 20),
@@ -699,7 +745,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                             label: ctx.l10n.searchInDb,
                             onTap: () {
                               Navigator.pop(ctx);
-                              context.push('/search?meal_type=$selectedMealType&date=$dateStr');
+                              context.push(
+                                '/search?meal_type=$selectedMealType&date=$dateStr',
+                              );
                             },
                           ),
                         ),
@@ -757,9 +805,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     if (!_dbReady) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -768,23 +814,21 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
     return Scaffold(
-        backgroundColor: back2,
-        body: SafeArea(
-          child: FocusScope(
-            autofocus: false,
-            child: Column(
-              children: [
-                _buildHeader(context),
-                _buildWeekStripWithConnector(context, isDark),
-                Expanded(
-                  child: _buildDayPageView(context, isDark, onBack4),
-                ),
-                _buildInputBar(context, dateStr, isDark),
-              ],
-            ),
+      backgroundColor: back2,
+      body: SafeArea(
+        child: FocusScope(
+          autofocus: false,
+          child: Column(
+            children: [
+              _buildHeader(context),
+              _buildWeekStripWithConnector(context, isDark),
+              Expanded(child: _buildDayPageView(context, isDark, onBack4)),
+              _buildInputBar(context, dateStr, isDark),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -793,8 +837,8 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final initial = (auth.userName?.isNotEmpty == true)
         ? auth.userName![0].toUpperCase()
         : (auth.userEmail?.isNotEmpty == true)
-            ? auth.userEmail![0].toUpperCase()
-            : 'M';
+        ? auth.userEmail![0].toUpperCase()
+        : 'M';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -822,31 +866,19 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 20,
-                  color: cs.onSurface,
-                ),
+                Icon(Icons.keyboard_arrow_down, size: 20, color: cs.onSurface),
               ],
             ),
           ),
           const Spacer(),
           GestureDetector(
             onTap: () => context.push('/stats'),
-            child: Icon(
-              Icons.bar_chart_rounded,
-              size: 24,
-              color: cs.onSurface,
-            ),
+            child: Icon(Icons.bar_chart_rounded, size: 24, color: cs.onSurface),
           ),
           const SizedBox(width: 24),
           GestureDetector(
             onTap: () => context.push('/favorites'),
-            child: Icon(
-              Icons.favorite,
-              size: 24,
-              color: cs.onSurface,
-            ),
+            child: Icon(Icons.favorite, size: 24, color: cs.onSurface),
           ),
           const SizedBox(width: 24),
           GestureDetector(
@@ -890,7 +922,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 16),
-            Text(context.l10n.recognizingViaAi, style: TextStyle(color: cs.onSurfaceVariant)),
+            Text(
+              context.l10n.recognizingViaAi,
+              style: TextStyle(color: cs.onSurfaceVariant),
+            ),
           ],
         ),
       );
@@ -935,21 +970,33 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                     height: 48,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => const SizedBox(
-                      width: 48, height: 48,
-                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      width: 48,
+                      height: 48,
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      width: 48, height: 48,
-                      color: isDark ? AppColors.darkSurface2 : Colors.grey.shade200,
+                      width: 48,
+                      height: 48,
+                      color: isDark
+                          ? AppColors.darkSurface2
+                          : Colors.grey.shade200,
                       child: const Icon(Icons.restaurant, color: Colors.grey),
                     ),
                   ),
                 )
               : CircleAvatar(
-                  backgroundColor: isDark ? AppColors.darkSurface2 : Colors.grey.shade200,
+                  backgroundColor: isDark
+                      ? AppColors.darkSurface2
+                      : Colors.grey.shade200,
                   child: const Icon(Icons.restaurant, color: Colors.grey),
                 ),
-          title: Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis),
+          title: Text(
+            product.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           subtitle: Text(
             '${context.l10n.kcalPer100g((product.caloriesPer100g?.toInt() ?? 0).toString())}  •  '
             '${product.brand ?? ""}',
@@ -988,16 +1035,21 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? cs.surface : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
                     boxShadow: isSelected
-                        ? [BoxShadow(
-                            color: const Color(0x1A050C26),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          )]
+                        ? [
+                            BoxShadow(
+                              color: const Color(0x1A050C26),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
                         : null,
                   ),
                   alignment: Alignment.center,
@@ -1035,7 +1087,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
       itemBuilder: (context, index) {
         final log = _recentProducts[index];
         return Padding(
-          padding: EdgeInsets.only(bottom: index < _recentProducts.length - 1 ? 8 : 0),
+          padding: EdgeInsets.only(
+            bottom: index < _recentProducts.length - 1 ? 8 : 0,
+          ),
           child: GestureDetector(
             onTap: () async {
               if (log.productId != null) {
@@ -1128,7 +1182,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         final cal = ((product.caloriesPer100g ?? 0) * factor).toInt();
 
         return Padding(
-          padding: EdgeInsets.only(bottom: index < _favoriteProducts.length - 1 ? 8 : 0),
+          padding: EdgeInsets.only(
+            bottom: index < _favoriteProducts.length - 1 ? 8 : 0,
+          ),
           child: GestureDetector(
             onTap: () => _addProductFromSearch(product, _todayDateStr),
             child: Container(
@@ -1198,7 +1254,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         borderRadius: BorderRadius.circular(8),
         child: CachedNetworkImage(
           imageUrl: product.imageUrl!,
-          width: 40, height: 40, fit: BoxFit.cover,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
           errorWidget: (_, __, ___) => _recentPlaceholder(cs),
         ),
       );
@@ -1212,14 +1270,22 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
       if (url.startsWith('/')) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.file(File(url), width: 40, height: 40, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _recentPlaceholder(cs)),
+          child: Image.file(
+            File(url),
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _recentPlaceholder(cs),
+          ),
         );
       }
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: CachedNetworkImage(
-          imageUrl: url, width: 40, height: 40, fit: BoxFit.cover,
+          imageUrl: url,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
           errorWidget: (_, __, ___) => _recentPlaceholder(cs),
         ),
       );
@@ -1229,7 +1295,8 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
   Widget _recentPlaceholder(ColorScheme cs) {
     return Container(
-      width: 40, height: 40,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
@@ -1246,33 +1313,40 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final maxDayPage = _dayPageForDate(today);
 
     return PageView.builder(
-        controller: _dayPageCtl,
-        physics: _ClampedForwardPageScrollPhysics(maxPage: maxDayPage),
-        onPageChanged: _onDayPageChanged,
-        itemCount: null,
-        itemBuilder: (_, page) {
-          final date = _dateForDayPage(page);
-          final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      controller: _dayPageCtl,
+      physics: _ClampedForwardPageScrollPhysics(maxPage: maxDayPage),
+      onPageChanged: _onDayPageChanged,
+      itemCount: null,
+      itemBuilder: (_, page) {
+        final date = _dateForDayPage(page);
+        final dateStr = DateFormat('yyyy-MM-dd').format(date);
 
-          return StreamBuilder<List<FoodLog>>(
-            stream: _db.watchFoodLogsForDate(date),
-            builder: (context, snapshot) {
-              final logs = snapshot.data ?? [];
-              final d = DateTime(date.year, date.month, date.day);
-              final sel = DateTime(
-                _selectedDate.year, _selectedDate.month, _selectedDate.day,
-              );
-              if (d == sel) _syncWeekCalories(logs);
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  return _buildDayContent(
-                    context, logs, dateStr, isDark, onBack4, constraints.maxHeight,
-                  );
-                },
-              );
-            },
-          );
-        },
+        return StreamBuilder<List<FoodLog>>(
+          stream: _db.watchFoodLogsForDate(date),
+          builder: (context, snapshot) {
+            final logs = snapshot.data ?? [];
+            final d = DateTime(date.year, date.month, date.day);
+            final sel = DateTime(
+              _selectedDate.year,
+              _selectedDate.month,
+              _selectedDate.day,
+            );
+            if (d == sel) _syncWeekCalories(logs);
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                return _buildDayContent(
+                  context,
+                  logs,
+                  dateStr,
+                  isDark,
+                  onBack4,
+                  constraints.maxHeight,
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1330,8 +1404,14 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     );
   }
 
-  Widget _buildDayContent(BuildContext context, List<FoodLog> logs,
-      String dateStr, bool isDark, Color back2, double viewportHeight) {
+  Widget _buildDayContent(
+    BuildContext context,
+    List<FoodLog> logs,
+    String dateStr,
+    bool isDark,
+    Color back2,
+    double viewportHeight,
+  ) {
     final cs = Theme.of(context).colorScheme;
 
     final grouped = {
@@ -1342,18 +1422,34 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     };
 
     final sections = [
-      (key: 'breakfast', title: context.l10n.mealBreakfast, icon: Icons.wb_sunny_outlined),
-      (key: 'lunch', title: context.l10n.mealLunch, icon: Icons.wb_cloudy_outlined),
-      (key: 'dinner', title: context.l10n.mealDinner, icon: Icons.nights_stay_outlined),
-      (key: 'snack', title: context.l10n.mealSnack, icon: Icons.cookie_outlined),
+      (
+        key: 'breakfast',
+        title: context.l10n.mealBreakfast,
+        icon: Icons.wb_sunny_outlined,
+      ),
+      (
+        key: 'lunch',
+        title: context.l10n.mealLunch,
+        icon: Icons.wb_cloudy_outlined,
+      ),
+      (
+        key: 'dinner',
+        title: context.l10n.mealDinner,
+        icon: Icons.nights_stay_outlined,
+      ),
+      (
+        key: 'snack',
+        title: context.l10n.mealSnack,
+        icon: Icons.cookie_outlined,
+      ),
     ];
 
-    final nonEmpty =
-        sections.where((s) => grouped[s.key]!.isNotEmpty).toList();
+    final nonEmpty = sections.where((s) => grouped[s.key]!.isNotEmpty).toList();
     final date = DateFormat('yyyy-MM-dd').parse(dateStr);
 
     final auth = AuthService();
-    final showBanner = !auth.isPremium &&
+    final showBanner =
+        !auth.isPremium &&
         auth.freeEntriesUsed >= 6 &&
         !auth.freeTrialExhausted;
 
@@ -1363,37 +1459,29 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
       padding: const EdgeInsets.only(top: 16, bottom: 16),
       children: [
         DailySummaryCard(logs: logs, selectedDate: date),
-        if (showBanner)
-          _buildFreeEntriesBanner(context, auth),
+        if (showBanner) _buildFreeEntriesBanner(context, auth),
         if (nonEmpty.isNotEmpty) ...[
           const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              context.l10n.diaryRecordsForDay,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                height: 18 / 14,
-                color: cs.onSurfaceVariant,
-                overflow: TextOverflow.ellipsis,
-              ),
+          _buildRecordsHeader(context, cs),
+          const SizedBox(height: 12),
+          ...nonEmpty.map(
+            (s) => _buildFoodCards(
+              context,
+              grouped[s.key]!,
+              s.key,
+              dateStr,
+              back2,
+              _goalCalories,
             ),
           ),
-          const SizedBox(height: 12),
-          ...nonEmpty.map((s) => _buildFoodCards(
-                context,
-                grouped[s.key]!,
-                s.key,
-                dateStr,
-                back2,
-              )),
         ] else ...[
           Builder(
             builder: (context) {
               const fixedAbove = 220.0;
-              final emptyHeight =
-                  (viewportHeight - fixedAbove).clamp(200.0, viewportHeight);
+              final emptyHeight = (viewportHeight - fixedAbove).clamp(
+                200.0,
+                viewportHeight,
+              );
               return SizedBox(
                 height: emptyHeight,
                 child: Center(
@@ -1413,9 +1501,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 22 / 16,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -1459,10 +1545,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   /// КБЖУ. Убрали по дизайн-решению — теперь неделя просто занимает свою
   /// высоту, а зазор до карточки ниже задаётся обычным SizedBox.
   Widget _buildWeekStripWithConnector(BuildContext context, bool isDark) {
-    return SizedBox(
-      height: 64,
-      child: _buildWeekStrip(context, isDark),
-    );
+    return SizedBox(height: 64, child: _buildWeekStrip(context, isDark));
   }
 
   Widget _buildWeekStrip(BuildContext context, bool isDark) {
@@ -1487,20 +1570,28 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   }
 
   Widget _buildWeekPage(
-    BuildContext context, int page, bool isDark, DateTime today,
+    BuildContext context,
+    int page,
+    bool isDark,
+    DateTime today,
   ) {
     final weekStart = _weekStartForPage(page);
     final selectedDay = DateTime(
-      _selectedDate.year, _selectedDate.month, _selectedDate.day,
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
     );
 
-    final calendarLine =
-        isDark ? AppColors.lineDT200 : AppColors.lineLight200;
+    final calendarLine = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
     final cs = Theme.of(context).colorScheme;
 
     final dayLabels = [
-      context.l10n.dayMon, context.l10n.dayTue, context.l10n.dayWed,
-      context.l10n.dayThu, context.l10n.dayFri, context.l10n.daySat,
+      context.l10n.dayMon,
+      context.l10n.dayTue,
+      context.l10n.dayWed,
+      context.l10n.dayThu,
+      context.l10n.dayFri,
+      context.l10n.daySat,
       context.l10n.daySun,
     ];
 
@@ -1568,7 +1659,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                         ? CustomPaint(
                             painter: _DayCellBorderPainter(
                               trackColor: calendarLine,
-                              gradientColors: const [Color(0xFF22D33A), Color(0xFF1EBF92)],
+                              gradientColors: const [
+                                Color(0xFF22D33A),
+                                Color(0xFF1EBF92),
+                              ],
                               progress: progress,
                               borderRadius: 12,
                               borderWidth: 4,
@@ -1592,6 +1686,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     String mealType,
     String dateStr,
     Color back2,
+    double calorieGoal,
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1606,9 +1701,87 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               dateStr: dateStr,
               onDelete: (id) => _db.deleteFoodLog(id),
               back2: back2,
+              variant: _foodLogCardVariant,
+              calorieGoal: calorieGoal,
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildRecordsHeader(BuildContext context, ColorScheme cs) {
+    final currentViewLabel = _foodLogCardVariant == FoodLogCardVariant.expanded
+        ? context.l10n.diaryViewExpanded
+        : context.l10n.diaryViewCompact;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              context.l10n.diaryRecordsForDay,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                height: 18 / 14,
+                color: cs.onSurfaceVariant,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          PopupMenuButton<FoodLogCardVariant>(
+            padding: EdgeInsets.zero,
+            position: PopupMenuPosition.under,
+            initialValue: _foodLogCardVariant,
+            onSelected: (variant) {
+              setState(() => _foodLogCardVariant = variant);
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: FoodLogCardVariant.expanded,
+                child: Text(context.l10n.diaryViewExpanded),
+              ),
+              PopupMenuItem(
+                value: FoodLogCardVariant.compact,
+                child: Text(context.l10n.diaryViewCompact),
+              ),
+            ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${context.l10n.diaryViewLabel}: ',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          height: 18 / 14,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                      TextSpan(
+                        text: currentViewLabel,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          height: 18 / 14,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Icon(Icons.keyboard_arrow_down, size: 18, color: cs.onSurface),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1618,213 +1791,222 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final placeholderColor = isDark
         ? const Color(0xFF9CA0B2)
         : const Color(0xFF676E85);
-    final iconColor = isDark ? AppColors.darkSecondaryDark : AppColors.lightSecondaryDark;
+    final iconColor = isDark
+        ? AppColors.darkSecondaryDark
+        : AppColors.lightSecondaryDark;
     final textColor = isDark ? Colors.white : AppColors.lightOnSurface;
-    final lineBorder =
-        isDark ? AppColors.lineDT200 : AppColors.lineLight200;
+    final lineBorder = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
     const double iconSize = 36.0;
 
     return Padding(
-        padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            GestureDetector(
-              onTap: () {
-                if (_checkFreeLimit()) return;
-                final mealType = defaultMealType();
-                context.push('/search?meal_type=$mealType&date=$dateStr');
-              },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: onBack,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: lineBorder, width: 1),
-                ),
-                child: Center(
-                  child: Icon(Icons.search, size: 22, color: iconColor),
-                ),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          GestureDetector(
+            onTap: () {
+              if (_checkFreeLimit()) return;
+              final mealType = defaultMealType();
+              context.push('/search?meal_type=$mealType&date=$dateStr');
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: onBack,
+                shape: BoxShape.circle,
+                border: Border.all(color: lineBorder, width: 1),
+              ),
+              child: Center(
+                child: Icon(Icons.search, size: 22, color: iconColor),
               ),
             ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Container(
-                constraints: const BoxConstraints(minHeight: 44),
-                decoration: BoxDecoration(
-                  color: onBack,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: lineBorder, width: 1),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _inputCtl,
-                        focusNode: _inputFocus,
-                        minLines: 1,
-                        maxLines: 4,
-                        style: TextStyle(
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 44),
+              decoration: BoxDecoration(
+                color: onBack,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: lineBorder, width: 1),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _inputCtl,
+                      focusNode: _inputFocus,
+                      minLines: 1,
+                      maxLines: 4,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        height: 22 / 16,
+                        color: textColor,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: context.l10n.addEntry,
+                        hintStyle: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 22 / 16,
-                          color: textColor,
+                          color: placeholderColor,
                         ),
-                        decoration: InputDecoration(
-                          hintText: context.l10n.addEntry,
-                          hintStyle: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            height: 22 / 16,
-                            color: placeholderColor,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                        filled: false,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      onChanged: null,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  if (!_hasSearchText)
+                    GestureDetector(
+                      onTap: () {
+                        if (_checkFreeLimit()) return;
+                        context.push(
+                          '/scanner?meal_type=${defaultMealType()}&date=$dateStr',
+                        );
+                      },
+                      child: SizedBox(
+                        width: iconSize,
+                        height: iconSize,
+                        child: Center(
+                          child: SvgPicture.asset(
+                            'assets/icons/barcode.svg',
+                            width: 24,
+                            height: 24,
+                            colorFilter: ColorFilter.mode(
+                              iconColor,
+                              BlendMode.srcIn,
+                            ),
                           ),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          isDense: true,
-                          filled: false,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
                         ),
-                        onChanged: null,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    if (!_hasSearchText)
-                      GestureDetector(
-                        onTap: () {
-                          if (_checkFreeLimit()) return;
-                          context.push('/scanner?meal_type=${defaultMealType()}&date=$dateStr');
-                        },
-                        child: SizedBox(
-                          width: iconSize,
-                          height: iconSize,
-                          child: Center(
-                            child: SvgPicture.asset(
-                              'assets/icons/barcode.svg',
-                              width: 24,
-                              height: 24,
-                              colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!_hasSearchText) const SizedBox(width: 4),
-                    if (!_hasSearchText)
-                      GestureDetector(
-                        onTap: () {
-                          if (_checkFreeLimit()) return;
-                          CameraScreen.pickAndShow(
-                            context,
-                            mealType: defaultMealType(),
-                            dateStr: dateStr,
-                            source: ImageSource.gallery,
-                          );
-                        },
-                        child: SizedBox(
-                          width: iconSize,
-                          height: iconSize,
-                          child: Center(
-                            child: SvgPicture.asset(
-                              'assets/icons/image.svg',
-                              width: 24,
-                              height: 24,
-                              colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (_hasSearchText)
-                      GestureDetector(
-                        onTap: () async {
-                          final picker = ImagePicker();
-                          final picked = await picker.pickImage(
-                            source: ImageSource.gallery,
-                            maxWidth: 768,
-                            imageQuality: 70,
-                          );
-                          if (picked == null) return;
-                          final bytes = await picked.readAsBytes();
-                          if (mounted) setState(() => _attachedImageBytes = bytes);
-                        },
-                        child: SizedBox(
-                          width: iconSize,
-                          height: iconSize,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Icon(
-                                Icons.attach_file,
-                                size: 22,
-                                color: iconColor,
-                              ),
-                              if (_attachedImageBytes != null)
-                                Positioned(
-                                  top: 4,
-                                  right: 4,
-                                  child: Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            GestureDetector(
-                onTap: _hasSearchText
-                    ? () => _recognizeWithAI(dateStr)
-                    : () {
+                  if (!_hasSearchText) const SizedBox(width: 4),
+                  if (!_hasSearchText)
+                    GestureDetector(
+                      onTap: () {
                         if (_checkFreeLimit()) return;
                         CameraScreen.pickAndShow(
                           context,
                           mealType: defaultMealType(),
                           dateStr: dateStr,
-                          source: ImageSource.camera,
+                          source: ImageSource.gallery,
                         );
                       },
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: _isRecognizing
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : SvgPicture.asset(
-                            _hasSearchText
-                                ? 'assets/icons/send.svg'
-                                : 'assets/icons/camera.svg',
+                      child: SizedBox(
+                        width: iconSize,
+                        height: iconSize,
+                        child: Center(
+                          child: SvgPicture.asset(
+                            'assets/icons/image.svg',
                             width: 24,
                             height: 24,
-                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                            colorFilter: ColorFilter.mode(
+                              iconColor,
+                              BlendMode.srcIn,
+                            ),
                           ),
-                  ),
-                ),
+                        ),
+                      ),
+                    ),
+                  if (_hasSearchText)
+                    GestureDetector(
+                      onTap: () async {
+                        final picker = ImagePicker();
+                        final picked = await picker.pickImage(
+                          source: ImageSource.gallery,
+                        );
+                        if (picked == null) return;
+                        final bytes = await picked.readAsBytes();
+                        if (mounted) {
+                          setState(() => _attachedImageBytes = bytes);
+                        }
+                      },
+                      child: SizedBox(
+                        width: iconSize,
+                        height: iconSize,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Icon(Icons.attach_file, size: 22, color: iconColor),
+                            if (_attachedImageBytes != null)
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 4),
+                ],
               ),
-          ],
-        ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: _hasSearchText
+                ? () => _recognizeWithAI(dateStr)
+                : () {
+                    if (_checkFreeLimit()) return;
+                    CameraScreen.pickAndShow(
+                      context,
+                      mealType: defaultMealType(),
+                      dateStr: dateStr,
+                      source: ImageSource.camera,
+                    );
+                  },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: _isRecognizing
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : SvgPicture.asset(
+                        _hasSearchText
+                            ? 'assets/icons/send.svg'
+                            : 'assets/icons/camera.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1922,8 +2104,11 @@ class _CompactActionTile extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 20, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                icon,
+                size: 20,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
@@ -1974,12 +2159,8 @@ class _PulsingDotState extends State<_PulsingDot>
       child: Container(
         width: 10,
         height: 10,
-        decoration: BoxDecoration(
-          color: widget.color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
       ),
     );
   }
 }
-

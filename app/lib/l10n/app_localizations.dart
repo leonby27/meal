@@ -880,6 +880,24 @@ abstract class AppLocalizations {
   /// **'Записи за день'**
   String get diaryRecordsForDay;
 
+  /// No description provided for @diaryViewLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вид'**
+  String get diaryViewLabel;
+
+  /// No description provided for @diaryViewCompact.
+  ///
+  /// In ru, this message translates to:
+  /// **'компактный'**
+  String get diaryViewCompact;
+
+  /// No description provided for @diaryViewExpanded.
+  ///
+  /// In ru, this message translates to:
+  /// **'расширенный'**
+  String get diaryViewExpanded;
+
   /// No description provided for @diaryEmptyDay.
   ///
   /// In ru, this message translates to:

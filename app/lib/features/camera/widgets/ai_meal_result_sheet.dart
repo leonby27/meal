@@ -119,6 +119,8 @@ class AiMealResultSheet extends StatefulWidget {
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
       barrierColor: const Color(0xCC000000),
+      isDismissible: false,
+      enableDrag: false,
       builder: (_) => AiMealResultSheet(
         mealType: mealType,
         dateStr: dateStr,

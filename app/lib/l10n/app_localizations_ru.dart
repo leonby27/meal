@@ -426,6 +426,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diaryRecordsForDay => 'Записи за день';
 
   @override
+  String get diaryViewLabel => 'Вид';
+
+  @override
+  String get diaryViewCompact => 'компактный';
+
+  @override
+  String get diaryViewExpanded => 'расширенный';
+
+  @override
   String get diaryEmptyDay => 'Ещё нет записей за этот день';
 
   @override

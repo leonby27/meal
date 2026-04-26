@@ -427,6 +427,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get diaryRecordsForDay => 'Entradas de hoy';
 
   @override
+  String get diaryViewLabel => 'Vista';
+
+  @override
+  String get diaryViewCompact => 'compacta';
+
+  @override
+  String get diaryViewExpanded => 'ampliada';
+
+  @override
   String get diaryEmptyDay => 'Aún no hay entradas para este día';
 
   @override

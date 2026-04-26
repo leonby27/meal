@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
@@ -115,22 +117,49 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  Future<void> _recognizeWithAI() async {
+  Future<void> _recognizeEmptyStateWithCamera() async {
     final auth = AuthService();
     if (!auth.isPremium && auth.freeTrialExhausted) {
       if (mounted) context.go('/paywall');
       return;
     }
-    final text = _searchController.text.trim();
-    if (text.isEmpty) return;
 
     setState(() => _recognizing = true);
 
-    await AiMealResultSheet.showWithTextLoading(
+    final picker = ImagePicker();
+    final XFile? image;
+    try {
+      image = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 768,
+        imageQuality: 70,
+      );
+    } catch (e, st) {
+      debugPrint('ImagePicker failed: $e\n$st');
+      if (mounted) setState(() => _recognizing = false);
+      return;
+    }
+
+    if (image == null) {
+      if (mounted) setState(() => _recognizing = false);
+      return;
+    }
+
+    final Uint8List bytes;
+    try {
+      bytes = await image.readAsBytes();
+    } catch (e, st) {
+      debugPrint('Failed to read picked image bytes: $e\n$st');
+      if (mounted) setState(() => _recognizing = false);
+      return;
+    }
+    if (!mounted) return;
+
+    await AiMealResultSheet.showWithLoading(
       context,
       mealType: widget.mealType,
       dateStr: widget.dateStr,
-      text: text,
+      imageBytes: bytes,
     );
 
     if (mounted) {
@@ -680,7 +709,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   Text(context.l10n.nothingFound, style: const TextStyle(color: Colors.grey)),
                   const SizedBox(height: 20),
                   FilledButton.icon(
-                    onPressed: _recognizeWithAI,
+                    onPressed: _recognizeEmptyStateWithCamera,
                     icon: const Icon(Icons.auto_awesome),
                     label: Text(context.l10n.recognizeViaAi),
                   ),

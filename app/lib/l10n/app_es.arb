@@ -143,6 +143,9 @@
   "notifChannelDesc": "Recordatorios para registrar comidas",
 
   "diaryRecordsForDay": "Entradas de hoy",
+  "diaryViewLabel": "Vista",
+  "diaryViewCompact": "compacta",
+  "diaryViewExpanded": "ampliada",
   "diaryEmptyDay": "Aún no hay entradas para este día",
   "addMealTitle": "Añadir Comida",
   "mealTypeLabel": "Tipo de comida",

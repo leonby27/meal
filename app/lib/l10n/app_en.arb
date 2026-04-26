@@ -143,6 +143,9 @@
   "notifChannelDesc": "Reminders to log meals",
 
   "diaryRecordsForDay": "Today's entries",
+  "diaryViewLabel": "View",
+  "diaryViewCompact": "compact",
+  "diaryViewExpanded": "expanded",
   "diaryEmptyDay": "No entries for this day yet",
   "addMealTitle": "Add Meal",
   "mealTypeLabel": "Meal Type",

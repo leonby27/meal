@@ -143,6 +143,9 @@
   "notifChannelDesc": "Erinnerungen zur Mahlzeitenerfassung",
 
   "diaryRecordsForDay": "Heutige Einträge",
+  "diaryViewLabel": "Ansicht",
+  "diaryViewCompact": "kompakt",
+  "diaryViewExpanded": "erweitert",
   "diaryEmptyDay": "Noch keine Einträge für diesen Tag",
   "addMealTitle": "Mahlzeit hinzufügen",
   "mealTypeLabel": "Mahlzeittyp",
