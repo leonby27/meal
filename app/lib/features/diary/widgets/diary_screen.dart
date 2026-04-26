@@ -1582,7 +1582,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
       _selectedDate.day,
     );
 
-    final calendarLine = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
+    final calendarLine = isDark ? AppColors.lineDT300 : AppColors.lineLight300;
     final cs = Theme.of(context).colorScheme;
 
     final dayLabels = [

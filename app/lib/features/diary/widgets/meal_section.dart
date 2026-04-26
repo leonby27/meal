@@ -36,7 +36,7 @@ class MealSection extends StatelessWidget {
     required String dateStr,
     required Future<void> Function(String id) onDelete,
     required Color back2,
-    FoodLogCardVariant variant = FoodLogCardVariant.compact,
+    FoodLogCardVariant variant = FoodLogCardVariant.expanded,
     double calorieGoal = 0,
   }) {
     return _FoodLogCard(

@@ -31,7 +31,7 @@ class AppColors {
   // ── Light-only helpers ──────────────────────────────────────
   static const lightScaffold = Color(0xFFF5F6F8);
   static const lightSurface = Color(0xFFFFFFFF);
-  static const lightBack2 = Color(0xFFF5F6F8);
+  static const lightBack2 = Color(0xFFF1F1F7);
   static const lightOnSurface = Color(0xFF0A1B39);
   static const lightOnSurfaceVariant = Color(0xFF83899F);
   static const lightSecondaryDark = Color(0xFF676E85);
@@ -83,8 +83,10 @@ class AppColors {
   /// Dark-theme line @ 5% on #CDDEFF (was 10% / 0x1A).
   static const lineDT100 = Color(0x0DCDDEFF);
   static const lineDT200 = Color(0x1ACDDEFF);
+  static const lineDT300 = Color(0x1ACDDEFF);
   static const lineLight100 = Color(0xFFEDEEF3);
   static const lineLight200 = Color(0xFFE6E7EC);
+  static const lineLight300 = Color(0xFFD7D9E2);
 }
 
 class AppTheme {
