@@ -176,6 +176,30 @@ class AppLocalizationsDe extends AppLocalizations {
       'Lokale Daten bleiben auf dem Gerät gespeichert.';
 
   @override
+  String get deleteAccount => 'Account löschen';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Account löschen?';
+
+  @override
+  String get deleteAccountConfirmMessage =>
+      'Dadurch wird Ihr Account dauerhaft gelöscht. Mahlzeitenverlauf, Rezepte, Produkte, Favoriten und Einstellungen werden von diesem Gerät entfernt. Diese Aktion kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get deleteAccountFinalConfirmTitle => 'Sind Sie absolut sicher?';
+
+  @override
+  String get deleteAccountFinalConfirmMessage =>
+      'Ihr Account und Ihre Daten werden dauerhaft gelöscht.';
+
+  @override
+  String get deleteAccountSuccess => 'Ihr Account wurde gelöscht.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Der Account konnte nicht gelöscht werden. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.';
+
+  @override
   String get cancel => 'Abbrechen';
 
   @override

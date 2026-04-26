@@ -406,6 +406,48 @@ abstract class AppLocalizations {
   /// **'Локальные данные сохранятся на устройстве.'**
   String get signOutLocalDataKept;
 
+  /// No description provided for @deleteAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт?'**
+  String get deleteAccountConfirmTitle;
+
+  /// No description provided for @deleteAccountConfirmMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт будет удалён навсегда. История питания, рецепты, продукты, избранное и настройки на этом устройстве также будут удалены. Это действие нельзя отменить.'**
+  String get deleteAccountConfirmMessage;
+
+  /// No description provided for @deleteAccountFinalConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы точно уверены?'**
+  String get deleteAccountFinalConfirmTitle;
+
+  /// No description provided for @deleteAccountFinalConfirmMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш аккаунт и данные будут удалены без возможности восстановления.'**
+  String get deleteAccountFinalConfirmMessage;
+
+  /// No description provided for @deleteAccountSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт удалён.'**
+  String get deleteAccountSuccess;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.'**
+  String get deleteAccountFailed;
+
   /// No description provided for @cancel.
   ///
   /// In ru, this message translates to:

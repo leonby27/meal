@@ -176,6 +176,30 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les données locales resteront sur l\'appareil.';
 
   @override
+  String get deleteAccount => 'Supprimer le compte';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Supprimer votre compte ?';
+
+  @override
+  String get deleteAccountConfirmMessage =>
+      'Cela supprimera définitivement votre compte et effacera de cet appareil votre historique de repas, vos recettes, produits, favoris et réglages. Cette action est irréversible.';
+
+  @override
+  String get deleteAccountFinalConfirmTitle => 'Êtes-vous absolument sûr ?';
+
+  @override
+  String get deleteAccountFinalConfirmMessage =>
+      'Votre compte et vos données seront supprimés définitivement.';
+
+  @override
+  String get deleteAccountSuccess => 'Votre compte a été supprimé.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Impossible de supprimer le compte. Vérifiez votre connexion et réessayez.';
+
+  @override
   String get cancel => 'Annuler';
 
   @override

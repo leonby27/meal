@@ -7,6 +7,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/build_info.dart';
+import 'package:meal_tracker/core/database/app_database.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._();
@@ -223,6 +224,46 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteAccount() async {
+    final api = ApiClient();
+
+    if (api.isAuthenticated) {
+      await api.delete('/api/auth/me');
+    }
+
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
+
+    await AppDatabase.getInstance().then((db) => db.clearUserData());
+    await api.clearToken();
+
+    _userName = null;
+    _userEmail = null;
+    _userPhotoUrl = null;
+    _isLoggedIn = false;
+    _onboardingCompleted = false;
+    _isPremium = false;
+    _freeEntriesUsed = 0;
+    _planName = null;
+    _nextBillingDate = null;
+    _authProvider = null;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userNameKey);
+    await prefs.remove(_userEmailKey);
+    await prefs.remove(_userPhotoKey);
+    await prefs.remove(_authProviderKey);
+    await prefs.remove(_planNameKey);
+    await prefs.remove(_nextBillingDateKey);
+    await prefs.setBool(_isLoggedInKey, false);
+    await prefs.setBool(_onboardingCompletedKey, false);
+    await prefs.setBool(_isPremiumKey, false);
+    await prefs.setInt(_freeEntriesUsedKey, 0);
+
+    notifyListeners();
+  }
+
   Future<void> incrementFreeEntry() async {
     _freeEntriesUsed++;
     final prefs = await SharedPreferences.getInstance();
@@ -255,10 +296,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> setPremium({
-    required bool isPremium,
-    String? planName,
-  }) async {
+  Future<void> setPremium({required bool isPremium, String? planName}) async {
     _isPremium = isPremium;
     _planName = planName;
     final prefs = await SharedPreferences.getInstance();

@@ -28,6 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   late AppDatabase _db;
   bool _dbReady = false;
   bool _anyPushReminderEnabled = false;
+  bool _isDeletingAccount = false;
   final _calorieController = TextEditingController(text: '');
   final _proteinController = TextEditingController(text: '');
   final _fatController = TextEditingController(text: '');
@@ -95,13 +96,10 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
 
   Future<void> _initDb() async {
     _db = await AppDatabase.getInstance();
-    _calorieController.text =
-        await _db.getSetting('calorie_goal') ?? '2000';
-    _proteinController.text =
-        await _db.getSetting('protein_goal') ?? '';
+    _calorieController.text = await _db.getSetting('calorie_goal') ?? '2000';
+    _proteinController.text = await _db.getSetting('protein_goal') ?? '';
     _fatController.text = await _db.getSetting('fat_goal') ?? '';
-    _carbsController.text =
-        await _db.getSetting('carbs_goal') ?? '';
+    _carbsController.text = await _db.getSetting('carbs_goal') ?? '';
     final anyPushReminders = await _anyPushReminderEnabledFromDb();
     if (mounted) {
       setState(() {
@@ -142,12 +140,77 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
     if (mounted) setState(() {});
   }
 
+  Future<void> _deleteAccount() async {
+    final firstConfirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.deleteAccountConfirmTitle),
+        content: Text(ctx.l10n.deleteAccountConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.l10n.deleteAccount),
+          ),
+        ],
+      ),
+    );
+    if (firstConfirm != true || !mounted) return;
+
+    final finalConfirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(ctx.l10n.deleteAccountFinalConfirmTitle),
+        content: Text(ctx.l10n.deleteAccountFinalConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(ctx.l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (finalConfirm != true || !mounted) return;
+
+    setState(() => _isDeletingAccount = true);
+    try {
+      await AuthService().deleteAccount();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.deleteAccountSuccess)),
+      );
+      context.go('/onboarding');
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.deleteAccountFailed)));
+    } finally {
+      if (mounted) setState(() => _isDeletingAccount = false);
+    }
+  }
+
   Future<void> _signInFromGuest() async {
     final success = await AuthService().signInWithGoogle();
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.signedInSnackbar)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.signedInSnackbar)));
       setState(() {});
     }
   }
@@ -155,9 +218,9 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   Future<void> _signInWithAppleFromGuest() async {
     final success = await AuthService().signInWithApple();
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.signedInSnackbar)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.signedInSnackbar)));
       setState(() {});
     }
   }
@@ -231,7 +294,8 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
             for (final locale in LocaleNotifier.supportedLocales)
               ListTile(
                 title: Text(LocaleNotifier.localeName(locale)),
-                trailing: LocaleNotifier.instance.value.languageCode ==
+                trailing:
+                    LocaleNotifier.instance.value.languageCode ==
                         locale.languageCode
                     ? const Icon(Icons.check, color: AppColors.primary)
                     : null,
@@ -249,8 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     if (!_dbReady) {
-      return const Scaffold(
-          body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final auth = AuthService();
@@ -314,8 +377,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   }
 
   Widget _card({required Widget child}) {
-    final lineBorder =
-        _isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    final lineBorder = _isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -350,11 +412,12 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
     // on `userEmail`. `hasSocialAccount` tracks whether a real sign-in
     // (Google/Apple) completed, independent of what fields Apple returned.
     final hasAccount = auth.hasSocialAccount;
-    final subtitle = auth.userEmail ??
+    final subtitle =
+        auth.userEmail ??
         (hasAccount
             ? (auth.authProvider == AuthService.providerApple
-                ? 'Apple ID'
-                : context.l10n.defaultUserName)
+                  ? 'Apple ID'
+                  : context.l10n.defaultUserName)
             : context.l10n.guestMode);
 
     return _card(
@@ -405,8 +468,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
                           height: 20 / 15,
-                          color:
-                              Theme.of(context).colorScheme.onSurface,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -416,9 +478,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           height: 14 / 12,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -446,6 +506,14 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                   icon: Icons.account_circle,
                   onTap: _signInFromGuest,
                 ),
+            ] else if (Platform.isIOS) ...[
+              const SizedBox(height: 15),
+              _destructiveButton(
+                label: context.l10n.deleteAccount,
+                icon: Icons.delete_outline,
+                isLoading: _isDeletingAccount,
+                onTap: _deleteAccount,
+              ),
             ],
           ],
         ),
@@ -500,6 +568,48 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
     );
   }
 
+  Widget _destructiveButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isLoading = false,
+  }) {
+    final color = Theme.of(context).colorScheme.error;
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: color.withAlpha(_isDark ? 28 : 18),
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isLoading)
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: color),
+              )
+            else
+              Icon(icon, size: 20, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 18 / 14,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _displayPlanName(String? planName) {
     switch (planName) {
       case 'yearly':
@@ -523,14 +633,8 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: _isDark
-              ? [
-                  const Color(0xFF1A2340),
-                  const Color(0xFF162035),
-                ]
-              : [
-                  const Color(0xFFEEF4FF),
-                  const Color(0xFFE0ECFF),
-                ],
+              ? [const Color(0xFF1A2340), const Color(0xFF162035)]
+              : [const Color(0xFFEEF4FF), const Color(0xFFE0ECFF)],
         ),
         boxShadow: const [
           BoxShadow(
@@ -650,7 +754,10 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.success.withAlpha(30),
                     borderRadius: BorderRadius.circular(8),
@@ -722,10 +829,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                 final url = Platform.isIOS
                     ? 'https://apps.apple.com/account/subscriptions'
                     : 'https://play.google.com/store/account/subscriptions';
-                launchUrl(
-                  Uri.parse(url),
-                  mode: LaunchMode.externalApplication,
-                );
+                launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
               },
             ),
           ],
@@ -739,8 +843,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   Widget _buildGoalsCard() {
     return _card(
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
         child: Column(
           children: [
             _goalRow(
@@ -799,9 +902,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
         Container(
           width: 70,
           decoration: BoxDecoration(
-            color: _isDark
-                ? AppColors.darkOnBack4
-                : AppColors.lightOnBack4,
+            color: _isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: _isDark ? AppColors.lineDT200 : AppColors.lineLight200,
@@ -823,8 +924,10 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
               filled: false,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 8,
+              ),
               isDense: true,
               hintText: '0',
               hintStyle: TextStyle(

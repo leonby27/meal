@@ -12,12 +12,15 @@ part 'app_database.g.dart';
 class Products extends Table {
   IntColumn get productId => integer().named('product_id')();
   TextColumn get name => text()();
-  TextColumn get searchName => text().withDefault(const Constant('')).named('search_name')();
+  TextColumn get searchName =>
+      text().withDefault(const Constant('')).named('search_name')();
   RealColumn get weightGrams => real().nullable().named('weight_grams')();
-  RealColumn get proteinPer100g => real().nullable().named('protein_per_100g')();
+  RealColumn get proteinPer100g =>
+      real().nullable().named('protein_per_100g')();
   RealColumn get fatPer100g => real().nullable().named('fat_per_100g')();
   RealColumn get carbsPer100g => real().nullable().named('carbs_per_100g')();
-  RealColumn get caloriesPer100g => real().nullable().named('calories_per_100g')();
+  RealColumn get caloriesPer100g =>
+      real().nullable().named('calories_per_100g')();
   TextColumn get imageUrl => text().nullable().named('image_url')();
   TextColumn get brand => text().nullable()();
   TextColumn get country => text().nullable()();
@@ -26,8 +29,10 @@ class Products extends Table {
   RealColumn get price => real().nullable()();
   TextColumn get barcode => text().nullable()();
   TextColumn get source => text().nullable()();
-  BoolColumn get isFavorite => boolean().withDefault(const Constant(false)).named('is_favorite')();
-  BoolColumn get isUserCreated => boolean().withDefault(const Constant(false)).named('is_user_created')();
+  BoolColumn get isFavorite =>
+      boolean().withDefault(const Constant(false)).named('is_favorite')();
+  BoolColumn get isUserCreated =>
+      boolean().withDefault(const Constant(false)).named('is_user_created')();
 
   @override
   Set<Column> get primaryKey => {productId};
@@ -51,9 +56,12 @@ class FoodLogs extends Table {
   RealColumn get carbs => real().withDefault(const Constant(0))();
   RealColumn get calories => real().withDefault(const Constant(0))();
   TextColumn get imageUrl => text().nullable().named('image_url')();
-  TextColumn get ingredientsJson => text().nullable().named('ingredients_json')();
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime).named('created_at')();
-  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime).named('updated_at')();
+  TextColumn get ingredientsJson =>
+      text().nullable().named('ingredients_json')();
+  DateTimeColumn get createdAt =>
+      dateTime().withDefault(currentDateAndTime).named('created_at')();
+  DateTimeColumn get updatedAt =>
+      dateTime().withDefault(currentDateAndTime).named('updated_at')();
   BoolColumn get synced => boolean().withDefault(const Constant(false))();
 
   @override
@@ -63,13 +71,19 @@ class FoodLogs extends Table {
 class Recipes extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
-  RealColumn get totalWeightGrams => real().withDefault(const Constant(0)).named('total_weight_grams')();
+  RealColumn get totalWeightGrams =>
+      real().withDefault(const Constant(0)).named('total_weight_grams')();
   IntColumn get servings => integer().withDefault(const Constant(1))();
-  RealColumn get proteinPer100g => real().withDefault(const Constant(0)).named('protein_per_100g')();
-  RealColumn get fatPer100g => real().withDefault(const Constant(0)).named('fat_per_100g')();
-  RealColumn get carbsPer100g => real().withDefault(const Constant(0)).named('carbs_per_100g')();
-  RealColumn get caloriesPer100g => real().withDefault(const Constant(0)).named('calories_per_100g')();
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime).named('created_at')();
+  RealColumn get proteinPer100g =>
+      real().withDefault(const Constant(0)).named('protein_per_100g')();
+  RealColumn get fatPer100g =>
+      real().withDefault(const Constant(0)).named('fat_per_100g')();
+  RealColumn get carbsPer100g =>
+      real().withDefault(const Constant(0)).named('carbs_per_100g')();
+  RealColumn get caloriesPer100g =>
+      real().withDefault(const Constant(0)).named('calories_per_100g')();
+  DateTimeColumn get createdAt =>
+      dateTime().withDefault(currentDateAndTime).named('created_at')();
 }
 
 class RecipeIngredients extends Table {
@@ -87,7 +101,9 @@ class UserSettings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [Products, FoodLogs, Recipes, RecipeIngredients, UserSettings])
+@DriftDatabase(
+  tables: [Products, FoodLogs, Recipes, RecipeIngredients, UserSettings],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal(super.e);
 
@@ -126,10 +142,11 @@ class AppDatabase extends _$AppDatabase {
   Future<void> _rebuildSearchIndex() async {
     final all = await select(products).get();
     for (final p in all) {
-      await (update(products)..where((t) => t.productId.equals(p.productId)))
-          .write(ProductsCompanion(
-        searchName: Value(buildSearchName(p.name, p.brand)),
-      ));
+      await (update(
+        products,
+      )..where((t) => t.productId.equals(p.productId))).write(
+        ProductsCompanion(searchName: Value(buildSearchName(p.name, p.brand))),
+      );
     }
   }
 
@@ -194,8 +211,8 @@ class AppDatabase extends _$AppDatabase {
     // Variables must match the order of ? in SQL text.
     // CASE WHEN appears before WHERE, so relevance vars go first.
     final vars = <Variable>[
-      Variable.withString('$q%'),   // CASE WHEN search_name LIKE ? THEN 3
-      Variable.withString('%$q%'),  // WHEN search_name LIKE ? THEN 2
+      Variable.withString('$q%'), // CASE WHEN search_name LIKE ? THEN 3
+      Variable.withString('%$q%'), // WHEN search_name LIKE ? THEN 2
     ];
 
     final whereClauses = <String>[];
@@ -205,7 +222,8 @@ class AppDatabase extends _$AppDatabase {
     }
     final whereStr = whereClauses.join(' AND ');
 
-    final sql = '''
+    final sql =
+        '''
       SELECT *, 
         CASE 
           WHEN search_name LIKE ? THEN 3
@@ -219,26 +237,30 @@ class AppDatabase extends _$AppDatabase {
     ''';
 
     final results = await customSelect(sql, variables: vars).get();
-    return results.map((row) => Product(
-      productId: row.read<int>('product_id'),
-      name: row.read<String>('name'),
-      searchName: row.read<String>('search_name'),
-      weightGrams: row.readNullable<double>('weight_grams'),
-      proteinPer100g: row.readNullable<double>('protein_per_100g'),
-      fatPer100g: row.readNullable<double>('fat_per_100g'),
-      carbsPer100g: row.readNullable<double>('carbs_per_100g'),
-      caloriesPer100g: row.readNullable<double>('calories_per_100g'),
-      imageUrl: row.readNullable<String>('image_url'),
-      brand: row.readNullable<String>('brand'),
-      country: row.readNullable<String>('country'),
-      category: row.readNullable<String>('category'),
-      composition: row.readNullable<String>('composition'),
-      price: row.readNullable<double>('price'),
-      barcode: row.readNullable<String>('barcode'),
-      source: row.readNullable<String>('source'),
-      isFavorite: row.read<bool>('is_favorite'),
-      isUserCreated: row.read<bool>('is_user_created'),
-    )).toList();
+    return results
+        .map(
+          (row) => Product(
+            productId: row.read<int>('product_id'),
+            name: row.read<String>('name'),
+            searchName: row.read<String>('search_name'),
+            weightGrams: row.readNullable<double>('weight_grams'),
+            proteinPer100g: row.readNullable<double>('protein_per_100g'),
+            fatPer100g: row.readNullable<double>('fat_per_100g'),
+            carbsPer100g: row.readNullable<double>('carbs_per_100g'),
+            caloriesPer100g: row.readNullable<double>('calories_per_100g'),
+            imageUrl: row.readNullable<String>('image_url'),
+            brand: row.readNullable<String>('brand'),
+            country: row.readNullable<String>('country'),
+            category: row.readNullable<String>('category'),
+            composition: row.readNullable<String>('composition'),
+            price: row.readNullable<double>('price'),
+            barcode: row.readNullable<String>('barcode'),
+            source: row.readNullable<String>('source'),
+            isFavorite: row.read<bool>('is_favorite'),
+            isUserCreated: row.read<bool>('is_user_created'),
+          ),
+        )
+        .toList();
   }
 
   Future<List<Product>> getFavoriteProducts() {
@@ -246,9 +268,12 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> toggleFavorite(int productId) async {
-    final product = await (select(products)..where((p) => p.productId.equals(productId))).getSingle();
-    await (update(products)..where((p) => p.productId.equals(productId)))
-        .write(ProductsCompanion(isFavorite: Value(!product.isFavorite)));
+    final product = await (select(
+      products,
+    )..where((p) => p.productId.equals(productId))).getSingle();
+    await (update(products)..where((p) => p.productId.equals(productId))).write(
+      ProductsCompanion(isFavorite: Value(!product.isFavorite)),
+    );
   }
 
   Future<Product> cacheServerProduct(Map<String, dynamic> json) async {
@@ -275,7 +300,9 @@ class AppDatabase extends _$AppDatabase {
     );
 
     await into(products).insert(companion, mode: InsertMode.insertOrReplace);
-    return (await (select(products)..where((p) => p.productId.equals(productId))).getSingle());
+    return (await (select(
+      products,
+    )..where((p) => p.productId.equals(productId))).getSingle());
   }
 
   // Food log queries
@@ -283,8 +310,8 @@ class AppDatabase extends _$AppDatabase {
     final start = DateTime(date.year, date.month, date.day);
     final end = start.add(const Duration(days: 1));
     return (select(foodLogs)
-      ..where((l) => l.mealDate.isBetweenValues(start, end))
-      ..orderBy([(l) => OrderingTerm.asc(l.createdAt)]))
+          ..where((l) => l.mealDate.isBetweenValues(start, end))
+          ..orderBy([(l) => OrderingTerm.asc(l.createdAt)]))
         .get();
   }
 
@@ -304,15 +331,15 @@ class AppDatabase extends _$AppDatabase {
     final start = DateTime(date.year, date.month, date.day);
     final end = start.add(const Duration(days: 1));
     return (select(foodLogs)
-      ..where((l) => l.mealDate.isBetweenValues(start, end))
-      ..orderBy([(l) => OrderingTerm.asc(l.createdAt)]))
+          ..where((l) => l.mealDate.isBetweenValues(start, end))
+          ..orderBy([(l) => OrderingTerm.asc(l.createdAt)]))
         .watch();
   }
 
   Future<List<FoodLog>> getRecentProducts({int limit = 20}) {
     return (select(foodLogs)
-      ..orderBy([(l) => OrderingTerm.desc(l.createdAt)])
-      ..limit(limit))
+          ..orderBy([(l) => OrderingTerm.desc(l.createdAt)])
+          ..limit(limit))
         .get();
   }
 
@@ -328,29 +355,33 @@ class AppDatabase extends _$AppDatabase {
     final nextId = await getNextUserProductId();
     final name = product.name.value;
     final brand = product.brand.present ? product.brand.value : null;
-    await into(products).insert(product.copyWith(
-      productId: Value(nextId),
-      isUserCreated: const Value(true),
-      searchName: Value(buildSearchName(name, brand)),
-    ));
+    await into(products).insert(
+      product.copyWith(
+        productId: Value(nextId),
+        isUserCreated: const Value(true),
+        searchName: Value(buildSearchName(name, brand)),
+      ),
+    );
     return nextId;
   }
 
   Future<void> updateProduct(int productId, ProductsCompanion companion) {
-    return (update(products)..where((p) => p.productId.equals(productId)))
-        .write(companion);
+    return (update(
+      products,
+    )..where((p) => p.productId.equals(productId))).write(companion);
   }
 
   Future<List<Product>> getUserProducts() {
     return (select(products)
-      ..where((p) => p.isUserCreated.equals(true))
-      ..orderBy([(p) => OrderingTerm.desc(p.productId)]))
+          ..where((p) => p.isUserCreated.equals(true))
+          ..orderBy([(p) => OrderingTerm.desc(p.productId)]))
         .get();
   }
 
   Future<void> deleteUserProduct(int productId) {
-    return (delete(products)
-      ..where((p) => p.productId.equals(productId) & p.isUserCreated.equals(true)))
+    return (delete(products)..where(
+          (p) => p.productId.equals(productId) & p.isUserCreated.equals(true),
+        ))
         .go();
   }
 
@@ -360,7 +391,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<Recipe>> getAllRecipes() {
-    return (select(recipes)..orderBy([(r) => OrderingTerm.desc(r.createdAt)])).get();
+    return (select(
+      recipes,
+    )..orderBy([(r) => OrderingTerm.desc(r.createdAt)])).get();
   }
 
   Future<Recipe> getRecipe(int id) {
@@ -368,11 +401,27 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> deleteRecipe(int id) async {
-    await (delete(recipeIngredients)..where((ri) => ri.recipeId.equals(id))).go();
+    await (delete(
+      recipeIngredients,
+    )..where((ri) => ri.recipeId.equals(id))).go();
     await (delete(recipes)..where((r) => r.id.equals(id))).go();
-    await (delete(products)
-      ..where((p) => p.isUserCreated.equals(true) & p.category.equals('recipe_$id')))
+    await (delete(products)..where(
+          (p) => p.isUserCreated.equals(true) & p.category.equals('recipe_$id'),
+        ))
         .go();
+  }
+
+  Future<void> clearUserData() async {
+    await transaction(() async {
+      await delete(foodLogs).go();
+      await delete(recipeIngredients).go();
+      await delete(recipes).go();
+      await (delete(products)..where((p) => p.isUserCreated.equals(true))).go();
+      await (update(products)..where((p) => p.isFavorite.equals(true))).write(
+        const ProductsCompanion(isFavorite: Value(false)),
+      );
+      await delete(userSettings).go();
+    });
   }
 
   Future<void> addRecipeIngredient(RecipeIngredientsCompanion ingredient) {
@@ -380,11 +429,15 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<RecipeIngredient>> getRecipeIngredients(int recipeId) {
-    return (select(recipeIngredients)..where((ri) => ri.recipeId.equals(recipeId))).get();
+    return (select(
+      recipeIngredients,
+    )..where((ri) => ri.recipeId.equals(recipeId))).get();
   }
 
   Future<Product?> getProductById(int productId) {
-    return (select(products)..where((p) => p.productId.equals(productId))).getSingleOrNull();
+    return (select(
+      products,
+    )..where((p) => p.productId.equals(productId))).getSingleOrNull();
   }
 
   // Copy meal logs from one date to another
@@ -401,19 +454,21 @@ class AppDatabase extends _$AppDatabase {
     int count = 0;
     for (final log in filtered) {
       final newDate = DateTime(toDate.year, toDate.month, toDate.day, 12);
-      await addFoodLog(FoodLogsCompanion.insert(
-        id: '${DateTime.now().microsecondsSinceEpoch}_$count',
-        productId: Value(log.productId),
-        productName: log.productName,
-        mealType: log.mealType,
-        mealDate: newDate,
-        grams: log.grams,
-        protein: Value(log.protein),
-        fat: Value(log.fat),
-        carbs: Value(log.carbs),
-        calories: Value(log.calories),
-        imageUrl: Value(log.imageUrl),
-      ));
+      await addFoodLog(
+        FoodLogsCompanion.insert(
+          id: '${DateTime.now().microsecondsSinceEpoch}_$count',
+          productId: Value(log.productId),
+          productName: log.productName,
+          mealType: log.mealType,
+          mealDate: newDate,
+          grams: log.grams,
+          protein: Value(log.protein),
+          fat: Value(log.fat),
+          carbs: Value(log.carbs),
+          calories: Value(log.calories),
+          imageUrl: Value(log.imageUrl),
+        ),
+      );
       count++;
     }
     return count;
@@ -433,7 +488,9 @@ class AppDatabase extends _$AppDatabase {
 
   // Settings
   Future<String?> getSetting(String key) async {
-    final result = await (select(userSettings)..where((s) => s.key.equals(key))).getSingleOrNull();
+    final result = await (select(
+      userSettings,
+    )..where((s) => s.key.equals(key))).getSingleOrNull();
     return result?.value;
   }
 

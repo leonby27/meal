@@ -176,6 +176,30 @@ class AppLocalizationsRu extends AppLocalizations {
       'Локальные данные сохранятся на устройстве.';
 
   @override
+  String get deleteAccount => 'Удалить аккаунт';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Удалить аккаунт?';
+
+  @override
+  String get deleteAccountConfirmMessage =>
+      'Аккаунт будет удалён навсегда. История питания, рецепты, продукты, избранное и настройки на этом устройстве также будут удалены. Это действие нельзя отменить.';
+
+  @override
+  String get deleteAccountFinalConfirmTitle => 'Вы точно уверены?';
+
+  @override
+  String get deleteAccountFinalConfirmMessage =>
+      'Ваш аккаунт и данные будут удалены без возможности восстановления.';
+
+  @override
+  String get deleteAccountSuccess => 'Аккаунт удалён.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.';
+
+  @override
   String get cancel => 'Отмена';
 
   @override

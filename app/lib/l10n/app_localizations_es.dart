@@ -176,6 +176,30 @@ class AppLocalizationsEs extends AppLocalizations {
       'Los datos locales permanecerán en el dispositivo.';
 
   @override
+  String get deleteAccount => 'Eliminar cuenta';
+
+  @override
+  String get deleteAccountConfirmTitle => '¿Eliminar tu cuenta?';
+
+  @override
+  String get deleteAccountConfirmMessage =>
+      'Esto eliminará permanentemente tu cuenta y borrará de este dispositivo tu historial de comidas, recetas, productos, favoritos y ajustes. Esta acción no se puede deshacer.';
+
+  @override
+  String get deleteAccountFinalConfirmTitle => '¿Estás completamente seguro?';
+
+  @override
+  String get deleteAccountFinalConfirmMessage =>
+      'Tu cuenta y tus datos se eliminarán permanentemente.';
+
+  @override
+  String get deleteAccountSuccess => 'Tu cuenta ha sido eliminada.';
+
+  @override
+  String get deleteAccountFailed =>
+      'No se pudo eliminar la cuenta. Comprueba tu conexión e inténtalo de nuevo.';
+
+  @override
   String get cancel => 'Cancelar';
 
   @override

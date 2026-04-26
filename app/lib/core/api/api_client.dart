@@ -43,17 +43,18 @@ http.Client? _createCupertinoClient() {
 http.Client _createDohClient() {
   final httpClient = HttpClient()
     ..connectionTimeout = const Duration(seconds: 10);
-  httpClient.connectionFactory = (Uri uri, String? proxyHost, int? proxyPort) async {
-    if (proxyHost != null) {
-      return Socket.startConnect(proxyHost, proxyPort ?? uri.port);
-    }
-    final host = uri.host;
-    if (_isIpLiteral(host)) {
-      return Socket.startConnect(host, uri.port);
-    }
-    final ip = await _DohResolver.resolve(host);
-    return Socket.startConnect(ip ?? host, uri.port);
-  };
+  httpClient.connectionFactory =
+      (Uri uri, String? proxyHost, int? proxyPort) async {
+        if (proxyHost != null) {
+          return Socket.startConnect(proxyHost, proxyPort ?? uri.port);
+        }
+        final host = uri.host;
+        if (_isIpLiteral(host)) {
+          return Socket.startConnect(host, uri.port);
+        }
+        final ip = await _DohResolver.resolve(host);
+        return Socket.startConnect(ip ?? host, uri.port);
+      };
   return http_io.IOClient(httpClient);
 }
 
@@ -88,8 +89,10 @@ class _DohResolver {
     for (final provider in _providers) {
       final endpoint = provider[1];
       try {
-        final ip = await _query(endpoint, hostname)
-            .timeout(const Duration(seconds: 6));
+        final ip = await _query(
+          endpoint,
+          hostname,
+        ).timeout(const Duration(seconds: 6));
         if (ip != null) {
           _cache[hostname] = _DohCacheEntry(ip, DateTime.now());
           return ip;
@@ -100,8 +103,7 @@ class _DohResolver {
   }
 
   static Future<String?> _query(String endpoint, String hostname) async {
-    final client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 5);
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
     try {
       final uri = Uri.parse(
         '$endpoint?name=${Uri.encodeQueryComponent(hostname)}&type=A',
@@ -131,8 +133,7 @@ class _DohCacheEntry {
   _DohCacheEntry(this.ip, this.at);
   final String ip;
   final DateTime at;
-  bool get isFresh =>
-      DateTime.now().difference(at) < _DohResolver._dohCacheTtl;
+  bool get isFresh => DateTime.now().difference(at) < _DohResolver._dohCacheTtl;
 }
 
 class ApiClient {
@@ -236,29 +237,51 @@ class ApiClient {
     if (_token != null) 'Authorization': 'Bearer $_token',
   };
 
-  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
-    final response = await _withRetry(() =>
-      _client.post(
-        Uri.parse('$_baseUrl$path'),
-        headers: _headers,
-        body: jsonEncode(body),
-      ).timeout(_requestTimeout),
+  Future<Map<String, dynamic>> post(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await _withRetry(
+      () => _client
+          .post(
+            Uri.parse('$_baseUrl$path'),
+            headers: _headers,
+            body: jsonEncode(body),
+          )
+          .timeout(_requestTimeout),
     );
     return _handleResponse(response);
   }
 
-  Future<Map<String, dynamic>> get(String path, {Map<String, String>? params}) async {
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, String>? params,
+  }) async {
     var uri = Uri.parse('$_baseUrl$path');
     if (params != null) {
       uri = uri.replace(queryParameters: params);
     }
-    final response = await _withRetry(() =>
-      _client.get(uri, headers: _headers).timeout(_requestTimeout),
+    final response = await _withRetry(
+      () => _client.get(uri, headers: _headers).timeout(_requestTimeout),
     );
     return _handleResponse(response);
   }
 
-  Future<Map<String, dynamic>> uploadImage(String path, Uint8List imageBytes, {String? locale, String? text}) async {
+  Future<Map<String, dynamic>> delete(String path) async {
+    final response = await _withRetry(
+      () => _client
+          .delete(Uri.parse('$_baseUrl$path'), headers: _headers)
+          .timeout(_requestTimeout),
+    );
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> uploadImage(
+    String path,
+    Uint8List imageBytes, {
+    String? locale,
+    String? text,
+  }) async {
     await _selectUploadClient();
     await ensureAuthenticated();
 
@@ -279,9 +302,11 @@ class ApiClient {
       if (text != null && text.isNotEmpty) writeField('text', text);
 
       headerBuf.add(utf8.encode('--$boundary\r\n'));
-      headerBuf.add(utf8.encode(
-        'Content-Disposition: form-data; name="file"; filename="photo.jpg"\r\n',
-      ));
+      headerBuf.add(
+        utf8.encode(
+          'Content-Disposition: form-data; name="file"; filename="photo.jpg"\r\n',
+        ),
+      );
       headerBuf.add(utf8.encode('Content-Type: image/jpeg\r\n\r\n'));
 
       final footer = utf8.encode('\r\n--$boundary--\r\n');
@@ -312,25 +337,32 @@ class ApiClient {
     return _handleResponse(response);
   }
 
-  Future<Map<String, dynamic>> recognizeText(String text, {String? locale}) async {
+  Future<Map<String, dynamic>> recognizeText(
+    String text, {
+    String? locale,
+  }) async {
     await ensureAuthenticated();
     final bodyMap = <String, dynamic>{'text': text};
     if (locale != null) bodyMap['locale'] = locale;
-    var response = await _withRetry(() =>
-      _client.post(
-        Uri.parse('$_baseUrl/api/recognize-text'),
-        headers: _headers,
-        body: jsonEncode(bodyMap),
-      ).timeout(_uploadTimeout),
+    var response = await _withRetry(
+      () => _client
+          .post(
+            Uri.parse('$_baseUrl/api/recognize-text'),
+            headers: _headers,
+            body: jsonEncode(bodyMap),
+          )
+          .timeout(_uploadTimeout),
     );
     if (response.statusCode == 401) {
       await ensureAuthenticated(forceRefresh: true);
-      response = await _withRetry(() =>
-        _client.post(
-          Uri.parse('$_baseUrl/api/recognize-text'),
-          headers: _headers,
-          body: jsonEncode(bodyMap),
-        ).timeout(_uploadTimeout),
+      response = await _withRetry(
+        () => _client
+            .post(
+              Uri.parse('$_baseUrl/api/recognize-text'),
+              headers: _headers,
+              body: jsonEncode(bodyMap),
+            )
+            .timeout(_uploadTimeout),
       );
     }
     return _handleResponse(response);
@@ -406,9 +438,9 @@ class ApiClient {
 
   Future<bool> _probeHealth(http.Client client) async {
     try {
-      final resp = await client.get(Uri.parse('$_baseUrl/health')).timeout(
-            const Duration(seconds: 10),
-          );
+      final resp = await client
+          .get(Uri.parse('$_baseUrl/health'))
+          .timeout(const Duration(seconds: 10));
       return resp.statusCode >= 200 && resp.statusCode < 300;
     } catch (_) {
       return false;
@@ -422,7 +454,9 @@ class ApiClient {
   /// on transient Gemini failures.
   static const Set<int> _retriableStatuses = {429, 500, 502, 503, 504};
 
-  Future<http.Response> _withRetry(Future<http.Response> Function() request) async {
+  Future<http.Response> _withRetry(
+    Future<http.Response> Function() request,
+  ) async {
     for (var attempt = 0; attempt < _maxRetries; attempt++) {
       final lastAttempt = attempt == _maxRetries - 1;
       try {
@@ -470,7 +504,9 @@ class ApiClient {
         await _rerollClientBeforeRetry();
       }
     }
-    throw NetworkException('${currentL10n.networkRetryFailed} [$_activeClientTag/loop]');
+    throw NetworkException(
+      '${currentL10n.networkRetryFailed} [$_activeClientTag/loop]',
+    );
   }
 
   /// Re-probe transports between retries so that a flaky pinned client
@@ -549,7 +585,8 @@ class ApiException implements Exception {
   ApiException({required this.statusCode, required this.message, this.kind});
 
   @override
-  String toString() => 'ApiException($statusCode${kind != null ? '/$kind' : ''}): $message';
+  String toString() =>
+      'ApiException($statusCode${kind != null ? '/$kind' : ''}): $message';
 }
 
 class NetworkException implements Exception {

@@ -175,6 +175,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOutLocalDataKept => 'Local data will remain on the device.';
 
   @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Delete your account?';
+
+  @override
+  String get deleteAccountConfirmMessage =>
+      'This will permanently delete your account and remove your local meal history, recipes, products, favorites, and settings from this device. This cannot be undone.';
+
+  @override
+  String get deleteAccountFinalConfirmTitle => 'Are you absolutely sure?';
+
+  @override
+  String get deleteAccountFinalConfirmMessage =>
+      'Your account and data will be deleted permanently.';
+
+  @override
+  String get deleteAccountSuccess => 'Your account has been deleted.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Could not delete the account. Please check your connection and try again.';
+
+  @override
   String get cancel => 'Cancel';
 
   @override
