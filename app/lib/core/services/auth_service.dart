@@ -232,8 +232,16 @@ class AuthService extends ChangeNotifier {
     }
 
     try {
-      await _googleSignIn.signOut();
-    } catch (_) {}
+      if (_authProvider == providerGoogle) {
+        await _googleSignIn.disconnect();
+      } else {
+        await _googleSignIn.signOut();
+      }
+    } catch (_) {
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+    }
 
     await AppDatabase.getInstance().then((db) => db.clearUserData());
     await api.clearToken();

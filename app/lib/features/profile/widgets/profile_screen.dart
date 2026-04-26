@@ -506,7 +506,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                   icon: Icons.account_circle,
                   onTap: _signInFromGuest,
                 ),
-            ] else if (Platform.isIOS) ...[
+            ] else ...[
               const SizedBox(height: 15),
               _destructiveButton(
                 label: context.l10n.deleteAccount,
