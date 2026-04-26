@@ -488,7 +488,10 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       ing.dispose();
     }
 
-    final countRegex = RegExp(r'\((\d+)\s*шт\.?\)');
+    final countRegex = RegExp(
+      r'\((\d+)\s*(?:шт\.?|pcs?\.?|pieces?)\)',
+      caseSensitive: false,
+    );
 
     _ingredients = ingredients.map((i) {
       final grams = (i['grams'] as num?)?.toDouble() ?? 0;

@@ -59,9 +59,28 @@ def _language_name(locale: str | None) -> str:
 # per-unit grams as grams / N.
 #
 # The "шт." suffix is Cyrillic on purpose and is the ONLY format the
-# client currently recognises — do not localise it to "pcs" / "units"
-# / etc., or the stepper will never appear for non-Russian UI locales.
-_COMMON_RULES_EN = """Ingredient formatting rules:
+# client asks for in the prompt. The parser also accepts English "pc(s)" /
+# "piece(s)" for resilience if the model localises the marker anyway.
+_COMMON_RULES_EN = """Recognition and ingredient formatting rules:
+- If the user supplied a textual description together with the photo, treat
+  explicit facts from that text as authoritative: dish name, weight, count,
+  ingredients, "without oil/sauce/sugar", cooking method, etc. Use the image
+  to fill missing details, not to override explicit user facts.
+- Estimate portion size from visible cues: plate/container size, utensils,
+  hand/fork/spoon scale, packaging, cut pieces, and how full the container is.
+  If there is no reliable scale reference, use a common serving size for that
+  dish and keep the estimate realistic.
+- For photos with multiple edible items in the same serving, include all
+  visible items. Do not include non-edible items, decorations, packaging, or
+  food that is not visible unless the user explicitly mentions it.
+- For mixed dishes (soups, salads, pasta, bowls, stews, sandwiches, sauces),
+  estimate the main components at a practical level of detail. Do not invent
+  many tiny hidden ingredients; include modest amounts of common oil, dressing,
+  sauce, or sugar only when visually likely or mentioned.
+- Round weights and nutrition to realistic precision. Avoid fake exactness:
+  grams are usually rounded to 5-10 g, calories to whole numbers, macros to
+  one decimal place when needed.
+- `total_grams` must approximately equal the sum of ingredient `grams`.
 - For countable ingredients (eggs, sausages, cutlets, meatballs, shrimp,
   dumplings, cookies, slices of bread/pizza, etc.) append "(N шт.)" to
   the `name`, where N is the integer number of pieces. The literal
@@ -349,6 +368,7 @@ async def recognize_food(
     if text:
         user_text = (
             f"Here is a photo of food. User-provided description: \"{text}\". "
+            f"Use explicit facts from the description as authoritative. "
             f"Identify the dish and its nutrition. Reply as JSON, in {lang}."
         )
     else:
