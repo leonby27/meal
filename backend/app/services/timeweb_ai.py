@@ -73,6 +73,19 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
 - For photos with multiple edible items in the same serving, include all
   visible items. Do not include non-edible items, decorations, packaging, or
   food that is not visible unless the user explicitly mentions it.
+- If the photo shows separate foods/products rather than one prepared dish,
+  name it as a selection/plate of items and list each visible edible item
+  separately. Do not collapse separate packaged snacks and sliced meat into a
+  single dish name like "salami with cheese" unless they are actually combined.
+- For packaged foods, first read any visible label/brand/product text and use
+  that over visual guessing. Preserve readable brand or product names in the
+  ingredient name when helpful (for example, a visible candy bar, protein bar,
+  glazed cottage cheese bar, yogurt, or packaged snack).
+- Do not confidently infer a specific product subtype from package shape alone
+  (for example "processed cheese", "cottage cheese bar", "protein bar",
+  "candy bar"). Use that subtype only when the label is readable or the visual
+  evidence is very strong. If uncertain, use a neutral category such as
+  "packaged dairy dessert", "packaged snack bar", or "packaged sweet bar".
 - For mixed dishes (soups, salads, pasta, bowls, stews, sandwiches, sauces),
   estimate the main components at a practical level of detail. Do not invent
   many tiny hidden ingredients; include modest amounts of common oil, dressing,
