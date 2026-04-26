@@ -92,11 +92,27 @@ final router = GoRouter(
     GoRoute(
       path: '/search',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final mealType = state.uri.queryParameters['meal_type'] ?? 'snack';
         final dateStr = state.uri.queryParameters['date'];
         final query = state.uri.queryParameters['query'];
-        return SearchScreen(mealType: mealType, dateStr: dateStr, initialQuery: query);
+        return CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: SearchScreen(
+            mealType: mealType,
+            dateStr: dateStr,
+            initialQuery: query,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final offsetAnimation = animation.drive(
+              Tween<Offset>(
+                begin: const Offset(0, 1),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOutCubic)),
+            );
+            return SlideTransition(position: offsetAnimation, child: child);
+          },
+        );
       },
     ),
     GoRoute(
