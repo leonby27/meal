@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -265,8 +266,9 @@ class AiMealResultSheet extends StatefulWidget {
     required FoodLog log,
     required String dateStr,
   }) async {
+    final ingredients = _ingredientsFromLog(log);
     final result = <String, dynamic>{
-      'name': log.productName,
+      'name': _nameForLog(context, log, ingredients),
       'total_grams': log.grams,
       'total': {
         'protein': log.protein,
@@ -274,7 +276,7 @@ class AiMealResultSheet extends StatefulWidget {
         'carbs': log.carbs,
         'calories': log.calories,
       },
-      'ingredients': <Map<String, dynamic>>[],
+      'ingredients': ingredients,
     };
 
     await showModalBottomSheet<void>(
@@ -300,8 +302,9 @@ class AiMealResultSheet extends StatefulWidget {
     required FoodLog log,
     required String dateStr,
   }) async {
+    final ingredients = _ingredientsFromLog(log);
     final result = <String, dynamic>{
-      'name': log.productName,
+      'name': _nameForLog(context, log, ingredients),
       'total_grams': log.grams,
       'total': {
         'protein': log.protein,
@@ -309,7 +312,7 @@ class AiMealResultSheet extends StatefulWidget {
         'carbs': log.carbs,
         'calories': log.calories,
       },
-      'ingredients': <Map<String, dynamic>>[],
+      'ingredients': ingredients,
     };
 
     final saved = await showModalBottomSheet<bool>(
@@ -328,6 +331,31 @@ class AiMealResultSheet extends StatefulWidget {
     );
     _unfocusUnderlyingAfterSheetPop();
     return saved ?? false;
+  }
+
+  static List<Map<String, dynamic>> _ingredientsFromLog(FoodLog log) {
+    final raw = log.ingredientsJson;
+    if (raw == null || raw.isEmpty) return <Map<String, dynamic>>[];
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return <Map<String, dynamic>>[];
+      return decoded
+          .whereType<Map>()
+          .map((item) => item.map((key, value) => MapEntry('$key', value)))
+          .toList();
+    } catch (_) {
+      return <Map<String, dynamic>>[];
+    }
+  }
+
+  static String _nameForLog(
+    BuildContext context,
+    FoodLog log,
+    List<Map<String, dynamic>> ingredients,
+  ) {
+    if (ingredients.length > 1) return log.productName;
+    return '${log.productName}, ${context.l10n.gramsValue(log.grams.round())}';
   }
 
   @override
@@ -503,11 +531,18 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
       final rawName = i['name'] as String? ?? '';
       final match = countRegex.firstMatch(rawName);
-      final count = match != null ? int.tryParse(match.group(1)!) ?? 0 : 0;
+      final explicitCount = (i['count'] as num?)?.toInt() ?? 0;
+      final count = explicitCount > 0
+          ? explicitCount
+          : match != null
+              ? int.tryParse(match.group(1)!) ?? 0
+              : 0;
       final cleanName = match != null
           ? rawName.replaceFirst(match.group(0)!, '').trim()
           : rawName;
-      final gramsPerUnit = count > 0 ? grams / count : 0.0;
+      final gramsPerUnit =
+          (i['grams_per_unit'] as num?)?.toDouble() ??
+          (count > 0 ? grams / count : 0.0);
 
       return _IngredientEntry(
         nameCtl: TextEditingController(text: cleanName),
@@ -530,6 +565,25 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 
   double _val(TextEditingController c) => double.tryParse(c.text) ?? 0;
+
+  String? _ingredientsJson() {
+    if (_ingredients.isEmpty) return null;
+    return jsonEncode(
+      _ingredients.map((ing) {
+        final grams = _val(ing.gramsCtl);
+        return <String, dynamic>{
+          'name': ing.nameCtl.text.trim(),
+          'grams': grams,
+          'protein': ing.protein,
+          'fat': ing.fat,
+          'carbs': ing.carbs,
+          'calories': ing.calories,
+          if (ing.hasCounter) 'count': ing.count,
+          if (ing.hasCounter) 'grams_per_unit': ing.gramsPerUnit,
+        };
+      }).toList(),
+    );
+  }
 
   void _recalcFromMacros() {
     if (_updatingControllers) return;
@@ -694,6 +748,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final productName = _nameCtl.text.trim().isEmpty
         ? l10n.unknownDish
         : _nameCtl.text.trim();
+    final ingredientsJson = _ingredientsJson();
 
     if (_isEditing) {
       final companion = FoodLogsCompanion(
@@ -703,6 +758,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         fat: drift.Value(_val(_fatCtl)),
         carbs: drift.Value(_val(_carbsCtl)),
         calories: drift.Value(_val(_caloriesCtl)),
+        ingredientsJson: drift.Value(ingredientsJson),
         updatedAt: drift.Value(DateTime.now()),
         synced: const drift.Value(false),
       );
@@ -722,6 +778,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         carbs: drift.Value(_val(_carbsCtl)),
         calories: drift.Value(_val(_caloriesCtl)),
         imageUrl: drift.Value(imageUrl),
+        ingredientsJson: drift.Value(ingredientsJson),
       ));
 
       final auth = AuthService();

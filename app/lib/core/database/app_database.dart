@@ -51,6 +51,7 @@ class FoodLogs extends Table {
   RealColumn get carbs => real().withDefault(const Constant(0))();
   RealColumn get calories => real().withDefault(const Constant(0))();
   TextColumn get imageUrl => text().nullable().named('image_url')();
+  TextColumn get ingredientsJson => text().nullable().named('ingredients_json')();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime).named('created_at')();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime).named('updated_at')();
   BoolColumn get synced => boolean().withDefault(const Constant(false))();
@@ -99,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -115,6 +116,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 3) {
         await m.addColumn(products, products.barcode);
         await m.addColumn(products, products.source);
+      }
+      if (from < 4) {
+        await m.addColumn(foodLogs, foodLogs.ingredientsJson);
       }
     },
   );
