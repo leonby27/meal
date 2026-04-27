@@ -141,7 +141,7 @@ class MealSection extends StatelessWidget {
             child: Column(
               children: [
                 for (var i = 0; i < logs.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 4),
+                  if (i > 0) const SizedBox(height: 8),
                   _FoodLogTile(
                     log: logs[i],
                     mealType: mealType,
@@ -448,7 +448,7 @@ class _FoodLogCard extends StatelessWidget {
             log: log,
             dateStr: duplicateDateStr ?? dateStr,
           );
-          if (saved && context.mounted) onDuplicateAdded?.call();
+          if (saved) onDuplicateAdded?.call();
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -600,7 +600,7 @@ class _FoodLogCard extends StatelessWidget {
             log: log,
             dateStr: duplicateDateStr ?? dateStr,
           );
-          if (saved && context.mounted) onDuplicateAdded?.call();
+          if (saved) onDuplicateAdded?.call();
         },
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 13),

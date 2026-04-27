@@ -472,7 +472,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
       ),
     );
 
-    if (mounted) _deactivateSearch();
+    if (mounted) {
+      _deactivateSearch(syncCalendarToToday: dateStr == _todayDateStr);
+    }
 
     if (!auth.isPremium) {
       await auth.incrementFreeEntry();
@@ -532,7 +534,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
       ),
     );
 
-    if (mounted) _deactivateSearch();
+    if (mounted) {
+      _deactivateSearch(syncCalendarToToday: dateStr == _todayDateStr);
+    }
 
     if (!auth.isPremium) {
       await auth.incrementFreeEntry();
@@ -1367,11 +1371,11 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               if (log.productId != null) {
                 final product = await _db.getProductById(log.productId!);
                 if (product != null && mounted) {
-                  _addProductFromSearch(product, _todayDateStr);
+                  _addProductFromSearch(product, dateStr);
                   return;
                 }
               }
-              if (mounted) _addFromLog(log, _todayDateStr);
+              if (mounted) _addFromLog(log, dateStr);
             },
             child: Container(
               padding: const EdgeInsets.all(16),
@@ -1464,7 +1468,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
             bottom: index < _favoriteProducts.length - 1 ? 8 : 0,
           ),
           child: GestureDetector(
-            onTap: () => _addProductFromSearch(product, _todayDateStr),
+            onTap: () => _addProductFromSearch(product, dateStr),
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1775,7 +1779,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         if (sortedLogs.isNotEmpty) ...[
           const SizedBox(height: 24),
           _buildRecordsHeader(context, cs),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildFoodCards(
             context,
             sortedLogs,
@@ -2005,7 +2009,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               ? math.min(index, 6) * 0.045
               : 0.0;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: 12),
             child: TweenAnimationBuilder<double>(
               key: ValueKey('${log.id}-$animationSeed'),
               tween: Tween<double>(begin: shouldAnimate ? 0 : 1, end: 1),
@@ -2159,26 +2163,41 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               ),
               onOpened: () => _setViewMenuOpen(true),
               onCanceled: () => _setViewMenuOpen(false),
-              onSelected: (variant) {
-                setState(() {
-                  _foodLogCardVariant = variant;
-                  _viewMenuOpen = false;
-                });
-              },
               itemBuilder: (context) => [
-                _buildViewModeMenuItem(
-                  context,
-                  value: FoodLogCardVariant.expanded,
-                  label: context.l10n.diaryViewExpanded,
-                  background: menuItemBg,
-                  isActive: _foodLogCardVariant == FoodLogCardVariant.expanded,
-                ),
-                _buildViewModeMenuItem(
-                  context,
-                  value: FoodLogCardVariant.compact,
-                  label: context.l10n.diaryViewCompact,
-                  background: menuItemBg,
-                  isActive: _foodLogCardVariant == FoodLogCardVariant.compact,
+                PopupMenuItem<FoodLogCardVariant>(
+                  enabled: false,
+                  padding: EdgeInsets.zero,
+                  child: StatefulBuilder(
+                    builder: (context, setMenuState) {
+                      void pick(FoodLogCardVariant v) {
+                        if (_foodLogCardVariant == v) return;
+                        setState(() => _foodLogCardVariant = v);
+                        setMenuState(() {});
+                      }
+
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildViewModeMenuItem(
+                            context,
+                            label: context.l10n.diaryViewExpanded,
+                            background: menuItemBg,
+                            isActive: _foodLogCardVariant ==
+                                FoodLogCardVariant.expanded,
+                            onTap: () => pick(FoodLogCardVariant.expanded),
+                          ),
+                          _buildViewModeMenuItem(
+                            context,
+                            label: context.l10n.diaryViewCompact,
+                            background: menuItemBg,
+                            isActive: _foodLogCardVariant ==
+                                FoodLogCardVariant.compact,
+                            onTap: () => pick(FoodLogCardVariant.compact),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ],
               child: AnimatedScale(
@@ -2242,20 +2261,18 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     );
   }
 
-  PopupMenuItem<FoodLogCardVariant> _buildViewModeMenuItem(
+  Widget _buildViewModeMenuItem(
     BuildContext context, {
-    required FoodLogCardVariant value,
     required String label,
     required Color background,
     required bool isActive,
+    required VoidCallback onTap,
   }) {
     final cs = Theme.of(context).colorScheme;
 
-    return PopupMenuItem<FoodLogCardVariant>(
-      value: value,
-      padding: EdgeInsets.zero,
-      height: 42,
-      mouseCursor: SystemMouseCursors.click,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 148,
         height: 42,
