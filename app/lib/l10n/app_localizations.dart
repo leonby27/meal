@@ -1015,7 +1015,7 @@ abstract class AppLocalizations {
   /// No description provided for @historyTab.
   ///
   /// In ru, this message translates to:
-  /// **'История'**
+  /// **'Недавние'**
   String get historyTab;
 
   /// No description provided for @favoritesTab.
@@ -1033,7 +1033,7 @@ abstract class AppLocalizations {
   /// No description provided for @addMenuRecentEntries.
   ///
   /// In ru, this message translates to:
-  /// **'Последние записи'**
+  /// **'Рекомендуемые'**
   String get addMenuRecentEntries;
 
   /// No description provided for @scanBarcodeAction.

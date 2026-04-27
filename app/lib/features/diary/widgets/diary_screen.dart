@@ -148,6 +148,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   bool _searchMode = false;
   List<Product> _searchResults = [];
   List<FoodLog> _recentProducts = [];
+  List<FoodLog> _recommendedProducts = [];
   List<Product> _favoriteProducts = [];
   bool _isSearching = false;
   bool _isRecognizing = false;
@@ -261,7 +262,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     }
     _inputFocus.unfocus();
     setState(() => _addMenuOpen = true);
-    await _loadRecentProducts(limit: 3);
+    await _loadRecommendedProducts(limit: 3);
   }
 
   void _closeAddMenu() {
@@ -304,6 +305,16 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         _recentProducts = recent;
         _favoriteProducts = favorites;
       });
+    }
+  }
+
+  Future<void> _loadRecommendedProducts({int limit = 3}) async {
+    final recommended = await _db.getRecommendedProducts(
+      currentMealType: defaultMealType(),
+      limit: limit,
+    );
+    if (mounted) {
+      setState(() => _recommendedProducts = recommended);
     }
   }
 
@@ -2307,7 +2318,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final secondary = isDark
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
-    final recent = _recentProducts.take(3).toList();
+    final recent = _recommendedProducts.take(3).toList();
 
     return GestureDetector(
       onTap: () {},

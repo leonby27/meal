@@ -495,7 +495,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notFoundInDb => 'Not found in database\nTap ➜ to recognize via AI';
 
   @override
-  String get historyTab => 'History';
+  String get historyTab => 'Recent';
 
   @override
   String get favoritesTab => 'Favorites';
@@ -504,7 +504,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noRecentRecords => 'No recent records';
 
   @override
-  String get addMenuRecentEntries => 'Recent entries';
+  String get addMenuRecentEntries => 'Recommended';
 
   @override
   String get scanBarcodeAction => 'Scan barcode';

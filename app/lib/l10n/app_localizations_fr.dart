@@ -499,7 +499,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Non trouvé dans la base de données\nAppuyez ➜ pour reconnaître par IA';
 
   @override
-  String get historyTab => 'Historique';
+  String get historyTab => 'Récents';
 
   @override
   String get favoritesTab => 'Favoris';
@@ -508,7 +508,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noRecentRecords => 'Aucun enregistrement récent';
 
   @override
-  String get addMenuRecentEntries => 'Entrées récentes';
+  String get addMenuRecentEntries => 'Recommandés';
 
   @override
   String get scanBarcodeAction => 'Scanner le code-barres';

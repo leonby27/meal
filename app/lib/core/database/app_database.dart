@@ -367,11 +367,67 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
-  Future<List<FoodLog>> getRecentProducts({int limit = 20}) {
-    return (select(foodLogs)
+  /// Recently logged foods, deduplicated so each product appears once at its
+  /// most-recent position. Re-logging the same product floats it back to the
+  /// top.
+  Future<List<FoodLog>> getRecentProducts({int limit = 20}) async {
+    final logs = await (select(foodLogs)
           ..orderBy([(l) => OrderingTerm.desc(l.createdAt)])
-          ..limit(limit))
+          ..limit(limit * 5))
         .get();
+    String keyFor(FoodLog l) => l.productId != null
+        ? 'p:${l.productId}'
+        : 'n:${l.productName.toLowerCase().trim()}';
+    final seen = <String>{};
+    final result = <FoodLog>[];
+    for (final log in logs) {
+      if (seen.add(keyFor(log))) {
+        result.add(log);
+        if (result.length >= limit) break;
+      }
+    }
+    return result;
+  }
+
+  /// Returns deduplicated recently-used food logs from the past [windowDays]
+  /// days, ranked so items that match [currentMealType] (the slot the user is
+  /// likely about to log) bubble to the top, then by usage frequency, then by
+  /// recency. Each product appears at most once — useful for suggesting
+  /// "Recommended" entries instead of a raw, dup-heavy history.
+  Future<List<FoodLog>> getRecommendedProducts({
+    required String currentMealType,
+    int limit = 20,
+    int windowDays = 7,
+  }) async {
+    final cutoff = DateTime.now().subtract(Duration(days: windowDays));
+    final logs = await (select(foodLogs)
+          ..where((l) => l.createdAt.isBiggerOrEqualValue(cutoff))
+          ..orderBy([(l) => OrderingTerm.desc(l.createdAt)]))
+        .get();
+    if (logs.isEmpty) return [];
+
+    String keyFor(FoodLog l) =>
+        l.productId != null ? 'p:${l.productId}' : 'n:${l.productName.toLowerCase().trim()}';
+
+    final groups = <String, FoodLog>{};
+    final scores = <String, double>{};
+    for (final log in logs) {
+      final key = keyFor(log);
+      groups.putIfAbsent(key, () => log);
+      var score = scores[key] ?? 0;
+      score += 1;
+      if (log.mealType == currentMealType) score += 5;
+      scores[key] = score;
+    }
+
+    final entries = groups.entries.toList()
+      ..sort((a, b) {
+        final cmp = (scores[b.key] ?? 0).compareTo(scores[a.key] ?? 0);
+        if (cmp != 0) return cmp;
+        return b.value.createdAt.compareTo(a.value.createdAt);
+      });
+
+    return entries.take(limit).map((e) => e.value).toList();
   }
 
   // User products

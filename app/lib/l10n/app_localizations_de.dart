@@ -497,16 +497,16 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nicht in der Datenbank gefunden\nTippen Sie ➜ zur KI-Erkennung';
 
   @override
-  String get historyTab => 'Verlauf';
+  String get historyTab => 'Kürzlich';
 
   @override
   String get favoritesTab => 'Favoriten';
 
   @override
-  String get noRecentRecords => 'Keine aktuellen Einträge';
+  String get noRecentRecords => 'Keine kürzlichen Einträge';
 
   @override
-  String get addMenuRecentEntries => 'Letzte Einträge';
+  String get addMenuRecentEntries => 'Empfohlen';
 
   @override
   String get scanBarcodeAction => 'Barcode scannen';

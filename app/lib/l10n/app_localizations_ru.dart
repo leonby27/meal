@@ -496,7 +496,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не найдено в базе\nНажмите  ➜  чтобы распознать через ИИ';
 
   @override
-  String get historyTab => 'История';
+  String get historyTab => 'Недавние';
 
   @override
   String get favoritesTab => 'Избранное';
@@ -505,7 +505,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noRecentRecords => 'Нет недавних записей';
 
   @override
-  String get addMenuRecentEntries => 'Последние записи';
+  String get addMenuRecentEntries => 'Рекомендуемые';
 
   @override
   String get scanBarcodeAction => 'Сканировать штрихкод';

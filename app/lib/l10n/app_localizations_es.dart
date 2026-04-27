@@ -497,16 +497,16 @@ class AppLocalizationsEs extends AppLocalizations {
       'No encontrado en la base de datos\nToca ➜ para reconocer con IA';
 
   @override
-  String get historyTab => 'Historial';
+  String get historyTab => 'Recientes';
 
   @override
   String get favoritesTab => 'Favoritos';
 
   @override
-  String get noRecentRecords => 'No hay registros recientes';
+  String get noRecentRecords => 'Sin registros recientes';
 
   @override
-  String get addMenuRecentEntries => 'Entradas recientes';
+  String get addMenuRecentEntries => 'Recomendados';
 
   @override
   String get scanBarcodeAction => 'Escanear código de barras';
