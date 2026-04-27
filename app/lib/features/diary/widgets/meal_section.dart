@@ -799,13 +799,27 @@ class _MacroBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final trackColor = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
+    final trackColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final dividerColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final protein = log.protein.clamp(0, double.infinity).toDouble();
     final fat = log.fat.clamp(0, double.infinity).toDouble();
     final carbs = log.carbs.clamp(0, double.infinity).toDouble();
-    final totalMacroCalories = protein * 4 + fat * 9 + carbs * 4;
+    final proteinCal = protein * 4;
+    final fatCal = fat * 9;
+    final carbsCal = carbs * 4;
+    final maxCal = [proteinCal, fatCal, carbsCal].reduce((a, b) => a > b ? a : b);
+    final hasDominant = maxCal > 0;
+    final proteinDominant = hasDominant && proteinCal == maxCal;
+    final fatDominant =
+        hasDominant && !proteinDominant && fatCal == maxCal;
+    final carbsDominant =
+        hasDominant && !proteinDominant && !fatDominant && carbsCal == maxCal;
+
+    final calorieRatio = calorieGoal > 0
+        ? (log.calories / calorieGoal).clamp(0.0, 1.0)
+        : 0.0;
 
     return Column(
       children: [
@@ -814,29 +828,21 @@ class _MacroBreakdown extends StatelessWidget {
           child: Container(
             height: 6,
             color: trackColor,
-            child: totalMacroCalories <= 0
+            child: calorieRatio <= 0
                 ? const SizedBox.expand()
-                : Row(
-                    children: [
-                      _MacroSegment(
-                        flex: _segmentFlex(protein * 4),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFD91D1D), Color(0xFFF0681B)],
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor: calorieRatio,
+                      child: const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF22D33A), Color(0xFF1EBF92)],
+                          ),
                         ),
+                        child: SizedBox.expand(),
                       ),
-                      _MacroSegment(
-                        flex: _segmentFlex(fat * 9),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFD0FF00), Color(0xFFFFBB00)],
-                        ),
-                      ),
-                      _MacroSegment(
-                        flex: _segmentFlex(carbs * 4),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF17D1C7), Color(0xFF1787D1)],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
           ),
         ),
@@ -849,7 +855,8 @@ class _MacroBreakdown extends StatelessWidget {
                 label: context.l10n.proteinShort.toUpperCase(),
                 grams: protein,
                 percent: _targetPercent(protein, calorieGoal * 0.3 / 4),
-                textColor: secondaryColor,
+                textColor: proteinDominant ? cs.onSurface : secondaryColor,
+                isDominant: proteinDominant,
               ),
             ),
             _MacroDivider(color: dividerColor),
@@ -859,7 +866,8 @@ class _MacroBreakdown extends StatelessWidget {
                 label: context.l10n.fatShort.toUpperCase(),
                 grams: fat,
                 percent: _targetPercent(fat, calorieGoal * 0.3 / 9),
-                textColor: secondaryColor,
+                textColor: fatDominant ? cs.onSurface : secondaryColor,
+                isDominant: fatDominant,
               ),
             ),
             _MacroDivider(color: dividerColor),
@@ -869,7 +877,8 @@ class _MacroBreakdown extends StatelessWidget {
                 label: context.l10n.carbsShort.toUpperCase(),
                 grams: carbs,
                 percent: _targetPercent(carbs, calorieGoal * 0.4 / 4),
-                textColor: secondaryColor,
+                textColor: carbsDominant ? cs.onSurface : secondaryColor,
+                isDominant: carbsDominant,
               ),
             ),
           ],
@@ -878,30 +887,8 @@ class _MacroBreakdown extends StatelessWidget {
     );
   }
 
-  int _segmentFlex(double value) =>
-      value <= 0 ? 0 : (value * 100).round().clamp(1, 100000);
-
   int _targetPercent(double value, double target) =>
       target > 0 ? (value / target * 100).round().clamp(0, 999) : 0;
-}
-
-class _MacroSegment extends StatelessWidget {
-  final int flex;
-  final Gradient gradient;
-
-  const _MacroSegment({required this.flex, required this.gradient});
-
-  @override
-  Widget build(BuildContext context) {
-    if (flex <= 0) return const SizedBox.shrink();
-    return Expanded(
-      flex: flex,
-      child: DecoratedBox(
-        decoration: BoxDecoration(gradient: gradient),
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
 }
 
 class _MacroDivider extends StatelessWidget {
@@ -926,6 +913,7 @@ class _MacroLabel extends StatelessWidget {
   final double grams;
   final int percent;
   final Color textColor;
+  final bool isDominant;
 
   const _MacroLabel({
     required this.dotColor,
@@ -933,6 +921,7 @@ class _MacroLabel extends StatelessWidget {
     required this.grams,
     required this.percent,
     required this.textColor,
+    this.isDominant = false,
   });
 
   @override
@@ -942,8 +931,8 @@ class _MacroLabel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 4,
-          height: 4,
+          width: 6,
+          height: 6,
           decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
         ),
         const SizedBox(width: 3),
@@ -954,7 +943,7 @@ class _MacroLabel extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w400,
+              fontWeight: isDominant ? FontWeight.w500 : FontWeight.w400,
               height: 14 / 12,
               color: textColor,
             ),
