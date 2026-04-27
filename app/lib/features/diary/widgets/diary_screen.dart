@@ -2095,10 +2095,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                       button: true,
                       label: sortLabel,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
+                        padding: const EdgeInsets.fromLTRB(4, 6, 12, 6),
                         child: AnimatedScale(
                           scale: _sortActionPressed ? 0.86 : 1,
                           duration: const Duration(milliseconds: 110),
@@ -2174,13 +2171,14 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                   value: FoodLogCardVariant.expanded,
                   label: context.l10n.diaryViewExpanded,
                   background: menuItemBg,
-                  addBottomGap: true,
+                  isActive: _foodLogCardVariant == FoodLogCardVariant.expanded,
                 ),
                 _buildViewModeMenuItem(
                   context,
                   value: FoodLogCardVariant.compact,
                   label: context.l10n.diaryViewCompact,
                   background: menuItemBg,
+                  isActive: _foodLogCardVariant == FoodLogCardVariant.compact,
                 ),
               ],
               child: AnimatedScale(
@@ -2249,37 +2247,34 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     required FoodLogCardVariant value,
     required String label,
     required Color background,
-    bool addBottomGap = false,
+    required bool isActive,
   }) {
     final cs = Theme.of(context).colorScheme;
 
     return PopupMenuItem<FoodLogCardVariant>(
       value: value,
       padding: EdgeInsets.zero,
-      height: addBottomGap ? 50 : 42,
+      height: 42,
       mouseCursor: SystemMouseCursors.click,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: addBottomGap ? 8 : 0),
-        child: Container(
-          width: 148,
-          height: 42,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 18 / 14,
-                color: cs.onSurface,
-              ),
+      child: Container(
+        width: 148,
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        decoration: BoxDecoration(
+          color: isActive ? background : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              height: 18 / 14,
+              color: cs.onSurface,
             ),
           ),
         ),

@@ -139,16 +139,17 @@ class MealSection extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             padding: const EdgeInsets.symmetric(vertical: 5),
             child: Column(
-              children: logs
-                  .map(
-                    (log) => _FoodLogTile(
-                      log: log,
-                      mealType: mealType,
-                      dateStr: dateStr,
-                      onDelete: () => onDelete(log.id),
-                    ),
-                  )
-                  .toList(),
+              children: [
+                for (var i = 0; i < logs.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 4),
+                  _FoodLogTile(
+                    log: logs[i],
+                    mealType: mealType,
+                    dateStr: dateStr,
+                    onDelete: () => onDelete(logs[i].id),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -171,9 +172,13 @@ class _FoodLogTile extends StatelessWidget {
   });
 
   Future<void> _toggleFavorite(BuildContext context) async {
-    if (log.productId == null) return;
     final db = await AppDatabase.getInstance();
-    await db.toggleFavorite(log.productId!);
+    if (log.productId != null) {
+      await db.toggleFavorite(log.productId!);
+    } else {
+      final newId = await db.addLogToFavorites(log);
+      if (newId == null) return;
+    }
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
@@ -291,16 +296,15 @@ class _FoodLogTile extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),
-                if (log.productId != null)
-                  PopupMenuItem(
-                    value: 'favorite',
-                    child: ListTile(
-                      leading: const Icon(Icons.favorite_border, size: 20),
-                      title: Text(context.l10n.addToFavorite),
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
+                PopupMenuItem(
+                  value: 'favorite',
+                  child: ListTile(
+                    leading: const Icon(Icons.favorite_border, size: 20),
+                    title: Text(context.l10n.addToFavorite),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
                   ),
+                ),
                 PopupMenuItem(
                   value: 'delete',
                   child: ListTile(
@@ -402,9 +406,13 @@ class _FoodLogCard extends StatelessWidget {
   });
 
   Future<void> _toggleFavorite(BuildContext context) async {
-    if (log.productId == null) return;
     final db = await AppDatabase.getInstance();
-    await db.toggleFavorite(log.productId!);
+    if (log.productId != null) {
+      await db.toggleFavorite(log.productId!);
+    } else {
+      final newId = await db.addLogToFavorites(log);
+      if (newId == null) return;
+    }
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
@@ -532,16 +540,15 @@ class _FoodLogCard extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
-                  if (log.productId != null)
-                    PopupMenuItem(
-                      value: 'favorite',
-                      child: ListTile(
-                        leading: const Icon(Icons.favorite_border, size: 20),
-                        title: Text(context.l10n.addToFavorite),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
+                  PopupMenuItem(
+                    value: 'favorite',
+                    child: ListTile(
+                      leading: const Icon(Icons.favorite_border, size: 20),
+                      title: Text(context.l10n.addToFavorite),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
                     ),
+                  ),
                   PopupMenuItem(
                     value: 'delete',
                     child: ListTile(
@@ -703,16 +710,15 @@ class _FoodLogCard extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
           ),
         ),
-        if (log.productId != null)
-          PopupMenuItem(
-            value: 'favorite',
-            child: ListTile(
-              leading: const Icon(Icons.favorite_border, size: 20),
-              title: Text(context.l10n.addToFavorite),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-            ),
+        PopupMenuItem(
+          value: 'favorite',
+          child: ListTile(
+            leading: const Icon(Icons.favorite_border, size: 20),
+            title: Text(context.l10n.addToFavorite),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
           ),
+        ),
         PopupMenuItem(
           value: 'delete',
           child: ListTile(

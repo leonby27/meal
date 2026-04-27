@@ -276,6 +276,37 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// Promotes a [FoodLog] without a linked product into a user-created
+  /// favorite product so AI-recognized dishes can be added to favorites.
+  /// Per-100g macros are derived from the log totals; the new product id is
+  /// written back to the log so subsequent taps go through [toggleFavorite].
+  /// Returns the new product id, or null if the log has no grams to derive
+  /// macros from.
+  Future<int?> addLogToFavorites(FoodLog log) async {
+    if (log.grams <= 0) return null;
+    final factor = 100.0 / log.grams;
+    final newId = await getNextUserProductId();
+    await into(products).insert(
+      ProductsCompanion.insert(
+        productId: Value(newId),
+        name: log.productName,
+        searchName: Value(buildSearchName(log.productName)),
+        weightGrams: Value(log.grams),
+        proteinPer100g: Value(log.protein * factor),
+        fatPer100g: Value(log.fat * factor),
+        carbsPer100g: Value(log.carbs * factor),
+        caloriesPer100g: Value(log.calories * factor),
+        imageUrl: Value(log.imageUrl),
+        isFavorite: const Value(true),
+        isUserCreated: const Value(true),
+      ),
+    );
+    await (update(foodLogs)..where((l) => l.id.equals(log.id))).write(
+      FoodLogsCompanion(productId: Value<int?>(newId)),
+    );
+    return newId;
+  }
+
   Future<Product> cacheServerProduct(Map<String, dynamic> json) async {
     final id = json['id'] as int? ?? 0;
     final name = json['name'] as String;
