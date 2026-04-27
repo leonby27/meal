@@ -122,7 +122,8 @@ class DiaryScreen extends StatefulWidget {
 
 class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   static const double _weekStripHeight = 64.0;
-  static const double _weekContentGap = 16.0;
+  static const double _inputBarReservedHeight = 62.0;
+  static const String _recordsSortOrderSetting = 'diary_records_sort_order';
 
   DateTime _selectedDate = DateTime.now();
   late AppDatabase _db;
@@ -139,7 +140,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   late final PageController _dayPageCtl;
   late final DateTime _dayAnchor;
   bool _syncingPages = false;
-  double _dayScrollOffset = 0;
+  bool _weekStripExpanded = false;
 
   final _inputCtl = TextEditingController();
   final _inputFocus = FocusNode();
@@ -151,9 +152,11 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   bool _isSearching = false;
   bool _isRecognizing = false;
   bool _hasSearchText = false;
+  bool _addMenuOpen = false;
   Uint8List? _attachedImageBytes;
   int _preSearchTab = 0;
   FoodLogCardVariant _foodLogCardVariant = FoodLogCardVariant.expanded;
+  bool _recordsNewestFirst = false;
 
   @override
   void initState() {
@@ -222,6 +225,21 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     }
   }
 
+  Future<void> _toggleAddMenu() async {
+    if (_addMenuOpen) {
+      setState(() => _addMenuOpen = false);
+      return;
+    }
+    _inputFocus.unfocus();
+    setState(() => _addMenuOpen = true);
+    await _loadRecentProducts(limit: 3);
+  }
+
+  void _closeAddMenu() {
+    if (!_addMenuOpen) return;
+    setState(() => _addMenuOpen = false);
+  }
+
   String get _todayDateStr => DateFormat('yyyy-MM-dd').format(DateTime.now());
 
   void _deactivateSearch({bool syncCalendarToToday = true}) {
@@ -249,8 +267,8 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     });
   }
 
-  Future<void> _loadRecentProducts() async {
-    final recent = await _db.getRecentProducts(limit: 15);
+  Future<void> _loadRecentProducts({int limit = 15}) async {
+    final recent = await _db.getRecentProducts(limit: limit);
     final favorites = await _db.getFavoriteProducts();
     if (mounted) {
       setState(() {
@@ -424,6 +442,39 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     }
   }
 
+  Future<void> _addRecentLogFromMenu(FoodLog log, String dateStr) async {
+    _closeAddMenu();
+    if (log.productId != null) {
+      final product = await _db.getProductById(log.productId!);
+      if (product != null && mounted) {
+        await _addProductFromSearch(product, dateStr);
+        return;
+      }
+    }
+    if (mounted) await _addFromLog(log, dateStr);
+  }
+
+  Future<void> _attachPhotoFromMenu(String dateStr) async {
+    _closeAddMenu();
+    if (_checkFreeLimit()) return;
+    if (_hasSearchText) {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked == null) return;
+      final bytes = await picked.readAsBytes();
+      if (mounted) {
+        setState(() => _attachedImageBytes = bytes);
+      }
+      return;
+    }
+    CameraScreen.pickAndShow(
+      context,
+      mealType: defaultMealType(),
+      dateStr: dateStr,
+      source: ImageSource.gallery,
+    );
+  }
+
   Future<void> _addProductFromSearch(Product product, String dateStr) async {
     final auth = AuthService();
     if (!auth.isPremium && auth.freeTrialExhausted) {
@@ -513,9 +564,14 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
   Future<void> _initDb() async {
     _db = await AppDatabase.getInstance();
-    await _loadGoal();
-    await _loadWeekCalories();
+    await Future.wait([_loadGoal(), _loadRecordsSortOrder()]);
     if (mounted) setState(() => _dbReady = true);
+    unawaited(_loadWeekCalories());
+  }
+
+  Future<void> _loadRecordsSortOrder() async {
+    final value = await _db.getSetting(_recordsSortOrderSetting);
+    _recordsNewestFirst = value == 'newest';
   }
 
   @override
@@ -559,6 +615,26 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     }
   }
 
+  Future<void> _toggleRecordsSortOrder() async {
+    final next = !_recordsNewestFirst;
+    setState(() => _recordsNewestFirst = next);
+    await _db.setSetting(_recordsSortOrderSetting, next ? 'newest' : 'oldest');
+  }
+
+  List<FoodLog> _sortLogsForDisplay(Iterable<FoodLog> logs) {
+    final sorted = logs.toList();
+    sorted.sort((a, b) {
+      final byCreated = _recordsNewestFirst
+          ? b.createdAt.compareTo(a.createdAt)
+          : a.createdAt.compareTo(b.createdAt);
+      if (byCreated != 0) return byCreated;
+      return _recordsNewestFirst
+          ? b.mealDate.compareTo(a.mealDate)
+          : a.mealDate.compareTo(b.mealDate);
+    });
+    return sorted;
+  }
+
   DateTime _weekStart(DateTime date) {
     final d = DateTime(date.year, date.month, date.day);
     return d.subtract(Duration(days: d.weekday - 1));
@@ -599,7 +675,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     _syncingPages = true;
     setState(() {
       _selectedDate = date;
-      _dayScrollOffset = 0;
     });
 
     final newWeekPage = _pageForDate(date);
@@ -623,7 +698,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     if (target.isAfter(today)) return;
     setState(() {
       _selectedDate = date;
-      _dayScrollOffset = 0;
     });
 
     if (_dayPageCtl.hasClients) {
@@ -636,32 +710,12 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     _loadWeekCalories();
   }
 
-  bool _onDayScrollNotification(
-    ScrollNotification notification,
-    DateTime date,
-  ) {
-    if (notification.metrics.axis != Axis.vertical) return false;
-    final current = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-    );
-    final pageDate = DateTime(date.year, date.month, date.day);
-    if (pageDate != current) return false;
-
-    final maxOffset = _weekStripHeight + _weekContentGap;
-    final nextOffset = notification.metrics.pixels.clamp(0.0, maxOffset);
-    if ((nextOffset - _dayScrollOffset).abs() < 0.5) return false;
-    setState(() => _dayScrollOffset = nextOffset);
-    return false;
-  }
-
-  String _formatHeaderDate() {
+  ({String date, String weekday}) _formatHeaderDateParts() {
     final d = _selectedDate;
     final locale = Localizations.localeOf(context).languageCode;
-    final dayName = DateFormat('E', locale).format(d);
-    final month = DateFormat('MMM', locale).format(d);
-    return '${d.day} $month, $dayName';
+    final dayName = DateFormat('E', locale).format(d).replaceAll('.', '');
+    final month = DateFormat('MMM', locale).format(d).replaceAll('.', '');
+    return (date: '${d.day} $month', weekday: dayName);
   }
 
   Future<void> _openDatePicker(BuildContext context) async {
@@ -838,28 +892,86 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final back2 = isDark ? AppColors.darkBack2 : AppColors.lightBack2;
     final onBack4 = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    final systemOverlayStyle = SystemUiOverlayStyle(
+      statusBarColor: _addMenuOpen ? AppColors.overlayDark : Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: _addMenuOpen ? AppColors.overlayDark : back2,
+      systemNavigationBarIconBrightness: isDark
+          ? Brightness.light
+          : Brightness.dark,
+      systemNavigationBarDividerColor: Colors.transparent,
+    );
 
-    return Scaffold(
-      backgroundColor: back2,
-      body: SafeArea(
-        child: FocusScope(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: systemOverlayStyle,
+      child: Scaffold(
+        backgroundColor: back2,
+        body: FocusScope(
           autofocus: false,
-          child: Column(
+          child: Stack(
             children: [
-              _buildHeader(context),
-              Expanded(
-                child: Stack(
-                  clipBehavior: Clip.hardEdge,
+              SafeArea(
+                child: Column(
                   children: [
-                    _buildDayPageView(context, isDark, onBack4),
-                    Transform.translate(
-                      offset: Offset(0, -_dayScrollOffset),
-                      child: _buildWeekStripWithConnector(context, isDark),
+                    _buildHeader(context),
+                    Expanded(
+                      child: _buildDayPageView(context, isDark, onBack4),
                     ),
+                    const SizedBox(height: _inputBarReservedHeight),
                   ],
                 ),
               ),
-              _buildInputBar(context, dateStr, isDark),
+              Positioned.fill(
+                child: IgnorePointer(
+                  ignoring: !_addMenuOpen,
+                  child: AnimatedOpacity(
+                    opacity: _addMenuOpen ? 1 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    child: GestureDetector(
+                      onTap: _closeAddMenu,
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(color: AppColors.overlayDark),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: safeBottom + _inputBarReservedHeight + 8,
+                child: IgnorePointer(
+                  ignoring: !_addMenuOpen,
+                  child: AnimatedOpacity(
+                    opacity: _addMenuOpen ? 1 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    child: AnimatedSlide(
+                      offset: _addMenuOpen
+                          ? Offset.zero
+                          : const Offset(0, 0.05),
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      child: AnimatedScale(
+                        scale: _addMenuOpen ? 1 : 0.98,
+                        alignment: Alignment.bottomCenter,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        child: _buildAddEntryMenu(context, dateStr, isDark),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SafeArea(
+                  top: false,
+                  child: _buildInputBar(context, dateStr, isDark),
+                ),
+              ),
             ],
           ),
         ),
@@ -869,6 +981,8 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
   Widget _buildHeader(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dateParts = _formatHeaderDateParts();
     final auth = AuthService();
     final initial = (auth.userName?.isNotEmpty == true)
         ? auth.userName![0].toUpperCase()
@@ -876,68 +990,124 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         ? auth.userEmail![0].toUpperCase()
         : 'M';
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-      child: Row(
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      alignment: Alignment.topCenter,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          GestureDetector(
-            onTap: () => _openDatePicker(context),
-            behavior: HitTestBehavior.opaque,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.calendar_today_outlined,
-                  size: 24,
-                  color: cs.onSurface,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatHeaderDate(),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 22 / 16,
-                    color: cs.onSurface,
+          SizedBox(
+            height: 52,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(
+                          () => _weekStripExpanded = !_weekStripExpanded,
+                        );
+                      },
+                      onLongPress: () => _openDatePicker(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(text: dateParts.date),
+                                  const TextSpan(text: ', '),
+                                  TextSpan(
+                                    text: dateParts.weekday,
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                height: 32 / 24,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          AnimatedRotation(
+                            turns: _weekStripExpanded ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeInOut,
+                            child: const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 20,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Icon(Icons.keyboard_arrow_down, size: 20, color: cs.onSurface),
-              ],
+                  const SizedBox(width: 12),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.push('/stats'),
+                        child: Icon(
+                          Icons.bar_chart_rounded,
+                          size: 24,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      GestureDetector(
+                        onTap: () => context.push('/favorites'),
+                        child: Icon(
+                          Icons.favorite,
+                          size: 24,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      GestureDetector(
+                        onTap: () => context.push('/profile'),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            initial,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              height: 24 / 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          const Spacer(),
-          GestureDetector(
-            onTap: () => context.push('/stats'),
-            child: Icon(Icons.bar_chart_rounded, size: 24, color: cs.onSurface),
-          ),
-          const SizedBox(width: 24),
-          GestureDetector(
-            onTap: () => context.push('/favorites'),
-            child: Icon(Icons.favorite, size: 24, color: cs.onSurface),
-          ),
-          const SizedBox(width: 24),
-          GestureDetector(
-            onTap: () => context.push('/profile'),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                initial,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  height: 24 / 18,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
+          if (_weekStripExpanded) ...[
+            _buildWeekStrip(context, isDark),
+            const SizedBox(height: 8),
+          ],
         ],
       ),
     );
@@ -1370,17 +1540,13 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
             if (d == sel) _syncWeekCalories(logs);
             return LayoutBuilder(
               builder: (context, constraints) {
-                return NotificationListener<ScrollNotification>(
-                  onNotification: (notification) =>
-                      _onDayScrollNotification(notification, date),
-                  child: _buildDayContent(
-                    context,
-                    logs,
-                    dateStr,
-                    isDark,
-                    onBack4,
-                    constraints.maxHeight,
-                  ),
+                return _buildDayContent(
+                  context,
+                  logs,
+                  dateStr,
+                  isDark,
+                  onBack4,
+                  constraints.maxHeight,
                 );
               },
             );
@@ -1454,37 +1620,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   ) {
     final cs = Theme.of(context).colorScheme;
 
-    final grouped = {
-      'breakfast': logs.where((l) => l.mealType == 'breakfast').toList(),
-      'lunch': logs.where((l) => l.mealType == 'lunch').toList(),
-      'dinner': logs.where((l) => l.mealType == 'dinner').toList(),
-      'snack': logs.where((l) => l.mealType == 'snack').toList(),
-    };
-
-    final sections = [
-      (
-        key: 'breakfast',
-        title: context.l10n.mealBreakfast,
-        icon: Icons.wb_sunny_outlined,
-      ),
-      (
-        key: 'lunch',
-        title: context.l10n.mealLunch,
-        icon: Icons.wb_cloudy_outlined,
-      ),
-      (
-        key: 'dinner',
-        title: context.l10n.mealDinner,
-        icon: Icons.nights_stay_outlined,
-      ),
-      (
-        key: 'snack',
-        title: context.l10n.mealSnack,
-        icon: Icons.cookie_outlined,
-      ),
-    ];
-
-    final nonEmpty = sections.where((s) => grouped[s.key]!.isNotEmpty).toList();
+    final sortedLogs = _sortLogsForDisplay(logs);
     final date = DateFormat('yyyy-MM-dd').parse(dateStr);
     final auth = AuthService();
     final showBanner =
@@ -1493,27 +1629,15 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         !auth.freeTrialExhausted;
 
     return ListView(
-      padding: const EdgeInsets.only(
-        top: _weekStripHeight + _weekContentGap,
-        bottom: 16,
-      ),
+      padding: const EdgeInsets.only(bottom: 16),
       children: [
         DailySummaryCard(logs: logs, selectedDate: date),
         if (showBanner) _buildFreeEntriesBanner(context, auth),
-        if (nonEmpty.isNotEmpty) ...[
+        if (sortedLogs.isNotEmpty) ...[
           const SizedBox(height: 24),
           _buildRecordsHeader(context, cs),
           const SizedBox(height: 12),
-          ...nonEmpty.map(
-            (s) => _buildFoodCards(
-              context,
-              grouped[s.key]!,
-              s.key,
-              dateStr,
-              back2,
-              _goalCalories,
-            ),
-          ),
+          _buildFoodCards(context, sortedLogs, dateStr, back2, _goalCalories),
         ] else ...[
           Builder(
             builder: (context) {
@@ -1571,7 +1695,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
     setState(() {
       _selectedDate = candidate;
-      _dayScrollOffset = 0;
     });
 
     if (_dayPageCtl.hasClients) {
@@ -1582,16 +1705,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncingPages = false;
     });
-  }
-
-  /// Ранее здесь была соединительная линия между выбранным днём и карточкой
-  /// КБЖУ. Убрали по дизайн-решению — теперь неделя просто занимает свою
-  /// высоту, а зазор до карточки ниже задаётся обычным SizedBox.
-  Widget _buildWeekStripWithConnector(BuildContext context, bool isDark) {
-    return SizedBox(
-      height: _weekStripHeight,
-      child: _buildWeekStrip(context, isDark),
-    );
   }
 
   Widget _buildWeekStrip(BuildContext context, bool isDark) {
@@ -1729,7 +1842,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   Widget _buildFoodCards(
     BuildContext context,
     List<FoodLog> logs,
-    String mealType,
     String dateStr,
     Color back2,
     double calorieGoal,
@@ -1743,7 +1855,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
             child: MealSection.buildSingleCard(
               context: context,
               log: log,
-              mealType: mealType,
+              mealType: log.mealType,
               dateStr: dateStr,
               duplicateDateStr: _todayDateStr,
               onDuplicateAdded: () => _selectDate(DateTime.now()),
@@ -1762,21 +1874,72 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final currentViewLabel = _foodLogCardVariant == FoodLogCardVariant.expanded
         ? context.l10n.diaryViewExpanded
         : context.l10n.diaryViewCompact;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryDark = isDark
+        ? AppColors.darkSecondaryDark
+        : AppColors.lightSecondaryDark;
+    final sortBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final sortLabel = _recordsNewestFirst
+        ? context.l10n.recordsSortNewestFirst
+        : context.l10n.recordsSortOldestFirst;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              context.l10n.diaryRecordsForDay,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                height: 18 / 14,
-                color: cs.onSurfaceVariant,
-                overflow: TextOverflow.ellipsis,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    context.l10n.diaryRecordsForDay,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      height: 18 / 14,
+                      color: secondaryDark,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: sortLabel,
+                  child: GestureDetector(
+                    onTap: _toggleRecordsSortOrder,
+                    behavior: HitTestBehavior.opaque,
+                    child: Semantics(
+                      button: true,
+                      label: sortLabel,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: sortBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Center(
+                          child: AnimatedRotation(
+                            turns: _recordsNewestFirst ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOutCubic,
+                            child: SvgPicture.asset(
+                              'assets/icons/sort_arrow_up.svg',
+                              width: 18,
+                              height: 18,
+                              colorFilter: ColorFilter.mode(
+                                secondaryDark,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           PopupMenuButton<FoodLogCardVariant>(
@@ -1834,62 +1997,344 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     );
   }
 
+  Widget _buildAddEntryMenu(BuildContext context, String dateStr, bool isDark) {
+    final cs = Theme.of(context).colorScheme;
+    final menuBg = isDark ? AppColors.darkScaffold : AppColors.lightScaffold;
+    final itemBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final border = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
+    final secondary = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+    final recent = _recentProducts.take(3).toList();
+
+    return GestureDetector(
+      onTap: () {},
+      behavior: HitTestBehavior.opaque,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: menuBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: border),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x21000000),
+              blurRadius: 165,
+              offset: Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Color(0x0F000000),
+              blurRadius: 20.66,
+              offset: Offset(0, 0.75),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (recent.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l10n.addMenuRecentEntries,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            height: 18 / 14,
+                            color: secondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ...recent.map(
+                          (log) => Padding(
+                            padding: EdgeInsets.only(
+                              bottom: log == recent.last ? 0 : 8,
+                            ),
+                            child: _buildAddMenuRecentTile(
+                              context,
+                              log,
+                              dateStr,
+                              itemBg,
+                              cs,
+                              secondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(height: 1, thickness: 1, color: border),
+                  const SizedBox(height: 16),
+                ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      _buildAddMenuAction(
+                        iconAsset: 'assets/icons/menu_search.svg',
+                        label: context.l10n.searchInDb,
+                        background: itemBg,
+                        textColor: cs.onSurface,
+                        onTap: () {
+                          _closeAddMenu();
+                          if (_checkFreeLimit()) return;
+                          final mealType = defaultMealType();
+                          context.push(
+                            '/search?meal_type=$mealType&date=$dateStr',
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _buildAddMenuAction(
+                        iconAsset: 'assets/icons/menu_barcode.svg',
+                        label: context.l10n.scanBarcodeAction,
+                        background: itemBg,
+                        textColor: cs.onSurface,
+                        onTap: () {
+                          _closeAddMenu();
+                          if (_checkFreeLimit()) return;
+                          context.push(
+                            '/scanner?meal_type=${defaultMealType()}&date=$dateStr',
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _buildAddMenuAction(
+                        iconAsset: 'assets/icons/menu_heart.svg',
+                        label: context.l10n.favoritesTab,
+                        background: itemBg,
+                        textColor: cs.onSurface,
+                        onTap: () {
+                          _closeAddMenu();
+                          context.push('/favorites');
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      _buildAddMenuAction(
+                        iconAsset: 'assets/icons/menu_photo.svg',
+                        label: context.l10n.attachPhotoAction,
+                        background: itemBg,
+                        textColor: cs.onSurface,
+                        onTap: () => _attachPhotoFromMenu(dateStr),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddMenuRecentTile(
+    BuildContext context,
+    FoodLog log,
+    String dateStr,
+    Color background,
+    ColorScheme cs,
+    Color secondary,
+  ) {
+    return GestureDetector(
+      onTap: () => _addRecentLogFromMenu(log, dateStr),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 72,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            _buildRecentLogPhoto(log, cs),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    log.productName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      height: 20 / 15,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        context.l10n.kcalValueInt(log.calories.toInt()),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          height: 18 / 14,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        context.l10n.gramsValue(log.grams.toInt()),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          height: 18 / 14,
+                          color: secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddMenuAction({
+    required String iconAsset,
+    required String label,
+    required Color background,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            SvgPicture.asset(iconAsset, width: 24, height: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 18 / 14,
+                  color: textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildInputBar(BuildContext context, String dateStr, bool isDark) {
     final onBack = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final plusBg = _addMenuOpen
+        ? (isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurface2)
+        : (isDark ? AppColors.darkSurface2 : AppColors.lightScaffold);
     final placeholderColor = isDark
-        ? const Color(0xFF9CA0B2)
-        : const Color(0xFF676E85);
+        ? AppColors.darkSecondaryDark
+        : AppColors.lightSecondaryDark;
     final iconColor = isDark
         ? AppColors.darkSecondaryDark
         : AppColors.lightSecondaryDark;
-    final textColor = isDark ? Colors.white : AppColors.lightOnSurface;
-    final lineBorder = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
-    const double iconSize = 36.0;
+    final primaryIconColor = isDark
+        ? AppColors.darkOnSurface
+        : AppColors.lightOnSurface;
+    final textColor = primaryIconColor;
+    final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    final plusColor = _addMenuOpen ? primaryIconColor : iconColor;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          GestureDetector(
-            onTap: () {
-              if (_checkFreeLimit()) return;
-              final mealType = defaultMealType();
-              context.push('/search?meal_type=$mealType&date=$dateStr');
-            },
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: onBack,
-                shape: BoxShape.circle,
-                border: Border.all(color: lineBorder, width: 1),
-              ),
-              child: Center(
-                child: Icon(Icons.search, size: 22, color: iconColor),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
           Expanded(
             child: Container(
-              constraints: const BoxConstraints(minHeight: 44),
+              height: 48,
               decoration: BoxDecoration(
                 color: onBack,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: lineBorder, width: 1),
+                borderRadius: BorderRadius.circular(50),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              padding: const EdgeInsets.all(8),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: _toggleAddMenu,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: plusBg,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: lineBorder),
+                      ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Center(
+                            child: AnimatedRotation(
+                              turns: _addMenuOpen ? 0.125 : 0,
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              child: SvgPicture.asset(
+                                'assets/icons/menu_plus.svg',
+                                width: 24,
+                                height: 24,
+                                colorFilter: ColorFilter.mode(
+                                  plusColor,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (_attachedImageBytes != null)
+                            Positioned(
+                              top: -1,
+                              right: -1,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.error,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: _inputCtl,
                       focusNode: _inputFocus,
                       minLines: 1,
-                      maxLines: 4,
+                      maxLines: 1,
+                      onTap: _closeAddMenu,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
@@ -1909,111 +2354,24 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                         focusedBorder: InputBorder.none,
                         isDense: true,
                         filled: false,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 5),
                       ),
                       onChanged: null,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  if (!_hasSearchText)
-                    GestureDetector(
-                      onTap: () {
-                        if (_checkFreeLimit()) return;
-                        context.push(
-                          '/scanner?meal_type=${defaultMealType()}&date=$dateStr',
-                        );
-                      },
-                      child: SizedBox(
-                        width: iconSize,
-                        height: iconSize,
-                        child: Center(
-                          child: SvgPicture.asset(
-                            'assets/icons/barcode.svg',
-                            width: 24,
-                            height: 24,
-                            colorFilter: ColorFilter.mode(
-                              iconColor,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (!_hasSearchText) const SizedBox(width: 4),
-                  if (!_hasSearchText)
-                    GestureDetector(
-                      onTap: () {
-                        if (_checkFreeLimit()) return;
-                        CameraScreen.pickAndShow(
-                          context,
-                          mealType: defaultMealType(),
-                          dateStr: dateStr,
-                          source: ImageSource.gallery,
-                        );
-                      },
-                      child: SizedBox(
-                        width: iconSize,
-                        height: iconSize,
-                        child: Center(
-                          child: SvgPicture.asset(
-                            'assets/icons/image.svg',
-                            width: 24,
-                            height: 24,
-                            colorFilter: ColorFilter.mode(
-                              iconColor,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (_hasSearchText)
-                    GestureDetector(
-                      onTap: () async {
-                        final picker = ImagePicker();
-                        final picked = await picker.pickImage(
-                          source: ImageSource.gallery,
-                        );
-                        if (picked == null) return;
-                        final bytes = await picked.readAsBytes();
-                        if (mounted) {
-                          setState(() => _attachedImageBytes = bytes);
-                        }
-                      },
-                      child: SizedBox(
-                        width: iconSize,
-                        height: iconSize,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Icon(Icons.attach_file, size: 22, color: iconColor),
-                            if (_attachedImageBytes != null)
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  const SizedBox(width: 4),
                 ],
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: _hasSearchText
-                ? () => _recognizeWithAI(dateStr)
+                ? () {
+                    _closeAddMenu();
+                    _recognizeWithAI(dateStr);
+                  }
                 : () {
+                    _closeAddMenu();
                     if (_checkFreeLimit()) return;
                     CameraScreen.pickAndShow(
                       context,
@@ -2023,11 +2381,19 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                     );
                   },
             child: Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
+              width: 64,
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: _hasSearchText ? AppColors.primary : null,
+                gradient: _hasSearchText
+                    ? null
+                    : const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF317BFF), Color(0xFF7631FF)],
+                      ),
+                borderRadius: BorderRadius.circular(100),
               ),
               child: Center(
                 child: _isRecognizing
@@ -2042,9 +2408,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                     : SvgPicture.asset(
                         _hasSearchText
                             ? 'assets/icons/send.svg'
-                            : 'assets/icons/camera.svg',
-                        width: 24,
-                        height: 24,
+                            : 'assets/icons/ai_generated_photo.svg',
+                        width: _hasSearchText ? 24 : 32,
+                        height: _hasSearchText ? 24 : 32,
                         colorFilter: const ColorFilter.mode(
                           Colors.white,
                           BlendMode.srcIn,

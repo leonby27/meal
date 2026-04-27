@@ -940,6 +940,18 @@ abstract class AppLocalizations {
   /// **'расширенный'**
   String get diaryViewExpanded;
 
+  /// No description provided for @recordsSortNewestFirst.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала новые'**
+  String get recordsSortNewestFirst;
+
+  /// No description provided for @recordsSortOldestFirst.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала старые'**
+  String get recordsSortOldestFirst;
+
   /// No description provided for @diaryEmptyDay.
   ///
   /// In ru, this message translates to:
@@ -1017,6 +1029,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Нет недавних записей'**
   String get noRecentRecords;
+
+  /// No description provided for @addMenuRecentEntries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Последние записи'**
+  String get addMenuRecentEntries;
+
+  /// No description provided for @scanBarcodeAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканировать штрихкод'**
+  String get scanBarcodeAction;
+
+  /// No description provided for @attachPhotoAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прикрепить фото'**
+  String get attachPhotoAction;
 
   /// No description provided for @noFavoriteProducts.
   ///

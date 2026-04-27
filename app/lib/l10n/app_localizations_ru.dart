@@ -459,6 +459,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diaryViewExpanded => 'расширенный';
 
   @override
+  String get recordsSortNewestFirst => 'Сначала новые';
+
+  @override
+  String get recordsSortOldestFirst => 'Сначала старые';
+
+  @override
   String get diaryEmptyDay => 'Ещё нет записей за этот день';
 
   @override
@@ -497,6 +503,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noRecentRecords => 'Нет недавних записей';
+
+  @override
+  String get addMenuRecentEntries => 'Последние записи';
+
+  @override
+  String get scanBarcodeAction => 'Сканировать штрихкод';
+
+  @override
+  String get attachPhotoAction => 'Прикрепить фото';
 
   @override
   String get noFavoriteProducts => 'Нет избранных продуктов';

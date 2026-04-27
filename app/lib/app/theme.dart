@@ -31,6 +31,7 @@ class AppColors {
   // ── Light-only helpers ──────────────────────────────────────
   static const lightScaffold = Color(0xFFF5F6F8);
   static const lightSurface = Color(0xFFFFFFFF);
+  static const lightSurface2 = Color(0xFFF0F1F5);
   static const lightBack2 = Color(0xFFF1F1F7);
   static const lightOnSurface = Color(0xFF0A1B39);
   static const lightOnSurfaceVariant = Color(0xFF83899F);
@@ -87,6 +88,9 @@ class AppColors {
   static const lineLight100 = Color(0xFFEDEEF3);
   static const lineLight200 = Color(0xFFE6E7EC);
   static const lineLight300 = Color(0xFFD7D9E2);
+
+  // ── Overlay tokens ──────────────────────────────────────────
+  static const overlayDark = Color(0x80000000);
 }
 
 class AppTheme {
@@ -174,8 +178,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
@@ -207,7 +213,9 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        overlayColor: WidgetStateProperty.all(AppColors.lightSurface.withAlpha(20)),
+        overlayColor: WidgetStateProperty.all(
+          AppColors.lightSurface.withAlpha(20),
+        ),
       ),
     );
   }
@@ -284,8 +292,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColors.primary, width: 1.5),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
@@ -317,7 +327,9 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        overlayColor: WidgetStateProperty.all(AppColors.darkSurface.withAlpha(40)),
+        overlayColor: WidgetStateProperty.all(
+          AppColors.darkSurface.withAlpha(40),
+        ),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,6 +32,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   int _currentPage = 0;
   bool _activitySelected = true;
   bool _isForward = true;
+  bool _isFinishing = false;
   static const _totalSteps = 10;
 
   bool get _canProceed {
@@ -64,6 +67,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   void _next() {
+    if (_isFinishing) return;
+
     if (_currentPage == 5) {
       _updateTargetWeightFromGoal();
     }
@@ -124,6 +129,22 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   Future<void> _finish() async {
+    if (_isFinishing) return;
+    setState(() => _isFinishing = true);
+
+    try {
+      await AuthService().markOnboardingCompleted();
+
+      if (mounted) context.go('/paywall');
+
+      unawaited(_persistOnboardingSettings());
+    } catch (e) {
+      debugPrint('Onboarding _finish error: $e');
+      if (mounted) setState(() => _isFinishing = false);
+    }
+  }
+
+  Future<void> _persistOnboardingSettings() async {
     try {
       final db = await AppDatabase.getInstance();
 
@@ -134,18 +155,20 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       await db.setSetting('unit_system', _data.unitSystem);
       await db.setSetting('user_height', '${_data.heightCm.round()}');
       await db.setSetting('user_weight', _data.weightKg.toStringAsFixed(1));
-      await db.setSetting('user_target_weight', _data.targetWeightKg.toStringAsFixed(1));
-      await db.setSetting('user_activity_level', _data.activityMultiplier.toString());
+      await db.setSetting(
+        'user_target_weight',
+        _data.targetWeightKg.toStringAsFixed(1),
+      );
+      await db.setSetting(
+        'user_activity_level',
+        _data.activityMultiplier.toString(),
+      );
       await db.setSetting('calorie_goal', '${_data.calorieGoal!.round()}');
       await db.setSetting('protein_goal', '${_data.proteinGoal!.round()}');
       await db.setSetting('fat_goal', '${_data.fatGoal!.round()}');
       await db.setSetting('carbs_goal', '${_data.carbsGoal!.round()}');
-
-      await AuthService().markOnboardingCompleted();
-
-      if (mounted) context.go('/paywall');
     } catch (e) {
-      debugPrint('Onboarding _finish error: $e');
+      debugPrint('Onboarding settings persist error: $e');
     }
   }
 
@@ -246,122 +269,143 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 child: SizedBox(
                   height: 40,
                   child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (_currentPage > 0 && !isLoading) ...[
-                      SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: _back,
-                          icon: Icon(Icons.arrow_back, color: cs.onSurface),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: TweenAnimationBuilder<double>(
-                          tween: Tween(
-                            begin: (_currentPage + 1) / _totalSteps,
-                            end: (_currentPage + 1) / _totalSteps,
-                          ),
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                          builder: (context, value, _) => LinearProgressIndicator(
-                            value: value,
-                            minHeight: 20,
-                            backgroundColor: cs.outline.withAlpha(60),
-                            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                ),
-              ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                reverseDuration: const Duration(milliseconds: 250),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                layoutBuilder: (currentChild, previousChildren) {
-                  return Stack(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      for (final child in previousChildren)
-                        Positioned.fill(child: child),
-                      if (currentChild != null)
-                        Positioned.fill(child: currentChild),
-                    ],
-                  );
-                },
-                transitionBuilder: (child, animation) {
-                  final isIncoming = child.key == ValueKey(_currentPage);
-                  final slideBegin = _isForward
-                      ? (isIncoming ? 0.25 : -0.15)
-                      : (isIncoming ? -0.25 : 0.15);
-                  final slide = Tween<Offset>(
-                    begin: Offset(slideBegin, 0),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  final fade = isIncoming
-                      ? Tween<double>(begin: 0.0, end: 1.0).animate(
-                          CurvedAnimation(
-                            parent: animation,
-                            curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+                      if (_currentPage > 0 && !isLoading) ...[
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: _back,
+                            icon: Icon(Icons.arrow_back, color: cs.onSurface),
                           ),
-                        )
-                      : animation;
-                  return SlideTransition(
-                    position: slide,
-                    child: FadeTransition(
-                      opacity: fade,
-                      child: child,
-                    ),
-                  );
-                },
-                child: _buildCurrentStep(),
-              ),
-            ),
-            if (!isLoading)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _canProceed ? _next : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _canProceed
-                          ? AppColors.primary
-                          : (isDark ? AppColors.darkDisabledBg : AppColors.lightDisabledBg),
-                      foregroundColor: _canProceed
-                          ? Colors.white
-                          : (isDark ? AppColors.darkDisabledContent : AppColors.lightDisabledContent),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(
+                              begin: (_currentPage + 1) / _totalSteps,
+                              end: (_currentPage + 1) / _totalSteps,
+                            ),
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            builder: (context, value, _) =>
+                                LinearProgressIndicator(
+                                  value: value,
+                                  minHeight: 20,
+                                  backgroundColor: cs.outline.withAlpha(60),
+                                  valueColor: const AlwaysStoppedAnimation(
+                                    AppColors.primary,
+                                  ),
+                                ),
+                          ),
+                        ),
                       ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      _currentPage == 9 ? context.l10n.onboardingStart : context.l10n.onboardingNext,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    ],
                   ),
                 ),
               ),
-          ],
+              const SizedBox(height: 8),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  reverseDuration: const Duration(milliseconds: 250),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  layoutBuilder: (currentChild, previousChildren) {
+                    return Stack(
+                      children: [
+                        for (final child in previousChildren)
+                          Positioned.fill(child: child),
+                        if (currentChild != null)
+                          Positioned.fill(child: currentChild),
+                      ],
+                    );
+                  },
+                  transitionBuilder: (child, animation) {
+                    final isIncoming = child.key == ValueKey(_currentPage);
+                    final slideBegin = _isForward
+                        ? (isIncoming ? 0.25 : -0.15)
+                        : (isIncoming ? -0.25 : 0.15);
+                    final slide = Tween<Offset>(
+                      begin: Offset(slideBegin, 0),
+                      end: Offset.zero,
+                    ).animate(animation);
+                    final fade = isIncoming
+                        ? Tween<double>(begin: 0.0, end: 1.0).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: const Interval(
+                                0.0,
+                                0.6,
+                                curve: Curves.easeOut,
+                              ),
+                            ),
+                          )
+                        : animation;
+                    return SlideTransition(
+                      position: slide,
+                      child: FadeTransition(opacity: fade, child: child),
+                    );
+                  },
+                  child: _buildCurrentStep(),
+                ),
+              ),
+              if (!isLoading)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isFinishing
+                          ? () {}
+                          : (_canProceed ? _next : null),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _canProceed || _isFinishing
+                            ? AppColors.primary
+                            : (isDark
+                                  ? AppColors.darkDisabledBg
+                                  : AppColors.lightDisabledBg),
+                        foregroundColor: _canProceed || _isFinishing
+                            ? Colors.white
+                            : (isDark
+                                  ? AppColors.darkDisabledContent
+                                  : AppColors.lightDisabledContent),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isFinishing
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              _currentPage == 9
+                                  ? context.l10n.onboardingStart
+                                  : context.l10n.onboardingNext,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }

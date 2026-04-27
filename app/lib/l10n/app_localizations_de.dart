@@ -460,6 +460,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get diaryViewExpanded => 'erweitert';
 
   @override
+  String get recordsSortNewestFirst => 'Neueste zuerst';
+
+  @override
+  String get recordsSortOldestFirst => 'Älteste zuerst';
+
+  @override
   String get diaryEmptyDay => 'Noch keine Einträge für diesen Tag';
 
   @override
@@ -498,6 +504,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noRecentRecords => 'Keine aktuellen Einträge';
+
+  @override
+  String get addMenuRecentEntries => 'Letzte Einträge';
+
+  @override
+  String get scanBarcodeAction => 'Barcode scannen';
+
+  @override
+  String get attachPhotoAction => 'Foto anhängen';
 
   @override
   String get noFavoriteProducts => 'Keine Lieblingsprodukte';
