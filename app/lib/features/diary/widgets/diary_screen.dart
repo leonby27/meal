@@ -308,13 +308,14 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   Future<void> _recognizeWithAI(String dateStr) async {
     if (_checkFreeLimit()) return;
     final text = _inputCtl.text.trim();
-    if (text.isEmpty) return;
+    final image = _attachedImageBytes;
+    if (text.isEmpty && image == null) return;
 
     setState(() => _isRecognizing = true);
     _inputFocus.unfocus();
 
     final savedText = text;
-    final savedImage = _attachedImageBytes;
+    final savedImage = image;
 
     if (_searchMode) {
       _deactivateSearch(syncCalendarToToday: false);
@@ -327,12 +328,19 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
       });
     }
 
-    if (savedImage != null) {
+    if (savedImage != null && savedText.isNotEmpty) {
       await AiMealResultSheet.showWithTextAndImageLoading(
         context,
         mealType: defaultMealType(),
         dateStr: dateStr,
         text: savedText,
+        imageBytes: savedImage,
+      );
+    } else if (savedImage != null) {
+      await AiMealResultSheet.showWithLoading(
+        context,
+        mealType: defaultMealType(),
+        dateStr: dateStr,
         imageBytes: savedImage,
       );
     } else {
@@ -454,25 +462,16 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     if (mounted) await _addFromLog(log, dateStr);
   }
 
-  Future<void> _attachPhotoFromMenu(String dateStr) async {
+  Future<void> _attachPhotoFromMenu() async {
     _closeAddMenu();
     if (_checkFreeLimit()) return;
-    if (_hasSearchText) {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(source: ImageSource.gallery);
-      if (picked == null) return;
-      final bytes = await picked.readAsBytes();
-      if (mounted) {
-        setState(() => _attachedImageBytes = bytes);
-      }
-      return;
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (mounted) {
+      setState(() => _attachedImageBytes = bytes);
     }
-    CameraScreen.pickAndShow(
-      context,
-      mealType: defaultMealType(),
-      dateStr: dateStr,
-      source: ImageSource.gallery,
-    );
   }
 
   Future<void> _addProductFromSearch(Product product, String dateStr) async {
@@ -2122,7 +2121,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                         label: context.l10n.attachPhotoAction,
                         background: itemBg,
                         textColor: cs.onSurface,
-                        onTap: () => _attachPhotoFromMenu(dateStr),
+                        onTap: _attachPhotoFromMenu,
                       ),
                     ],
                   ),
@@ -2263,6 +2262,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final textColor = primaryIconColor;
     final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final plusColor = _addMenuOpen ? primaryIconColor : iconColor;
+    final hasDraft = _hasSearchText || _attachedImageBytes != null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
@@ -2365,7 +2365,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
           ),
           const SizedBox(width: 12),
           GestureDetector(
-            onTap: _hasSearchText
+            onTap: hasDraft
                 ? () {
                     _closeAddMenu();
                     _recognizeWithAI(dateStr);
@@ -2385,8 +2385,8 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               height: 48,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: _hasSearchText ? AppColors.primary : null,
-                gradient: _hasSearchText
+                color: hasDraft ? AppColors.primary : null,
+                gradient: hasDraft
                     ? null
                     : const LinearGradient(
                         begin: Alignment.topLeft,
@@ -2406,11 +2406,11 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                         ),
                       )
                     : SvgPicture.asset(
-                        _hasSearchText
+                        hasDraft
                             ? 'assets/icons/send.svg'
                             : 'assets/icons/ai_generated_photo.svg',
-                        width: _hasSearchText ? 24 : 32,
-                        height: _hasSearchText ? 24 : 32,
+                        width: hasDraft ? 24 : 32,
+                        height: hasDraft ? 24 : 32,
                         colorFilter: const ColorFilter.mode(
                           Colors.white,
                           BlendMode.srcIn,
