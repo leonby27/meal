@@ -26,8 +26,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signInWithGoogle() async {
     setState(() => _loading = true);
-    await AuthService().signInWithGoogle();
-    if (mounted) setState(() => _loading = false);
+    final auth = AuthService();
+    final ok = await auth.signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (!ok && auth.lastSignInError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.lastSignInError!),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    }
   }
 
   Future<void> _signInWithApple() async {

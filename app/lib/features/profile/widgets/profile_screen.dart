@@ -206,12 +206,21 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   }
 
   Future<void> _signInFromGuest() async {
-    final success = await AuthService().signInWithGoogle();
-    if (success && mounted) {
+    final auth = AuthService();
+    final success = await auth.signInWithGoogle();
+    if (!mounted) return;
+    if (success) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(context.l10n.signedInSnackbar)));
       setState(() {});
+    } else if (auth.lastSignInError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.lastSignInError!),
+          duration: const Duration(seconds: 6),
+        ),
+      );
     }
   }
 
@@ -353,6 +362,15 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
           _sectionLabel(context.l10n.settings),
           const SizedBox(height: 8),
           _buildSettingsCard(),
+          if (auth.hasSocialAccount) ...[
+            const SizedBox(height: 24),
+            _destructiveButton(
+              label: context.l10n.deleteAccount,
+              icon: Icons.delete_outline,
+              isLoading: _isDeletingAccount,
+              onTap: _deleteAccount,
+            ),
+          ],
           const SizedBox(height: 24),
           _buildVersionFooter(),
         ],
@@ -504,14 +522,6 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                   icon: Icons.account_circle,
                   onTap: _signInFromGuest,
                 ),
-            ] else ...[
-              const SizedBox(height: 15),
-              _destructiveButton(
-                label: context.l10n.deleteAccount,
-                icon: Icons.delete_outline,
-                isLoading: _isDeletingAccount,
-                onTap: _deleteAccount,
-              ),
             ],
           ],
         ),

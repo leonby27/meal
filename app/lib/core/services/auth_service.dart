@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -39,6 +40,8 @@ class AuthService extends ChangeNotifier {
 
   bool _isLoggedIn = false;
   bool _onboardingCompleted = false;
+  String? _lastSignInError;
+  String? get lastSignInError => _lastSignInError;
 
   bool _isPremium = false;
   int _freeEntriesUsed = 0;
@@ -110,30 +113,46 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<bool> signInWithGoogle() async {
+    _lastSignInError = null;
     // Keep Google sign-in Android-only. On iOS the native Google Sign-In
     // plugin requires extra iOS configuration (URL scheme / Firebase) that
     // is not set up here, and calling it crashes the app.
     if (!kIsWeb && Platform.isIOS) {
       debugPrint('Google sign-in disabled on iOS.');
+      _lastSignInError = 'Google sign-in disabled on iOS';
       return false;
     }
     try {
       final account = await _googleSignIn.signIn();
-      if (account == null) return false;
+      if (account == null) {
+        debugPrint('Google sign-in: signIn() returned null');
+        return false;
+      }
 
       final auth = await account.authentication;
       final idToken = auth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        debugPrint(
+          'Google sign-in: idToken is null. Likely SHA-1 of the signing key '
+          'is not registered for the Android OAuth client in Google Cloud, '
+          'or serverClientId is wrong. account.email=${account.email}',
+        );
+        _lastSignInError =
+            'Google did not return an ID token. Check OAuth client SHA-1 in Google Cloud Console.';
+        return false;
+      }
 
       final api = ApiClient();
       try {
         final backendResult = await api.post('/api/auth/google', {
-          'id_token': idToken ?? '',
+          'id_token': idToken,
           'name': account.displayName,
           'email': account.email,
           'photo_url': account.photoUrl,
         });
         await api.setToken(backendResult['access_token'] as String);
-      } catch (_) {
+      } catch (e) {
+        debugPrint('Google sign-in: backend exchange failed: $e');
         // Backend may not be available yet — save locally, sync later
       }
 
@@ -146,8 +165,15 @@ class AuthService extends ChangeNotifier {
       await _persistUser();
       notifyListeners();
       return true;
+    } on PlatformException catch (e) {
+      debugPrint(
+        'Google sign-in PlatformException: code=${e.code} message=${e.message} details=${e.details}',
+      );
+      _lastSignInError = 'Google sign-in failed (${e.code}): ${e.message ?? ''}';
+      return false;
     } catch (e) {
       debugPrint('Google sign-in error: $e');
+      _lastSignInError = 'Google sign-in failed: $e';
       return false;
     }
   }
