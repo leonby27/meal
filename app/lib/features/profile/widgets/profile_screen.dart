@@ -400,13 +400,8 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
       decoration: BoxDecoration(
         color: _isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x081B364A),
-            blurRadius: 20,
-            offset: Offset(0, 5),
-          ),
-        ],
+        border: AppTheme.cardEdgeBorder(isDark: _isDark),
+        boxShadow: AppTheme.cardElevatedShadows(isDark: _isDark),
       ),
       child: child,
     );
@@ -644,13 +639,8 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
               ? [const Color(0xFF1A2340), const Color(0xFF162035)]
               : [const Color(0xFFEEF4FF), const Color(0xFFE0ECFF)],
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x081B364A),
-            blurRadius: 20,
-            offset: Offset(0, 5),
-          ),
-        ],
+        border: AppTheme.cardEdgeBorder(isDark: _isDark),
+        boxShadow: AppTheme.cardElevatedShadows(isDark: _isDark),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),

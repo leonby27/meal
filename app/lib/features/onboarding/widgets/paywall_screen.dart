@@ -8,6 +8,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/subscription_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
@@ -866,6 +867,7 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: isLoading ? null : onTap,
@@ -882,6 +884,11 @@ class _PlanCard extends StatelessWidget {
                 color: isSelected ? cs.onSurface : cs.outline.withAlpha(80),
                 width: isSelected ? 2 : 1,
               ),
+              boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+            ),
+            foregroundDecoration: AppTheme.cardEdgeForeground(
+              isDark: isDark,
+              radius: 20,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

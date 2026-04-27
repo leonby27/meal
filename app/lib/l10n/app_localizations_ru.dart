@@ -1011,6 +1011,54 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onboardingStart => 'Начать';
 
   @override
+  String get socialProofScaleTitle => 'Создано для серьёзного учёта';
+
+  @override
+  String get socialProofScaleSubtitle =>
+      'Технология, на которой строится ваш план';
+
+  @override
+  String get socialProofScaleProductsLabel => 'продуктов в нашей базе';
+
+  @override
+  String get socialProofScaleSecondsUnit => 'сек';
+
+  @override
+  String get socialProofScaleSpeedLabel => 'Распознавание блюд по фото';
+
+  @override
+  String get socialProofPoweredBy => 'Работает на';
+
+  @override
+  String get socialProofAccuracyTitle => 'Проверено на точность';
+
+  @override
+  String get socialProofAccuracySubtitle =>
+      'Насколько точно AI определяет ваши блюда';
+
+  @override
+  String get socialProofAccuracyLabel => 'Точность AI';
+
+  @override
+  String get socialProofAccuracyDisclaimer =>
+      'На основе внутреннего контроля качества на 500+ блюдах из разных кухонь мира.';
+
+  @override
+  String get socialProofScienceTitle => 'В основе — нутрициология';
+
+  @override
+  String get socialProofScienceSubtitle =>
+      'Ваш план рассчитан по проверенной формуле';
+
+  @override
+  String get socialProofScienceFormulaCaption =>
+      'Золотой стандарт нутрициологии с 1990 года';
+
+  @override
+  String get socialProofScienceTrust =>
+      'Используется дипломированными диетологами и клиническими нутрициологами по всему миру.';
+
+  @override
   String get paywallTitle =>
       'Чтобы продолжить, начните 3-дневный БЕСПЛАТНЫЙ пробный период';
 

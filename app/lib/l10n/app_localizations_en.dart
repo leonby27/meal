@@ -1008,6 +1008,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingStart => 'Start';
 
   @override
+  String get socialProofScaleTitle => 'Built for serious tracking';
+
+  @override
+  String get socialProofScaleSubtitle => 'The technology behind your plan';
+
+  @override
+  String get socialProofScaleProductsLabel => 'Products in our database';
+
+  @override
+  String get socialProofScaleSecondsUnit => 'sec';
+
+  @override
+  String get socialProofScaleSpeedLabel => 'AI photo recognition';
+
+  @override
+  String get socialProofPoweredBy => 'Powered by';
+
+  @override
+  String get socialProofAccuracyTitle => 'Tested for accuracy';
+
+  @override
+  String get socialProofAccuracySubtitle =>
+      'How well our AI identifies your meals';
+
+  @override
+  String get socialProofAccuracyLabel => 'AI accuracy';
+
+  @override
+  String get socialProofAccuracyDisclaimer =>
+      'Based on internal quality testing on 500+ dishes from a range of cuisines.';
+
+  @override
+  String get socialProofScienceTitle => 'Backed by nutrition science';
+
+  @override
+  String get socialProofScienceSubtitle =>
+      'Your plan is built on a proven formula';
+
+  @override
+  String get socialProofScienceFormulaCaption =>
+      'Nutrition gold standard since 1990';
+
+  @override
+  String get socialProofScienceTrust =>
+      'Used by registered dietitians and clinical nutritionists worldwide.';
+
+  @override
   String get paywallTitle => 'To continue, start your 3-day FREE trial';
 
   @override

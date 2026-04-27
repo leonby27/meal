@@ -140,6 +140,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         color: cs.surface,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: lineBorder, width: 1),
+                        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+                      ),
+                      foregroundDecoration: AppTheme.cardEdgeForeground(
+                        isDark: isDark,
+                        radius: 20,
                       ),
                       child: Row(
                         children: [

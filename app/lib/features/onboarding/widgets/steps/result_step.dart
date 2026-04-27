@@ -469,6 +469,7 @@ class _TipCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -476,6 +477,11 @@ class _TipCard extends StatelessWidget {
         color: cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: lineColor),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+      ),
+      foregroundDecoration: AppTheme.cardEdgeForeground(
+        isDark: isDark,
+        radius: 14,
       ),
       child: Row(
         children: [

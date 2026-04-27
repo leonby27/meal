@@ -1972,6 +1972,90 @@ abstract class AppLocalizations {
   /// **'Начать'**
   String get onboardingStart;
 
+  /// No description provided for @socialProofScaleTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создано для серьёзного учёта'**
+  String get socialProofScaleTitle;
+
+  /// No description provided for @socialProofScaleSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Технология, на которой строится ваш план'**
+  String get socialProofScaleSubtitle;
+
+  /// No description provided for @socialProofScaleProductsLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'продуктов в нашей базе'**
+  String get socialProofScaleProductsLabel;
+
+  /// No description provided for @socialProofScaleSecondsUnit.
+  ///
+  /// In ru, this message translates to:
+  /// **'сек'**
+  String get socialProofScaleSecondsUnit;
+
+  /// No description provided for @socialProofScaleSpeedLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Распознавание блюд по фото'**
+  String get socialProofScaleSpeedLabel;
+
+  /// No description provided for @socialProofPoweredBy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Работает на'**
+  String get socialProofPoweredBy;
+
+  /// No description provided for @socialProofAccuracyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверено на точность'**
+  String get socialProofAccuracyTitle;
+
+  /// No description provided for @socialProofAccuracySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Насколько точно AI определяет ваши блюда'**
+  String get socialProofAccuracySubtitle;
+
+  /// No description provided for @socialProofAccuracyLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Точность AI'**
+  String get socialProofAccuracyLabel;
+
+  /// No description provided for @socialProofAccuracyDisclaimer.
+  ///
+  /// In ru, this message translates to:
+  /// **'На основе внутреннего контроля качества на 500+ блюдах из разных кухонь мира.'**
+  String get socialProofAccuracyDisclaimer;
+
+  /// No description provided for @socialProofScienceTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'В основе — нутрициология'**
+  String get socialProofScienceTitle;
+
+  /// No description provided for @socialProofScienceSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш план рассчитан по проверенной формуле'**
+  String get socialProofScienceSubtitle;
+
+  /// No description provided for @socialProofScienceFormulaCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Золотой стандарт нутрициологии с 1990 года'**
+  String get socialProofScienceFormulaCaption;
+
+  /// No description provided for @socialProofScienceTrust.
+  ///
+  /// In ru, this message translates to:
+  /// **'Используется дипломированными диетологами и клиническими нутрициологами по всему миру.'**
+  String get socialProofScienceTrust;
+
   /// No description provided for @paywallTitle.
   ///
   /// In ru, this message translates to:

@@ -1378,6 +1378,12 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               decoration: BoxDecoration(
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(20),
+                border: AppTheme.cardEdgeBorder(
+                  isDark: Theme.of(context).brightness == Brightness.dark,
+                ),
+                boxShadow: AppTheme.cardEdgeShadows(
+                  isDark: Theme.of(context).brightness == Brightness.dark,
+                ),
               ),
               child: Row(
                 children: [
@@ -1464,6 +1470,12 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               decoration: BoxDecoration(
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(20),
+                border: AppTheme.cardEdgeBorder(
+                  isDark: Theme.of(context).brightness == Brightness.dark,
+                ),
+                boxShadow: AppTheme.cardEdgeShadows(
+                  isDark: Theme.of(context).brightness == Brightness.dark,
+                ),
               ),
               child: Row(
                 children: [

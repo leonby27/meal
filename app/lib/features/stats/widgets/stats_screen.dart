@@ -383,6 +383,8 @@ class _StatsScreenState extends State<StatsScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: AppTheme.cardEdgeBorder(isDark: isDark),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       child: Column(mainAxisSize: MainAxisSize.min, children: rows),
@@ -514,6 +516,8 @@ class _StatsScreenState extends State<StatsScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: AppTheme.cardEdgeBorder(isDark: isDark),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       clipBehavior: Clip.antiAlias,
       padding: const EdgeInsets.all(16),
@@ -637,13 +641,8 @@ class _StatsScreenState extends State<StatsScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x081B364A),
-            blurRadius: 20,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        border: AppTheme.cardEdgeBorder(isDark: isDark),
+        boxShadow: AppTheme.cardElevatedShadows(isDark: isDark),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(

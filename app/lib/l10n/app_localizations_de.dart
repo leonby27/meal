@@ -1019,6 +1019,53 @@ class AppLocalizationsDe extends AppLocalizations {
   String get onboardingStart => 'Starten';
 
   @override
+  String get socialProofScaleTitle => 'Für ernsthaftes Tracking entwickelt';
+
+  @override
+  String get socialProofScaleSubtitle => 'Die Technologie hinter Ihrem Plan';
+
+  @override
+  String get socialProofScaleProductsLabel => 'Produkte in unserer Datenbank';
+
+  @override
+  String get socialProofScaleSecondsUnit => 'Sek.';
+
+  @override
+  String get socialProofScaleSpeedLabel => 'KI-Fotoerkennung';
+
+  @override
+  String get socialProofPoweredBy => 'Powered by';
+
+  @override
+  String get socialProofAccuracyTitle => 'Auf Genauigkeit geprüft';
+
+  @override
+  String get socialProofAccuracySubtitle =>
+      'Wie genau unsere KI Ihre Mahlzeiten erkennt';
+
+  @override
+  String get socialProofAccuracyLabel => 'KI-Genauigkeit';
+
+  @override
+  String get socialProofAccuracyDisclaimer =>
+      'Basierend auf interner Qualitätsprüfung mit über 500 Gerichten aus verschiedenen Küchen.';
+
+  @override
+  String get socialProofScienceTitle => 'Wissenschaftlich fundiert';
+
+  @override
+  String get socialProofScienceSubtitle =>
+      'Ihr Plan basiert auf einer bewährten Formel';
+
+  @override
+  String get socialProofScienceFormulaCaption =>
+      'Goldstandard der Ernährungswissenschaft seit 1990';
+
+  @override
+  String get socialProofScienceTrust =>
+      'Wird weltweit von Diätassistenten und klinischen Ernährungsberatern genutzt.';
+
+  @override
   String get paywallTitle =>
       'Um fortzufahren, starten Sie Ihre 3-tägige KOSTENLOSE Testphase';
 

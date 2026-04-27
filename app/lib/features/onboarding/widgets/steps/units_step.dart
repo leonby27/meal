@@ -92,6 +92,11 @@ class _UnitCard extends StatelessWidget {
               color: isSelected ? AppColors.primary : lineColor,
               width: isSelected ? 1.5 : 1,
             ),
+            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+          ),
+          foregroundDecoration: AppTheme.cardEdgeForeground(
+            isDark: isDark,
+            radius: 20,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(

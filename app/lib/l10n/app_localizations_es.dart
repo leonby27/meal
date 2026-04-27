@@ -1014,6 +1014,54 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onboardingStart => 'Comenzar';
 
   @override
+  String get socialProofScaleTitle => 'Hecho para un seguimiento serio';
+
+  @override
+  String get socialProofScaleSubtitle => 'La tecnología detrás de tu plan';
+
+  @override
+  String get socialProofScaleProductsLabel =>
+      'Productos en nuestra base de datos';
+
+  @override
+  String get socialProofScaleSecondsUnit => 's';
+
+  @override
+  String get socialProofScaleSpeedLabel => 'Reconocimiento de comida con IA';
+
+  @override
+  String get socialProofPoweredBy => 'Con tecnología de';
+
+  @override
+  String get socialProofAccuracyTitle => 'Probado para mayor precisión';
+
+  @override
+  String get socialProofAccuracySubtitle =>
+      'Qué tan bien nuestra IA identifica tus comidas';
+
+  @override
+  String get socialProofAccuracyLabel => 'Precisión de la IA';
+
+  @override
+  String get socialProofAccuracyDisclaimer =>
+      'Basado en pruebas internas de calidad con más de 500 platos de diversas cocinas.';
+
+  @override
+  String get socialProofScienceTitle => 'Respaldado por la nutrición';
+
+  @override
+  String get socialProofScienceSubtitle =>
+      'Tu plan se basa en una fórmula comprobada';
+
+  @override
+  String get socialProofScienceFormulaCaption =>
+      'Estándar de oro nutricional desde 1990';
+
+  @override
+  String get socialProofScienceTrust =>
+      'Utilizado por dietistas y nutricionistas clínicos en todo el mundo.';
+
+  @override
   String get paywallTitle =>
       'Para continuar, inicia tu prueba GRATUITA de 3 días';
 

@@ -1015,6 +1015,53 @@ class AppLocalizationsPt extends AppLocalizations {
   String get onboardingStart => 'Começar';
 
   @override
+  String get socialProofScaleTitle => 'Feito para um acompanhamento sério';
+
+  @override
+  String get socialProofScaleSubtitle => 'A tecnologia por trás do seu plano';
+
+  @override
+  String get socialProofScaleProductsLabel => 'Produtos em nossa base de dados';
+
+  @override
+  String get socialProofScaleSecondsUnit => 's';
+
+  @override
+  String get socialProofScaleSpeedLabel => 'Reconhecimento de refeições por IA';
+
+  @override
+  String get socialProofPoweredBy => 'Desenvolvido com';
+
+  @override
+  String get socialProofAccuracyTitle => 'Testado para precisão';
+
+  @override
+  String get socialProofAccuracySubtitle =>
+      'Quão bem nossa IA identifica suas refeições';
+
+  @override
+  String get socialProofAccuracyLabel => 'Precisão da IA';
+
+  @override
+  String get socialProofAccuracyDisclaimer =>
+      'Com base em testes internos de qualidade em mais de 500 pratos de várias cozinhas.';
+
+  @override
+  String get socialProofScienceTitle => 'Baseado em ciência nutricional';
+
+  @override
+  String get socialProofScienceSubtitle =>
+      'Seu plano é construído sobre uma fórmula comprovada';
+
+  @override
+  String get socialProofScienceFormulaCaption =>
+      'Padrão-ouro da nutrição desde 1990';
+
+  @override
+  String get socialProofScienceTrust =>
+      'Utilizado por nutricionistas registrados e clínicos em todo o mundo.';
+
+  @override
   String get paywallTitle =>
       'Para continuar, inicie seu teste GRATUITO de 3 dias';
 

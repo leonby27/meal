@@ -89,6 +89,17 @@ class AppColors {
   static const lineLight200 = Color(0xFFE6E7EC);
   static const lineLight300 = Color(0xFFD7D9E2);
 
+  // ── Card edge tokens (skeumorphic depth) ──────────────────
+  /// Light-theme bottom edge under a card. Same hue as scaffold,
+  /// slightly darker than the card surface.
+  static const cardEdgeLight = Color(0xFFE5E6EF);
+
+  /// Dark-theme bottom edge under a card.
+  static const cardEdgeDark = Color(0xFF0D0E11);
+
+  /// Dark-theme top edge highlight for cards (CDDEFF @ 5%).
+  static const cardEdgeDarkTop = Color(0x0DCDDEFF);
+
   // ── Overlay tokens ──────────────────────────────────────────
   static const overlayDark = Color(0x80000000);
 }
@@ -105,6 +116,99 @@ class AppTheme {
     BoxShadow(color: Color(0x29000000), blurRadius: 16),
     BoxShadow(color: Color(0x14000000), blurRadius: 2),
   ];
+
+  // ── Card edge shadows ──────────────────────────────────────
+  /// Hard-edge shadow that sits flush against a rounded card to
+  /// create a subtle skeumorphic depth on the bottom.
+  ///
+  /// Light theme: 4px solid line under the card (`cardEdgeLight`).
+  /// Dark theme:  4px solid line under the card (`cardEdgeDark`).
+  ///
+  /// `blurRadius: 0` and `spreadRadius: 0` make the shadow follow
+  /// the card's exact shape, so rounded corners stay clean.
+  ///
+  /// The dark-theme top highlight is implemented separately via
+  /// [cardEdgeBorder], because Flutter does not support inset
+  /// shadows.
+  static List<BoxShadow> cardEdgeShadows({required bool isDark}) {
+    if (isDark) {
+      return const [
+        BoxShadow(
+          color: AppColors.cardEdgeDark,
+          offset: Offset(0, 4),
+          blurRadius: 0,
+          spreadRadius: 0,
+        ),
+      ];
+    }
+    return const [
+      BoxShadow(
+        color: AppColors.cardEdgeLight,
+        offset: Offset(0, 4),
+        blurRadius: 0,
+        spreadRadius: 0,
+      ),
+    ];
+  }
+
+  /// Top-only border that paints a 2px highlight inside the rounded
+  /// shape. Used together with [cardEdgeShadows] in dark mode to
+  /// give cards a subtle "inset highlight" along their top edge.
+  ///
+  /// Returns `null` in light mode — there is no top highlight there.
+  ///
+  /// NOTE: when a card already has its own [BoxDecoration.border]
+  /// (e.g. [Border.all]), use [cardEdgeForeground] in
+  /// `foregroundDecoration:` instead. Putting two different colours
+  /// in the same [Border] would crash with
+  /// "borderRadius can only be given on borders with uniform colors".
+  static BoxBorder? cardEdgeBorder({required bool isDark}) {
+    if (!isDark) return null;
+    return const Border(
+      top: BorderSide(
+        color: AppColors.cardEdgeDarkTop,
+        width: 2,
+      ),
+    );
+  }
+
+  /// `foregroundDecoration` value that paints the same 2px top
+  /// highlight ON TOP of a card's content. Use this when the card
+  /// already uses `decoration.border` for its own border (e.g.
+  /// onboarding selection rings) and we cannot fold the highlight
+  /// into the same [Border] without breaking the uniform-colors
+  /// constraint.
+  ///
+  /// Returns `null` in light mode.
+  static BoxDecoration? cardEdgeForeground({
+    required bool isDark,
+    required double radius,
+  }) {
+    if (!isDark) return null;
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      border: const Border(
+        top: BorderSide(
+          color: AppColors.cardEdgeDarkTop,
+          width: 2,
+        ),
+      ),
+    );
+  }
+
+  /// Convenience that combines the existing soft drop shadow with
+  /// the new hard edges. Use for cards that already had a soft
+  /// elevation shadow.
+  static List<BoxShadow> cardElevatedShadows({required bool isDark}) {
+    return [
+      const BoxShadow(
+        color: Color(0x081B364A),
+        blurRadius: 20,
+        offset: Offset(0, 5),
+      ),
+      ...cardEdgeShadows(isDark: isDark),
+    ];
+  }
 
   static ThemeData get light {
     const colorScheme = ColorScheme(

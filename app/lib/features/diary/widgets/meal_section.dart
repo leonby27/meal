@@ -429,6 +429,8 @@ class _FoodLogCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: back2,
         borderRadius: BorderRadius.circular(20),
+        border: AppTheme.cardEdgeBorder(isDark: isDark),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -570,6 +572,7 @@ class _FoodLogCard extends StatelessWidget {
     ColorScheme cs,
     Color secondaryColor,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final kcalPercent = calorieGoal > 0
         ? (log.calories / calorieGoal * 100).round().clamp(0, 999)
         : 0;
@@ -579,6 +582,8 @@ class _FoodLogCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: back2,
         borderRadius: BorderRadius.circular(20),
+        border: AppTheme.cardEdgeBorder(isDark: isDark),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),

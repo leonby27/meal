@@ -1123,6 +1123,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           decoration: BoxDecoration(
             color: c.cardBg,
             borderRadius: BorderRadius.circular(20),
+            border: AppTheme.cardEdgeBorder(isDark: c.isDark),
+            boxShadow: AppTheme.cardEdgeShadows(isDark: c.isDark),
           ),
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -1294,6 +1296,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           decoration: BoxDecoration(
             color: c.cardBg,
             borderRadius: BorderRadius.circular(20),
+            border: AppTheme.cardEdgeBorder(isDark: c.isDark),
+            boxShadow: AppTheme.cardEdgeShadows(isDark: c.isDark),
           ),
           padding: const EdgeInsets.all(12),
           child: Column(

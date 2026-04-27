@@ -99,6 +99,8 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
         decoration: BoxDecoration(
           color: back2,
           borderRadius: BorderRadius.circular(20),
+          border: AppTheme.cardEdgeBorder(isDark: isDark),
+          boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
         ),
         padding: const EdgeInsets.all(12),
         child: Column(

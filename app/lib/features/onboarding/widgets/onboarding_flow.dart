@@ -19,6 +19,11 @@ import 'package:meal_tracker/features/onboarding/widgets/steps/target_weight_ste
 import 'package:meal_tracker/features/onboarding/widgets/steps/activity_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/loading_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/result_step.dart';
+// Social-proof steps are temporarily disabled — files kept on disk for
+// when we return to polish them.
+// import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_scale_step.dart';
+// import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_accuracy_step.dart';
+// import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_science_step.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});
@@ -34,6 +39,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   bool _isForward = true;
   bool _isFinishing = false;
   static const _totalSteps = 10;
+  static const _resultPage = 9;
+  static const _finalPage = 9;
 
   bool get _canProceed {
     switch (_currentPage) {
@@ -77,7 +84,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _calculateResults();
     }
 
-    if (_currentPage == 9) {
+    if (_currentPage == _finalPage) {
       _finish();
       return;
     }
@@ -173,7 +180,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   void _onLoadingFinished() {
-    _goToPage(9);
+    _goToPage(_resultPage);
   }
 
   Widget _buildCurrentStep() {
@@ -358,9 +365,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               if (!isLoading)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                  child: SizedBox(
+                  child: Container(
                     width: double.infinity,
                     height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: AppTheme.cardEdgeBorder(isDark: isDark),
+                      boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+                    ),
                     child: ElevatedButton(
                       onPressed: _isFinishing
                           ? () {}
@@ -391,7 +403,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                               ),
                             )
                           : Text(
-                              _currentPage == 9
+                              _currentPage == _finalPage
                                   ? context.l10n.onboardingStart
                                   : context.l10n.onboardingNext,
                               style: const TextStyle(
