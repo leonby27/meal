@@ -157,6 +157,11 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   int _preSearchTab = 0;
   FoodLogCardVariant _foodLogCardVariant = FoodLogCardVariant.expanded;
   bool _recordsNewestFirst = false;
+  int _recordsAnimationSeed = 0;
+  bool _headerScrolledUnder = false;
+  bool _inputActionPressed = false;
+  bool _sortActionPressed = false;
+  bool _viewMenuOpen = false;
 
   @override
   void initState() {
@@ -199,6 +204,30 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     if (!_inputFocus.hasFocus && _inputCtl.text.trim().isEmpty && _searchMode) {
       _deactivateSearch();
     }
+  }
+
+  bool _handleDayScrollNotification(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) return false;
+    final scrolledUnder = notification.metrics.pixels > 0.5;
+    if (scrolledUnder != _headerScrolledUnder) {
+      setState(() => _headerScrolledUnder = scrolledUnder);
+    }
+    return false;
+  }
+
+  void _setInputActionPressed(bool pressed) {
+    if (_inputActionPressed == pressed) return;
+    setState(() => _inputActionPressed = pressed);
+  }
+
+  void _setSortActionPressed(bool pressed) {
+    if (_sortActionPressed == pressed) return;
+    setState(() => _sortActionPressed = pressed);
+  }
+
+  void _setViewMenuOpen(bool open) {
+    if (_viewMenuOpen == open) return;
+    setState(() => _viewMenuOpen = open);
   }
 
   /// Нижнее поле ввода не должно самопроизвольно получать фокус при возврате с другого экрана.
@@ -616,7 +645,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
   Future<void> _toggleRecordsSortOrder() async {
     final next = !_recordsNewestFirst;
-    setState(() => _recordsNewestFirst = next);
+    setState(() {
+      _recordsNewestFirst = next;
+      _recordsAnimationSeed++;
+    });
     await _db.setSetting(_recordsSortOrderSetting, next ? 'newest' : 'oldest');
   }
 
@@ -674,6 +706,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     _syncingPages = true;
     setState(() {
       _selectedDate = date;
+      _headerScrolledUnder = false;
     });
 
     final newWeekPage = _pageForDate(date);
@@ -916,7 +949,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                   children: [
                     _buildHeader(context),
                     Expanded(
-                      child: _buildDayPageView(context, isDark, onBack4),
+                      child: NotificationListener<ScrollNotification>(
+                        onNotification: _handleDayScrollNotification,
+                        child: _buildDayPageView(context, isDark, onBack4),
+                      ),
                     ),
                   ],
                 ),
@@ -1003,6 +1039,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dateParts = _formatHeaderDateParts();
+    final borderColor = _headerScrolledUnder
+        ? (isDark ? AppColors.lineDT100 : AppColors.lineLight100)
+        : Colors.transparent;
     final auth = AuthService();
     final initial = (auth.userName?.isNotEmpty == true)
         ? auth.userName![0].toUpperCase()
@@ -1010,125 +1049,132 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         ? auth.userEmail![0].toUpperCase()
         : 'M';
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeInOut,
-      alignment: Alignment.topCenter,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: 52,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(
-                          () => _weekStripExpanded = !_weekStripExpanded,
-                        );
-                      },
-                      onLongPress: () => _openDatePicker(context),
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(text: dateParts.date),
-                                  const TextSpan(text: ', '),
-                                  TextSpan(
-                                    text: dateParts.weekday,
-                                    style: const TextStyle(
-                                      color: AppColors.primary,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: borderColor)),
+      ),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeInOut,
+        alignment: Alignment.topCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 52,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(
+                            () => _weekStripExpanded = !_weekStripExpanded,
+                          );
+                        },
+                        onLongPress: () => _openDatePicker(context),
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(text: dateParts.date),
+                                    const TextSpan(text: ', '),
+                                    TextSpan(
+                                      text: dateParts.weekday,
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                height: 32 / 24,
-                                color: cs.onSurface,
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  height: 32 / 24,
+                                  color: cs.onSurface,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          AnimatedRotation(
-                            turns: _weekStripExpanded ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOut,
-                            child: const Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 20,
-                              color: AppColors.primary,
+                            const SizedBox(width: 6),
+                            AnimatedRotation(
+                              turns: _weekStripExpanded ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeInOut,
+                              child: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 20,
+                                color: AppColors.primary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GestureDetector(
-                        onTap: () => context.push('/stats'),
-                        child: Icon(
-                          Icons.bar_chart_rounded,
-                          size: 24,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      GestureDetector(
-                        onTap: () => context.push('/favorites'),
-                        child: Icon(
-                          Icons.favorite,
-                          size: 24,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      GestureDetector(
-                        onTap: () => context.push('/profile'),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
+                    const SizedBox(width: 12),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => context.push('/stats'),
+                          child: Icon(
+                            Icons.bar_chart_rounded,
+                            size: 24,
+                            color: cs.onSurfaceVariant,
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            initial,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              height: 24 / 18,
-                              color: Colors.white,
+                        ),
+                        const SizedBox(width: 24),
+                        GestureDetector(
+                          onTap: () => context.push('/favorites'),
+                          child: Icon(
+                            Icons.favorite,
+                            size: 24,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        GestureDetector(
+                          onTap: () => context.push('/profile'),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              initial,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                height: 24 / 18,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (_weekStripExpanded) ...[
-            _buildWeekStrip(context, isDark),
-            const SizedBox(height: 8),
+            if (_weekStripExpanded) ...[
+              _buildWeekStrip(context, isDark),
+              const SizedBox(height: 8),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1660,7 +1706,14 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
           const SizedBox(height: 24),
           _buildRecordsHeader(context, cs),
           const SizedBox(height: 12),
-          _buildFoodCards(context, sortedLogs, dateStr, back2, _goalCalories),
+          _buildFoodCards(
+            context,
+            sortedLogs,
+            dateStr,
+            back2,
+            _goalCalories,
+            animationSeed: _recordsAnimationSeed,
+          ),
         ] else ...[
           Builder(
             builder: (context) {
@@ -1867,28 +1920,59 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     List<FoodLog> logs,
     String dateStr,
     Color back2,
-    double calorieGoal,
-  ) {
+    double calorieGoal, {
+    required int animationSeed,
+  }) {
+    final shouldAnimate = animationSeed > 0;
+    final entryOffset = _recordsNewestFirst ? -10.0 : 10.0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
-        children: logs.map((log) {
+        children: List.generate(logs.length, (index) {
+          final log = logs[index];
+          final intervalStart = shouldAnimate
+              ? math.min(index, 6) * 0.045
+              : 0.0;
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: MealSection.buildSingleCard(
-              context: context,
-              log: log,
-              mealType: log.mealType,
-              dateStr: dateStr,
-              duplicateDateStr: _todayDateStr,
-              onDuplicateAdded: () => _selectDate(DateTime.now()),
-              onDelete: (id) => _db.deleteFoodLog(id),
-              back2: back2,
-              variant: _foodLogCardVariant,
-              calorieGoal: calorieGoal,
+            child: TweenAnimationBuilder<double>(
+              key: ValueKey('${log.id}-$animationSeed'),
+              tween: Tween<double>(begin: shouldAnimate ? 0 : 1, end: 1),
+              duration: const Duration(milliseconds: 320),
+              curve: Interval(
+                intervalStart.clamp(0.0, 0.72),
+                1,
+                curve: Curves.easeOutCubic,
+              ),
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, (1 - value) * entryOffset),
+                    child: Transform.scale(
+                      scale: 0.985 + (0.015 * value),
+                      alignment: Alignment.topCenter,
+                      child: child,
+                    ),
+                  ),
+                );
+              },
+              child: MealSection.buildSingleCard(
+                context: context,
+                log: log,
+                mealType: log.mealType,
+                dateStr: dateStr,
+                duplicateDateStr: _todayDateStr,
+                onDuplicateAdded: () => _selectDate(DateTime.now()),
+                onDelete: (id) => _db.deleteFoodLog(id),
+                back2: back2,
+                variant: _foodLogCardVariant,
+                calorieGoal: calorieGoal,
+              ),
             ),
           );
-        }).toList(),
+        }),
       ),
     );
   }
@@ -1902,6 +1986,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         ? AppColors.darkSecondaryDark
         : AppColors.lightSecondaryDark;
     final sortBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final menuBg = isDark ? AppColors.darkScaffold : AppColors.lightScaffold;
+    final menuItemBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final menuBorder = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
     final sortLabel = _recordsNewestFirst
         ? context.l10n.recordsSortNewestFirst
         : context.l10n.recordsSortOldestFirst;
@@ -1930,30 +2017,42 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                 Tooltip(
                   message: sortLabel,
                   child: GestureDetector(
+                    onTapDown: (_) => _setSortActionPressed(true),
+                    onTapUp: (_) => _setSortActionPressed(false),
+                    onTapCancel: () => _setSortActionPressed(false),
                     onTap: _toggleRecordsSortOrder,
                     behavior: HitTestBehavior.opaque,
                     child: Semantics(
                       button: true,
                       label: sortLabel,
-                      child: Container(
-                        width: 18,
-                        height: 18,
-                        decoration: BoxDecoration(
-                          color: sortBg,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Center(
-                          child: AnimatedRotation(
-                            turns: _recordsNewestFirst ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 180),
-                            curve: Curves.easeOutCubic,
-                            child: SvgPicture.asset(
-                              'assets/icons/sort_arrow_up.svg',
-                              width: 18,
-                              height: 18,
-                              colorFilter: ColorFilter.mode(
-                                secondaryDark,
-                                BlendMode.srcIn,
+                      child: AnimatedScale(
+                        scale: _sortActionPressed ? 0.86 : 1,
+                        duration: const Duration(milliseconds: 110),
+                        curve: Curves.easeOutCubic,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 120),
+                          curve: Curves.easeOutCubic,
+                          width: 18,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: _sortActionPressed
+                                ? sortBg.withValues(alpha: 0.72)
+                                : sortBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Center(
+                            child: AnimatedRotation(
+                              turns: _recordsNewestFirst ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 260),
+                              curve: Curves.easeOutBack,
+                              child: SvgPicture.asset(
+                                'assets/icons/sort_arrow_up.svg',
+                                width: 18,
+                                height: 18,
+                                colorFilter: ColorFilter.mode(
+                                  secondaryDark,
+                                  BlendMode.srcIn,
+                                ),
                               ),
                             ),
                           ),
@@ -1965,57 +2064,147 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               ],
             ),
           ),
-          PopupMenuButton<FoodLogCardVariant>(
-            padding: EdgeInsets.zero,
-            position: PopupMenuPosition.under,
-            initialValue: _foodLogCardVariant,
-            onSelected: (variant) {
-              setState(() => _foodLogCardVariant = variant);
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: FoodLogCardVariant.expanded,
-                child: Text(context.l10n.diaryViewExpanded),
+          Theme(
+            data: Theme.of(context).copyWith(
+              splashFactory: NoSplash.splashFactory,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              splashColor: Colors.transparent,
+            ),
+            child: PopupMenuButton<FoodLogCardVariant>(
+              padding: EdgeInsets.zero,
+              position: PopupMenuPosition.under,
+              offset: const Offset(0, 8),
+              color: menuBg,
+              surfaceTintColor: Colors.transparent,
+              elevation: 8,
+              shadowColor: const Color(0x21000000),
+              menuPadding: const EdgeInsets.all(16),
+              constraints: const BoxConstraints.tightFor(width: 180),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: menuBorder),
               ),
-              PopupMenuItem(
-                value: FoodLogCardVariant.compact,
-                child: Text(context.l10n.diaryViewCompact),
-              ),
-            ],
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text.rich(
-                  TextSpan(
+              onOpened: () => _setViewMenuOpen(true),
+              onCanceled: () => _setViewMenuOpen(false),
+              onSelected: (variant) {
+                setState(() {
+                  _foodLogCardVariant = variant;
+                  _viewMenuOpen = false;
+                });
+              },
+              itemBuilder: (context) => [
+                _buildViewModeMenuItem(
+                  context,
+                  value: FoodLogCardVariant.expanded,
+                  label: context.l10n.diaryViewExpanded,
+                  background: menuItemBg,
+                  addBottomGap: true,
+                ),
+                _buildViewModeMenuItem(
+                  context,
+                  value: FoodLogCardVariant.compact,
+                  label: context.l10n.diaryViewCompact,
+                  background: menuItemBg,
+                ),
+              ],
+              child: AnimatedScale(
+                scale: _viewMenuOpen ? 0.97 : 1,
+                duration: const Duration(milliseconds: 120),
+                curve: Curves.easeOutCubic,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOutCubic,
+                  padding: EdgeInsets.zero,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      TextSpan(
-                        text: '${context.l10n.diaryViewLabel}: ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          height: 18 / 14,
-                          color: cs.onSurfaceVariant,
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${context.l10n.diaryViewLabel}: ',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                height: 18 / 14,
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ),
+                            TextSpan(
+                              text: currentViewLabel,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                height: 18 / 14,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ],
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      TextSpan(
-                        text: currentViewLabel,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          height: 18 / 14,
+                      AnimatedRotation(
+                        turns: _viewMenuOpen ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOutCubic,
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 18,
                           color: cs.onSurface,
                         ),
                       ),
                     ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                Icon(Icons.keyboard_arrow_down, size: 18, color: cs.onSurface),
-              ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  PopupMenuItem<FoodLogCardVariant> _buildViewModeMenuItem(
+    BuildContext context, {
+    required FoodLogCardVariant value,
+    required String label,
+    required Color background,
+    bool addBottomGap = false,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+
+    return PopupMenuItem<FoodLogCardVariant>(
+      value: value,
+      padding: EdgeInsets.zero,
+      height: addBottomGap ? 50 : 42,
+      mouseCursor: SystemMouseCursors.click,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: addBottomGap ? 8 : 0),
+        child: Container(
+          width: 148,
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 18 / 14,
+                color: cs.onSurface,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -2399,6 +2588,9 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
           ),
           const SizedBox(width: 12),
           GestureDetector(
+            onTapDown: (_) => _setInputActionPressed(true),
+            onTapUp: (_) => _setInputActionPressed(false),
+            onTapCancel: () => _setInputActionPressed(false),
             onTap: hasDraft
                 ? () {
                     _closeAddMenu();
@@ -2414,43 +2606,48 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                       source: ImageSource.camera,
                     );
                   },
-            child: Container(
-              width: 64,
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: hasDraft ? AppColors.primary : null,
-                gradient: hasDraft
-                    ? null
-                    : const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF317BFF), Color(0xFF7631FF)],
-                      ),
-                borderRadius: BorderRadius.circular(100),
-                boxShadow: inputShadow,
-              ),
-              child: Center(
-                child: _isRecognizing
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
+            child: AnimatedScale(
+              scale: _inputActionPressed ? 0.94 : 1,
+              duration: const Duration(milliseconds: 110),
+              curve: Curves.easeOutCubic,
+              child: Container(
+                width: 64,
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: hasDraft ? AppColors.primary : null,
+                  gradient: hasDraft
+                      ? null
+                      : const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF317BFF), Color(0xFF7631FF)],
                         ),
-                      )
-                    : SvgPicture.asset(
-                        hasDraft
-                            ? 'assets/icons/send.svg'
-                            : 'assets/icons/ai_generated_photo.svg',
-                        width: hasDraft ? 24 : 32,
-                        height: hasDraft ? 24 : 32,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.white,
-                          BlendMode.srcIn,
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: inputShadow,
+                ),
+                child: Center(
+                  child: _isRecognizing
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : SvgPicture.asset(
+                          hasDraft
+                              ? 'assets/icons/send.svg'
+                              : 'assets/icons/ai_generated_photo.svg',
+                          width: hasDraft ? 24 : 32,
+                          height: hasDraft ? 24 : 32,
+                          colorFilter: const ColorFilter.mode(
+                            Colors.white,
+                            BlendMode.srcIn,
+                          ),
                         ),
-                      ),
+                ),
               ),
             ),
           ),

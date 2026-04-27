@@ -46,8 +46,7 @@ class _StatsScreenState extends State<StatsScreen> {
         double.tryParse(await _db.getSetting('calorie_goal') ?? '') ?? 2000;
     _goalProtein =
         double.tryParse(await _db.getSetting('protein_goal') ?? '') ?? 100;
-    _goalFat =
-        double.tryParse(await _db.getSetting('fat_goal') ?? '') ?? 70;
+    _goalFat = double.tryParse(await _db.getSetting('fat_goal') ?? '') ?? 70;
     _goalCarbs =
         double.tryParse(await _db.getSetting('carbs_goal') ?? '') ?? 250;
     final showP = await _db.getSetting('show_protein');
@@ -65,14 +64,16 @@ class _StatsScreenState extends State<StatsScreen> {
     for (int i = _periodDays - 1; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final logs = await _db.getFoodLogsForDate(date);
-      data.add(_DaySummary(
-        date: date,
-        calories: logs.fold(0.0, (s, l) => s + l.calories),
-        protein: logs.fold(0.0, (s, l) => s + l.protein),
-        fat: logs.fold(0.0, (s, l) => s + l.fat),
-        carbs: logs.fold(0.0, (s, l) => s + l.carbs),
-        totalGrams: logs.fold(0.0, (s, l) => s + l.grams),
-      ));
+      data.add(
+        _DaySummary(
+          date: date,
+          calories: logs.fold(0.0, (s, l) => s + l.calories),
+          protein: logs.fold(0.0, (s, l) => s + l.protein),
+          fat: logs.fold(0.0, (s, l) => s + l.fat),
+          carbs: logs.fold(0.0, (s, l) => s + l.carbs),
+          totalGrams: logs.fold(0.0, (s, l) => s + l.grams),
+        ),
+      );
     }
 
     _data = data;
@@ -111,14 +112,18 @@ class _StatsScreenState extends State<StatsScreen> {
   // ── Metric maps ──────────────────────────────────────────────
 
   static const _metricGradients = <_ChartMetric, LinearGradient>{
-    _ChartMetric.calories:
-        LinearGradient(colors: [Color(0xFF22D33A), Color(0xFF1EBF92)]),
-    _ChartMetric.protein:
-        LinearGradient(colors: [Color(0xFFD91D1D), Color(0xFFF0681B)]),
-    _ChartMetric.fat:
-        LinearGradient(colors: [Color(0xFFD0FF00), Color(0xFFFFBB00)]),
-    _ChartMetric.carbs:
-        LinearGradient(colors: [Color(0xFF17D1C7), Color(0xFF1787D1)]),
+    _ChartMetric.calories: LinearGradient(
+      colors: [Color(0xFF22D33A), Color(0xFF1EBF92)],
+    ),
+    _ChartMetric.protein: LinearGradient(
+      colors: [Color(0xFFD91D1D), Color(0xFFF0681B)],
+    ),
+    _ChartMetric.fat: LinearGradient(
+      colors: [Color(0xFFD0FF00), Color(0xFFFFBB00)],
+    ),
+    _ChartMetric.carbs: LinearGradient(
+      colors: [Color(0xFF17D1C7), Color(0xFF1787D1)],
+    ),
   };
 
   static const _metricBarGradients = <_ChartMetric, LinearGradient>{
@@ -156,8 +161,7 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_dbReady) {
-      return const Scaffold(
-          body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final nonEmptyDays = _data.where((d) => d.calories > 0).toList();
@@ -211,8 +215,9 @@ class _StatsScreenState extends State<StatsScreen> {
 
   Widget _buildSectionLabel(String text) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color =
-        isDark ? AppColors.darkOnSurfaceVariant : AppColors.lightOnSurfaceVariant;
+    final color = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
     return Text(
       text,
       style: TextStyle(
@@ -254,8 +259,10 @@ class _StatsScreenState extends State<StatsScreen> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? cs.surface : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
@@ -265,7 +272,7 @@ class _StatsScreenState extends State<StatsScreen> {
                               color: const Color(0x1A050C26),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
-                            )
+                            ),
                           ]
                         : null,
                   ),
@@ -276,8 +283,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       height: 24 / 15,
-                      color:
-                          isSelected ? cs.onSurface : cs.onSurfaceVariant,
+                      color: isSelected ? cs.onSurface : cs.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -291,91 +297,95 @@ class _StatsScreenState extends State<StatsScreen> {
 
   // ── Average card ─────────────────────────────────────────────
 
-  Widget _buildAverageCard(
-      double cal, double prot, double fat, double carbs) {
+  Widget _buildAverageCard(double cal, double prot, double fat, double carbs) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-    final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final trackColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-    final secondaryText =
-        isDark ? AppColors.darkOnSurfaceVariant : AppColors.lightOnSurfaceVariant;
-    final primaryText =
-        isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final secondaryText = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+    final primaryText = isDark
+        ? AppColors.darkOnSurface
+        : AppColors.lightOnSurface;
 
     final rows = <Widget>[];
 
-    rows.add(_buildIconProgressRow(
-      icon: '🔥',
-      current: cal,
-      goal: _goalCalories,
-      gradient: _metricGradients[_ChartMetric.calories]!,
-      currentLabel: context.l10n.kcalValue(_formatNumber(cal)),
-      goalLabel: context.l10n.kcalValue(_formatNumber(_goalCalories)),
-      trackColor: trackColor,
-      cardBg: cardBg,
-      primaryText: primaryText,
-      secondaryText: secondaryText,
-    ));
-
-    if (_showProtein) {
-      rows.add(const SizedBox(height: 20));
-      rows.add(_buildIconProgressRow(
-        icon: '🥩',
-        current: prot,
-        goal: _goalProtein,
-        gradient: _metricGradients[_ChartMetric.protein]!,
-        currentLabel: '${prot.toInt()} ${context.l10n.proteinShort}',
-        goalLabel: context.l10n.proteinGoalLabel(_goalProtein.toInt()),
+    rows.add(
+      _buildIconProgressRow(
+        icon: '🔥',
+        current: cal,
+        goal: _goalCalories,
+        gradient: _metricGradients[_ChartMetric.calories]!,
+        currentLabel: context.l10n.kcalValue(_formatNumber(cal)),
+        goalLabel: context.l10n.kcalValue(_formatNumber(_goalCalories)),
         trackColor: trackColor,
         cardBg: cardBg,
         primaryText: primaryText,
         secondaryText: secondaryText,
-      ));
+      ),
+    );
+
+    if (_showProtein) {
+      rows.add(const SizedBox(height: 20));
+      rows.add(
+        _buildIconProgressRow(
+          icon: '🥩',
+          current: prot,
+          goal: _goalProtein,
+          gradient: _metricGradients[_ChartMetric.protein]!,
+          currentLabel: '${prot.toInt()} ${context.l10n.proteinShort}',
+          goalLabel: context.l10n.proteinGoalLabel(_goalProtein.toInt()),
+          trackColor: trackColor,
+          cardBg: cardBg,
+          primaryText: primaryText,
+          secondaryText: secondaryText,
+        ),
+      );
     }
 
     if (_showFat) {
       rows.add(const SizedBox(height: 20));
-      rows.add(_buildIconProgressRow(
-        icon: '🥑',
-        current: fat,
-        goal: _goalFat,
-        gradient: _metricGradients[_ChartMetric.fat]!,
-        currentLabel: '${fat.toInt()} ${context.l10n.fatShort}',
-        goalLabel: context.l10n.fatGoalLabel(_goalFat.toInt()),
-        trackColor: trackColor,
-        cardBg: cardBg,
-        primaryText: primaryText,
-        secondaryText: secondaryText,
-      ));
+      rows.add(
+        _buildIconProgressRow(
+          icon: '🥑',
+          current: fat,
+          goal: _goalFat,
+          gradient: _metricGradients[_ChartMetric.fat]!,
+          currentLabel: '${fat.toInt()} ${context.l10n.fatShort}',
+          goalLabel: context.l10n.fatGoalLabel(_goalFat.toInt()),
+          trackColor: trackColor,
+          cardBg: cardBg,
+          primaryText: primaryText,
+          secondaryText: secondaryText,
+        ),
+      );
     }
 
     if (_showCarbs) {
       rows.add(const SizedBox(height: 20));
-      rows.add(_buildIconProgressRow(
-        icon: '🍞',
-        current: carbs,
-        goal: _goalCarbs,
-        gradient: _metricGradients[_ChartMetric.carbs]!,
-        currentLabel: '${carbs.toInt()} ${context.l10n.carbsShort}',
-        goalLabel: context.l10n.carbsGoalLabel(_goalCarbs.toInt()),
-        trackColor: trackColor,
-        cardBg: cardBg,
-        primaryText: primaryText,
-        secondaryText: secondaryText,
-      ));
+      rows.add(
+        _buildIconProgressRow(
+          icon: '🍞',
+          current: carbs,
+          goal: _goalCarbs,
+          gradient: _metricGradients[_ChartMetric.carbs]!,
+          currentLabel: '${carbs.toInt()} ${context.l10n.carbsShort}',
+          goalLabel: context.l10n.carbsGoalLabel(_goalCarbs.toInt()),
+          trackColor: trackColor,
+          cardBg: cardBg,
+          primaryText: primaryText,
+          secondaryText: secondaryText,
+        ),
+      );
     }
 
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: lineBorder, width: 1),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: rows,
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: rows),
     );
   }
 
@@ -442,22 +452,27 @@ class _StatsScreenState extends State<StatsScreen> {
             ),
           ),
           const SizedBox(width: 2),
-          const Icon(Icons.keyboard_arrow_down_rounded,
-              size: 20, color: AppColors.primary),
+          const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 20,
+            color: AppColors.primary,
+          ),
         ],
       ),
       itemBuilder: (context) => _ChartMetric.values
-          .map((m) => PopupMenuItem(
-                value: m,
-                child: Text(
-                  _metricLabels(context)[m]!,
-                  style: TextStyle(
-                    fontWeight: m == _selectedMetric
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                  ),
+          .map(
+            (m) => PopupMenuItem(
+              value: m,
+              child: Text(
+                _metricLabels(context)[m]!,
+                style: TextStyle(
+                  fontWeight: m == _selectedMetric
+                      ? FontWeight.w600
+                      : FontWeight.w400,
                 ),
-              ))
+              ),
+            ),
+          )
           .toList(),
     );
   }
@@ -467,7 +482,6 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget _buildSelectedBarChart() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-    final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
     List<double> values;
     double goal;
@@ -500,29 +514,27 @@ class _StatsScreenState extends State<StatsScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: lineBorder, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       padding: const EdgeInsets.all(16),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final barAreaHeight = constraints.maxHeight;
-          final barMax =
-              (barAreaHeight - 30).clamp(10.0, barAreaHeight);
+          final barMax = (barAreaHeight - 30).clamp(10.0, barAreaHeight);
           return Stack(
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: List.generate(values.length, (i) {
                   final v = values[i];
-                  final h =
-                      (v / chartMax * barMax).clamp(2.0, barMax);
+                  final h = (v / chartMax * barMax).clamp(2.0, barMax);
                   final isToday = i == values.length - 1;
                   final overGoal = v > goal;
                   return Expanded(
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                          horizontal: _periodDays <= 14 ? 3 : 1),
+                        horizontal: _periodDays <= 14 ? 3 : 1,
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -531,13 +543,10 @@ class _StatsScreenState extends State<StatsScreen> {
                               v.toInt().toString(),
                               maxLines: 1,
                               overflow: TextOverflow.clip,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
                                     fontSize: 9,
-                                    color:
-                                        overGoal ? AppColors.orange : null,
+                                    color: overGoal ? AppColors.orange : null,
                                   ),
                             ),
                           const SizedBox(height: 2),
@@ -546,29 +555,31 @@ class _StatsScreenState extends State<StatsScreen> {
                             decoration: BoxDecoration(
                               gradient: gradient,
                               borderRadius: BorderRadius.circular(
-                                  _periodDays <= 14 ? 4 : 2),
+                                _periodDays <= 14 ? 4 : 2,
+                              ),
                             ),
                             foregroundDecoration: !isToday
                                 ? BoxDecoration(
                                     color: cardBg.withAlpha(120),
                                     borderRadius: BorderRadius.circular(
-                                        _periodDays <= 14 ? 4 : 2),
+                                      _periodDays <= 14 ? 4 : 2,
+                                    ),
                                   )
                                 : null,
                           ),
                           const SizedBox(height: 4),
                           if (showDayLabels)
                             Text(
-                              DateFormat('E', Localizations.localeOf(context).languageCode)
-                                  .format(_data[i].date)
-                                  .substring(0, 2),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              DateFormat(
+                                'E',
+                                Localizations.localeOf(context).languageCode,
+                              ).format(_data[i].date).substring(0, 2),
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
                                     fontSize: 9,
-                                    fontWeight:
-                                        isToday ? FontWeight.bold : null,
+                                    fontWeight: isToday
+                                        ? FontWeight.bold
+                                        : null,
                                   ),
                             ),
                         ],
@@ -581,8 +592,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 Positioned(
                   left: 0,
                   right: 0,
-                  bottom:
-                      (goal / chartMax * barMax).clamp(0, barMax),
+                  bottom: (goal / chartMax * barMax).clamp(0, barMax),
                   child: Row(
                     children: [
                       Expanded(
@@ -614,11 +624,12 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget _buildDaysCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-    final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-    final primaryText =
-        isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
-    final secondaryText =
-        isDark ? AppColors.darkOnSurfaceVariant : AppColors.lightOnSurfaceVariant;
+    final primaryText = isDark
+        ? AppColors.darkOnSurface
+        : AppColors.lightOnSurface;
+    final secondaryText = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
 
     final recent = _data.reversed.take(7).toList();
 
@@ -626,7 +637,6 @@ class _StatsScreenState extends State<StatsScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: lineBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: const Color(0x081B364A),
@@ -647,8 +657,7 @@ class _StatsScreenState extends State<StatsScreen> {
           final calColor = isEmpty ? secondaryText : primaryText;
 
           return Padding(
-            padding:
-                EdgeInsets.only(bottom: i < recent.length - 1 ? 16 : 0),
+            padding: EdgeInsets.only(bottom: i < recent.length - 1 ? 16 : 0),
             child: Column(
               children: [
                 Row(

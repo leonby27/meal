@@ -377,13 +377,11 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   }
 
   Widget _card({required Widget child}) {
-    final lineBorder = _isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: _isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: lineBorder, width: 1),
         boxShadow: const [
           BoxShadow(
             color: Color(0x081B364A),
