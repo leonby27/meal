@@ -1623,53 +1623,111 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   }
 
   Widget _buildFreeEntriesBanner(BuildContext context, AuthService auth) {
-    final cs = Theme.of(context).colorScheme;
     final remaining = auth.freeEntriesRemaining;
     final isUrgent = remaining <= 2;
+
+    final gradientColors = isUrgent
+        ? const [Color(0xFFFF5A6E), Color(0xFFFF7A3D)]
+        : const [Color(0xFF317BFF), Color(0xFF7631FF)];
+    final glowColor = isUrgent
+        ? const Color(0xFFFF5A6E)
+        : const Color(0xFF5A47FF);
+    final ctaTextColor = isUrgent
+        ? const Color(0xFFD13848)
+        : const Color(0xFF4F2BD9);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: AnimatedSize(
         duration: const Duration(milliseconds: 300),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: isUrgent ? cs.errorContainer : cs.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.l10n.freeEntriesRemaining(remaining),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: isUrgent
-                        ? cs.onErrorContainer
-                        : cs.onPrimaryContainer,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: () => context.push('/paywall'),
+            borderRadius: BorderRadius.circular(16),
+            child: Ink(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: gradientColors,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: glowColor.withValues(alpha: 0.32),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
                   ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.20),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.workspace_premium_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        context.l10n.freeEntriesRemaining(remaining),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 18 / 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            context.l10n.getPro,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              height: 16 / 13,
+                              color: ctaTextColor,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: ctaTextColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              TextButton(
-                onPressed: () => context.push('/paywall'),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  context.l10n.getPro,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isUrgent
-                        ? cs.onErrorContainer
-                        : cs.onPrimaryContainer,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -2013,7 +2071,6 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
                 Tooltip(
                   message: sortLabel,
                   child: GestureDetector(
@@ -2025,33 +2082,39 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                     child: Semantics(
                       button: true,
                       label: sortLabel,
-                      child: AnimatedScale(
-                        scale: _sortActionPressed ? 0.86 : 1,
-                        duration: const Duration(milliseconds: 110),
-                        curve: Curves.easeOutCubic,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 120),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        child: AnimatedScale(
+                          scale: _sortActionPressed ? 0.86 : 1,
+                          duration: const Duration(milliseconds: 110),
                           curve: Curves.easeOutCubic,
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: _sortActionPressed
-                                ? sortBg.withValues(alpha: 0.72)
-                                : sortBg,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Center(
-                            child: AnimatedRotation(
-                              turns: _recordsNewestFirst ? 0.5 : 0,
-                              duration: const Duration(milliseconds: 260),
-                              curve: Curves.easeOutBack,
-                              child: SvgPicture.asset(
-                                'assets/icons/sort_arrow_up.svg',
-                                width: 18,
-                                height: 18,
-                                colorFilter: ColorFilter.mode(
-                                  secondaryDark,
-                                  BlendMode.srcIn,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 120),
+                            curve: Curves.easeOutCubic,
+                            width: 18,
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: _sortActionPressed
+                                  ? sortBg.withValues(alpha: 0.72)
+                                  : sortBg,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Center(
+                              child: AnimatedRotation(
+                                turns: _recordsNewestFirst ? 0.5 : 0,
+                                duration: const Duration(milliseconds: 260),
+                                curve: Curves.easeOutBack,
+                                child: SvgPicture.asset(
+                                  'assets/icons/sort_arrow_up.svg',
+                                  width: 18,
+                                  height: 18,
+                                  colorFilter: ColorFilter.mode(
+                                    secondaryDark,
+                                    BlendMode.srcIn,
+                                  ),
                                 ),
                               ),
                             ),
@@ -2115,7 +2178,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 140),
                   curve: Curves.easeOutCubic,
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

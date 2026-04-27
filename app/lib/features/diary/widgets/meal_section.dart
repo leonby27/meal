@@ -644,7 +644,10 @@ class _FoodLogCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _buildMenuButton(context, cs),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: _buildMenuButton(context, cs),
+                  ),
                 ],
               ),
               const Spacer(),
@@ -846,7 +849,7 @@ class _MacroBreakdown extends StatelessWidget {
                   ),
           ),
         ),
-        const SizedBox(height: 7),
+        const SizedBox(height: 9),
         Row(
           children: [
             Expanded(
@@ -942,9 +945,9 @@ class _MacroLabel extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: isDominant ? FontWeight.w500 : FontWeight.w400,
-              height: 14 / 12,
+              height: 16 / 13,
               color: textColor,
             ),
           ),
