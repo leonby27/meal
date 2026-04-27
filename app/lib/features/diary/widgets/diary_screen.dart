@@ -918,8 +918,29 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                     Expanded(
                       child: _buildDayPageView(context, isDark, onBack4),
                     ),
-                    const SizedBox(height: _inputBarReservedHeight),
                   ],
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: safeBottom + _inputBarReservedHeight + 72,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          back2.withValues(alpha: 0),
+                          back2.withValues(alpha: isDark ? 0.74 : 0.62),
+                          back2.withValues(alpha: isDark ? 0.98 : 0.96),
+                        ],
+                        stops: const [0, 0.62, 1],
+                      ),
+                    ),
+                  ),
                 ),
               ),
               Positioned.fill(
@@ -1627,8 +1648,11 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
         auth.freeEntriesUsed >= 6 &&
         !auth.freeTrialExhausted;
 
+    final bottomPadding =
+        MediaQuery.paddingOf(context).bottom + _inputBarReservedHeight + 24;
+
     return ListView(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: bottomPadding),
       children: [
         DailySummaryCard(logs: logs, selectedDate: date),
         if (showBanner) _buildFreeEntriesBanner(context, auth),
@@ -2263,6 +2287,15 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final plusColor = _addMenuOpen ? primaryIconColor : iconColor;
     final hasDraft = _hasSearchText || _attachedImageBytes != null;
+    final inputShadow = isDark
+        ? const [
+            BoxShadow(color: Color(0x14000000), blurRadius: 16),
+            BoxShadow(color: Color(0x0A000000), blurRadius: 2),
+          ]
+        : const [
+            BoxShadow(color: Color(0x09000000), blurRadius: 16),
+            BoxShadow(color: Color(0x05000000), blurRadius: 2),
+          ];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
@@ -2275,6 +2308,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
               decoration: BoxDecoration(
                 color: onBack,
                 borderRadius: BorderRadius.circular(50),
+                boxShadow: inputShadow,
               ),
               padding: const EdgeInsets.all(8),
               child: Row(
@@ -2394,6 +2428,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                         colors: [Color(0xFF317BFF), Color(0xFF7631FF)],
                       ),
                 borderRadius: BorderRadius.circular(100),
+                boxShadow: inputShadow,
               ),
               child: Center(
                 child: _isRecognizing
