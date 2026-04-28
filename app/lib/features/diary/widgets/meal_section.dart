@@ -181,11 +181,6 @@ class _FoodLogTile extends StatelessWidget {
       final newId = await db.addLogToFavorites(log);
       if (newId == null) return;
     }
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.favoriteUpdated)));
-    }
   }
 
   @override
@@ -460,11 +455,6 @@ class _FoodLogCardState extends State<_FoodLogCard> {
       final newId = await db.addLogToFavorites(log);
       if (newId == null) return;
       if (mounted) setState(() => _isFavorite = true);
-    }
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.favoriteUpdated)));
     }
   }
 
@@ -797,8 +787,8 @@ class _FoodLogCardState extends State<_FoodLogCard> {
         children: [
           _buildPhotoImage(cs, size: size, radius: radius),
           Positioned(
-            right: 8,
-            bottom: 8,
+            right: 4,
+            bottom: 4,
             child: _FavoriteHeartButton(
               isFavorite: _isFavorite,
               fillColor: Theme.of(context).colorScheme.tertiary,
@@ -889,14 +879,20 @@ class _FavoriteHeartButton extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-          child: SvgPicture.string(
-            _heartSvg(isFavorite ? fillColor : Colors.white, isFavorite),
-            width: 20,
-            height: 19,
+      child: SizedBox(
+        width: 28,
+        height: 28,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+            child: Center(
+              child: SvgPicture.string(
+                _heartSvg(isFavorite ? fillColor : Colors.white, isFavorite),
+                width: 20,
+                height: 19,
+              ),
+            ),
           ),
         ),
       ),
