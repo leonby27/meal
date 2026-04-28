@@ -612,6 +612,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recognizeDish => 'Reconocer plato';
 
   @override
+  String get photoDetailsHint => 'Describe con más detalle si quieres ...';
+
+  @override
   String get cameraLabel => 'Cámara';
 
   @override

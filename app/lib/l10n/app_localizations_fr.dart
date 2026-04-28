@@ -614,6 +614,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get recognizeDish => 'Reconnaître le plat';
 
   @override
+  String get photoDetailsHint => 'Décrivez plus en détail si vous voulez ...';
+
+  @override
   String get cameraLabel => 'Appareil photo';
 
   @override

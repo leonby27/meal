@@ -1234,6 +1234,12 @@ abstract class AppLocalizations {
   /// **'Распознать блюдо'**
   String get recognizeDish;
 
+  /// No description provided for @photoDetailsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Распишите подробнее, если хотите ...'**
+  String get photoDetailsHint;
+
   /// No description provided for @cameraLabel.
   ///
   /// In ru, this message translates to:

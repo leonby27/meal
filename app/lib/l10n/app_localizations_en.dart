@@ -610,6 +610,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recognizeDish => 'Recognize dish';
 
   @override
+  String get photoDetailsHint => 'Describe in more detail if you want ...';
+
+  @override
   String get cameraLabel => 'Camera';
 
   @override

@@ -1,9 +1,10 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:photo_manager/photo_manager.dart';
 
+import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/features/camera/widgets/ai_meal_result_sheet.dart';
 
@@ -84,7 +85,16 @@ class CameraScreen extends StatefulWidget {
     }
     if (!context.mounted) return;
 
-    return AiMealResultSheet.showWithLoading(
+    if (source == ImageSource.camera) {
+      return _showPhotoDetailsAndRecognize(
+        context,
+        mealType: mealType,
+        dateStr: dateStr,
+        imageBytes: bytes,
+      );
+    }
+
+    return _recognizeImage(
       context,
       mealType: mealType,
       dateStr: dateStr,
@@ -105,6 +115,58 @@ class CameraScreen extends StatefulWidget {
       dateStr: dateStr,
       result: result,
       imageBytes: imageBytes,
+    );
+  }
+
+  static Future<void> _recognizeImage(
+    BuildContext context, {
+    required String mealType,
+    String? dateStr,
+    required Uint8List imageBytes,
+    String? details,
+  }) {
+    final text = details?.trim() ?? '';
+    if (text.isNotEmpty) {
+      return AiMealResultSheet.showWithTextAndImageLoading(
+        context,
+        mealType: mealType,
+        dateStr: dateStr,
+        text: text,
+        imageBytes: imageBytes,
+      );
+    }
+
+    return AiMealResultSheet.showWithLoading(
+      context,
+      mealType: mealType,
+      dateStr: dateStr,
+      imageBytes: imageBytes,
+    );
+  }
+
+  static Future<void> _showPhotoDetailsAndRecognize(
+    BuildContext context, {
+    required String mealType,
+    String? dateStr,
+    required Uint8List imageBytes,
+  }) async {
+    final details = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: false,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0xCC000000),
+      builder: (_) => _PhotoDetailsSheet(imageBytes: imageBytes),
+    );
+    if (details == null || !context.mounted) return;
+
+    return _recognizeImage(
+      context,
+      mealType: mealType,
+      dateStr: dateStr,
+      imageBytes: imageBytes,
+      details: details,
     );
   }
 
@@ -180,8 +242,33 @@ class _CameraScreenState extends State<CameraScreen> {
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
+    if (source == ImageSource.camera) {
+      await _recognizeCameraPhoto(bytes);
+      return;
+    }
+
     setState(() => _imageBytes = bytes);
     _recognize(bytes);
+  }
+
+  Future<void> _recognizeCameraPhoto(Uint8List bytes) async {
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    final currentNavigator = Navigator.of(context);
+    final presenterContext = rootNavigator.context;
+
+    if (currentNavigator.canPop()) {
+      currentNavigator.pop();
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    if (!presenterContext.mounted) return;
+
+    await CameraScreen._showPhotoDetailsAndRecognize(
+      presenterContext,
+      mealType: widget.mealType,
+      dateStr: widget.dateStr,
+      imageBytes: bytes,
+    );
   }
 
   Future<void> _recognize(Uint8List bytes) async {
@@ -270,7 +357,10 @@ class _CameraScreenState extends State<CameraScreen> {
       itemBuilder: (context, index) {
         if (index == 0) {
           return GestureDetector(
-            onTap: () => _pickImage(ImageSource.camera),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              _pickImage(ImageSource.camera);
+            },
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey.shade900,
@@ -315,6 +405,205 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _PhotoDetailsSheet extends StatefulWidget {
+  final Uint8List imageBytes;
+
+  const _PhotoDetailsSheet({required this.imageBytes});
+
+  @override
+  State<_PhotoDetailsSheet> createState() => _PhotoDetailsSheetState();
+}
+
+class _PhotoDetailsSheetState extends State<_PhotoDetailsSheet> {
+  final _detailsCtl = TextEditingController();
+  bool _buttonPressed = false;
+
+  @override
+  void dispose() {
+    _detailsCtl.dispose();
+    super.dispose();
+  }
+
+  void _setButtonPressed(bool pressed) {
+    if (_buttonPressed == pressed) return;
+    setState(() => _buttonPressed = pressed);
+  }
+
+  void _submit() {
+    HapticFeedback.selectionClick();
+    Navigator.of(context).pop(_detailsCtl.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetBg = isDark ? AppColors.darkBack2 : AppColors.lightBack2;
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final borderColor = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
+    final textColor = isDark
+        ? AppColors.darkOnSurface
+        : AppColors.lightOnSurface;
+    final hintColor = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: screenHeight * 0.95),
+      child: Container(
+        decoration: BoxDecoration(
+          color: sheetBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            bottom: keyboardHeight > 0 ? keyboardHeight : bottomPadding,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: 42,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          context.l10n.addDish,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            height: 24 / 18,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.close, color: textColor, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 221,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.memory(widget.imageBytes, fit: BoxFit.cover),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    border: Border.all(color: borderColor),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: TextField(
+                    controller: _detailsCtl,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      height: 18 / 14,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: context.l10n.photoDetailsHint,
+                      hintStyle: TextStyle(
+                        color: hintColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        height: 18 / 14,
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTapDown: (_) => _setButtonPressed(true),
+                  onTapUp: (_) => _setButtonPressed(false),
+                  onTapCancel: () => _setButtonPressed(false),
+                  onTap: _submit,
+                  child: AnimatedScale(
+                    scale: _buttonPressed ? 0.94 : 1,
+                    duration: const Duration(milliseconds: 110),
+                    curve: Curves.easeOutCubic,
+                    child: Container(
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF317BFF), Color(0xFF7631FF)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/ai_generated_photo.svg',
+                            width: 24,
+                            height: 24,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              context.l10n.recognizeDish,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                height: 22 / 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

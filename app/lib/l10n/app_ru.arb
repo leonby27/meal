@@ -216,6 +216,7 @@
   "saveEntry": "Добавить запись",
   "saveChanges": "Сохранить",
   "recognizeDish": "Распознать блюдо",
+  "photoDetailsHint": "Распишите подробнее, если хотите ...",
   "cameraLabel": "Камера",
 
   "searchTitle": "Поиск",

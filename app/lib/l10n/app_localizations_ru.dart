@@ -611,6 +611,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recognizeDish => 'Распознать блюдо';
 
   @override
+  String get photoDetailsHint => 'Распишите подробнее, если хотите ...';
+
+  @override
   String get cameraLabel => 'Камера';
 
   @override

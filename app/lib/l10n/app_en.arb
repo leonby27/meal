@@ -204,6 +204,7 @@
   "saveEntry": "Add entry",
   "saveChanges": "Save",
   "recognizeDish": "Recognize dish",
+  "photoDetailsHint": "Describe in more detail if you want ...",
   "cameraLabel": "Camera",
 
   "searchTitle": "Search",

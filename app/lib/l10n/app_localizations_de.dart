@@ -612,6 +612,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recognizeDish => 'Gericht erkennen';
 
   @override
+  String get photoDetailsHint =>
+      'Beschreiben Sie es genauer, wenn Sie möchten ...';
+
+  @override
   String get cameraLabel => 'Kamera';
 
   @override

@@ -204,6 +204,7 @@
   "saveEntry": "Ajouter une entrée",
   "saveChanges": "Enregistrer",
   "recognizeDish": "Reconnaître le plat",
+  "photoDetailsHint": "Décrivez plus en détail si vous voulez ...",
   "cameraLabel": "Appareil photo",
 
   "searchTitle": "Recherche",
