@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
@@ -62,19 +64,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final now = DateTime.now();
     final date = DateTime(now.year, now.month, now.day, 12);
 
-    await _db.addFoodLog(FoodLogsCompanion.insert(
-      id: const Uuid().v4(),
-      productId: drift.Value(product.productId),
-      productName: product.name,
-      mealType: mealType,
-      mealDate: date,
-      grams: grams,
-      protein: drift.Value((product.proteinPer100g ?? 0) * factor),
-      fat: drift.Value((product.fatPer100g ?? 0) * factor),
-      carbs: drift.Value((product.carbsPer100g ?? 0) * factor),
-      calories: drift.Value((product.caloriesPer100g ?? 0) * factor),
-      imageUrl: drift.Value(product.imageUrl),
-    ));
+    await _db.addFoodLog(
+      FoodLogsCompanion.insert(
+        id: const Uuid().v4(),
+        productId: drift.Value(product.productId),
+        productName: product.name,
+        mealType: mealType,
+        mealDate: date,
+        grams: grams,
+        protein: drift.Value((product.proteinPer100g ?? 0) * factor),
+        fat: drift.Value((product.fatPer100g ?? 0) * factor),
+        carbs: drift.Value((product.carbsPer100g ?? 0) * factor),
+        calories: drift.Value((product.caloriesPer100g ?? 0) * factor),
+        imageUrl: drift.Value(product.imageUrl),
+      ),
+    );
 
     if (!auth.isPremium) {
       await auth.incrementFreeEntry();
@@ -106,8 +110,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineBorder =
-        isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    final lineBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.favoritesTitle)),
@@ -115,9 +118,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           ? Center(
               child: Text(
                 context.l10n.noFavoriteProducts,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey.shade500,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade500),
               ),
             )
           : ListView.builder(
@@ -131,7 +134,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 final cal = ((product.caloriesPer100g ?? 0) * factor).toInt();
 
                 return Padding(
-                  padding: EdgeInsets.only(bottom: index < _favorites.length - 1 ? 8 : 0),
+                  padding: EdgeInsets.only(
+                    bottom: index < _favorites.length - 1 ? 8 : 0,
+                  ),
                   child: GestureDetector(
                     onTap: () => _addToMeal(product),
                     child: Container(
@@ -155,7 +160,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                 const SizedBox(width: 11),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         product.name,
@@ -207,8 +213,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               height: 32,
                               child: Center(
                                 child: Icon(
-                                  isRemoved ? Icons.favorite_border : Icons.favorite,
-                                  color: isRemoved ? cs.onSurfaceVariant : Colors.red,
+                                  isRemoved
+                                      ? Icons.favorite_border
+                                      : Icons.favorite,
+                                  color: isRemoved
+                                      ? cs.onSurfaceVariant
+                                      : Colors.red,
                                   size: 24,
                                 ),
                               ),
@@ -225,12 +235,30 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Widget _buildPhoto(Product product) {
-    if (product.imageUrl != null) {
+    final url = product.imageUrl;
+    if (url != null && url.isNotEmpty) {
+      if (url.startsWith('/')) {
+        final file = File(url);
+        if (!file.existsSync()) return _placeholderIcon();
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            file,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => _placeholderIcon(),
+          ),
+        );
+      }
+
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: CachedNetworkImage(
-          imageUrl: product.imageUrl!,
-          width: 40, height: 40, fit: BoxFit.cover,
+          imageUrl: url,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
           errorWidget: (context, url, error) => _placeholderIcon(),
         ),
       );
@@ -240,13 +268,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Widget _placeholderIcon() {
     return Container(
-      width: 40, height: 40,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Icon(Icons.restaurant, size: 20,
-        color: Theme.of(context).colorScheme.onSurfaceVariant),
+      child: Icon(
+        Icons.restaurant,
+        size: 20,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     );
   }
 }
@@ -263,10 +295,24 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
   String _mealType = defaultMealType();
   late final TextEditingController _gramsCtl;
 
-  List<({String key, String label, IconData icon})> _getMeals(BuildContext context) => [
-    (key: 'breakfast', label: context.l10n.mealBreakfast, icon: Icons.wb_sunny_outlined),
-    (key: 'lunch', label: context.l10n.mealLunch, icon: Icons.wb_cloudy_outlined),
-    (key: 'dinner', label: context.l10n.mealDinner, icon: Icons.nights_stay_outlined),
+  List<({String key, String label, IconData icon})> _getMeals(
+    BuildContext context,
+  ) => [
+    (
+      key: 'breakfast',
+      label: context.l10n.mealBreakfast,
+      icon: Icons.wb_sunny_outlined,
+    ),
+    (
+      key: 'lunch',
+      label: context.l10n.mealLunch,
+      icon: Icons.wb_cloudy_outlined,
+    ),
+    (
+      key: 'dinner',
+      label: context.l10n.mealDinner,
+      icon: Icons.nights_stay_outlined,
+    ),
     (key: 'snack', label: context.l10n.mealSnack, icon: Icons.cookie_outlined),
   ];
 
@@ -298,7 +344,9 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          24, 16, 24,
+          24,
+          16,
+          24,
           MediaQuery.of(context).viewInsets.bottom + 24,
         ),
         child: Column(
@@ -307,7 +355,8 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
                   color: cs.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
@@ -435,13 +484,31 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
   }
 
   Widget _buildSheetPhoto(Product p) {
-    if (p.imageUrl != null) {
+    final url = p.imageUrl;
+    if (url != null && url.isNotEmpty) {
+      if (url.startsWith('/')) {
+        final file = File(url);
+        if (!file.existsSync()) return _sheetPlaceholder();
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            file,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => _sheetPlaceholder(),
+          ),
+        );
+      }
+
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: CachedNetworkImage(
-          imageUrl: p.imageUrl!,
-          width: 40, height: 40, fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => _sheetPlaceholder(),
+          imageUrl: url,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          errorWidget: (_, _, _) => _sheetPlaceholder(),
         ),
       );
     }
@@ -451,7 +518,8 @@ class _AddToMealSheetState extends State<_AddToMealSheet> {
   Widget _sheetPlaceholder() {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      width: 40, height: 40,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),

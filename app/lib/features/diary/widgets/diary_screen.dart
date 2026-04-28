@@ -1548,15 +1548,29 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   }
 
   Widget _buildFavProductPhoto(Product product, ColorScheme cs) {
-    if (product.imageUrl != null) {
+    final url = product.imageUrl;
+    if (url != null && url.isNotEmpty) {
+      if (url.startsWith('/')) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            File(url),
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => _recentPlaceholder(cs),
+          ),
+        );
+      }
+
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: CachedNetworkImage(
-          imageUrl: product.imageUrl!,
+          imageUrl: url,
           width: 40,
           height: 40,
           fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => _recentPlaceholder(cs),
+          errorWidget: (_, _, _) => _recentPlaceholder(cs),
         ),
       );
     }
@@ -1574,7 +1588,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
             width: 40,
             height: 40,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _recentPlaceholder(cs),
+            errorBuilder: (_, _, _) => _recentPlaceholder(cs),
           ),
         );
       }
@@ -1585,7 +1599,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
           width: 40,
           height: 40,
           fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => _recentPlaceholder(cs),
+          errorWidget: (_, _, _) => _recentPlaceholder(cs),
         ),
       );
     }
