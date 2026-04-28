@@ -276,6 +276,13 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<bool> isProductFavorite(int productId) async {
+    final product = await (select(
+      products,
+    )..where((p) => p.productId.equals(productId))).getSingleOrNull();
+    return product?.isFavorite ?? false;
+  }
+
   /// Promotes a [FoodLog] without a linked product into a user-created
   /// favorite product so AI-recognized dishes can be added to favorites.
   /// Per-100g macros are derived from the log totals; the new product id is
@@ -371,10 +378,11 @@ class AppDatabase extends _$AppDatabase {
   /// most-recent position. Re-logging the same product floats it back to the
   /// top.
   Future<List<FoodLog>> getRecentProducts({int limit = 20}) async {
-    final logs = await (select(foodLogs)
-          ..orderBy([(l) => OrderingTerm.desc(l.createdAt)])
-          ..limit(limit * 5))
-        .get();
+    final logs =
+        await (select(foodLogs)
+              ..orderBy([(l) => OrderingTerm.desc(l.createdAt)])
+              ..limit(limit * 5))
+            .get();
     String keyFor(FoodLog l) => l.productId != null
         ? 'p:${l.productId}'
         : 'n:${l.productName.toLowerCase().trim()}';
@@ -400,14 +408,16 @@ class AppDatabase extends _$AppDatabase {
     int windowDays = 7,
   }) async {
     final cutoff = DateTime.now().subtract(Duration(days: windowDays));
-    final logs = await (select(foodLogs)
-          ..where((l) => l.createdAt.isBiggerOrEqualValue(cutoff))
-          ..orderBy([(l) => OrderingTerm.desc(l.createdAt)]))
-        .get();
+    final logs =
+        await (select(foodLogs)
+              ..where((l) => l.createdAt.isBiggerOrEqualValue(cutoff))
+              ..orderBy([(l) => OrderingTerm.desc(l.createdAt)]))
+            .get();
     if (logs.isEmpty) return [];
 
-    String keyFor(FoodLog l) =>
-        l.productId != null ? 'p:${l.productId}' : 'n:${l.productName.toLowerCase().trim()}';
+    String keyFor(FoodLog l) => l.productId != null
+        ? 'p:${l.productId}'
+        : 'n:${l.productName.toLowerCase().trim()}';
 
     final groups = <String, FoodLog>{};
     final scores = <String, double>{};

@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:ui' show ImageFilter;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/app/theme.dart';
@@ -382,7 +384,7 @@ class _FoodLogTile extends StatelessWidget {
   }
 }
 
-class _FoodLogCard extends StatelessWidget {
+class _FoodLogCard extends StatefulWidget {
   final FoodLog log;
   final String mealType;
   final String dateStr;
@@ -405,13 +407,59 @@ class _FoodLogCard extends StatelessWidget {
     required this.calorieGoal,
   });
 
+  @override
+  State<_FoodLogCard> createState() => _FoodLogCardState();
+}
+
+class _FoodLogCardState extends State<_FoodLogCard> {
+  bool _isFavorite = false;
+
+  FoodLog get log => widget.log;
+  String get mealType => widget.mealType;
+  String get dateStr => widget.dateStr;
+  String? get duplicateDateStr => widget.duplicateDateStr;
+  VoidCallback? get onDuplicateAdded => widget.onDuplicateAdded;
+  VoidCallback get onDelete => widget.onDelete;
+  Color get back2 => widget.back2;
+  FoodLogCardVariant get variant => widget.variant;
+  double get calorieGoal => widget.calorieGoal;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavoriteState();
+  }
+
+  @override
+  void didUpdateWidget(covariant _FoodLogCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.log.productId != widget.log.productId ||
+        oldWidget.log.id != widget.log.id) {
+      _loadFavoriteState();
+    }
+  }
+
+  Future<void> _loadFavoriteState() async {
+    final productId = log.productId;
+    if (productId == null) {
+      if (mounted) setState(() => _isFavorite = false);
+      return;
+    }
+
+    final db = await AppDatabase.getInstance();
+    final isFavorite = await db.isProductFavorite(productId);
+    if (mounted) setState(() => _isFavorite = isFavorite);
+  }
+
   Future<void> _toggleFavorite(BuildContext context) async {
     final db = await AppDatabase.getInstance();
     if (log.productId != null) {
       await db.toggleFavorite(log.productId!);
+      if (mounted) setState(() => _isFavorite = !_isFavorite);
     } else {
       final newId = await db.addLogToFavorites(log);
       if (newId == null) return;
+      if (mounted) setState(() => _isFavorite = true);
     }
     if (context.mounted) {
       ScaffoldMessenger.of(
@@ -454,7 +502,7 @@ class _FoodLogCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              _buildPhoto(cs),
+              _buildPhoto(context, cs),
               const SizedBox(width: 11),
               Expanded(
                 child: Column(
@@ -609,7 +657,7 @@ class _FoodLogCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildPhoto(cs, size: 80, radius: 16),
+                  _buildPhoto(context, cs, size: 80, radius: 16),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Padding(
@@ -735,7 +783,38 @@ class _FoodLogCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPhoto(ColorScheme cs, {double size = 40, double radius = 8}) {
+  Widget _buildPhoto(
+    BuildContext context,
+    ColorScheme cs, {
+    double size = 40,
+    double radius = 8,
+  }) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          _buildPhotoImage(cs, size: size, radius: radius),
+          Positioned(
+            right: 8,
+            bottom: 8,
+            child: _FavoriteHeartButton(
+              isFavorite: _isFavorite,
+              fillColor: Theme.of(context).colorScheme.tertiary,
+              onTap: () => _toggleFavorite(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoImage(
+    ColorScheme cs, {
+    double size = 40,
+    double radius = 8,
+  }) {
     final url = log.imageUrl;
     if (url == null || url.isEmpty) {
       return _placeholderIcon(cs, size: size, radius: radius);
@@ -794,6 +873,53 @@ class _FoodLogCard extends StatelessWidget {
   }
 }
 
+class _FavoriteHeartButton extends StatelessWidget {
+  final bool isFavorite;
+  final Color fillColor;
+  final VoidCallback onTap;
+
+  const _FavoriteHeartButton({
+    required this.isFavorite,
+    required this.fillColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+          child: SvgPicture.string(
+            _heartSvg(isFavorite ? fillColor : Colors.white, isFavorite),
+            width: 20,
+            height: 19,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _heartSvg(Color fill, bool isFavorite) {
+    final fillHex = _hex(fill);
+    final fillOpacity = isFavorite ? '1' : '0.2';
+    return '''
+<svg width="20" height="19" viewBox="0 0 20 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12.8615 2.09712C11.2381 2.40216 9.99775 4.4398 9.99775 4.4398C9.99775 4.4398 8.75163 2.40216 7.13403 2.09712C3.1271 1.34673 1.47518 5.09257 2.14395 7.88065C3.13282 11.9986 7.88855 15.6896 9.47758 16.8304C9.79192 17.0562 10.2035 17.0562 10.5236 16.8304C12.1184 15.6896 16.874 11.9986 17.8572 7.88065C18.5203 5.09257 16.8683 1.34673 12.8615 2.09712Z" fill="$fillHex" fill-opacity="$fillOpacity"/>
+<path d="M13.1187 1.04565C15.2896 0.782465 16.9409 1.67011 17.9312 3.0896C18.9412 4.53755 19.2203 6.46914 18.8296 8.11206V8.11304C18.2762 10.4308 16.6946 12.5395 15.1421 14.1628C13.5714 15.8052 11.929 17.0539 11.105 17.6433L11.1001 17.6472C10.4376 18.1146 9.5601 18.1207 8.89404 17.6423C8.07375 17.0534 6.43308 15.8048 4.86279 14.1628C3.4074 12.641 1.92553 10.6926 1.2876 8.54565L1.17139 8.11401C0.777203 6.47068 1.05567 4.53889 2.06494 3.09058C3.12058 1.57604 4.92897 0.666729 7.31787 1.11401H7.31982C8.44848 1.32699 9.34735 2.10797 9.90186 2.69897C9.93447 2.73374 9.96547 2.76912 9.99658 2.80347C10.0276 2.76916 10.0588 2.73369 10.0913 2.69897C10.6459 2.10704 11.5455 1.32668 12.6772 1.11401L13.1187 1.04565Z" stroke="black" stroke-opacity="0.5" stroke-width="2"/>
+</svg>
+''';
+  }
+
+  static String _hex(Color color) {
+    final value = color.toARGB32() & 0x00FFFFFF;
+    return '#${value.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+  }
+}
+
 class _MacroBreakdown extends StatelessWidget {
   static const _proteinColor = Color(0xFFF04438);
   static const _fatColor = Color(0xFFE7F900);
@@ -823,11 +949,14 @@ class _MacroBreakdown extends StatelessWidget {
     final proteinCal = protein * 4;
     final fatCal = fat * 9;
     final carbsCal = carbs * 4;
-    final maxCal = [proteinCal, fatCal, carbsCal].reduce((a, b) => a > b ? a : b);
+    final maxCal = [
+      proteinCal,
+      fatCal,
+      carbsCal,
+    ].reduce((a, b) => a > b ? a : b);
     final hasDominant = maxCal > 0;
     final proteinDominant = hasDominant && proteinCal == maxCal;
-    final fatDominant =
-        hasDominant && !proteinDominant && fatCal == maxCal;
+    final fatDominant = hasDominant && !proteinDominant && fatCal == maxCal;
     final carbsDominant =
         hasDominant && !proteinDominant && !fatDominant && carbsCal == maxCal;
 
