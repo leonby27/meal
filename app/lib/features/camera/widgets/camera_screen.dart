@@ -526,6 +526,7 @@ class _PhotoDetailsSheetState extends State<_PhotoDetailsSheet> {
                   child: TextField(
                     controller: _detailsCtl,
                     maxLines: 1,
+                    textCapitalization: TextCapitalization.sentences,
                     style: TextStyle(
                       color: textColor,
                       fontSize: 14,
@@ -543,6 +544,8 @@ class _PhotoDetailsSheetState extends State<_PhotoDetailsSheet> {
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
+                      filled: false,
+                      fillColor: Colors.transparent,
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                     ),
