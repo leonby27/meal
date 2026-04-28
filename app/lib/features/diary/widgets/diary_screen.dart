@@ -2182,7 +2182,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                     builder: (context, setMenuState) {
                       void pick(FoodLogCardVariant v) {
                         if (_foodLogCardVariant == v) return;
-                        setState(() => _foodLogCardVariant = v);
+                        setState(() {
+                          _foodLogCardVariant = v;
+                          _recordsAnimationSeed++;
+                        });
                         setMenuState(() {});
                       }
 
@@ -2605,7 +2608,10 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   GestureDetector(
-                    onTap: _toggleAddMenu,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      _toggleAddMenu();
+                    },
                     behavior: HitTestBehavior.opaque,
                     child: Container(
                       width: 32,
@@ -2694,10 +2700,12 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
             onTapCancel: () => _setInputActionPressed(false),
             onTap: hasDraft
                 ? () {
+                    HapticFeedback.selectionClick();
                     _closeAddMenu();
                     _recognizeWithAI(dateStr);
                   }
                 : () {
+                    HapticFeedback.selectionClick();
                     _closeAddMenu();
                     if (_checkFreeLimit()) return;
                     CameraScreen.pickAndShow(

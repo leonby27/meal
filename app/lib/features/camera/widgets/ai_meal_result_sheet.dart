@@ -286,6 +286,8 @@ class AiMealResultSheet extends StatefulWidget {
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
       barrierColor: const Color(0xCC000000),
+      isDismissible: true,
+      enableDrag: true,
       builder: (_) => AiMealResultSheet(
         mealType: log.mealType,
         dateStr: dateStr,
@@ -322,6 +324,8 @@ class AiMealResultSheet extends StatefulWidget {
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
       barrierColor: const Color(0xCC000000),
+      isDismissible: true,
+      enableDrag: true,
       builder: (_) => AiMealResultSheet(
         mealType: log.mealType,
         dateStr: dateStr,
