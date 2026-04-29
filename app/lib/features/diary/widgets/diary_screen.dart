@@ -120,7 +120,8 @@ class DiaryScreen extends StatefulWidget {
   State<DiaryScreen> createState() => _DiaryScreenState();
 }
 
-class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
+class _DiaryScreenState extends State<DiaryScreen>
+    with RouteAware, WidgetsBindingObserver {
   static const double _weekStripHeight = 64.0;
   static const double _inputBarReservedHeight = 62.0;
   static const String _recordsSortOrderSetting = 'diary_records_sort_order';
@@ -167,6 +168,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _weekAnchor = _weekStart(DateTime.now());
     _weekPageCtl = PageController(initialPage: _weekPageCenter);
     final now = DateTime.now();
@@ -194,6 +196,13 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   @override
   void didPopNext() {
     _scheduleUnfocusInputBar();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _selectToday();
+    }
   }
 
   void _onSearchTextChanged() {
@@ -619,6 +628,7 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     appRouteObserver.unsubscribe(this);
     _weekPageCtl.dispose();
     _dayPageCtl.dispose();
@@ -707,6 +717,11 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
     return _dayPageCenter + d.difference(_dayAnchor).inDays;
   }
 
+  DateTime _today() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
   void _onDayPageChanged(int page) {
     if (_syncingPages) return;
     final date = _dateForDayPage(page);
@@ -739,22 +754,40 @@ class _DiaryScreenState extends State<DiaryScreen> with RouteAware {
   }
 
   void _selectDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = _today();
     final target = DateTime(date.year, date.month, date.day);
     if (target.isAfter(today)) return;
     setState(() {
-      _selectedDate = date;
+      _selectedDate = target;
     });
 
     if (_dayPageCtl.hasClients) {
-      final dayPage = _dayPageForDate(date);
+      final dayPage = _dayPageForDate(target);
       if (_dayPageCtl.page?.round() != dayPage) {
         _dayPageCtl.jumpToPage(dayPage);
       }
     }
 
+    if (_weekPageCtl.hasClients) {
+      final weekPage = _pageForDate(target);
+      if (_weekPageCtl.page?.round() != weekPage) {
+        _weekPageCtl.jumpToPage(weekPage);
+      }
+    }
+
     _loadWeekCalories();
+  }
+
+  void _selectToday() {
+    if (!mounted) return;
+    final today = _today();
+    final selectedDay = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+    if (selectedDay == today) return;
+    _selectDate(today);
   }
 
   ({String date, String weekday}) _formatHeaderDateParts() {
