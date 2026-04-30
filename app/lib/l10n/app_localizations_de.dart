@@ -941,6 +941,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Empfohlenes Tempo — 0,25 kg pro Woche';
 
   @override
+  String get onboardingAgeYearsUnit => 'Jahre';
+
+  @override
   String get onboardingLoadingCalc => 'Stoffwechsel wird berechnet...';
 
   @override
@@ -1021,6 +1024,91 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Starten';
+
+  @override
+  String get resultPlanReadyTitle => 'Ihr persönlicher Plan ist fertig';
+
+  @override
+  String resultPlanReadyLose(String delta, int calories) {
+    return 'Um $delta abzunehmen, starten Sie mit $calories kcal pro Tag';
+  }
+
+  @override
+  String resultPlanReadyGain(String delta, int calories) {
+    return 'Um $delta zuzunehmen, starten Sie mit $calories kcal pro Tag';
+  }
+
+  @override
+  String resultPlanReadyMaintain(int calories) {
+    return 'Um Ihr Gewicht zu halten, starten Sie mit $calories kcal pro Tag';
+  }
+
+  @override
+  String get resultRingTrustLine =>
+      'Berechnet aus Ihren Antworten mit der Mifflin–St Jeor-Formel';
+
+  @override
+  String get resultRingAdjustLine =>
+      'Sie können diese Werte jederzeit anpassen';
+
+  @override
+  String get resultGoalCardTitle => 'Ihr Ziel';
+
+  @override
+  String resultGoalDateBy(String date) {
+    return 'Etwa bis $date';
+  }
+
+  @override
+  String resultGoalPace(String pace) {
+    return 'Realistisches Tempo — etwa $pace pro Woche';
+  }
+
+  @override
+  String resultGoalMaintainTitle(String weight) {
+    return 'Gewicht bei etwa $weight halten';
+  }
+
+  @override
+  String get resultGoalMaintainSubtitle =>
+      'Keine strengen Einschränkungen — die tägliche Balance zählt';
+
+  @override
+  String get resultBenefitsTitle => 'Was Sie mit der Zeit bemerken werden';
+
+  @override
+  String get resultBenefitsLose =>
+      'Mehr Energie · Besserer Schlaf · Weniger Belastung für das Herz';
+
+  @override
+  String get resultBenefitsGain =>
+      'Kraftzuwachs · Bessere Erholung · Konstante Energie';
+
+  @override
+  String get resultBenefitsMaintain =>
+      'Stabiles Wohlbefinden · Besserer Schlaf · Weniger Überessen';
+
+  @override
+  String get resultBridgeTitle =>
+      'Damit der Plan funktioniert, müssen Sie täglich tracken';
+
+  @override
+  String get resultBridgeFreeLine =>
+      'Kostenlos — 10 Mahlzeiten-Einträge zum Ausprobieren';
+
+  @override
+  String get resultBridgePremiumLine =>
+      'Mit Premium — ohne Limits, bis zu Ihrem Ziel';
+
+  @override
+  String get resultDisclaimerShort =>
+      'Empfehlungen ersetzen keinen ärztlichen Rat';
+
+  @override
+  String get resultDisclaimerExpand => 'Mehr erfahren';
+
+  @override
+  String get resultOpenPlan => 'Meinen Plan öffnen';
 
   @override
   String get socialProofScaleTitle => 'Für ernsthaftes Tracking entwickelt';

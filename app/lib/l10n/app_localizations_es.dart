@@ -936,6 +936,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Ritmo recomendado — 0,25 kg por semana';
 
   @override
+  String get onboardingAgeYearsUnit => 'años';
+
+  @override
   String get onboardingLoadingCalc => 'Calculando metabolismo...';
 
   @override
@@ -1015,6 +1018,91 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Comenzar';
+
+  @override
+  String get resultPlanReadyTitle => 'Tu plan personalizado está listo';
+
+  @override
+  String resultPlanReadyLose(String delta, int calories) {
+    return 'Para perder $delta, empieza con $calories kcal al día';
+  }
+
+  @override
+  String resultPlanReadyGain(String delta, int calories) {
+    return 'Para ganar $delta, empieza con $calories kcal al día';
+  }
+
+  @override
+  String resultPlanReadyMaintain(int calories) {
+    return 'Para mantener tu peso, empieza con $calories kcal al día';
+  }
+
+  @override
+  String get resultRingTrustLine =>
+      'Calculado a partir de tus respuestas con la fórmula Mifflin–St Jeor';
+
+  @override
+  String get resultRingAdjustLine =>
+      'Puedes ajustar estos valores en cualquier momento';
+
+  @override
+  String get resultGoalCardTitle => 'Tu objetivo';
+
+  @override
+  String resultGoalDateBy(String date) {
+    return 'Aproximadamente para $date';
+  }
+
+  @override
+  String resultGoalPace(String pace) {
+    return 'Ritmo realista — alrededor de $pace por semana';
+  }
+
+  @override
+  String resultGoalMaintainTitle(String weight) {
+    return 'Mantener el peso en torno a $weight';
+  }
+
+  @override
+  String get resultGoalMaintainSubtitle =>
+      'Sin restricciones estrictas — el equilibrio diario es lo importante';
+
+  @override
+  String get resultBenefitsTitle => 'Lo que notarás con el tiempo';
+
+  @override
+  String get resultBenefitsLose =>
+      'Más energía · Mejor sueño · Menos esfuerzo para el corazón';
+
+  @override
+  String get resultBenefitsGain =>
+      'Ganancia de fuerza · Mejor recuperación · Energía estable';
+
+  @override
+  String get resultBenefitsMaintain =>
+      'Bienestar estable · Mejor sueño · Menos atracones';
+
+  @override
+  String get resultBridgeTitle =>
+      'Para que el plan funcione, hay que registrar cada día';
+
+  @override
+  String get resultBridgeFreeLine =>
+      'Gratis — 10 registros de comida para probarlo';
+
+  @override
+  String get resultBridgePremiumLine =>
+      'Con Premium — sin límites, hasta alcanzar tu objetivo';
+
+  @override
+  String get resultDisclaimerShort =>
+      'Las recomendaciones no sustituyen el consejo médico';
+
+  @override
+  String get resultDisclaimerExpand => 'Más información';
+
+  @override
+  String get resultOpenPlan => 'Abrir mi plan';
 
   @override
   String get socialProofScaleTitle => 'Hecho para un seguimiento serio';

@@ -934,6 +934,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Рекомендуемый темп — 0.25 кг в неделю';
 
   @override
+  String get onboardingAgeYearsUnit => 'лет';
+
+  @override
   String get onboardingLoadingCalc => 'Рассчитываем метаболизм...';
 
   @override
@@ -1012,6 +1015,90 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Начать';
+
+  @override
+  String get resultPlanReadyTitle => 'Ваш персональный план готов';
+
+  @override
+  String resultPlanReadyLose(String delta, int calories) {
+    return 'Чтобы снизить вес на $delta, начните с $calories ккал в день';
+  }
+
+  @override
+  String resultPlanReadyGain(String delta, int calories) {
+    return 'Чтобы набрать $delta, начните с $calories ккал в день';
+  }
+
+  @override
+  String resultPlanReadyMaintain(int calories) {
+    return 'Чтобы поддерживать вес, начните с $calories ккал в день';
+  }
+
+  @override
+  String get resultRingTrustLine =>
+      'Расчёт по вашим ответам и формуле Mifflin–St Jeor';
+
+  @override
+  String get resultRingAdjustLine =>
+      'Цифры можно скорректировать в любой момент';
+
+  @override
+  String get resultGoalCardTitle => 'Ваша цель';
+
+  @override
+  String resultGoalDateBy(String date) {
+    return 'Примерно к $date';
+  }
+
+  @override
+  String resultGoalPace(String pace) {
+    return 'Реалистичный темп — около $pace в неделю';
+  }
+
+  @override
+  String resultGoalMaintainTitle(String weight) {
+    return 'Удерживать вес около $weight';
+  }
+
+  @override
+  String get resultGoalMaintainSubtitle =>
+      'Без жёстких ограничений — баланс на каждый день';
+
+  @override
+  String get resultBenefitsTitle => 'Что вы заметите со временем';
+
+  @override
+  String get resultBenefitsLose =>
+      'Больше энергии · Лучше сон · Меньше нагрузки на сердце';
+
+  @override
+  String get resultBenefitsGain =>
+      'Прирост силы · Лучшее восстановление · Стабильная энергия';
+
+  @override
+  String get resultBenefitsMaintain =>
+      'Стабильное самочувствие · Лучше сон · Меньше переедания';
+
+  @override
+  String get resultBridgeTitle =>
+      'Чтобы план работал — его нужно вести каждый день';
+
+  @override
+  String get resultBridgeFreeLine =>
+      'Бесплатно — 10 записей еды, чтобы попробовать';
+
+  @override
+  String get resultBridgePremiumLine => 'С Premium — без лимита, до самой цели';
+
+  @override
+  String get resultDisclaimerShort =>
+      'Рекомендации не заменяют консультацию врача';
+
+  @override
+  String get resultDisclaimerExpand => 'Подробнее';
+
+  @override
+  String get resultOpenPlan => 'Открыть мой план';
 
   @override
   String get socialProofScaleTitle => 'Создано для серьёзного учёта';

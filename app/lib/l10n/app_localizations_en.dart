@@ -932,6 +932,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recommendedWeightGainPace => 'Recommended pace — 0.25 kg per week';
 
   @override
+  String get onboardingAgeYearsUnit => 'years';
+
+  @override
   String get onboardingLoadingCalc => 'Calculating metabolism...';
 
   @override
@@ -1009,6 +1012,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Start';
+
+  @override
+  String get resultPlanReadyTitle => 'Your personal plan is ready';
+
+  @override
+  String resultPlanReadyLose(String delta, int calories) {
+    return 'To lose $delta, start with $calories kcal per day';
+  }
+
+  @override
+  String resultPlanReadyGain(String delta, int calories) {
+    return 'To gain $delta, start with $calories kcal per day';
+  }
+
+  @override
+  String resultPlanReadyMaintain(int calories) {
+    return 'To maintain your weight, start with $calories kcal per day';
+  }
+
+  @override
+  String get resultRingTrustLine =>
+      'Calculated from your answers using the Mifflin–St Jeor formula';
+
+  @override
+  String get resultRingAdjustLine => 'You can adjust these values at any time';
+
+  @override
+  String get resultGoalCardTitle => 'Your goal';
+
+  @override
+  String resultGoalDateBy(String date) {
+    return 'Approximately by $date';
+  }
+
+  @override
+  String resultGoalPace(String pace) {
+    return 'Realistic pace — about $pace per week';
+  }
+
+  @override
+  String resultGoalMaintainTitle(String weight) {
+    return 'Maintain weight at about $weight';
+  }
+
+  @override
+  String get resultGoalMaintainSubtitle =>
+      'No strict limits — daily balance is what matters';
+
+  @override
+  String get resultBenefitsTitle => 'What you\'ll notice over time';
+
+  @override
+  String get resultBenefitsLose =>
+      'More energy · Better sleep · Less strain on the heart';
+
+  @override
+  String get resultBenefitsGain =>
+      'Strength gains · Better recovery · Steady energy';
+
+  @override
+  String get resultBenefitsMaintain =>
+      'Steady well-being · Better sleep · Less overeating';
+
+  @override
+  String get resultBridgeTitle =>
+      'For the plan to work, you need to track every day';
+
+  @override
+  String get resultBridgeFreeLine => 'Free — 10 meal entries to try it out';
+
+  @override
+  String get resultBridgePremiumLine =>
+      'With Premium — no limits, all the way to your goal';
+
+  @override
+  String get resultDisclaimerShort =>
+      'Recommendations do not replace medical advice';
+
+  @override
+  String get resultDisclaimerExpand => 'Learn more';
+
+  @override
+  String get resultOpenPlan => 'Open my plan';
 
   @override
   String get socialProofScaleTitle => 'Built for serious tracking';

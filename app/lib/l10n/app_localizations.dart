@@ -1840,6 +1840,12 @@ abstract class AppLocalizations {
   /// **'Рекомендуемый темп — 0.25 кг в неделю'**
   String get recommendedWeightGainPace;
 
+  /// No description provided for @onboardingAgeYearsUnit.
+  ///
+  /// In ru, this message translates to:
+  /// **'лет'**
+  String get onboardingAgeYearsUnit;
+
   /// No description provided for @onboardingLoadingCalc.
   ///
   /// In ru, this message translates to:
@@ -1977,6 +1983,132 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Начать'**
   String get onboardingStart;
+
+  /// No description provided for @resultPlanReadyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш персональный план готов'**
+  String get resultPlanReadyTitle;
+
+  /// No description provided for @resultPlanReadyLose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы снизить вес на {delta}, начните с {calories} ккал в день'**
+  String resultPlanReadyLose(String delta, int calories);
+
+  /// No description provided for @resultPlanReadyGain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы набрать {delta}, начните с {calories} ккал в день'**
+  String resultPlanReadyGain(String delta, int calories);
+
+  /// No description provided for @resultPlanReadyMaintain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы поддерживать вес, начните с {calories} ккал в день'**
+  String resultPlanReadyMaintain(int calories);
+
+  /// No description provided for @resultRingTrustLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расчёт по вашим ответам и формуле Mifflin–St Jeor'**
+  String get resultRingTrustLine;
+
+  /// No description provided for @resultRingAdjustLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цифры можно скорректировать в любой момент'**
+  String get resultRingAdjustLine;
+
+  /// No description provided for @resultGoalCardTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваша цель'**
+  String get resultGoalCardTitle;
+
+  /// No description provided for @resultGoalDateBy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Примерно к {date}'**
+  String resultGoalDateBy(String date);
+
+  /// No description provided for @resultGoalPace.
+  ///
+  /// In ru, this message translates to:
+  /// **'Реалистичный темп — около {pace} в неделю'**
+  String resultGoalPace(String pace);
+
+  /// No description provided for @resultGoalMaintainTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удерживать вес около {weight}'**
+  String resultGoalMaintainTitle(String weight);
+
+  /// No description provided for @resultGoalMaintainSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без жёстких ограничений — баланс на каждый день'**
+  String get resultGoalMaintainSubtitle;
+
+  /// No description provided for @resultBenefitsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что вы заметите со временем'**
+  String get resultBenefitsTitle;
+
+  /// No description provided for @resultBenefitsLose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Больше энергии · Лучше сон · Меньше нагрузки на сердце'**
+  String get resultBenefitsLose;
+
+  /// No description provided for @resultBenefitsGain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прирост силы · Лучшее восстановление · Стабильная энергия'**
+  String get resultBenefitsGain;
+
+  /// No description provided for @resultBenefitsMaintain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стабильное самочувствие · Лучше сон · Меньше переедания'**
+  String get resultBenefitsMaintain;
+
+  /// No description provided for @resultBridgeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы план работал — его нужно вести каждый день'**
+  String get resultBridgeTitle;
+
+  /// No description provided for @resultBridgeFreeLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бесплатно — 10 записей еды, чтобы попробовать'**
+  String get resultBridgeFreeLine;
+
+  /// No description provided for @resultBridgePremiumLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'С Premium — без лимита, до самой цели'**
+  String get resultBridgePremiumLine;
+
+  /// No description provided for @resultDisclaimerShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рекомендации не заменяют консультацию врача'**
+  String get resultDisclaimerShort;
+
+  /// No description provided for @resultDisclaimerExpand.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подробнее'**
+  String get resultDisclaimerExpand;
+
+  /// No description provided for @resultOpenPlan.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть мой план'**
+  String get resultOpenPlan;
 
   /// No description provided for @socialProofScaleTitle.
   ///

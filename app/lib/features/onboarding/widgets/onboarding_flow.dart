@@ -635,72 +635,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
                     return Stack(
                       children: [
-                        Positioned.fill(
-                          child: SafeArea(
-                            top: false,
-                            bottom: isLoading,
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                bottom: contentBottomPadding,
-                              ),
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 300),
-                                reverseDuration: const Duration(
-                                  milliseconds: 250,
-                                ),
-                                switchInCurve: Curves.easeOutCubic,
-                                switchOutCurve: Curves.easeInCubic,
-                                layoutBuilder:
-                                    (currentChild, previousChildren) {
-                                      return Stack(
-                                        children: [
-                                          for (final child in previousChildren)
-                                            Positioned.fill(child: child),
-                                          if (currentChild != null)
-                                            Positioned.fill(
-                                              child: currentChild,
-                                            ),
-                                        ],
-                                      );
-                                    },
-                                transitionBuilder: (child, animation) {
-                                  final isIncoming =
-                                      child.key == ValueKey(_currentPage);
-                                  final slideBegin = _isForward
-                                      ? (isIncoming ? 0.25 : -0.15)
-                                      : (isIncoming ? -0.25 : 0.15);
-                                  final slide = Tween<Offset>(
-                                    begin: Offset(slideBegin, 0),
-                                    end: Offset.zero,
-                                  ).animate(animation);
-                                  final fade = isIncoming
-                                      ? Tween<double>(
-                                          begin: 0.0,
-                                          end: 1.0,
-                                        ).animate(
-                                          CurvedAnimation(
-                                            parent: animation,
-                                            curve: const Interval(
-                                              0.0,
-                                              0.6,
-                                              curve: Curves.easeOut,
-                                            ),
-                                          ),
-                                        )
-                                      : animation;
-                                  return SlideTransition(
-                                    position: slide,
-                                    child: FadeTransition(
-                                      opacity: fade,
-                                      child: child,
-                                    ),
-                                  );
-                                },
-                                child: _buildCurrentStep(),
-                              ),
-                            ),
-                          ),
-                        ),
                         if (stepImageAsset != null)
                           Positioned(
                             left: _stepImageHorizontalPadding,
@@ -777,6 +711,72 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                               ),
                             ),
                           ),
+                        Positioned.fill(
+                          child: SafeArea(
+                            top: false,
+                            bottom: isLoading,
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                bottom: contentBottomPadding,
+                              ),
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                reverseDuration: const Duration(
+                                  milliseconds: 250,
+                                ),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                layoutBuilder:
+                                    (currentChild, previousChildren) {
+                                      return Stack(
+                                        children: [
+                                          for (final child in previousChildren)
+                                            Positioned.fill(child: child),
+                                          if (currentChild != null)
+                                            Positioned.fill(
+                                              child: currentChild,
+                                            ),
+                                        ],
+                                      );
+                                    },
+                                transitionBuilder: (child, animation) {
+                                  final isIncoming =
+                                      child.key == ValueKey(_currentPage);
+                                  final slideBegin = _isForward
+                                      ? (isIncoming ? 0.25 : -0.15)
+                                      : (isIncoming ? -0.25 : 0.15);
+                                  final slide = Tween<Offset>(
+                                    begin: Offset(slideBegin, 0),
+                                    end: Offset.zero,
+                                  ).animate(animation);
+                                  final fade = isIncoming
+                                      ? Tween<double>(
+                                          begin: 0.0,
+                                          end: 1.0,
+                                        ).animate(
+                                          CurvedAnimation(
+                                            parent: animation,
+                                            curve: const Interval(
+                                              0.0,
+                                              0.6,
+                                              curve: Curves.easeOut,
+                                            ),
+                                          ),
+                                        )
+                                      : animation;
+                                  return SlideTransition(
+                                    position: slide,
+                                    child: FadeTransition(
+                                      opacity: fade,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: _buildCurrentStep(),
+                              ),
+                            ),
+                          ),
+                        ),
                         if (!isLoading)
                           Positioned(
                             left: 24,
@@ -823,7 +823,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                       )
                                     : Text(
                                         _currentPage == _finalPage
-                                            ? context.l10n.onboardingStart
+                                            ? context.l10n.resultOpenPlan
                                             : context.l10n.onboardingNext,
                                         style: const TextStyle(
                                           fontSize: 16,

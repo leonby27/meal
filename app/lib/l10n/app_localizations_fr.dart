@@ -940,6 +940,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Rythme recommandé — 0,25 kg par semaine';
 
   @override
+  String get onboardingAgeYearsUnit => 'ans';
+
+  @override
   String get onboardingLoadingCalc => 'Calcul du métabolisme...';
 
   @override
@@ -1019,6 +1022,91 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onboardingStart => 'Commencer';
+
+  @override
+  String get resultPlanReadyTitle => 'Votre plan personnalisé est prêt';
+
+  @override
+  String resultPlanReadyLose(String delta, int calories) {
+    return 'Pour perdre $delta, commencez avec $calories kcal par jour';
+  }
+
+  @override
+  String resultPlanReadyGain(String delta, int calories) {
+    return 'Pour gagner $delta, commencez avec $calories kcal par jour';
+  }
+
+  @override
+  String resultPlanReadyMaintain(int calories) {
+    return 'Pour maintenir votre poids, commencez avec $calories kcal par jour';
+  }
+
+  @override
+  String get resultRingTrustLine =>
+      'Calculé à partir de vos réponses avec la formule Mifflin–St Jeor';
+
+  @override
+  String get resultRingAdjustLine =>
+      'Vous pouvez ajuster ces valeurs à tout moment';
+
+  @override
+  String get resultGoalCardTitle => 'Votre objectif';
+
+  @override
+  String resultGoalDateBy(String date) {
+    return 'Environ d\'ici le $date';
+  }
+
+  @override
+  String resultGoalPace(String pace) {
+    return 'Rythme réaliste — environ $pace par semaine';
+  }
+
+  @override
+  String resultGoalMaintainTitle(String weight) {
+    return 'Maintenir le poids autour de $weight';
+  }
+
+  @override
+  String get resultGoalMaintainSubtitle =>
+      'Pas de restrictions strictes — l\'équilibre quotidien suffit';
+
+  @override
+  String get resultBenefitsTitle => 'Ce que vous remarquerez avec le temps';
+
+  @override
+  String get resultBenefitsLose =>
+      'Plus d\'énergie · Meilleur sommeil · Moins d\'efforts pour le cœur';
+
+  @override
+  String get resultBenefitsGain =>
+      'Gains de force · Meilleure récupération · Énergie stable';
+
+  @override
+  String get resultBenefitsMaintain =>
+      'Bien-être stable · Meilleur sommeil · Moins de suralimentation';
+
+  @override
+  String get resultBridgeTitle =>
+      'Pour que le plan fonctionne, vous devez enregistrer chaque jour';
+
+  @override
+  String get resultBridgeFreeLine =>
+      'Gratuit — 10 enregistrements de repas pour essayer';
+
+  @override
+  String get resultBridgePremiumLine =>
+      'Avec Premium — sans limites, jusqu\'à votre objectif';
+
+  @override
+  String get resultDisclaimerShort =>
+      'Les recommandations ne remplacent pas un avis médical';
+
+  @override
+  String get resultDisclaimerExpand => 'En savoir plus';
+
+  @override
+  String get resultOpenPlan => 'Ouvrir mon plan';
 
   @override
   String get socialProofScaleTitle => 'Conçu pour un suivi sérieux';

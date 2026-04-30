@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/features/onboarding/widgets/common/ruler_picker.dart';
 
-class HeightStep extends StatefulWidget {
+class HeightStep extends StatelessWidget {
   final double heightCm;
   final bool isImperial;
   final ValueChanged<double> onChanged;
@@ -16,64 +15,19 @@ class HeightStep extends StatefulWidget {
     required this.onChanged,
   });
 
-  @override
-  State<HeightStep> createState() => _HeightStepState();
-}
+  // Metric: 120–220 cm, step 1
+  static const _minCm = 120.0;
+  static const _maxCm = 220.0;
 
-class _HeightStepState extends State<HeightStep> {
-  late final FixedExtentScrollController _controller;
+  // Imperial: 47–87 in, step 1 (3'11" – 7'3")
+  static const _minIn = 47.0;
+  static const _maxIn = 87.0;
+  static const _cmPerIn = 2.54;
 
-  static const _itemExtent = 60.0;
-  static const _selectedFontSize = 48.0;
-  static const _unselectedFontSize = 28.0;
-
-  // Metric: 120–220 cm
-  static const _minCm = 120;
-  static const _maxCm = 220;
-  static const _cmCount = _maxCm - _minCm + 1;
-
-  // Imperial: 3'11" – 7'3" (119–221 cm range in inches = 47–87 in)
-  static const _minInches = 47;
-  static const _maxInches = 87;
-  static const _inchesCount = _maxInches - _minInches + 1;
-
-  int get _itemCount => widget.isImperial ? _inchesCount : _cmCount;
-
-  int _cmToInitialIndex(double cm) {
-    if (widget.isImperial) {
-      final totalInches = (cm / 2.54).round();
-      return (totalInches - _minInches).clamp(0, _inchesCount - 1);
-    }
-    return (cm.round() - _minCm).clamp(0, _cmCount - 1);
-  }
-
-  String _formatImperial(int totalInches) {
+  static String _formatImperial(int totalInches) {
     final feet = totalInches ~/ 12;
     final inches = totalInches % 12;
     return "$feet'$inches\"";
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = FixedExtentScrollController(
-      initialItem: _cmToInitialIndex(widget.heightCm),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  double _fractionForIndex(int index) {
-    final pixels = _controller.hasClients
-        ? _controller.offset
-        : _controller.initialItem * _itemExtent;
-    final center = pixels / _itemExtent;
-    final distance = (index - center).abs();
-    return (1.0 - distance).clamp(0.0, 1.0);
   }
 
   @override
@@ -98,77 +52,52 @@ class _HeightStepState extends State<HeightStep> {
           const SizedBox(height: 8),
           Text(
             context.l10n.onboardingHeightHint,
-            style: TextStyle(
-              fontSize: 14,
-              color: cs.onSurfaceVariant,
-            ),
+            style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
           const Spacer(),
-          Center(
-            child: SizedBox(
-              height: 200,
-              child: ListenableBuilder(
-                listenable: _controller,
-                builder: (context, _) => ListWheelScrollView.useDelegate(
-                  controller: _controller,
-                  itemExtent: _itemExtent,
-                  physics: const FixedExtentScrollPhysics(),
-                  diameterRatio: 1.5,
-                  perspective: 0.003,
-                  onSelectedItemChanged: (index) {
-                    HapticFeedback.selectionClick();
-                    if (widget.isImperial) {
-                      final totalInches = index + _minInches;
-                      widget.onChanged(totalInches * 2.54);
-                    } else {
-                      widget.onChanged((index + _minCm).toDouble());
-                    }
-                  },
-                  childDelegate: ListWheelChildBuilderDelegate(
-                    builder: (context, index) {
-                      if (index < 0 || index >= _itemCount) return null;
-                      final label = widget.isImperial
-                          ? _formatImperial(index + _minInches)
-                          : '${index + _minCm}';
-                      final t = _fractionForIndex(index);
-                      final fontSize = _unselectedFontSize +
-                          (_selectedFontSize - _unselectedFontSize) * t;
-                      return Center(
-                        child: Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: fontSize,
-                            fontWeight:
-                                FontWeight.lerp(FontWeight.w400, FontWeight.w700, t),
-                            color: Color.lerp(
-                              cs.onSurfaceVariant.withAlpha(120),
-                              cs.onSurface,
-                              t,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    childCount: _itemCount,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 36),
-          Center(
-            child: Text(
-              widget.isImperial ? 'ft' : context.l10n.cmUnit,
-              style: TextStyle(
-                fontSize: 16,
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-          ),
+          if (isImperial)
+            _buildImperialPicker(context)
+          else
+            _buildMetricPicker(context),
           const Spacer(),
         ],
       ),
+    );
+  }
+
+  Widget _buildMetricPicker(BuildContext context) {
+    return RulerPicker(
+      value: heightCm,
+      min: _minCm,
+      max: _maxCm,
+      step: 1.0,
+      tickSpacing: 12.0,
+      majorTickEvery: 5,
+      labelEvery: 10,
+      unit: context.l10n.cmUnit,
+      formatLabel: (v) => v.round().toString(),
+      formatReadout: (v) => v.round().toString(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildImperialPicker(BuildContext context) {
+    final totalIn = (heightCm / _cmPerIn).round().clamp(
+      _minIn.toInt(),
+      _maxIn.toInt(),
+    );
+    return RulerPicker(
+      value: totalIn.toDouble(),
+      min: _minIn,
+      max: _maxIn,
+      step: 1.0,
+      tickSpacing: 18.0,
+      majorTickEvery: 6,
+      labelEvery: 6,
+      formatLabel: (v) => _formatImperial(v.round()),
+      formatReadout: (v) => _formatImperial(v.round()),
+      onChanged: (v) => onChanged(v * _cmPerIn),
     );
   }
 }
