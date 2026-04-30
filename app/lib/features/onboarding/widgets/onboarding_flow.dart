@@ -50,6 +50,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   static const _progressSteps = 8;
   static const _resultPage = 9;
   static const _finalPage = 9;
+  static const _stepImageAspectRatio = 1024 / 632;
+  static const _stepImageHorizontalPadding = 16.0;
+  static const _stepImageBottomOffset = 84.0;
+  static const _stepImageContentGap = 12.0;
   static const _stepNames = [
     'goal',
     'gender',
@@ -609,184 +613,229 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             children: [
               _buildProgressHeader(context, isDark, isLoading),
               Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: SafeArea(
-                        top: false,
-                        bottom: isLoading,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          reverseDuration: const Duration(milliseconds: 250),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          layoutBuilder: (currentChild, previousChildren) {
-                            return Stack(
-                              children: [
-                                for (final child in previousChildren)
-                                  Positioned.fill(child: child),
-                                if (currentChild != null)
-                                  Positioned.fill(child: currentChild),
-                              ],
-                            );
-                          },
-                          transitionBuilder: (child, animation) {
-                            final isIncoming =
-                                child.key == ValueKey(_currentPage);
-                            final slideBegin = _isForward
-                                ? (isIncoming ? 0.25 : -0.15)
-                                : (isIncoming ? -0.25 : 0.15);
-                            final slide = Tween<Offset>(
-                              begin: Offset(slideBegin, 0),
-                              end: Offset.zero,
-                            ).animate(animation);
-                            final fade = isIncoming
-                                ? Tween<double>(begin: 0.0, end: 1.0).animate(
-                                    CurvedAnimation(
-                                      parent: animation,
-                                      curve: const Interval(
-                                        0.0,
-                                        0.6,
-                                        curve: Curves.easeOut,
-                                      ),
-                                    ),
-                                  )
-                                : animation;
-                            return SlideTransition(
-                              position: slide,
-                              child: FadeTransition(
-                                opacity: fade,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: _buildCurrentStep(),
-                        ),
-                      ),
-                    ),
-                    if (stepImageAsset != null)
-                      Positioned(
-                        left: 16,
-                        right: 16,
-                        bottom: isLoading ? 0 : bottomInset + 84,
-                        child: IgnorePointer(
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 280),
-                            reverseDuration: const Duration(milliseconds: 220),
-                            layoutBuilder: (currentChild, previousChildren) {
-                              return Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  for (final child in previousChildren) child,
-                                  ?currentChild,
-                                ],
-                              );
-                            },
-                            transitionBuilder: (child, animation) {
-                              final isIncoming =
-                                  child.key == ValueKey(stepImageAsset);
-                              final opacity = CurvedAnimation(
-                                parent: animation,
-                                curve: isIncoming
-                                    ? const Interval(
-                                        0.45,
-                                        1,
-                                        curve: Curves.easeOutCubic,
-                                      )
-                                    : const Interval(
-                                        0.55,
-                                        1,
-                                        curve: Curves.easeInCubic,
-                                      ),
-                              );
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final hasStepImage = stepImageAsset != null;
+                    final stepImageWidth =
+                        constraints.maxWidth - _stepImageHorizontalPadding * 2;
+                    final stepImageHeight = hasStepImage
+                        ? (stepImageWidth / _stepImageAspectRatio).clamp(
+                            0.0,
+                            constraints.maxHeight * 0.28,
+                          )
+                        : 0.0;
+                    final stepImageBottom = isLoading
+                        ? 0.0
+                        : bottomInset + _stepImageBottomOffset;
+                    final contentBottomPadding = hasStepImage
+                        ? stepImageBottom +
+                              stepImageHeight +
+                              _stepImageContentGap
+                        : 0.0;
 
-                              final offset =
-                                  Tween<Offset>(
-                                    begin: const Offset(0, 0.12),
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: SafeArea(
+                            top: false,
+                            bottom: isLoading,
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                bottom: contentBottomPadding,
+                              ),
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                reverseDuration: const Duration(
+                                  milliseconds: 250,
+                                ),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                layoutBuilder:
+                                    (currentChild, previousChildren) {
+                                      return Stack(
+                                        children: [
+                                          for (final child in previousChildren)
+                                            Positioned.fill(child: child),
+                                          if (currentChild != null)
+                                            Positioned.fill(
+                                              child: currentChild,
+                                            ),
+                                        ],
+                                      );
+                                    },
+                                transitionBuilder: (child, animation) {
+                                  final isIncoming =
+                                      child.key == ValueKey(_currentPage);
+                                  final slideBegin = _isForward
+                                      ? (isIncoming ? 0.25 : -0.15)
+                                      : (isIncoming ? -0.25 : 0.15);
+                                  final slide = Tween<Offset>(
+                                    begin: Offset(slideBegin, 0),
                                     end: Offset.zero,
-                                  ).animate(
-                                    CurvedAnimation(
-                                      parent: animation,
-                                      curve: isIncoming
-                                          ? Curves.easeOutCubic
-                                          : Curves.easeInCubic,
+                                  ).animate(animation);
+                                  final fade = isIncoming
+                                      ? Tween<double>(
+                                          begin: 0.0,
+                                          end: 1.0,
+                                        ).animate(
+                                          CurvedAnimation(
+                                            parent: animation,
+                                            curve: const Interval(
+                                              0.0,
+                                              0.6,
+                                              curve: Curves.easeOut,
+                                            ),
+                                          ),
+                                        )
+                                      : animation;
+                                  return SlideTransition(
+                                    position: slide,
+                                    child: FadeTransition(
+                                      opacity: fade,
+                                      child: child,
                                     ),
                                   );
-
-                              return FadeTransition(
-                                opacity: opacity,
-                                child: SlideTransition(
-                                  position: offset,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: Image.asset(
-                              stepImageAsset,
-                              key: ValueKey(stepImageAsset),
-                              width: double.infinity,
-                              fit: BoxFit.contain,
-                              cacheWidth: stepImageCacheWidth,
-                              filterQuality: FilterQuality.high,
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!isLoading)
-                      Positioned(
-                        left: 24,
-                        right: 24,
-                        bottom: bottomInset + 16,
-                        child: Container(
-                          width: double.infinity,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            border: AppTheme.cardEdgeBorder(isDark: isDark),
-                            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _isFinishing
-                                ? () {}
-                                : (_canProceed ? _next : null),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _canProceed || _isFinishing
-                                  ? AppColors.primary
-                                  : (isDark
-                                        ? AppColors.darkDisabledBg
-                                        : AppColors.lightDisabledBg),
-                              foregroundColor: _canProceed || _isFinishing
-                                  ? Colors.white
-                                  : (isDark
-                                        ? AppColors.darkDisabledContent
-                                        : AppColors.lightDisabledContent),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                },
+                                child: _buildCurrentStep(),
                               ),
-                              elevation: 0,
                             ),
-                            child: _isFinishing
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : Text(
-                                    _currentPage == _finalPage
-                                        ? context.l10n.onboardingStart
-                                        : context.l10n.onboardingNext,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
                           ),
                         ),
-                      ),
-                  ],
+                        if (stepImageAsset != null)
+                          Positioned(
+                            left: _stepImageHorizontalPadding,
+                            right: _stepImageHorizontalPadding,
+                            bottom: stepImageBottom,
+                            child: IgnorePointer(
+                              child: SizedBox(
+                                height: stepImageHeight,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 280),
+                                  reverseDuration: const Duration(
+                                    milliseconds: 220,
+                                  ),
+                                  layoutBuilder:
+                                      (currentChild, previousChildren) {
+                                        return Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            for (final child
+                                                in previousChildren)
+                                              child,
+                                            ?currentChild,
+                                          ],
+                                        );
+                                      },
+                                  transitionBuilder: (child, animation) {
+                                    final isIncoming =
+                                        child.key == ValueKey(stepImageAsset);
+                                    final opacity = CurvedAnimation(
+                                      parent: animation,
+                                      curve: isIncoming
+                                          ? const Interval(
+                                              0.45,
+                                              1,
+                                              curve: Curves.easeOutCubic,
+                                            )
+                                          : const Interval(
+                                              0.55,
+                                              1,
+                                              curve: Curves.easeInCubic,
+                                            ),
+                                    );
+
+                                    final offset =
+                                        Tween<Offset>(
+                                          begin: const Offset(0, 0.12),
+                                          end: Offset.zero,
+                                        ).animate(
+                                          CurvedAnimation(
+                                            parent: animation,
+                                            curve: isIncoming
+                                                ? Curves.easeOutCubic
+                                                : Curves.easeInCubic,
+                                          ),
+                                        );
+
+                                    return FadeTransition(
+                                      opacity: opacity,
+                                      child: SlideTransition(
+                                        position: offset,
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Image.asset(
+                                    stepImageAsset,
+                                    key: ValueKey(stepImageAsset),
+                                    width: double.infinity,
+                                    fit: BoxFit.contain,
+                                    cacheWidth: stepImageCacheWidth,
+                                    filterQuality: FilterQuality.high,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (!isLoading)
+                          Positioned(
+                            left: 24,
+                            right: 24,
+                            bottom: bottomInset + 16,
+                            child: Container(
+                              width: double.infinity,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: AppTheme.cardEdgeBorder(isDark: isDark),
+                                boxShadow: AppTheme.cardEdgeShadows(
+                                  isDark: isDark,
+                                ),
+                              ),
+                              child: ElevatedButton(
+                                onPressed: _isFinishing
+                                    ? () {}
+                                    : (_canProceed ? _next : null),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _canProceed || _isFinishing
+                                      ? AppColors.primary
+                                      : (isDark
+                                            ? AppColors.darkDisabledBg
+                                            : AppColors.lightDisabledBg),
+                                  foregroundColor: _canProceed || _isFinishing
+                                      ? Colors.white
+                                      : (isDark
+                                            ? AppColors.darkDisabledContent
+                                            : AppColors.lightDisabledContent),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: _isFinishing
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        _currentPage == _finalPage
+                                            ? context.l10n.onboardingStart
+                                            : context.l10n.onboardingNext,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
