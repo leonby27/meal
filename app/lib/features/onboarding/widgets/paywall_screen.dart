@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:meal_tracker/app/theme.dart';
+import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/subscription_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
@@ -52,6 +53,13 @@ class _PaywallScreenState extends State<PaywallScreen>
     final sub = SubscriptionService();
     sub.addListener(_onStateChanged);
     _eventsSub = sub.events.listen(_onSubEvent);
+
+    unawaited(
+      AnalyticsService.instance.logEvent(
+        'paywall_viewed',
+        parameters: {'is_hard_paywall': _isHardPaywall ? 1 : 0},
+      ),
+    );
 
     // Make sure products are fetched by the time the user taps the CTA.
     sub.ensureProductsLoaded();

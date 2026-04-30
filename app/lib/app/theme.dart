@@ -33,6 +33,7 @@ class AppColors {
   static const lightSurface = Color(0xFFFFFFFF);
   static const lightSurface2 = Color(0xFFF0F1F5);
   static const lightBack2 = Color(0xFFF1F1F7);
+  static const lightBack3 = Color(0xFFF1F1F7);
   static const lightOnSurface = Color(0xFF0A1B39);
   static const lightOnSurfaceVariant = Color(0xFF83899F);
   static const lightSecondaryDark = Color(0xFF676E85);
@@ -44,6 +45,9 @@ class AppColors {
   static const lightDividerStrong = Color(0xFFD7D9E2);
   static const lightInverse = Color(0xFF31394A);
   static const lightAccentLight = Color(0xFF83B0FF);
+  static const lightOnBack = Color(0xFFFFFFFF);
+  static const lightOnBackAlpha50 = Color(0x80FFFFFF);
+  static const lightOnBackAlpha30 = Color(0x80FFFFFF);
   static const lightOnBack4 = Color(0xFFFFFFFF);
   static const lightUnderBack = Color(0xFFE0E4EC);
   static const lightDisabledBg = Color(0xFFE8EBEF);
@@ -53,6 +57,7 @@ class AppColors {
   static const darkScaffold = Color(0xFF14161B);
   static const darkSurface = Color(0xFF21262D);
   static const darkBack2 = Color(0xFF101115);
+  static const darkBack3 = Color(0xFF0B0C13);
   static const darkSurface2 = Color(0xFF292E37);
   static const darkSurface3 = Color(0xFF2B313A);
   static const darkSurfaceElevated = Color(0xFF3B434F);
@@ -65,6 +70,9 @@ class AppColors {
   static const darkDivider = Color(0xFF313843);
   static const darkDividerLight = Color(0xFF262C34);
   static const darkDividerStrong = Color(0xFF3E4551);
+  static const darkOnBack = Color(0xFF21262D);
+  static const darkOnBackAlpha50 = Color(0x8021262D);
+  static const darkOnBackAlpha30 = Color(0x4D21262D);
   static const darkOnBack4 = Color(0xFF1A1C22);
   static const darkUnderBack = Color(0xFF000000);
   static const darkDisabledBg = Color(0x12E7EFFE);
@@ -81,8 +89,10 @@ class AppColors {
   static const neutralBtnContentLight = Color(0xFF0A1B39);
 
   // ── Line tokens (DT = dark-theme transparency variants) ───
-  /// Dark-theme line @ 5% on #CDDEFF (was 10% / 0x1A).
-  static const lineDT100 = Color(0x0DCDDEFF);
+  static const lineDT50 = Color(0x0DCDDEFF);
+
+  /// Dark-theme line @ 10% on #CDDEFF.
+  static const lineDT100 = Color(0x1ACDDEFF);
   static const lineDT200 = Color(0x1ACDDEFF);
   static const lineDT300 = Color(0x1ACDDEFF);
   static const lineLight100 = Color(0xFFEDEEF3);
@@ -165,10 +175,7 @@ class AppTheme {
   static BoxBorder? cardEdgeBorder({required bool isDark}) {
     if (!isDark) return null;
     return const Border(
-      top: BorderSide(
-        color: AppColors.cardEdgeDarkTop,
-        width: 2,
-      ),
+      top: BorderSide(color: AppColors.cardEdgeDarkTop, width: 2),
     );
   }
 
@@ -188,10 +195,7 @@ class AppTheme {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(radius),
       border: const Border(
-        top: BorderSide(
-          color: AppColors.cardEdgeDarkTop,
-          width: 2,
-        ),
+        top: BorderSide(color: AppColors.cardEdgeDarkTop, width: 2),
       ),
     );
   }

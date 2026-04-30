@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:meal_tracker/l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -7,14 +8,27 @@ import 'package:meal_tracker/app/router.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/notification_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/subscription_service.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
+import 'package:meal_tracker/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (DefaultFirebaseOptions.isSupported) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      await AnalyticsService.instance.init();
+    } catch (e) {
+      debugPrint('Firebase initialization failed: $e');
+    }
+  }
 
   await Future.wait([
     initializeDateFormatting('ru', null),

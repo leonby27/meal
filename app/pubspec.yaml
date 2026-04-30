@@ -58,13 +58,22 @@ dependencies:
   lottie: ^3.3.1
   google_fonts: ^8.0.2
   flutter_svg: ^2.2.4
-  mobile_scanner: ^6.0.2
+  mobile_scanner: ^7.2.0
   in_app_purchase: ^3.2.0
   url_launcher: ^6.3.1
   confetti: ^0.8.0
   cupertino_http: ^2.4.0
+  firebase_core: ^4.7.0
+  firebase_analytics: ^12.3.0
 
 dependency_overrides:
+  # Local fork of mobile_scanner 7.2.0 with iOS plugin registration disabled.
+  # The upstream iOS MLKit pods do not support arm64 simulator builds on
+  # Apple Silicon iOS 26+ runtimes, which prevents the app from launching in
+  # the simulator. Android scanner support remains enabled.
+  mobile_scanner:
+    path: ./third_party/mobile_scanner
+
   # Local fork of sign_in_with_apple 6.1.4 that sets
   # ASAuthorizationController.presentationContextProvider on iOS.
   # Upstream 6.1.4 omits it, which makes the native Apple sign-in sheet
@@ -101,6 +110,8 @@ flutter:
     - assets/database/products.db
     - assets/animations/
     - assets/icons/
+    - assets/onboarding/dark/
+    - assets/onboarding/light/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
 import 'package:meal_tracker/features/onboarding/services/tdee_calculator.dart';
@@ -38,9 +40,128 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   bool _activitySelected = true;
   bool _isForward = true;
   bool _isFinishing = false;
+  bool _onboardingCompleted = false;
+  String? _precachedStepImagesKey;
+  int _backClicksCount = 0;
+  DateTime _stepStartedAt = DateTime.now();
+  final Stopwatch _onboardingStopwatch = Stopwatch();
+  final Set<int> _stepsSeen = <int>{};
   static const _totalSteps = 10;
+  static const _progressSteps = 8;
   static const _resultPage = 9;
   static const _finalPage = 9;
+  static const _stepNames = [
+    'goal',
+    'gender',
+    'age',
+    'units',
+    'height',
+    'weight',
+    'target_weight',
+    'activity',
+    'loading',
+    'result',
+  ];
+  static const _darkStepImageAssets = [
+    'assets/onboarding/dark/step_1.jpg',
+    'assets/onboarding/dark/step_2.jpg',
+    'assets/onboarding/dark/step_3.jpg',
+    'assets/onboarding/dark/step_4.jpg',
+    'assets/onboarding/dark/step_5.jpg',
+    'assets/onboarding/dark/step_6.jpg',
+    'assets/onboarding/dark/step_7.jpg',
+    'assets/onboarding/dark/step_8.jpg',
+  ];
+  static const _lightStepImageAssets = [
+    'assets/onboarding/light/step_1.jpg',
+    'assets/onboarding/light/step_2.jpg',
+    'assets/onboarding/light/step_3.jpg',
+    'assets/onboarding/light/step_4.jpg',
+    'assets/onboarding/light/step_5.jpg',
+    'assets/onboarding/light/step_6.jpg',
+    'assets/onboarding/light/step_7.jpg',
+    'assets/onboarding/light/step_8.jpg',
+  ];
+
+  String _stepName(int page) {
+    if (page < 0 || page >= _stepNames.length) return 'unknown';
+    return _stepNames[page];
+  }
+
+  Map<String, Object> _stepParams(int page, {String? direction}) {
+    final params = <String, Object>{
+      'step_index': page,
+      'step_name': _stepName(page),
+      'total_steps': _totalSteps,
+    };
+    if (direction != null) params['direction'] = direction;
+    return params;
+  }
+
+  int get _timeOnStepMs =>
+      DateTime.now().difference(_stepStartedAt).inMilliseconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _onboardingStopwatch.start();
+    _stepStartedAt = DateTime.now();
+    _stepsSeen.add(_currentPage);
+
+    unawaited(
+      AnalyticsService.instance.logEvent(
+        'onboarding_started',
+        parameters: {'total_steps': _totalSteps},
+      ),
+    );
+    unawaited(_logStepViewed(_currentPage, direction: 'initial'));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final cacheWidth =
+        ((MediaQuery.sizeOf(context).width - 32) *
+                MediaQuery.devicePixelRatioOf(context))
+            .round();
+    final cacheKey = '${isDark ? 'dark' : 'light'}:$cacheWidth';
+    if (_precachedStepImagesKey == cacheKey) return;
+    _precachedStepImagesKey = cacheKey;
+
+    for (final asset in _stepImageAssetsFor(isDark: isDark)) {
+      unawaited(
+        precacheImage(
+          ResizeImage(AssetImage(asset), width: cacheWidth),
+          context,
+        ),
+      );
+    }
+  }
+
+  Future<void> _logStepViewed(int page, {required String direction}) {
+    return AnalyticsService.instance.logEvent(
+      'onboarding_step_viewed',
+      parameters: _stepParams(page, direction: direction),
+    );
+  }
+
+  Future<void> _logStepCompleted(int page) {
+    return AnalyticsService.instance.logEvent(
+      'onboarding_step_completed',
+      parameters: {..._stepParams(page), 'time_on_step_ms': _timeOnStepMs},
+    );
+  }
+
+  List<String> _stepImageAssetsFor({required bool isDark}) {
+    return isDark ? _darkStepImageAssets : _lightStepImageAssets;
+  }
+
+  String? _stepImageAsset({required bool isDark}) {
+    if (_currentPage < 0 || _currentPage >= _progressSteps) return null;
+    return _stepImageAssetsFor(isDark: isDark)[_currentPage];
+  }
 
   bool get _canProceed {
     switch (_currentPage) {
@@ -65,16 +186,30 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     }
   }
 
-  void _goToPage(int page) {
+  void _goToPage(int page, {required String direction}) {
     if (!mounted) return;
     setState(() {
       _isForward = page > _currentPage;
       _currentPage = page;
     });
+    _stepStartedAt = DateTime.now();
+    _stepsSeen.add(page);
+    unawaited(_logStepViewed(page, direction: direction));
   }
 
   void _next() {
     if (_isFinishing) return;
+    final page = _currentPage;
+
+    unawaited(
+      AnalyticsService.instance.logEvent(
+        'onboarding_step_cta_clicked',
+        parameters: {
+          ..._stepParams(page),
+          'is_final_step': page == _finalPage ? 1 : 0,
+        },
+      ),
+    );
 
     if (_currentPage == 5) {
       _updateTargetWeightFromGoal();
@@ -85,12 +220,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     }
 
     if (_currentPage == _finalPage) {
+      unawaited(_logStepCompleted(page));
       _finish();
       return;
     }
 
     if (_currentPage < _totalSteps - 1) {
-      _goToPage(_currentPage + 1);
+      unawaited(_logStepCompleted(page));
+      _goToPage(_currentPage + 1, direction: 'forward');
     }
   }
 
@@ -109,7 +246,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   void _back() {
     if (_currentPage > 0) {
-      _goToPage(_currentPage - 1);
+      final page = _currentPage;
+      _backClicksCount++;
+      unawaited(
+        AnalyticsService.instance.logEvent(
+          'onboarding_back_clicked',
+          parameters: {
+            'from_step_index': page,
+            'from_step_name': _stepName(page),
+            'time_on_step_ms': _timeOnStepMs,
+          },
+        ),
+      );
+      _goToPage(_currentPage - 1, direction: 'back');
     }
   }
 
@@ -141,6 +290,20 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
     try {
       await AuthService().markOnboardingCompleted();
+
+      _onboardingCompleted = true;
+      _onboardingStopwatch.stop();
+      unawaited(
+        AnalyticsService.instance.logEvent(
+          'onboarding_completed',
+          parameters: {
+            'total_steps': _totalSteps,
+            'steps_seen': _stepsSeen.length,
+            'back_clicks_count': _backClicksCount,
+            'total_duration_ms': _onboardingStopwatch.elapsedMilliseconds,
+          },
+        ),
+      );
 
       if (mounted) context.go('/paywall');
 
@@ -180,7 +343,26 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   void _onLoadingFinished() {
-    _goToPage(_resultPage);
+    unawaited(_logStepCompleted(_currentPage));
+    _goToPage(_resultPage, direction: 'forward');
+  }
+
+  @override
+  void dispose() {
+    if (!_onboardingCompleted) {
+      unawaited(
+        AnalyticsService.instance.logEvent(
+          'onboarding_exited',
+          parameters: {
+            ..._stepParams(_currentPage),
+            'steps_seen': _stepsSeen.length,
+            'back_clicks_count': _backClicksCount,
+            'total_duration_ms': _onboardingStopwatch.elapsedMilliseconds,
+          },
+        ),
+      );
+    }
+    super.dispose();
   }
 
   Widget _buildCurrentStep() {
@@ -254,11 +436,159 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     }
   }
 
+  Widget _buildProgressHeader(
+    BuildContext context,
+    bool isDark,
+    bool isLoading,
+  ) {
+    final cs = Theme.of(context).colorScheme;
+    final topInset = MediaQuery.paddingOf(context).top;
+    final canGoBack = _currentPage > 0 && !isLoading;
+    final progressStep = (_currentPage + 1).clamp(1, _progressSteps);
+    final progressValue = progressStep / _progressSteps;
+    final headerBg = isDark
+        ? AppColors.darkOnBackAlpha30
+        : AppColors.lightOnBackAlpha30;
+    final controlBg = isDark ? AppColors.darkOnBack : AppColors.lightOnBack;
+    final counterBg = isDark ? AppColors.darkOnBack : AppColors.lightOnBack;
+    final borderColor = isDark ? AppColors.lineDT50 : AppColors.lineLight100;
+    final trackColor = isDark ? AppColors.lineDT300 : AppColors.lineLight300;
+
+    return SizedBox(
+      height: topInset + 64,
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: headerBg,
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(24),
+            bottomRight: Radius.circular(24),
+          ),
+        ),
+        child: CustomPaint(
+          foregroundPainter: _RoundedBottomBorderPainter(
+            color: borderColor,
+            radius: 24,
+          ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, topInset + 12, 16, 16),
+            child: Row(
+              children: [
+                Opacity(
+                  opacity: canGoBack ? 1 : 0.2,
+                  child: IgnorePointer(
+                    ignoring: !canGoBack,
+                    child: Container(
+                      width: 48,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: controlBg,
+                        borderRadius: BorderRadius.circular(122),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: _back,
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: cs.onSurface,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 17),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final trackWidth = constraints.maxWidth < 230
+                          ? constraints.maxWidth
+                          : 230.0;
+
+                      return Align(
+                        alignment: Alignment.center,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(100),
+                          child: SizedBox(
+                            width: trackWidth,
+                            height: 20,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(color: trackColor),
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween(end: progressValue),
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                builder: (context, value, _) {
+                                  return Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: FractionallySizedBox(
+                                      widthFactor: value,
+                                      heightFactor: 1,
+                                      child: const DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Color(0xFF317BFE),
+                                              Color(0xFF31AFFE),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 17),
+                Container(
+                  width: 48,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: counterBg,
+                    borderRadius: BorderRadius.circular(122),
+                  ),
+                  child: Text(
+                    '$progressStep/$_progressSteps',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      height: 22 / 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isLoading = _currentPage == 8;
+    final headerBg = isDark
+        ? AppColors.darkOnBackAlpha30
+        : AppColors.lightOnBackAlpha30;
+    final stepImageAsset = _stepImageAsset(isDark: isDark);
+    final stepImageCacheWidth = stepImageAsset == null
+        ? null
+        : ((MediaQuery.sizeOf(context).width - 32) *
+                  MediaQuery.devicePixelRatioOf(context))
+              .round();
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return PopScope(
       canPop: false,
@@ -266,158 +596,239 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         if (!didPop && _currentPage > 0 && !isLoading) _back();
       },
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBack2 : AppColors.lightBack2,
-        body: SafeArea(
+        backgroundColor: isDark ? AppColors.darkBack3 : AppColors.lightBack3,
+        body: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: headerBg,
+            statusBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+          ),
           child: Column(
             children: [
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: SizedBox(
-                  height: 40,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (_currentPage > 0 && !isLoading) ...[
-                        SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: IconButton(
-                            padding: EdgeInsets.zero,
-                            onPressed: _back,
-                            icon: Icon(Icons.arrow_back, color: cs.onSurface),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(
-                              begin: (_currentPage + 1) / _totalSteps,
-                              end: (_currentPage + 1) / _totalSteps,
-                            ),
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                            builder: (context, value, _) =>
-                                LinearProgressIndicator(
-                                  value: value,
-                                  minHeight: 20,
-                                  backgroundColor: cs.outline.withAlpha(60),
-                                  valueColor: const AlwaysStoppedAnimation(
-                                    AppColors.primary,
-                                  ),
-                                ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              _buildProgressHeader(context, isDark, isLoading),
               Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  reverseDuration: const Duration(milliseconds: 250),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  layoutBuilder: (currentChild, previousChildren) {
-                    return Stack(
-                      children: [
-                        for (final child in previousChildren)
-                          Positioned.fill(child: child),
-                        if (currentChild != null)
-                          Positioned.fill(child: currentChild),
-                      ],
-                    );
-                  },
-                  transitionBuilder: (child, animation) {
-                    final isIncoming = child.key == ValueKey(_currentPage);
-                    final slideBegin = _isForward
-                        ? (isIncoming ? 0.25 : -0.15)
-                        : (isIncoming ? -0.25 : 0.15);
-                    final slide = Tween<Offset>(
-                      begin: Offset(slideBegin, 0),
-                      end: Offset.zero,
-                    ).animate(animation);
-                    final fade = isIncoming
-                        ? Tween<double>(begin: 0.0, end: 1.0).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: const Interval(
-                                0.0,
-                                0.6,
-                                curve: Curves.easeOut,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: SafeArea(
+                        top: false,
+                        bottom: isLoading,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          reverseDuration: const Duration(milliseconds: 250),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          layoutBuilder: (currentChild, previousChildren) {
+                            return Stack(
+                              children: [
+                                for (final child in previousChildren)
+                                  Positioned.fill(child: child),
+                                if (currentChild != null)
+                                  Positioned.fill(child: currentChild),
+                              ],
+                            );
+                          },
+                          transitionBuilder: (child, animation) {
+                            final isIncoming =
+                                child.key == ValueKey(_currentPage);
+                            final slideBegin = _isForward
+                                ? (isIncoming ? 0.25 : -0.15)
+                                : (isIncoming ? -0.25 : 0.15);
+                            final slide = Tween<Offset>(
+                              begin: Offset(slideBegin, 0),
+                              end: Offset.zero,
+                            ).animate(animation);
+                            final fade = isIncoming
+                                ? Tween<double>(begin: 0.0, end: 1.0).animate(
+                                    CurvedAnimation(
+                                      parent: animation,
+                                      curve: const Interval(
+                                        0.0,
+                                        0.6,
+                                        curve: Curves.easeOut,
+                                      ),
+                                    ),
+                                  )
+                                : animation;
+                            return SlideTransition(
+                              position: slide,
+                              child: FadeTransition(
+                                opacity: fade,
+                                child: child,
                               ),
+                            );
+                          },
+                          child: _buildCurrentStep(),
+                        ),
+                      ),
+                    ),
+                    if (stepImageAsset != null)
+                      Positioned(
+                        left: 16,
+                        right: 16,
+                        bottom: isLoading ? 0 : bottomInset + 84,
+                        child: IgnorePointer(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 280),
+                            reverseDuration: const Duration(milliseconds: 220),
+                            layoutBuilder: (currentChild, previousChildren) {
+                              return Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  for (final child in previousChildren) child,
+                                  ?currentChild,
+                                ],
+                              );
+                            },
+                            transitionBuilder: (child, animation) {
+                              final isIncoming =
+                                  child.key == ValueKey(stepImageAsset);
+                              final opacity = CurvedAnimation(
+                                parent: animation,
+                                curve: isIncoming
+                                    ? const Interval(
+                                        0.45,
+                                        1,
+                                        curve: Curves.easeOutCubic,
+                                      )
+                                    : const Interval(
+                                        0.55,
+                                        1,
+                                        curve: Curves.easeInCubic,
+                                      ),
+                              );
+
+                              final offset =
+                                  Tween<Offset>(
+                                    begin: const Offset(0, 0.12),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: animation,
+                                      curve: isIncoming
+                                          ? Curves.easeOutCubic
+                                          : Curves.easeInCubic,
+                                    ),
+                                  );
+
+                              return FadeTransition(
+                                opacity: opacity,
+                                child: SlideTransition(
+                                  position: offset,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Image.asset(
+                              stepImageAsset,
+                              key: ValueKey(stepImageAsset),
+                              width: double.infinity,
+                              fit: BoxFit.contain,
+                              cacheWidth: stepImageCacheWidth,
+                              filterQuality: FilterQuality.high,
                             ),
-                          )
-                        : animation;
-                    return SlideTransition(
-                      position: slide,
-                      child: FadeTransition(opacity: fade, child: child),
-                    );
-                  },
-                  child: _buildCurrentStep(),
+                          ),
+                        ),
+                      ),
+                    if (!isLoading)
+                      Positioned(
+                        left: 24,
+                        right: 24,
+                        bottom: bottomInset + 16,
+                        child: Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            border: AppTheme.cardEdgeBorder(isDark: isDark),
+                            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: _isFinishing
+                                ? () {}
+                                : (_canProceed ? _next : null),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _canProceed || _isFinishing
+                                  ? AppColors.primary
+                                  : (isDark
+                                        ? AppColors.darkDisabledBg
+                                        : AppColors.lightDisabledBg),
+                              foregroundColor: _canProceed || _isFinishing
+                                  ? Colors.white
+                                  : (isDark
+                                        ? AppColors.darkDisabledContent
+                                        : AppColors.lightDisabledContent),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: _isFinishing
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    _currentPage == _finalPage
+                                        ? context.l10n.onboardingStart
+                                        : context.l10n.onboardingNext,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              if (!isLoading)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                  child: Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: AppTheme.cardEdgeBorder(isDark: isDark),
-                      boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _isFinishing
-                          ? () {}
-                          : (_canProceed ? _next : null),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _canProceed || _isFinishing
-                            ? AppColors.primary
-                            : (isDark
-                                  ? AppColors.darkDisabledBg
-                                  : AppColors.lightDisabledBg),
-                        foregroundColor: _canProceed || _isFinishing
-                            ? Colors.white
-                            : (isDark
-                                  ? AppColors.darkDisabledContent
-                                  : AppColors.lightDisabledContent),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isFinishing
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              _currentPage == _finalPage
-                                  ? context.l10n.onboardingStart
-                                  : context.l10n.onboardingNext,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
       ),
     );
+  }
+}
+
+class _RoundedBottomBorderPainter extends CustomPainter {
+  const _RoundedBottomBorderPainter({
+    required this.color,
+    required this.radius,
+  });
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final halfStroke = paint.strokeWidth / 2;
+    final bottom = size.height - halfStroke;
+    final left = halfStroke;
+    final right = size.width - halfStroke;
+    final r = radius.clamp(0, size.width / 2);
+
+    final path = Path()
+      ..moveTo(left, bottom - r)
+      ..quadraticBezierTo(left, bottom, left + r, bottom)
+      ..lineTo(right - r, bottom)
+      ..quadraticBezierTo(right, bottom, right, bottom - r);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RoundedBottomBorderPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.radius != radius;
   }
 }

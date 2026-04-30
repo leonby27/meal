@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart' as drift;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -14,11 +15,7 @@ class BarcodeScannerScreen extends StatefulWidget {
   final String mealType;
   final String? dateStr;
 
-  const BarcodeScannerScreen({
-    super.key,
-    required this.mealType,
-    this.dateStr,
-  });
+  const BarcodeScannerScreen({super.key, required this.mealType, this.dateStr});
 
   @override
   State<BarcodeScannerScreen> createState() => _BarcodeScannerScreenState();
@@ -27,7 +24,12 @@ class BarcodeScannerScreen extends StatefulWidget {
 class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
   final MobileScannerController _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.normal,
-    formats: [BarcodeFormat.ean13, BarcodeFormat.ean8, BarcodeFormat.upcA, BarcodeFormat.upcE],
+    formats: [
+      BarcodeFormat.ean13,
+      BarcodeFormat.ean8,
+      BarcodeFormat.upcA,
+      BarcodeFormat.upcE,
+    ],
   );
 
   bool _isProcessing = false;
@@ -176,19 +178,21 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         : DateTime.now();
 
     final db = await AppDatabase.getInstance();
-    await db.addFoodLog(FoodLogsCompanion.insert(
-      id: const Uuid().v4(),
-      productId: drift.Value(product.productId),
-      productName: product.name,
-      mealType: widget.mealType,
-      mealDate: DateTime(date.year, date.month, date.day, 12),
-      grams: grams,
-      protein: drift.Value((product.proteinPer100g ?? 0) * factor),
-      fat: drift.Value((product.fatPer100g ?? 0) * factor),
-      carbs: drift.Value((product.carbsPer100g ?? 0) * factor),
-      calories: drift.Value((product.caloriesPer100g ?? 0) * factor),
-      imageUrl: drift.Value(product.imageUrl),
-    ));
+    await db.addFoodLog(
+      FoodLogsCompanion.insert(
+        id: const Uuid().v4(),
+        productId: drift.Value(product.productId),
+        productName: product.name,
+        mealType: widget.mealType,
+        mealDate: DateTime(date.year, date.month, date.day, 12),
+        grams: grams,
+        protein: drift.Value((product.proteinPer100g ?? 0) * factor),
+        fat: drift.Value((product.fatPer100g ?? 0) * factor),
+        carbs: drift.Value((product.carbsPer100g ?? 0) * factor),
+        calories: drift.Value((product.caloriesPer100g ?? 0) * factor),
+        imageUrl: drift.Value(product.imageUrl),
+      ),
+    );
 
     if (!auth.isPremium) {
       await auth.incrementFreeEntry();
@@ -199,6 +203,22 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return Scaffold(
+        appBar: AppBar(title: Text(context.l10n.barcodeScannerTitle)),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Barcode scanner is unavailable in the iOS Simulator.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -209,22 +229,20 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       ),
       body: Stack(
         children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: _onBarcodeDetected,
-          ),
+          MobileScanner(controller: _controller, onDetect: _onBarcodeDetected),
           _buildOverlay(),
           if (_isProcessing)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
           if (_errorMessage != null)
             Positioned(
               bottom: 120,
               left: 32,
               right: 32,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black87,
                   borderRadius: BorderRadius.circular(12),
@@ -299,7 +317,10 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                 height: scanAreaSize,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    width: 2,
+                  ),
                 ),
               ),
             ),
