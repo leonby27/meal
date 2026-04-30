@@ -1066,6 +1066,32 @@ class AppLocalizationsRu extends AppLocalizations {
       'Чтобы продолжить, начните 3-дневный БЕСПЛАТНЫЙ пробный период';
 
   @override
+  String get paywallWeeklyTitle =>
+      'Чтобы продолжить, выберите еженедельный Pro-тариф';
+
+  @override
+  String get paywallWeeklyTimelineTodayTitle => 'Сегодня — откройте Pro';
+
+  @override
+  String get paywallWeeklyTimelineTodayDesc =>
+      'Получите полный доступ к AI-сканированию калорий, дневнику питания и аналитике.';
+
+  @override
+  String get paywallWeeklyTimelineRenewTitle =>
+      'Каждую неделю — продолжайте прогресс';
+
+  @override
+  String get paywallWeeklyTimelineRenewDesc =>
+      'Недельный план продлевается автоматически, чтобы доступ не прерывался.';
+
+  @override
+  String get paywallWeeklyTimelineCancelTitle => 'Отмена в любой момент';
+
+  @override
+  String get paywallWeeklyTimelineCancelDesc =>
+      'Управляйте подпиской или отменяйте её в настройках аккаунта магазина.';
+
+  @override
   String get paywallTimelineTodayTitle => 'Сегодня';
 
   @override
@@ -1116,6 +1142,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get paywallTrialDisclaimer => '3 дня бесплатно, затем \$39.99/год';
+
+  @override
+  String get paywallWeeklyDisclaimer =>
+      'Списание сегодня. Автопродление каждую неделю. Отмена в любой момент.';
 
   @override
   String paywallTrialDisclaimerFmt(String price) {
@@ -1169,6 +1199,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get paywallErrorProductsEmpty =>
       'Не удалось загрузить варианты подписки. Проверьте соединение и попробуйте ещё раз.';
+
+  @override
+  String get paywallErrorSelectedProductUnavailable =>
+      'Этот вариант подписки сейчас недоступен. Выберите другой тариф или попробуйте ещё раз.';
 
   @override
   String get paywallErrorQueryFailed =>

@@ -1069,6 +1069,31 @@ class AppLocalizationsPt extends AppLocalizations {
       'Para continuar, inicie seu teste GRATUITO de 3 dias';
 
   @override
+  String get paywallWeeklyTitle =>
+      'Para continuar, escolha seu plano Pro semanal';
+
+  @override
+  String get paywallWeeklyTimelineTodayTitle => 'Hoje — desbloqueie o Pro';
+
+  @override
+  String get paywallWeeklyTimelineTodayDesc =>
+      'Tenha acesso ilimitado ao escaneamento de calorias com IA, registro de refeições e insights.';
+
+  @override
+  String get paywallWeeklyTimelineRenewTitle => 'Toda semana — mantenha o foco';
+
+  @override
+  String get paywallWeeklyTimelineRenewDesc =>
+      'Seu plano semanal renova automaticamente para que seu progresso não seja interrompido.';
+
+  @override
+  String get paywallWeeklyTimelineCancelTitle => 'Cancele quando quiser';
+
+  @override
+  String get paywallWeeklyTimelineCancelDesc =>
+      'Gerencie ou cancele sua assinatura quando quiser nas configurações da sua conta da loja.';
+
+  @override
   String get paywallTimelineTodayTitle => 'Hoje';
 
   @override
@@ -1119,6 +1144,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get paywallTrialDisclaimer => '3 dias grátis, depois \$39.99/ano';
+
+  @override
+  String get paywallWeeklyDisclaimer =>
+      'Cobrado hoje. Renovação automática semanal. Cancele quando quiser.';
 
   @override
   String paywallTrialDisclaimerFmt(String price) {
@@ -1172,6 +1201,10 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get paywallErrorProductsEmpty =>
       'Não foi possível carregar as opções de assinatura. Verifique sua conexão e tente novamente.';
+
+  @override
+  String get paywallErrorSelectedProductUnavailable =>
+      'Esta opção de assinatura não está disponível agora. Escolha outro plano ou tente novamente.';
 
   @override
   String get paywallErrorQueryFailed =>

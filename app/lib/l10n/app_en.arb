@@ -355,6 +355,13 @@
   "socialProofScienceTrust": "Used by registered dietitians and clinical nutritionists worldwide.",
 
   "paywallTitle": "To continue, start your 3-day FREE trial",
+  "paywallWeeklyTitle": "To continue, choose your weekly Pro plan",
+  "paywallWeeklyTimelineTodayTitle": "Today — unlock Pro",
+  "paywallWeeklyTimelineTodayDesc": "Get unlimited access to AI calorie scanning, meal tracking, and insights.",
+  "paywallWeeklyTimelineRenewTitle": "Every week — stay on track",
+  "paywallWeeklyTimelineRenewDesc": "Your weekly plan renews automatically, so your progress never gets interrupted.",
+  "paywallWeeklyTimelineCancelTitle": "Cancel anytime",
+  "paywallWeeklyTimelineCancelDesc": "Manage or cancel your subscription anytime in your store account settings.",
   "paywallTimelineTodayTitle": "Today",
   "paywallTimelineTodayDesc": "Unlock all app features — AI calorie scanning and much more",
   "paywallTimelineReminderTitle": "In 2 days — reminder",
@@ -376,6 +383,7 @@
   "paywallNoPaymentNow": "No payment required now",
   "paywallStartTrial": "Start 3-day free trial",
   "paywallTrialDisclaimer": "3 days free, then $39.99/year",
+  "paywallWeeklyDisclaimer": "Billed today. Auto-renews weekly. Cancel anytime.",
   "paywallTrialDisclaimerFmt": "3 days free, then {price}/year",
   "@paywallTrialDisclaimerFmt": {
     "placeholders": {
@@ -397,6 +405,7 @@
   "paywallTryAgain": "Try again",
   "paywallErrorStoreUnavailable": "The App Store is not available right now. Please make sure you are signed in to the App Store and try again.",
   "paywallErrorProductsEmpty": "We couldn't load subscription options. Please check your connection and try again.",
+  "paywallErrorSelectedProductUnavailable": "This subscription option is not available right now. Please choose another plan or try again.",
   "paywallErrorQueryFailed": "Couldn't reach the App Store. Please try again in a moment.",
   "paywallErrorPurchaseFailed": "The purchase couldn't be completed. Please try again.",
   "paywallErrorRestoreFailed": "Couldn't restore purchases. Please try again.",

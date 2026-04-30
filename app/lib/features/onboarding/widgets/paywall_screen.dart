@@ -135,6 +135,13 @@ class _PaywallScreenState extends State<PaywallScreen>
   ProductDetails? get _yearlyProduct =>
       SubscriptionService().productById(SubscriptionService.yearlyId);
 
+  bool get _selectedPlanIsYearly => _selectedPlan == 1;
+
+  bool get _selectedPlanHasTrial => _selectedPlanIsYearly;
+
+  ProductDetails? get _selectedProduct =>
+      _selectedPlanIsYearly ? _yearlyProduct : _weeklyProduct;
+
   bool _productsLoadFailed(SubscriptionService sub) =>
       sub.state == SubState.noProducts || sub.state == SubState.unavailable;
 
@@ -166,6 +173,11 @@ class _PaywallScreenState extends State<PaywallScreen>
     return context.l10n.paywallTrialDisclaimerFmt(p.price);
   }
 
+  String _selectedPlanDisclaimer() {
+    if (_selectedPlanHasTrial) return _trialDisclaimer();
+    return context.l10n.paywallWeeklyDisclaimer;
+  }
+
   Future<void> _subscribe() async {
     final sub = SubscriptionService();
     // The CTA is only enabled when products are ready; this guard is a
@@ -176,7 +188,12 @@ class _PaywallScreenState extends State<PaywallScreen>
         ? SubscriptionService.weeklyId
         : SubscriptionService.yearlyId;
 
-    final product = sub.productById(productId) ?? sub.products.first;
+    final product = sub.productById(productId);
+    if (product == null) {
+      _showErrorDialog(context.l10n.paywallErrorSelectedProductUnavailable);
+      return;
+    }
+
     await sub.buy(product);
     // Success / failure / cancel are delivered via the events stream.
   }
@@ -437,7 +454,9 @@ class _PaywallScreenState extends State<PaywallScreen>
                               Text(
                                 isHard
                                     ? context.l10n.paywallHardTitle
-                                    : context.l10n.paywallTitle,
+                                    : _selectedPlanHasTrial
+                                    ? context.l10n.paywallTitle
+                                    : context.l10n.paywallWeeklyTitle,
                                 style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.w800,
@@ -449,34 +468,97 @@ class _PaywallScreenState extends State<PaywallScreen>
                               const SizedBox(height: 32),
 
                               if (!isHard) ...[
-                                _TimelineItem(
-                                  svgAsset: 'assets/icons/lock_unlocked.svg',
-                                  iconBg: cs.primary,
-                                  title: context.l10n.paywallTimelineTodayTitle,
-                                  description:
-                                      context.l10n.paywallTimelineTodayDesc,
-                                  isFirst: true,
-                                  isLast: false,
-                                ),
-                                _TimelineItem(
-                                  svgAsset: 'assets/icons/bell.svg',
-                                  iconBg: cs.primary,
-                                  title:
-                                      context.l10n.paywallTimelineReminderTitle,
-                                  description:
-                                      context.l10n.paywallTimelineReminderDesc,
-                                  isFirst: false,
-                                  isLast: false,
-                                ),
-                                _TimelineItem(
-                                  svgAsset: 'assets/icons/crown.svg',
-                                  iconBg: cs.inverseSurface,
-                                  iconColor: cs.surface,
-                                  title: context.l10n.paywallTimelinePayTitle,
-                                  description: context.l10n
-                                      .paywallTimelinePayDesc(_trialEndDate),
-                                  isFirst: false,
-                                  isLast: true,
+                                IndexedStack(
+                                  index: _selectedPlanHasTrial ? 1 : 0,
+                                  sizing: StackFit.loose,
+                                  children: [
+                                    Column(
+                                      children: [
+                                        _TimelineItem(
+                                          svgAsset:
+                                              'assets/icons/lock_unlocked.svg',
+                                          iconBg: cs.primary,
+                                          title: context
+                                              .l10n
+                                              .paywallWeeklyTimelineTodayTitle,
+                                          description: context
+                                              .l10n
+                                              .paywallWeeklyTimelineTodayDesc,
+                                          isFirst: true,
+                                          isLast: false,
+                                        ),
+                                        _TimelineItem(
+                                          svgAsset: 'assets/icons/day.svg',
+                                          iconBg: cs.primary,
+                                          title: context
+                                              .l10n
+                                              .paywallWeeklyTimelineRenewTitle,
+                                          description: context
+                                              .l10n
+                                              .paywallWeeklyTimelineRenewDesc,
+                                          isFirst: false,
+                                          isLast: false,
+                                        ),
+                                        _TimelineItem(
+                                          svgAsset:
+                                              'assets/icons/settings_adjust.svg',
+                                          iconBg: cs.inverseSurface,
+                                          iconColor: cs.surface,
+                                          title: context
+                                              .l10n
+                                              .paywallWeeklyTimelineCancelTitle,
+                                          description: context
+                                              .l10n
+                                              .paywallWeeklyTimelineCancelDesc,
+                                          isFirst: false,
+                                          isLast: true,
+                                        ),
+                                      ],
+                                    ),
+                                    Column(
+                                      children: [
+                                        _TimelineItem(
+                                          svgAsset:
+                                              'assets/icons/lock_unlocked.svg',
+                                          iconBg: cs.primary,
+                                          title: context
+                                              .l10n
+                                              .paywallTimelineTodayTitle,
+                                          description: context
+                                              .l10n
+                                              .paywallTimelineTodayDesc,
+                                          isFirst: true,
+                                          isLast: false,
+                                        ),
+                                        _TimelineItem(
+                                          svgAsset: 'assets/icons/bell.svg',
+                                          iconBg: cs.primary,
+                                          title: context
+                                              .l10n
+                                              .paywallTimelineReminderTitle,
+                                          description: context
+                                              .l10n
+                                              .paywallTimelineReminderDesc,
+                                          isFirst: false,
+                                          isLast: false,
+                                        ),
+                                        _TimelineItem(
+                                          svgAsset: 'assets/icons/crown.svg',
+                                          iconBg: cs.inverseSurface,
+                                          iconColor: cs.surface,
+                                          title: context
+                                              .l10n
+                                              .paywallTimelinePayTitle,
+                                          description: context.l10n
+                                              .paywallTimelinePayDesc(
+                                                _trialEndDate,
+                                              ),
+                                          isFirst: false,
+                                          isLast: true,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 28),
                               ],
@@ -501,7 +583,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                                     child: _PlanCard(
                                       title: context.l10n.paywallYearly,
                                       price: _yearlyPriceLabel(sub),
-                                      badge: isHard
+                                      badge: isHard || !_selectedPlanHasTrial
                                           ? null
                                           : context.l10n.paywallTrialBadge,
                                       isSelected: _selectedPlan == 1,
@@ -517,24 +599,30 @@ class _PaywallScreenState extends State<PaywallScreen>
                               const SizedBox(height: 20),
 
                               if (!isHard)
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.check,
-                                      size: 18,
-                                      color: cs.onSurface,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      context.l10n.paywallNoPaymentNow,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
+                                Visibility(
+                                  visible: _selectedPlanHasTrial,
+                                  maintainState: true,
+                                  maintainAnimation: true,
+                                  maintainSize: true,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.check,
+                                        size: 18,
                                         color: cs.onSurface,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        context.l10n.paywallNoPaymentNow,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: cs.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               const SizedBox(height: 24),
                             ],
@@ -568,7 +656,7 @@ class _PaywallScreenState extends State<PaywallScreen>
     final bool isPurchasing = sub.state == SubState.purchasing;
     final bool isLoading = _productsAreLoading(sub);
     final bool canSubscribe =
-        sub.state == SubState.ready && sub.products.isNotEmpty;
+        sub.state == SubState.ready && _selectedProduct != null;
     final bool canRetry = _productsLoadFailed(sub);
 
     return Container(
@@ -611,7 +699,9 @@ class _PaywallScreenState extends State<PaywallScreen>
                           ? context.l10n.paywallTryAgain
                           : isHard
                           ? context.l10n.paywallSubscribeNow
-                          : context.l10n.paywallStartTrial,
+                          : _selectedPlanHasTrial
+                          ? context.l10n.paywallStartTrial
+                          : context.l10n.paywallSubscribeNow,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -622,7 +712,9 @@ class _PaywallScreenState extends State<PaywallScreen>
           ),
           const SizedBox(height: 10),
           Text(
-            isHard ? context.l10n.paywallHardDisclaimer : _trialDisclaimer(),
+            isHard
+                ? context.l10n.paywallHardDisclaimer
+                : _selectedPlanDisclaimer(),
             style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),

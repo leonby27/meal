@@ -377,6 +377,13 @@
   "socialProofScienceTrust": "Используется дипломированными диетологами и клиническими нутрициологами по всему миру.",
 
   "paywallTitle": "Чтобы продолжить, начните 3-дневный БЕСПЛАТНЫЙ пробный период",
+  "paywallWeeklyTitle": "Чтобы продолжить, выберите еженедельный Pro-тариф",
+  "paywallWeeklyTimelineTodayTitle": "Сегодня — откройте Pro",
+  "paywallWeeklyTimelineTodayDesc": "Получите полный доступ к AI-сканированию калорий, дневнику питания и аналитике.",
+  "paywallWeeklyTimelineRenewTitle": "Каждую неделю — продолжайте прогресс",
+  "paywallWeeklyTimelineRenewDesc": "Недельный план продлевается автоматически, чтобы доступ не прерывался.",
+  "paywallWeeklyTimelineCancelTitle": "Отмена в любой момент",
+  "paywallWeeklyTimelineCancelDesc": "Управляйте подпиской или отменяйте её в настройках аккаунта магазина.",
   "paywallTimelineTodayTitle": "Сегодня",
   "paywallTimelineTodayDesc": "Откройте все функции приложения — например, AI-сканирование калорий и многое другое",
   "paywallTimelineReminderTitle": "Через 2 дня — напоминание",
@@ -398,6 +405,7 @@
   "paywallNoPaymentNow": "Платёж сейчас не требуется",
   "paywallStartTrial": "Начать 3-дневный бесплатный пробный период",
   "paywallTrialDisclaimer": "3 дня бесплатно, затем $39.99/год",
+  "paywallWeeklyDisclaimer": "Списание сегодня. Автопродление каждую неделю. Отмена в любой момент.",
   "paywallTrialDisclaimerFmt": "3 дня бесплатно, затем {price}/год",
   "@paywallTrialDisclaimerFmt": {
     "placeholders": {
@@ -419,6 +427,7 @@
   "paywallTryAgain": "Повторить",
   "paywallErrorStoreUnavailable": "App Store сейчас недоступен. Убедитесь, что вы вошли в App Store, и попробуйте ещё раз.",
   "paywallErrorProductsEmpty": "Не удалось загрузить варианты подписки. Проверьте соединение и попробуйте ещё раз.",
+  "paywallErrorSelectedProductUnavailable": "Этот вариант подписки сейчас недоступен. Выберите другой тариф или попробуйте ещё раз.",
   "paywallErrorQueryFailed": "Не удаётся связаться с App Store. Попробуйте через минуту.",
   "paywallErrorPurchaseFailed": "Покупку не удалось завершить. Попробуйте ещё раз.",
   "paywallErrorRestoreFailed": "Не удалось восстановить покупки. Попробуйте ещё раз.",
