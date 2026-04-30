@@ -63,24 +63,24 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     'result',
   ];
   static const _darkStepImageAssets = [
-    'assets/onboarding/dark/step_1.jpg',
-    'assets/onboarding/dark/step_2.jpg',
-    'assets/onboarding/dark/step_3.jpg',
-    'assets/onboarding/dark/step_4.jpg',
-    'assets/onboarding/dark/step_5.jpg',
-    'assets/onboarding/dark/step_6.jpg',
-    'assets/onboarding/dark/step_7.jpg',
-    'assets/onboarding/dark/step_8.jpg',
+    'assets/onboarding/dark/step_1.png',
+    'assets/onboarding/dark/step_2.png',
+    'assets/onboarding/dark/step_3.png',
+    'assets/onboarding/dark/step_4.png',
+    'assets/onboarding/dark/step_5.png',
+    'assets/onboarding/dark/step_6.png',
+    'assets/onboarding/dark/step_7.png',
+    'assets/onboarding/dark/step_8.png',
   ];
   static const _lightStepImageAssets = [
-    'assets/onboarding/light/step_1.jpg',
-    'assets/onboarding/light/step_2.jpg',
-    'assets/onboarding/light/step_3.jpg',
-    'assets/onboarding/light/step_4.jpg',
-    'assets/onboarding/light/step_5.jpg',
-    'assets/onboarding/light/step_6.jpg',
-    'assets/onboarding/light/step_7.jpg',
-    'assets/onboarding/light/step_8.jpg',
+    'assets/onboarding/light/step_1.png',
+    'assets/onboarding/light/step_2.png',
+    'assets/onboarding/light/step_3.png',
+    'assets/onboarding/light/step_4.png',
+    'assets/onboarding/light/step_5.png',
+    'assets/onboarding/light/step_6.png',
+    'assets/onboarding/light/step_7.png',
+    'assets/onboarding/light/step_8.png',
   ];
 
   String _stepName(int page) {
