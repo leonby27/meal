@@ -341,8 +341,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                                     );
                                   case 'code':
                                     _redeemCode();
-                                  case 'diagnostics':
-                                    _showDiagnostics();
                                   case 'restart':
                                     AuthService().resetOnboarding();
                                 }
@@ -405,21 +403,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   ),
                                 ),
                                 if (kDebugMode) ...[
-                                  const PopupMenuDivider(),
-                                  PopupMenuItem(
-                                    value: 'diagnostics',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.bug_report_outlined,
-                                          size: 20,
-                                          color: cs.onSurface,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        const Text('IAP diagnostics'),
-                                      ],
-                                    ),
-                                  ),
                                   PopupMenuItem(
                                     value: 'restart',
                                     child: Row(
@@ -488,7 +471,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                                           isLast: false,
                                         ),
                                         _TimelineItem(
-                                          svgAsset: 'assets/icons/day.svg',
+                                          icon: Icons.trending_up_rounded,
                                           iconBg: cs.primary,
                                           title: context
                                               .l10n
@@ -500,8 +483,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                                           isLast: false,
                                         ),
                                         _TimelineItem(
-                                          svgAsset:
-                                              'assets/icons/settings_adjust.svg',
+                                          icon: Icons.cancel_rounded,
                                           iconBg: cs.inverseSurface,
                                           iconColor: cs.surface,
                                           title: context
@@ -660,7 +642,7 @@ class _PaywallScreenState extends State<PaywallScreen>
     final bool canRetry = _productsLoadFailed(sub);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -718,51 +700,15 @@ class _PaywallScreenState extends State<PaywallScreen>
             style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: () => launchUrl(
-                  Uri.parse(_termsUrl),
-                  mode: LaunchMode.externalApplication,
-                ),
-                child: Text(
-                  context.l10n.paywallTerms,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: cs.onSurfaceVariant,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Text(
-                  '·',
-                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => launchUrl(
-                  Uri.parse(_privacyUrl),
-                  mode: LaunchMode.externalApplication,
-                ),
-                child: Text(
-                  context.l10n.paywallPrivacy,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: cs.onSurfaceVariant,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-            ],
-          ),
           if (!isHard) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             TextButton(
               onPressed: _skip,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 32),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: Text(
                 context.l10n.paywallSkip,
                 style: TextStyle(
@@ -773,70 +719,8 @@ class _PaywallScreenState extends State<PaywallScreen>
               ),
             ),
           ],
-          const SizedBox(height: 8),
         ],
       ),
-    );
-  }
-
-  Future<void> _showDiagnostics() async {
-    final sub = SubscriptionService();
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('IAP diagnostics'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('state: ${sub.state}'),
-                  if (sub.lastFailureDetails != null)
-                    Text('lastFailure: ${sub.lastFailureDetails}'),
-                  const SizedBox(height: 8),
-                  Text(
-                    'products (${sub.products.length}): ${sub.products.map((p) => '${p.id}=${p.price}').join(', ')}',
-                  ),
-                  const Divider(),
-                  const Text(
-                    'logs:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  ...sub.logs.reversed.map(
-                    (line) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 1),
-                      child: Text(
-                        line,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                SubscriptionService().ensureProductsLoaded();
-              },
-              child: const Text('Re-query products'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
@@ -845,7 +729,8 @@ class _PaywallScreenState extends State<PaywallScreen>
 // Vertical timeline item
 // ---------------------------------------------------------------------------
 class _TimelineItem extends StatelessWidget {
-  final String svgAsset;
+  final String? svgAsset;
+  final IconData? icon;
   final Color iconBg;
   final Color? iconColor;
   final String title;
@@ -854,7 +739,8 @@ class _TimelineItem extends StatelessWidget {
   final bool isLast;
 
   const _TimelineItem({
-    required this.svgAsset,
+    this.svgAsset,
+    this.icon,
     required this.iconBg,
     this.iconColor,
     required this.title,
@@ -884,18 +770,20 @@ class _TimelineItem extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: SvgPicture.asset(
-                        svgAsset,
-                        fit: BoxFit.contain,
-                        colorFilter: ColorFilter.mode(
-                          iconColor ?? Colors.white,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ),
+                    child: icon != null
+                        ? Icon(icon, size: 24, color: iconColor ?? Colors.white)
+                        : SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: SvgPicture.asset(
+                              svgAsset!,
+                              fit: BoxFit.contain,
+                              colorFilter: ColorFilter.mode(
+                                iconColor ?? Colors.white,
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
                 if (!isLast)

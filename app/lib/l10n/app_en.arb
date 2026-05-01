@@ -371,20 +371,20 @@
   "socialProofScienceFormulaCaption": "Nutrition gold standard since 1990",
   "socialProofScienceTrust": "Used by registered dietitians and clinical nutritionists worldwide.",
 
-  "paywallTitle": "To continue, start your 3-day FREE trial",
-  "paywallWeeklyTitle": "To continue, choose your weekly Pro plan",
+  "paywallTitle": "Try Pro\nfor free",
+  "paywallWeeklyTitle": "Unlock Pro\ntoday",
   "paywallWeeklyTimelineTodayTitle": "Today — unlock Pro",
-  "paywallWeeklyTimelineTodayDesc": "Get unlimited access to AI calorie scanning, meal tracking, and insights.",
-  "paywallWeeklyTimelineRenewTitle": "Every week — stay on track",
-  "paywallWeeklyTimelineRenewDesc": "Your weekly plan renews automatically, so your progress never gets interrupted.",
+  "paywallWeeklyTimelineTodayDesc": "AI scanning, meal tracking, and insights without limits.",
+  "paywallWeeklyTimelineRenewTitle": "Weekly — progress",
+  "paywallWeeklyTimelineRenewDesc": "Renews weekly so your access stays uninterrupted.",
   "paywallWeeklyTimelineCancelTitle": "Cancel anytime",
-  "paywallWeeklyTimelineCancelDesc": "Manage or cancel your subscription anytime in your store account settings.",
-  "paywallTimelineTodayTitle": "Today",
-  "paywallTimelineTodayDesc": "Unlock all app features — AI calorie scanning and much more",
-  "paywallTimelineReminderTitle": "In 2 days — reminder",
-  "paywallTimelineReminderDesc": "We'll remind you that the trial is about to end",
-  "paywallTimelinePayTitle": "In 3 days — payment starts",
-  "paywallTimelinePayDesc": "You will be charged on {date} unless you cancel before then",
+  "paywallWeeklyTimelineCancelDesc": "Cancel anytime in your store account settings.",
+  "paywallTimelineTodayTitle": "Today — unlock Pro",
+  "paywallTimelineTodayDesc": "AI scanning, meal tracking, and insights without limits.",
+  "paywallTimelineReminderTitle": "Day 2 — reminder",
+  "paywallTimelineReminderDesc": "We'll remind you before the trial ends",
+  "paywallTimelinePayTitle": "Day 3 — payment",
+  "paywallTimelinePayDesc": "Charged on {date} unless you cancel first",
   "@paywallTimelinePayDesc": {
     "placeholders": {
       "date": {"type": "String"}
@@ -398,9 +398,9 @@
   "paywallPerYear": "year",
   "paywallTrialBadge": "3 DAYS FREE",
   "paywallNoPaymentNow": "No payment required now",
-  "paywallStartTrial": "Start 3-day free trial",
+  "paywallStartTrial": "Start trial",
   "paywallTrialDisclaimer": "3 days free, then $39.99/year",
-  "paywallWeeklyDisclaimer": "Billed today. Auto-renews weekly. Cancel anytime.",
+  "paywallWeeklyDisclaimer": "Billed today. Cancel anytime.",
   "paywallTrialDisclaimerFmt": "3 days free, then {price}/year",
   "@paywallTrialDisclaimerFmt": {
     "placeholders": {
@@ -438,7 +438,7 @@
 
   "paywallSubscribeNow": "Subscribe",
   "paywallHardDisclaimer": "Auto-renews. Cancel anytime.",
-  "paywallHardTitle": "Enjoying the app?\nContinue with Pro",
+  "paywallHardTitle": "Continue\nwith Pro",
   "freeEntriesRemaining": "{count, plural, =1{1 free entry remaining} other{{count} free entries remaining}}",
   "@freeEntriesRemaining": { "placeholders": { "count": { "type": "int" } } },
   "getPro": "Get Pro",

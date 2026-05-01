@@ -1112,52 +1112,52 @@ class AppLocalizationsEn extends AppLocalizations {
       'Used by registered dietitians and clinical nutritionists worldwide.';
 
   @override
-  String get paywallTitle => 'To continue, start your 3-day FREE trial';
+  String get paywallTitle => 'Try Pro\nfor free';
 
   @override
-  String get paywallWeeklyTitle => 'To continue, choose your weekly Pro plan';
+  String get paywallWeeklyTitle => 'Unlock Pro\ntoday';
 
   @override
   String get paywallWeeklyTimelineTodayTitle => 'Today — unlock Pro';
 
   @override
   String get paywallWeeklyTimelineTodayDesc =>
-      'Get unlimited access to AI calorie scanning, meal tracking, and insights.';
+      'AI scanning, meal tracking, and insights without limits.';
 
   @override
-  String get paywallWeeklyTimelineRenewTitle => 'Every week — stay on track';
+  String get paywallWeeklyTimelineRenewTitle => 'Weekly — progress';
 
   @override
   String get paywallWeeklyTimelineRenewDesc =>
-      'Your weekly plan renews automatically, so your progress never gets interrupted.';
+      'Renews weekly so your access stays uninterrupted.';
 
   @override
   String get paywallWeeklyTimelineCancelTitle => 'Cancel anytime';
 
   @override
   String get paywallWeeklyTimelineCancelDesc =>
-      'Manage or cancel your subscription anytime in your store account settings.';
+      'Cancel anytime in your store account settings.';
 
   @override
-  String get paywallTimelineTodayTitle => 'Today';
+  String get paywallTimelineTodayTitle => 'Today — unlock Pro';
 
   @override
   String get paywallTimelineTodayDesc =>
-      'Unlock all app features — AI calorie scanning and much more';
+      'AI scanning, meal tracking, and insights without limits.';
 
   @override
-  String get paywallTimelineReminderTitle => 'In 2 days — reminder';
+  String get paywallTimelineReminderTitle => 'Day 2 — reminder';
 
   @override
   String get paywallTimelineReminderDesc =>
-      'We\'ll remind you that the trial is about to end';
+      'We\'ll remind you before the trial ends';
 
   @override
-  String get paywallTimelinePayTitle => 'In 3 days — payment starts';
+  String get paywallTimelinePayTitle => 'Day 3 — payment';
 
   @override
   String paywallTimelinePayDesc(String date) {
-    return 'You will be charged on $date unless you cancel before then';
+    return 'Charged on $date unless you cancel first';
   }
 
   @override
@@ -1185,14 +1185,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallNoPaymentNow => 'No payment required now';
 
   @override
-  String get paywallStartTrial => 'Start 3-day free trial';
+  String get paywallStartTrial => 'Start trial';
 
   @override
   String get paywallTrialDisclaimer => '3 days free, then \$39.99/year';
 
   @override
-  String get paywallWeeklyDisclaimer =>
-      'Billed today. Auto-renews weekly. Cancel anytime.';
+  String get paywallWeeklyDisclaimer => 'Billed today. Cancel anytime.';
 
   @override
   String paywallTrialDisclaimerFmt(String price) {
@@ -1292,7 +1291,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallHardDisclaimer => 'Auto-renews. Cancel anytime.';
 
   @override
-  String get paywallHardTitle => 'Enjoying the app?\nContinue with Pro';
+  String get paywallHardTitle => 'Continue\nwith Pro';
 
   @override
   String freeEntriesRemaining(int count) {

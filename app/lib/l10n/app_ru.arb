@@ -394,20 +394,20 @@
   "socialProofScienceFormulaCaption": "Золотой стандарт нутрициологии с 1990 года",
   "socialProofScienceTrust": "Используется дипломированными диетологами и клиническими нутрициологами по всему миру.",
 
-  "paywallTitle": "Чтобы продолжить, начните 3-дневный БЕСПЛАТНЫЙ пробный период",
-  "paywallWeeklyTitle": "Чтобы продолжить, выберите еженедельный Pro-тариф",
+  "paywallTitle": "Попробуйте Pro\nбесплатно",
+  "paywallWeeklyTitle": "Откройте Pro\nсегодня",
   "paywallWeeklyTimelineTodayTitle": "Сегодня — откройте Pro",
-  "paywallWeeklyTimelineTodayDesc": "Получите полный доступ к AI-сканированию калорий, дневнику питания и аналитике.",
-  "paywallWeeklyTimelineRenewTitle": "Каждую неделю — продолжайте прогресс",
-  "paywallWeeklyTimelineRenewDesc": "Недельный план продлевается автоматически, чтобы доступ не прерывался.",
+  "paywallWeeklyTimelineTodayDesc": "AI-сканирование, дневник питания и аналитика без ограничений.",
+  "paywallWeeklyTimelineRenewTitle": "Еженедельно — прогресс",
+  "paywallWeeklyTimelineRenewDesc": "План продлевается еженедельно, чтобы доступ не прерывался.",
   "paywallWeeklyTimelineCancelTitle": "Отмена в любой момент",
-  "paywallWeeklyTimelineCancelDesc": "Управляйте подпиской или отменяйте её в настройках аккаунта магазина.",
-  "paywallTimelineTodayTitle": "Сегодня",
-  "paywallTimelineTodayDesc": "Откройте все функции приложения — например, AI-сканирование калорий и многое другое",
-  "paywallTimelineReminderTitle": "Через 2 дня — напоминание",
+  "paywallWeeklyTimelineCancelDesc": "Отменяйте подписку в настройках аккаунта магазина.",
+  "paywallTimelineTodayTitle": "Сегодня — откройте Pro",
+  "paywallTimelineTodayDesc": "AI-сканирование, дневник питания и аналитика без ограничений.",
+  "paywallTimelineReminderTitle": "Через 2 дня — напомним",
   "paywallTimelineReminderDesc": "Мы напомним, что пробный период скоро закончится",
-  "paywallTimelinePayTitle": "Через 3 дня — начнётся оплата",
-  "paywallTimelinePayDesc": "Списание будет {date}, если вы не отмените подписку до этого",
+  "paywallTimelinePayTitle": "Через 3 дня — оплата",
+  "paywallTimelinePayDesc": "Списание будет {date}, если вы не отмените подписку",
   "@paywallTimelinePayDesc": {
     "placeholders": {
       "date": {"type": "String"}
@@ -421,9 +421,9 @@
   "paywallPerYear": "год",
   "paywallTrialBadge": "3 ДНЯ БЕСПЛАТНО",
   "paywallNoPaymentNow": "Платёж сейчас не требуется",
-  "paywallStartTrial": "Начать 3-дневный бесплатный пробный период",
+  "paywallStartTrial": "Начать пробный период",
   "paywallTrialDisclaimer": "3 дня бесплатно, затем $39.99/год",
-  "paywallWeeklyDisclaimer": "Списание сегодня. Автопродление каждую неделю. Отмена в любой момент.",
+  "paywallWeeklyDisclaimer": "Списание сегодня. Отмена в любой момент.",
   "paywallTrialDisclaimerFmt": "3 дня бесплатно, затем {price}/год",
   "@paywallTrialDisclaimerFmt": {
     "placeholders": {
@@ -461,7 +461,7 @@
 
   "paywallSubscribeNow": "Оформить подписку",
   "paywallHardDisclaimer": "Автопродление. Отмена в любой момент.",
-  "paywallHardTitle": "Понравилось?\nПродолжите с Pro",
+  "paywallHardTitle": "Продолжайте\nс Pro",
   "freeEntriesRemaining": "{count, plural, =1{Осталась 1 бесплатная запись} few{Осталось {count} бесплатные записи} many{Осталось {count} бесплатных записей} other{Осталось {count} бесплатных записей}}",
   "@freeEntriesRemaining": { "placeholders": { "count": { "type": "int" } } },
   "getPro": "Получить Pro",

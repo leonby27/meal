@@ -15,8 +15,12 @@ class ResultStep extends StatefulWidget {
   State<ResultStep> createState() => _ResultStepState();
 }
 
-class _ResultStepState extends State<ResultStep>
-    with TickerProviderStateMixin {
+class _ResultStepState extends State<ResultStep> with TickerProviderStateMixin {
+  static const String _planImageLight = 'assets/onboarding/light/plan.png';
+  static const String _planImageDark = 'assets/onboarding/dark/plan.png';
+  static const double _planImageAspectRatio = 1572 / 808;
+  static const double _planCardOverlap = 44;
+
   // Conversion factor used to format weights for users on imperial units.
   // The internal data model is always kg; we only convert for display.
   static const double _kgToLb = 2.20462;
@@ -70,9 +74,7 @@ class _ResultStepState extends State<ResultStep>
   /// minus (U+2212) so it lines up well with bold numerals.
   String _formatDelta(double currentKg, double targetKg) {
     final deltaKg = targetKg - currentKg;
-    final unit = widget.data.isImperial
-        ? 'lb'
-        : context.l10n.kgUnit;
+    final unit = widget.data.isImperial ? 'lb' : context.l10n.kgUnit;
     final value = widget.data.isImperial
         ? (deltaKg.abs() * _kgToLb).round()
         : deltaKg.abs().round();
@@ -102,8 +104,9 @@ class _ResultStepState extends State<ResultStep>
     final fat = widget.data.fatGoal?.round() ?? 0;
     final carbs = widget.data.carbsGoal?.round() ?? 0;
     final totalGrams = protein + fat + carbs;
-    final proteinPct =
-        totalGrams > 0 ? ((protein / totalGrams) * 100).round() : 0;
+    final proteinPct = totalGrams > 0
+        ? ((protein / totalGrams) * 100).round()
+        : 0;
     final fatPct = totalGrams > 0 ? ((fat / totalGrams) * 100).round() : 0;
     final carbsPct = totalGrams > 0 ? ((carbs / totalGrams) * 100).round() : 0;
 
@@ -112,119 +115,144 @@ class _ResultStepState extends State<ResultStep>
     // simpler maintain-style goal card.
     final isMaintain = goal != 'lose' && goal != 'gain';
     final isLose = goal == 'lose';
+    final planImage = isDark ? _planImageDark : _planImageLight;
 
     return Stack(
       children: [
         SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: _hPad),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final imageHeight = constraints.maxWidth / _planImageAspectRatio;
 
-              // --- Hero: title + animated calorie ring (kcal/day in center) ---
-              AnimatedBuilder(
-                animation: _animation ?? const AlwaysStoppedAnimation(1.0),
-                builder: (context, _) {
-                  final p = _progress;
-                  final animCal = (calories * p).round();
-                  return _HeroCard(
-                    title: context.l10n.resultPlanReadyTitle,
-                    subtitle: context.l10n.resultHeroSubtitle,
-                    calorieValue: _formatCalories(animCal),
-                    unit: context.l10n.kcalPerDay,
-                    progress: p,
-                    cardBg: cardBg,
-                    lineColor: lineColor,
-                    isDark: isDark,
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
+              return Stack(
+                children: [
+                  Image.asset(
+                    planImage,
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      _hPad,
+                      imageHeight - _planCardOverlap,
+                      _hPad,
+                      8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // --- Hero: title + animated calorie ring (kcal/day in center) ---
+                        AnimatedBuilder(
+                          animation:
+                              _animation ?? const AlwaysStoppedAnimation(1.0),
+                          builder: (context, _) {
+                            final p = _progress;
+                            final animCal = (calories * p).round();
+                            return _HeroCard(
+                              title: context.l10n.resultPlanReadyTitle,
+                              subtitle: context.l10n.resultHeroSubtitle,
+                              calorieValue: _formatCalories(animCal),
+                              unit: context.l10n.kcalPerDay,
+                              progress: p,
+                              cardBg: cardBg,
+                              lineColor: lineColor,
+                              isDark: isDark,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
 
-              // --- Macros: slim segmented bar + 3 centered macro columns ---
-              AnimatedBuilder(
-                animation: _animation ?? const AlwaysStoppedAnimation(1.0),
-                builder: (context, _) {
-                  final p = _progress;
-                  return _MacroCard(
-                    progress: p,
-                    proteinGrams: (protein * p).round(),
-                    carbsGrams: (carbs * p).round(),
-                    fatGrams: (fat * p).round(),
-                    proteinPct: proteinPct,
-                    carbsPct: carbsPct,
-                    fatPct: fatPct,
-                    proteinFraction: totalGrams > 0
-                        ? protein / totalGrams
-                        : 0.33,
-                    carbsFraction: totalGrams > 0
-                        ? carbs / totalGrams
-                        : 0.34,
-                    fatFraction: totalGrams > 0 ? fat / totalGrams : 0.33,
-                    proteinLabel: context.l10n.proteinLabel,
-                    carbsLabel: context.l10n.carbsLabel,
-                    fatLabel: context.l10n.fatLabel,
-                    gramsUnit: context.l10n.gramsUnit,
-                    adjustLine: context.l10n.resultRingAdjustLine,
-                    cardBg: cardBg,
-                    lineColor: lineColor,
-                    isDark: isDark,
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
+                        // --- Macros: slim segmented bar + 3 centered macro columns ---
+                        AnimatedBuilder(
+                          animation:
+                              _animation ?? const AlwaysStoppedAnimation(1.0),
+                          builder: (context, _) {
+                            final p = _progress;
+                            return _MacroCard(
+                              progress: p,
+                              proteinGrams: (protein * p).round(),
+                              carbsGrams: (carbs * p).round(),
+                              fatGrams: (fat * p).round(),
+                              proteinPct: proteinPct,
+                              carbsPct: carbsPct,
+                              fatPct: fatPct,
+                              proteinFraction: totalGrams > 0
+                                  ? protein / totalGrams
+                                  : 0.33,
+                              carbsFraction: totalGrams > 0
+                                  ? carbs / totalGrams
+                                  : 0.34,
+                              fatFraction: totalGrams > 0
+                                  ? fat / totalGrams
+                                  : 0.33,
+                              proteinLabel: context.l10n.proteinLabel,
+                              carbsLabel: context.l10n.carbsLabel,
+                              fatLabel: context.l10n.fatLabel,
+                              gramsUnit: context.l10n.gramsUnit,
+                              adjustLine: context.l10n.resultRingAdjustLine,
+                              cardBg: cardBg,
+                              lineColor: lineColor,
+                              isDark: isDark,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
 
-              // --- Goal card (lose/gain → arrow + delta badge; maintain → text) ---
-              _GoalCard(
-                isMaintain: isMaintain,
-                isLose: isLose,
-                regularTitle: context.l10n.resultGoalCardTitle,
-                maintainTitle: isMaintain
-                    ? context.l10n.resultGoalMaintainTitle(
-                        _formatWeight(widget.data.weightKg),
-                      )
-                    : null,
-                maintainSubtitle: isMaintain
-                    ? context.l10n.resultGoalMaintainSubtitle
-                    : null,
-                fromWeight:
-                    isMaintain ? null : _formatWeight(widget.data.weightKg),
-                toWeight: isMaintain
-                    ? null
-                    : _formatWeight(widget.data.targetWeightKg),
-                deltaLabel: isMaintain
-                    ? null
-                    : _formatDelta(
-                        widget.data.weightKg,
-                        widget.data.targetWeightKg,
-                      ),
-                cardBg: cardBg,
-                lineColor: lineColor,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 24),
+                        // --- Goal card (lose/gain → arrow + delta badge; maintain → text) ---
+                        _GoalCard(
+                          isMaintain: isMaintain,
+                          isLose: isLose,
+                          regularTitle: context.l10n.resultGoalCardTitle,
+                          maintainTitle: isMaintain
+                              ? context.l10n.resultGoalMaintainTitle(
+                                  _formatWeight(widget.data.weightKg),
+                                )
+                              : null,
+                          maintainSubtitle: isMaintain
+                              ? context.l10n.resultGoalMaintainSubtitle
+                              : null,
+                          fromWeight: isMaintain
+                              ? null
+                              : _formatWeight(widget.data.weightKg),
+                          toWeight: isMaintain
+                              ? null
+                              : _formatWeight(widget.data.targetWeightKg),
+                          deltaLabel: isMaintain
+                              ? null
+                              : _formatDelta(
+                                  widget.data.weightKg,
+                                  widget.data.targetWeightKg,
+                                ),
+                          cardBg: cardBg,
+                          lineColor: lineColor,
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 24),
 
-              // --- Free vs Premium bridge (premium line gets primary accent) ---
-              _BridgeCard(
-                title: context.l10n.resultBridgeTitle,
-                freeLine: context.l10n.resultBridgeFreeLine,
-                premiumLine: context.l10n.resultBridgePremiumLine,
-                cardBg: cardBg,
-                lineColor: lineColor,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 20),
+                        // --- Free vs Premium bridge (premium line gets primary accent) ---
+                        _BridgeCard(
+                          title: context.l10n.resultBridgeTitle,
+                          freeLine: context.l10n.resultBridgeFreeLine,
+                          premiumLine: context.l10n.resultBridgePremiumLine,
+                          cardBg: cardBg,
+                          lineColor: lineColor,
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 20),
 
-              // --- Methodology zone: disclaimer + scientific citations ---
-              _MethodologyBlock(
-                disclaimerLabel: context.l10n.resultDisclaimerShort,
-                disclaimerText: context.l10n.resultDisclaimer,
-                caloriesLabel: context.l10n.resultSourceCaloriesLabel,
-                macrosLabel: context.l10n.resultSourceMacrosLabel,
-              ),
-              const SizedBox(height: 24),
-            ],
+                        // --- Methodology zone: disclaimer + scientific citations ---
+                        _MethodologyBlock(
+                          disclaimerLabel: context.l10n.resultDisclaimerShort,
+                          disclaimerText: context.l10n.resultDisclaimer,
+                          caloriesLabel: context.l10n.resultSourceCaloriesLabel,
+                          macrosLabel: context.l10n.resultSourceMacrosLabel,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
 
@@ -276,6 +304,7 @@ class _HeroCard extends StatelessWidget {
   final String subtitle;
   final String calorieValue;
   final String unit;
+
   /// 0..1 — drives both the kcal count-up (in the parent) and the ring fill.
   final double progress;
   final Color cardBg;
@@ -821,10 +850,7 @@ class _GoalCard extends StatelessWidget {
             ),
             if (deltaLabel != null)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: deltaBg,
                   borderRadius: BorderRadius.circular(999),
@@ -1068,12 +1094,12 @@ class _MethodologyBlock extends StatelessWidget {
       fontSize: 11,
       fontWeight: FontWeight.w600,
       color: cs.onSurfaceVariant,
-      height: 1.4,
+      height: 1.28,
     );
     final bodyStyle = TextStyle(
       fontSize: 11,
       color: cs.onSurfaceVariant.withAlpha(170),
-      height: 1.5,
+      height: 1.32,
     );
 
     return Column(
@@ -1085,14 +1111,14 @@ class _MethodologyBlock extends StatelessWidget {
           labelStyle: labelStyle,
           bodyStyle: bodyStyle,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 7),
         _MethodologyLine(
           label: caloriesLabel,
           text: kMethodologyCitationCalories,
           labelStyle: labelStyle,
           bodyStyle: bodyStyle,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 7),
         _MethodologyLine(
           label: macrosLabel,
           text: kMethodologyCitationMacros,

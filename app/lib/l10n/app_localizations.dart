@@ -2161,13 +2161,13 @@ abstract class AppLocalizations {
   /// No description provided for @paywallTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Чтобы продолжить, начните 3-дневный БЕСПЛАТНЫЙ пробный период'**
+  /// **'Попробуйте Pro\nбесплатно'**
   String get paywallTitle;
 
   /// No description provided for @paywallWeeklyTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Чтобы продолжить, выберите еженедельный Pro-тариф'**
+  /// **'Откройте Pro\nсегодня'**
   String get paywallWeeklyTitle;
 
   /// No description provided for @paywallWeeklyTimelineTodayTitle.
@@ -2179,19 +2179,19 @@ abstract class AppLocalizations {
   /// No description provided for @paywallWeeklyTimelineTodayDesc.
   ///
   /// In ru, this message translates to:
-  /// **'Получите полный доступ к AI-сканированию калорий, дневнику питания и аналитике.'**
+  /// **'AI-сканирование, дневник питания и аналитика без ограничений.'**
   String get paywallWeeklyTimelineTodayDesc;
 
   /// No description provided for @paywallWeeklyTimelineRenewTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Каждую неделю — продолжайте прогресс'**
+  /// **'Еженедельно — прогресс'**
   String get paywallWeeklyTimelineRenewTitle;
 
   /// No description provided for @paywallWeeklyTimelineRenewDesc.
   ///
   /// In ru, this message translates to:
-  /// **'Недельный план продлевается автоматически, чтобы доступ не прерывался.'**
+  /// **'План продлевается еженедельно, чтобы доступ не прерывался.'**
   String get paywallWeeklyTimelineRenewDesc;
 
   /// No description provided for @paywallWeeklyTimelineCancelTitle.
@@ -2203,25 +2203,25 @@ abstract class AppLocalizations {
   /// No description provided for @paywallWeeklyTimelineCancelDesc.
   ///
   /// In ru, this message translates to:
-  /// **'Управляйте подпиской или отменяйте её в настройках аккаунта магазина.'**
+  /// **'Отменяйте подписку в настройках аккаунта магазина.'**
   String get paywallWeeklyTimelineCancelDesc;
 
   /// No description provided for @paywallTimelineTodayTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сегодня'**
+  /// **'Сегодня — откройте Pro'**
   String get paywallTimelineTodayTitle;
 
   /// No description provided for @paywallTimelineTodayDesc.
   ///
   /// In ru, this message translates to:
-  /// **'Откройте все функции приложения — например, AI-сканирование калорий и многое другое'**
+  /// **'AI-сканирование, дневник питания и аналитика без ограничений.'**
   String get paywallTimelineTodayDesc;
 
   /// No description provided for @paywallTimelineReminderTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Через 2 дня — напоминание'**
+  /// **'Через 2 дня — напомним'**
   String get paywallTimelineReminderTitle;
 
   /// No description provided for @paywallTimelineReminderDesc.
@@ -2233,13 +2233,13 @@ abstract class AppLocalizations {
   /// No description provided for @paywallTimelinePayTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Через 3 дня — начнётся оплата'**
+  /// **'Через 3 дня — оплата'**
   String get paywallTimelinePayTitle;
 
   /// No description provided for @paywallTimelinePayDesc.
   ///
   /// In ru, this message translates to:
-  /// **'Списание будет {date}, если вы не отмените подписку до этого'**
+  /// **'Списание будет {date}, если вы не отмените подписку'**
   String paywallTimelinePayDesc(String date);
 
   /// No description provided for @paywallMonthly.
@@ -2293,7 +2293,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallStartTrial.
   ///
   /// In ru, this message translates to:
-  /// **'Начать 3-дневный бесплатный пробный период'**
+  /// **'Начать пробный период'**
   String get paywallStartTrial;
 
   /// No description provided for @paywallTrialDisclaimer.
@@ -2305,7 +2305,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallWeeklyDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'Списание сегодня. Автопродление каждую неделю. Отмена в любой момент.'**
+  /// **'Списание сегодня. Отмена в любой момент.'**
   String get paywallWeeklyDisclaimer;
 
   /// No description provided for @paywallTrialDisclaimerFmt.
@@ -2485,7 +2485,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallHardTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Понравилось?\nПродолжите с Pro'**
+  /// **'Продолжайте\nс Pro'**
   String get paywallHardTitle;
 
   /// No description provided for @freeEntriesRemaining.

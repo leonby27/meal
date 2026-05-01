@@ -1127,55 +1127,52 @@ class AppLocalizationsFr extends AppLocalizations {
       'Utilisé par des diététiciens et nutritionnistes cliniques dans le monde entier.';
 
   @override
-  String get paywallTitle =>
-      'Pour continuer, commencez votre essai GRATUIT de 3 jours';
+  String get paywallTitle => 'Essayez Pro\ngratuitement';
 
   @override
-  String get paywallWeeklyTitle =>
-      'Pour continuer, choisissez votre offre Pro hebdomadaire';
+  String get paywallWeeklyTitle => 'Débloquez Pro\naujourd\'hui';
 
   @override
   String get paywallWeeklyTimelineTodayTitle => 'Aujourd\'hui — débloquez Pro';
 
   @override
   String get paywallWeeklyTimelineTodayDesc =>
-      'Accédez sans limite au scan des calories par IA, au suivi des repas et aux analyses.';
+      'Scan IA, suivi des repas et analyses sans limite.';
 
   @override
-  String get paywallWeeklyTimelineRenewTitle =>
-      'Chaque semaine — gardez le cap';
+  String get paywallWeeklyTimelineRenewTitle => 'Hebdo — progression';
 
   @override
   String get paywallWeeklyTimelineRenewDesc =>
-      'Votre offre hebdomadaire se renouvelle automatiquement pour ne jamais interrompre vos progrès.';
+      'Renouvelé chaque semaine pour garder l\'accès.';
 
   @override
   String get paywallWeeklyTimelineCancelTitle => 'Annulation à tout moment';
 
   @override
   String get paywallWeeklyTimelineCancelDesc =>
-      'Gérez ou annulez votre abonnement à tout moment dans les paramètres de votre compte de boutique.';
+      'Annulez quand vous voulez depuis votre compte de boutique.';
 
   @override
-  String get paywallTimelineTodayTitle => 'Aujourd\'hui';
+  String get paywallTimelineTodayTitle => 'Aujourd\'hui — débloquez Pro';
 
   @override
   String get paywallTimelineTodayDesc =>
-      'Débloquez toutes les fonctionnalités — scan IA des calories et bien plus';
+      'Scan IA, suivi des repas et analyses sans limite.';
 
   @override
-  String get paywallTimelineReminderTitle => 'Dans 2 jours — rappel';
+  String get paywallTimelineReminderTitle => 'Jour 2 — rappel';
 
   @override
   String get paywallTimelineReminderDesc =>
-      'Nous vous rappellerons que l\'essai touche à sa fin';
+      'Nous vous préviendrons avant la fin de l\'essai';
 
   @override
-  String get paywallTimelinePayTitle => 'Dans 3 jours — paiement';
+  String get paywallTimelinePayTitle => 'Jour 3 — paiement';
 
   @override
   String paywallTimelinePayDesc(String date) {
-    return 'Le prélèvement aura lieu le $date sauf annulation';
+    return 'Prélèvement le $date, sauf annulation';
   }
 
   @override
@@ -1203,14 +1200,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get paywallNoPaymentNow => 'Aucun paiement requis maintenant';
 
   @override
-  String get paywallStartTrial => 'Commencer l\'essai gratuit de 3 jours';
+  String get paywallStartTrial => 'Commencer l\'essai';
 
   @override
   String get paywallTrialDisclaimer => '3 jours gratuits, puis 39,99 \$/an';
 
   @override
   String get paywallWeeklyDisclaimer =>
-      'Facturé aujourd\'hui. Renouvellement hebdomadaire automatique. Annulation à tout moment.';
+      'Facturé aujourd\'hui. Annulation à tout moment.';
 
   @override
   String paywallTrialDisclaimerFmt(String price) {
@@ -1312,7 +1309,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Renouvellement automatique. Annulation à tout moment.';
 
   @override
-  String get paywallHardTitle => 'Vous aimez l\'app ?\nContinuez avec Pro';
+  String get paywallHardTitle => 'Continuez\navec Pro';
 
   @override
   String freeEntriesRemaining(int count) {
