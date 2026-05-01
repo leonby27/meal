@@ -1,8 +1,5 @@
-import 'dart:math' as math;
-
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
@@ -64,25 +61,6 @@ class _ResultStepState extends State<ResultStep>
     return '${kg.round()} ${context.l10n.kgUnit}';
   }
 
-  /// Formats a weekly weight-change rate. Trims trailing zeros so that
-  /// 0.5 kg renders as "0.5 кг" but 0.25 kg keeps two decimals.
-  String _formatPace(double kgPerWeek) {
-    if (widget.data.isImperial) {
-      return '${(kgPerWeek * _kgToLb).toStringAsFixed(1)} lb';
-    }
-    var s = kgPerWeek.toStringAsFixed(2);
-    if (s.contains('.')) {
-      s = s.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
-    }
-    return '$s ${context.l10n.kgUnit}';
-  }
-
-  String _formattedTargetDate() {
-    final date = widget.data.targetDate ?? DateTime.now();
-    final locale = Localizations.localeOf(context).toString();
-    return DateFormat.yMMMMd(locale).format(date);
-  }
-
   String _formatCalories(int cal) {
     if (cal >= 1000) {
       final whole = cal ~/ 1000;
@@ -95,7 +73,6 @@ class _ResultStepState extends State<ResultStep>
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
@@ -111,19 +88,9 @@ class _ResultStepState extends State<ResultStep>
     final carbsPct = totalGrams > 0 ? ((carbs / totalGrams) * 100).round() : 0;
 
     final goal = widget.data.goal;
-    final isLose = goal == 'lose';
-    final isGain = goal == 'gain';
-    // Treat any unknown / null goal as "maintain" so we don't show a
-    // "today" target date by accident.
-    final isMaintain = !isLose && !isGain;
-
-    final delta = (widget.data.weightKg - widget.data.targetWeightKg).abs();
-
-    final subtitle = isLose
-        ? context.l10n.resultPlanReadyLose(_formatWeight(delta), calories)
-        : isGain
-            ? context.l10n.resultPlanReadyGain(_formatWeight(delta), calories)
-            : context.l10n.resultPlanReadyMaintain(calories);
+    // Treat any unknown / null goal as "maintain" so we render the
+    // simpler maintain-style goal card.
+    final isMaintain = goal != 'lose' && goal != 'gain';
 
     return Stack(
       children: [
@@ -134,157 +101,56 @@ class _ResultStepState extends State<ResultStep>
             children: [
               const SizedBox(height: 24),
 
-              // --- Section 1: Title + personalized subtitle ---
-              Text(
-                context.l10n.resultPlanReadyTitle,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface,
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: cs.onSurfaceVariant,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-
-              // --- Section 2: Macro ring with animated values ---
+              // --- Section 1: Hero card (title + calorie target + mascot) ---
               AnimatedBuilder(
-                animation: _animation ?? const AlwaysStoppedAnimation(0.0),
+                animation: _animation ?? const AlwaysStoppedAnimation(1.0),
                 builder: (context, _) {
                   final p = _progress;
                   final animCal = (calories * p).round();
-                  final animProtein = (protein * p).round();
-                  final animFat = (fat * p).round();
-                  final animCarbs = (carbs * p).round();
-
-                  return SizedBox(
-                    width: 280,
-                    height: 280,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 240,
-                          height: 240,
-                          child: CustomPaint(
-                            painter: _MacroRingPainter(
-                              proteinFraction: totalGrams > 0
-                                  ? protein / totalGrams
-                                  : 0.33,
-                              fatFraction:
-                                  totalGrams > 0 ? fat / totalGrams : 0.33,
-                              carbsFraction:
-                                  totalGrams > 0 ? carbs / totalGrams : 0.34,
-                              progress: p,
-                              bgColor: cs.outline.withAlpha(30),
-                            ),
-                          ),
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _formatCalories(animCal),
-                              style: TextStyle(
-                                fontSize: 36,
-                                fontWeight: FontWeight.w700,
-                                color: cs.onSurface,
-                                height: 1.1,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              context.l10n.kcalPerDay,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: cs.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Positioned(
-                          left: 0,
-                          top: 50,
-                          child: _MacroLabel(
-                            value: '$animProtein ${context.l10n.gramsUnit}',
-                            color: AppColors.blue,
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          bottom: 40,
-                          child: _MacroLabel(
-                            value: '$animFat ${context.l10n.gramsUnit}',
-                            color: AppColors.orange,
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 20,
-                          child: _MacroLabel(
-                            value: '$animCarbs ${context.l10n.gramsUnit}',
-                            color: AppColors.green,
-                          ),
-                        ),
-                      ],
-                    ),
+                  return _HeroCard(
+                    title: context.l10n.resultPlanReadyTitle,
+                    subtitle: context.l10n.resultHeroSubtitle,
+                    goalLabel: context.l10n.resultGoalCardTitle,
+                    calorieValue: _formatCalories(animCal),
+                    unit: context.l10n.kcalPerDay,
+                    cardBg: cardBg,
+                    lineColor: lineColor,
+                    isDark: isDark,
                   );
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              // --- Legend ---
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 16,
-                runSpacing: 8,
-                children: [
-                  _LegendItem(
-                    label: '${context.l10n.carbsLabel} ($carbsPct%)',
-                    color: AppColors.green,
-                  ),
-                  _LegendItem(
-                    label: '${context.l10n.proteinLabel} ($proteinPct%)',
-                    color: AppColors.blue,
-                  ),
-                  _LegendItem(
-                    label: '${context.l10n.fatLabel} ($fatPct%)',
-                    color: AppColors.orange,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // --- Section 3: Trust anchor + adjustability hint ---
-              Text(
-                context.l10n.resultRingTrustLine,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: cs.onSurfaceVariant,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                context.l10n.resultRingAdjustLine,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: cs.onSurfaceVariant,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
+              // --- Section 2: Macro card (segmented bar + per-macro stats) ---
+              AnimatedBuilder(
+                animation: _animation ?? const AlwaysStoppedAnimation(1.0),
+                builder: (context, _) {
+                  final p = _progress;
+                  return _MacroCard(
+                    progress: p,
+                    proteinGrams: (protein * p).round(),
+                    carbsGrams: (carbs * p).round(),
+                    fatGrams: (fat * p).round(),
+                    proteinPct: proteinPct,
+                    carbsPct: carbsPct,
+                    fatPct: fatPct,
+                    proteinFraction: totalGrams > 0
+                        ? protein / totalGrams
+                        : 0.33,
+                    carbsFraction: totalGrams > 0
+                        ? carbs / totalGrams
+                        : 0.34,
+                    fatFraction: totalGrams > 0 ? fat / totalGrams : 0.33,
+                    proteinLabel: context.l10n.proteinLabel,
+                    carbsLabel: context.l10n.carbsLabel,
+                    fatLabel: context.l10n.fatLabel,
+                    gramsUnit: context.l10n.gramsUnit,
+                    adjustLine: context.l10n.resultRingAdjustLine,
+                    cardBg: cardBg,
+                    lineColor: lineColor,
+                    isDark: isDark,
+                  );
+                },
               ),
               const SizedBox(height: 28),
 
@@ -305,43 +171,9 @@ class _ResultStepState extends State<ResultStep>
                 toWeight: isMaintain
                     ? null
                     : _formatWeight(widget.data.targetWeightKg),
-                dateLine: isMaintain
-                    ? null
-                    : context.l10n.resultGoalDateBy(_formattedTargetDate()),
-                paceLine: isMaintain
-                    ? null
-                    : context.l10n.resultGoalPace(
-                        _formatPace(isLose ? 0.5 : 0.25),
-                      ),
                 cardBg: cardBg,
                 lineColor: lineColor,
                 isDark: isDark,
-              ),
-              const SizedBox(height: 28),
-
-              // --- Section 5: Personalized "what you'll notice" ---
-              Text(
-                context.l10n.resultBenefitsTitle,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                isLose
-                    ? context.l10n.resultBenefitsLose
-                    : isGain
-                        ? context.l10n.resultBenefitsGain
-                        : context.l10n.resultBenefitsMaintain,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: cs.onSurfaceVariant,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 28),
 
@@ -406,120 +238,421 @@ class _ResultStepState extends State<ResultStep>
 }
 
 // ---------------------------------------------------------------------------
-// 3-segment macro ring painter
+// Hero card: title + tagline + big calorie target + mascot illustration slot
 // ---------------------------------------------------------------------------
-class _MacroRingPainter extends CustomPainter {
-  final double proteinFraction;
-  final double fatFraction;
-  final double carbsFraction;
-  final double progress;
-  final Color bgColor;
+class _HeroCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String goalLabel;
+  final String calorieValue;
+  final String unit;
+  final Color cardBg;
+  final Color lineColor;
+  final bool isDark;
 
-  static const _strokeWidth = 22.0;
-  static const _gap = 0.04; // radians gap between segments
-
-  _MacroRingPainter({
-    required this.proteinFraction,
-    required this.fatFraction,
-    required this.carbsFraction,
-    required this.progress,
-    required this.bgColor,
+  const _HeroCard({
+    required this.title,
+    required this.subtitle,
+    required this.goalLabel,
+    required this.calorieValue,
+    required this.unit,
+    required this.cardBg,
+    required this.lineColor,
+    required this.isDark,
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - _strokeWidth / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-
-    final bgPaint = Paint()
-      ..color = bgColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _strokeWidth
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(center, radius, bgPaint);
-
-    final totalAngle = 2 * math.pi * progress;
-    final totalGap = _gap * 3;
-    final usableAngle = totalAngle - totalGap;
-    if (usableAngle <= 0) return;
-
-    final segments = [
-      (proteinFraction, AppColors.blue),
-      (fatFraction, AppColors.orange),
-      (carbsFraction, AppColors.green),
-    ];
-
-    var startAngle = -math.pi / 2;
-    for (final (fraction, color) in segments) {
-      final sweep = usableAngle * fraction;
-      if (sweep <= 0) continue;
-
-      final paint = Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = _strokeWidth
-        ..strokeCap = StrokeCap.round;
-
-      canvas.drawArc(rect, startAngle, sweep, false, paint);
-      startAngle += sweep + _gap;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _MacroRingPainter old) =>
-      progress != old.progress ||
-      proteinFraction != old.proteinFraction ||
-      fatFraction != old.fatFraction ||
-      carbsFraction != old.carbsFraction;
-}
-
-// ---------------------------------------------------------------------------
-// Small atoms
-// ---------------------------------------------------------------------------
-class _MacroLabel extends StatelessWidget {
-  final String value;
-  final Color color;
-
-  const _MacroLabel({required this.value, required this.color});
-
-  @override
   Widget build(BuildContext context) {
-    return Text(
-      value,
-      style: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
-        color: color,
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: lineColor),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+      ),
+      foregroundDecoration: AppTheme.cardEdgeForeground(
+        isDark: isDark,
+        radius: 20,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Flexible(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurface,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.auto_awesome,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 13,
+                color: cs.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(height: 1, color: lineColor),
+            const SizedBox(height: 16),
+            Text(
+              goalLabel,
+              style: TextStyle(
+                fontSize: 13,
+                color: cs.onSurfaceVariant,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              calorieValue,
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+                height: 1.05,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              unit,
+              style: TextStyle(
+                fontSize: 13,
+                color: cs.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _LegendItem extends StatelessWidget {
-  final String label;
-  final Color color;
+// ---------------------------------------------------------------------------
+// Macro card: segmented horizontal bar + per-macro stats + adjust footer
+// ---------------------------------------------------------------------------
+class _MacroCard extends StatelessWidget {
+  final double progress;
+  final int proteinGrams;
+  final int carbsGrams;
+  final int fatGrams;
+  final int proteinPct;
+  final int carbsPct;
+  final int fatPct;
+  final double proteinFraction;
+  final double carbsFraction;
+  final double fatFraction;
+  final String proteinLabel;
+  final String carbsLabel;
+  final String fatLabel;
+  final String gramsUnit;
+  final String adjustLine;
+  final Color cardBg;
+  final Color lineColor;
+  final bool isDark;
 
-  const _LegendItem({required this.label, required this.color});
+  const _MacroCard({
+    required this.progress,
+    required this.proteinGrams,
+    required this.carbsGrams,
+    required this.fatGrams,
+    required this.proteinPct,
+    required this.carbsPct,
+    required this.fatPct,
+    required this.proteinFraction,
+    required this.carbsFraction,
+    required this.fatFraction,
+    required this.proteinLabel,
+    required this.carbsLabel,
+    required this.fatLabel,
+    required this.gramsUnit,
+    required this.adjustLine,
+    required this.cardBg,
+    required this.lineColor,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: cs.onSurface,
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: lineColor),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+      ),
+      foregroundDecoration: AppTheme.cardEdgeForeground(
+        isDark: isDark,
+        radius: 20,
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SegmentedMacroBar(
+                  progress: progress,
+                  proteinFraction: proteinFraction,
+                  carbsFraction: carbsFraction,
+                  fatFraction: fatFraction,
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _MacroStatColumn(
+                        label: proteinLabel,
+                        dotColor: AppColors.blue,
+                        value: '$proteinGrams $gramsUnit',
+                        percent: '$proteinPct%',
+                      ),
+                    ),
+                    Expanded(
+                      child: _MacroStatColumn(
+                        label: carbsLabel,
+                        dotColor: AppColors.green,
+                        value: '$carbsGrams $gramsUnit',
+                        percent: '$carbsPct%',
+                      ),
+                    ),
+                    Expanded(
+                      child: _MacroStatColumn(
+                        label: fatLabel,
+                        dotColor: AppColors.orange,
+                        value: '$fatGrams $gramsUnit',
+                        percent: '$fatPct%',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
+          Container(height: 1, color: lineColor),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.refresh_rounded,
+                  size: 16,
+                  color: cs.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    adjustLine,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: cs.onSurfaceVariant,
+                      height: 1.3,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Horizontal pill bar split into 3 colored segments (protein / carbs /
+/// fat) with small gaps. Animates a left-to-right reveal driven by
+/// [progress] (0..1).
+class _SegmentedMacroBar extends StatelessWidget {
+  final double progress;
+  final double proteinFraction;
+  final double carbsFraction;
+  final double fatFraction;
+
+  const _SegmentedMacroBar({
+    required this.progress,
+    required this.proteinFraction,
+    required this.carbsFraction,
+    required this.fatFraction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 14,
+      child: CustomPaint(
+        size: Size.infinite,
+        painter: _MacroBarPainter(
+          progress: progress,
+          proteinFraction: proteinFraction,
+          carbsFraction: carbsFraction,
+          fatFraction: fatFraction,
+        ),
+      ),
+    );
+  }
+}
+
+class _MacroBarPainter extends CustomPainter {
+  static const _gap = 4.0;
+
+  final double progress;
+  final double proteinFraction;
+  final double carbsFraction;
+  final double fatFraction;
+
+  _MacroBarPainter({
+    required this.progress,
+    required this.proteinFraction,
+    required this.carbsFraction,
+    required this.fatFraction,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final radius = Radius.circular(h / 2);
+    final usable = (w - _gap * 2).clamp(0, w).toDouble();
+
+    final pW = usable * proteinFraction;
+    final cW = usable * carbsFraction;
+    final fW = usable * fatFraction;
+
+    final segments = <(double, double, Color)>[
+      (0.0, pW, AppColors.blue),
+      (pW + _gap, cW, AppColors.green),
+      (pW + _gap + cW + _gap, fW, AppColors.orange),
+    ];
+
+    final visibleEnd = w * progress.clamp(0.0, 1.0);
+    if (visibleEnd <= 0) return;
+
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, visibleEnd, h));
+
+    for (final (start, segWidth, color) in segments) {
+      if (segWidth <= 0) continue;
+      final rrect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(start, 0, segWidth, h),
+        radius,
+      );
+      canvas.drawRRect(rrect, Paint()..color = color);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _MacroBarPainter old) =>
+      progress != old.progress ||
+      proteinFraction != old.proteinFraction ||
+      carbsFraction != old.carbsFraction ||
+      fatFraction != old.fatFraction;
+}
+
+class _MacroStatColumn extends StatelessWidget {
+  final String label;
+  final Color dotColor;
+  final String value;
+  final String percent;
+
+  const _MacroStatColumn({
+    required this.label,
+    required this.dotColor,
+    required this.value,
+    required this.percent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: cs.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: cs.onSurface,
+                ),
+              ),
+              TextSpan(
+                text: ' ($percent)',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -536,8 +669,6 @@ class _GoalCard extends StatelessWidget {
   final String? maintainSubtitle;
   final String? fromWeight;
   final String? toWeight;
-  final String? dateLine;
-  final String? paceLine;
   final Color cardBg;
   final Color lineColor;
   final bool isDark;
@@ -549,8 +680,6 @@ class _GoalCard extends StatelessWidget {
     required this.maintainSubtitle,
     required this.fromWeight,
     required this.toWeight,
-    required this.dateLine,
-    required this.paceLine,
     required this.cardBg,
     required this.lineColor,
     required this.isDark,
@@ -645,28 +774,6 @@ class _GoalCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        if (dateLine != null)
-          Text(
-            dateLine!,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: cs.onSurface,
-              height: 1.3,
-            ),
-          ),
-        if (paceLine != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            paceLine!,
-            style: TextStyle(
-              fontSize: 12,
-              color: cs.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-        ],
       ],
     );
   }

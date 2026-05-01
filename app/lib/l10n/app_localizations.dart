@@ -1828,18 +1828,6 @@ abstract class AppLocalizations {
   /// **'Рассчитаем сроки и темп достижения'**
   String get onboardingTargetWeightHint;
 
-  /// No description provided for @safeWeightLossPace.
-  ///
-  /// In ru, this message translates to:
-  /// **'Безопасный темп — 0.5 кг в неделю'**
-  String get safeWeightLossPace;
-
-  /// No description provided for @recommendedWeightGainPace.
-  ///
-  /// In ru, this message translates to:
-  /// **'Рекомендуемый темп — 0.25 кг в неделю'**
-  String get recommendedWeightGainPace;
-
   /// No description provided for @onboardingAgeYearsUnit.
   ///
   /// In ru, this message translates to:
@@ -1849,13 +1837,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingLoadingCalc.
   ///
   /// In ru, this message translates to:
-  /// **'Рассчитываем метаболизм...'**
+  /// **'Анализируем ваши ответы...'**
   String get onboardingLoadingCalc;
 
   /// No description provided for @onboardingLoadingNorm.
   ///
   /// In ru, this message translates to:
-  /// **'Подбираем норму калорий...'**
+  /// **'Настраиваем ежедневные цели...'**
   String get onboardingLoadingNorm;
 
   /// No description provided for @onboardingLoadingPlan.
@@ -1990,29 +1978,11 @@ abstract class AppLocalizations {
   /// **'Ваш персональный план готов'**
   String get resultPlanReadyTitle;
 
-  /// No description provided for @resultPlanReadyLose.
+  /// No description provided for @resultHeroSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Чтобы снизить вес на {delta}, начните с {calories} ккал в день'**
-  String resultPlanReadyLose(String delta, int calories);
-
-  /// No description provided for @resultPlanReadyGain.
-  ///
-  /// In ru, this message translates to:
-  /// **'Чтобы набрать {delta}, начните с {calories} ккал в день'**
-  String resultPlanReadyGain(String delta, int calories);
-
-  /// No description provided for @resultPlanReadyMaintain.
-  ///
-  /// In ru, this message translates to:
-  /// **'Чтобы поддерживать вес, начните с {calories} ккал в день'**
-  String resultPlanReadyMaintain(int calories);
-
-  /// No description provided for @resultRingTrustLine.
-  ///
-  /// In ru, this message translates to:
-  /// **'Расчёт по вашим ответам и формуле Mifflin–St Jeor'**
-  String get resultRingTrustLine;
+  /// **'Мы собрали рекомендации на основе ваших ответов'**
+  String get resultHeroSubtitle;
 
   /// No description provided for @resultRingAdjustLine.
   ///
@@ -2026,18 +1996,6 @@ abstract class AppLocalizations {
   /// **'Ваша цель'**
   String get resultGoalCardTitle;
 
-  /// No description provided for @resultGoalDateBy.
-  ///
-  /// In ru, this message translates to:
-  /// **'Примерно к {date}'**
-  String resultGoalDateBy(String date);
-
-  /// No description provided for @resultGoalPace.
-  ///
-  /// In ru, this message translates to:
-  /// **'Реалистичный темп — около {pace} в неделю'**
-  String resultGoalPace(String pace);
-
   /// No description provided for @resultGoalMaintainTitle.
   ///
   /// In ru, this message translates to:
@@ -2049,30 +2007,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Без жёстких ограничений — баланс на каждый день'**
   String get resultGoalMaintainSubtitle;
-
-  /// No description provided for @resultBenefitsTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Что вы заметите со временем'**
-  String get resultBenefitsTitle;
-
-  /// No description provided for @resultBenefitsLose.
-  ///
-  /// In ru, this message translates to:
-  /// **'Больше энергии · Лучше сон · Меньше нагрузки на сердце'**
-  String get resultBenefitsLose;
-
-  /// No description provided for @resultBenefitsGain.
-  ///
-  /// In ru, this message translates to:
-  /// **'Прирост силы · Лучшее восстановление · Стабильная энергия'**
-  String get resultBenefitsGain;
-
-  /// No description provided for @resultBenefitsMaintain.
-  ///
-  /// In ru, this message translates to:
-  /// **'Стабильное самочувствие · Лучше сон · Меньше переедания'**
-  String get resultBenefitsMaintain;
 
   /// No description provided for @resultBridgeTitle.
   ///

@@ -5,14 +5,12 @@ import 'package:meal_tracker/features/onboarding/widgets/common/ruler_picker.dar
 
 class TargetWeightStep extends StatelessWidget {
   final double targetWeight;
-  final String? goal;
   final bool isImperial;
   final ValueChanged<double> onChanged;
 
   const TargetWeightStep({
     super.key,
     required this.targetWeight,
-    required this.goal,
     required this.isImperial,
     required this.onChanged,
   });
@@ -27,17 +25,6 @@ class TargetWeightStep extends StatelessWidget {
   static const _maxLb = 440.0;
   static const _lbStep = 1.0;
   static const _kgToLb = 2.20462;
-
-  String? _hint(BuildContext context) {
-    switch (goal) {
-      case 'lose':
-        return context.l10n.safeWeightLossPace;
-      case 'gain':
-        return context.l10n.recommendedWeightGainPace;
-      default:
-        return null;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,14 +56,6 @@ class TargetWeightStep extends StatelessWidget {
             _buildImperialPicker(context)
           else
             _buildMetricPicker(context),
-          if (_hint(context) != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              _hint(context)!,
-              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-          ],
           const Spacer(),
         ],
       ),

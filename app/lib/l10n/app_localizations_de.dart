@@ -934,20 +934,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get onboardingTargetWeightHint => 'Wir berechnen Zeitrahmen und Tempo';
 
   @override
-  String get safeWeightLossPace => 'Sicheres Tempo — 0,5 kg pro Woche';
-
-  @override
-  String get recommendedWeightGainPace =>
-      'Empfohlenes Tempo — 0,25 kg pro Woche';
-
-  @override
   String get onboardingAgeYearsUnit => 'Jahre';
 
   @override
-  String get onboardingLoadingCalc => 'Stoffwechsel wird berechnet...';
+  String get onboardingLoadingCalc => 'Ihre Antworten werden ausgewertet...';
 
   @override
-  String get onboardingLoadingNorm => 'Ihre Kaloriennorm wird ermittelt...';
+  String get onboardingLoadingNorm => 'Tägliche Ziele werden eingerichtet...';
 
   @override
   String get onboardingLoadingPlan => 'Ihr persönlicher Plan wird erstellt...';
@@ -1029,23 +1022,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get resultPlanReadyTitle => 'Ihr persönlicher Plan ist fertig';
 
   @override
-  String resultPlanReadyLose(String delta, int calories) {
-    return 'Um $delta abzunehmen, starten Sie mit $calories kcal pro Tag';
-  }
-
-  @override
-  String resultPlanReadyGain(String delta, int calories) {
-    return 'Um $delta zuzunehmen, starten Sie mit $calories kcal pro Tag';
-  }
-
-  @override
-  String resultPlanReadyMaintain(int calories) {
-    return 'Um Ihr Gewicht zu halten, starten Sie mit $calories kcal pro Tag';
-  }
-
-  @override
-  String get resultRingTrustLine =>
-      'Berechnet aus Ihren Antworten mit der Mifflin–St Jeor-Formel';
+  String get resultHeroSubtitle =>
+      'Wir haben Empfehlungen basierend auf Ihren Antworten zusammengestellt';
 
   @override
   String get resultRingAdjustLine =>
@@ -1055,16 +1033,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get resultGoalCardTitle => 'Ihr Ziel';
 
   @override
-  String resultGoalDateBy(String date) {
-    return 'Etwa bis $date';
-  }
-
-  @override
-  String resultGoalPace(String pace) {
-    return 'Realistisches Tempo — etwa $pace pro Woche';
-  }
-
-  @override
   String resultGoalMaintainTitle(String weight) {
     return 'Gewicht bei etwa $weight halten';
   }
@@ -1072,21 +1040,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get resultGoalMaintainSubtitle =>
       'Keine strengen Einschränkungen — die tägliche Balance zählt';
-
-  @override
-  String get resultBenefitsTitle => 'Was Sie mit der Zeit bemerken werden';
-
-  @override
-  String get resultBenefitsLose =>
-      'Mehr Energie · Besserer Schlaf · Weniger Belastung für das Herz';
-
-  @override
-  String get resultBenefitsGain =>
-      'Kraftzuwachs · Bessere Erholung · Konstante Energie';
-
-  @override
-  String get resultBenefitsMaintain =>
-      'Stabiles Wohlbefinden · Besserer Schlaf · Weniger Überessen';
 
   @override
   String get resultBridgeTitle =>

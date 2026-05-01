@@ -25,7 +25,6 @@ import 'package:meal_tracker/features/onboarding/widgets/steps/result_step.dart'
 // when we return to polish them.
 // import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_scale_step.dart';
 // import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_accuracy_step.dart';
-// import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_science_step.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});
@@ -54,6 +53,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   static const _stepImageHorizontalPadding = 16.0;
   static const _stepImageBottomOffset = 84.0;
   static const _stepImageContentGap = 12.0;
+  static const _ctaButtonHeight = 56.0;
+  static const _ctaButtonBottomMargin = 16.0;
   static const _stepNames = [
     'goal',
     'gender',
@@ -413,7 +414,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         return TargetWeightStep(
           key: const ValueKey(6),
           targetWeight: _data.targetWeightKg,
-          goal: _data.goal,
           isImperial: _data.isImperial,
           onChanged: (v) => setState(() => _data.targetWeightKg = v),
         );
@@ -627,11 +627,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     final stepImageBottom = isLoading
                         ? 0.0
                         : bottomInset + _stepImageBottomOffset;
-                    final contentBottomPadding = hasStepImage
-                        ? stepImageBottom +
-                              stepImageHeight +
-                              _stepImageContentGap
-                        : 0.0;
+                    final contentBottomPadding = isLoading
+                        ? 0.0
+                        : hasStepImage
+                            ? stepImageBottom +
+                                  stepImageHeight +
+                                  _stepImageContentGap
+                            // No step image (e.g. result step): reserve space
+                            // for the floating CTA button so scrollable content
+                            // doesn't get hidden behind it at the bottom.
+                            : bottomInset +
+                                  _ctaButtonBottomMargin +
+                                  _ctaButtonHeight +
+                                  _stepImageContentGap;
 
                     return Stack(
                       children: [
@@ -781,10 +789,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                           Positioned(
                             left: 24,
                             right: 24,
-                            bottom: bottomInset + 16,
+                            bottom: bottomInset + _ctaButtonBottomMargin,
                             child: Container(
                               width: double.infinity,
-                              height: 56,
+                              height: _ctaButtonHeight,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
                                 border: AppTheme.cardEdgeBorder(isDark: isDark),

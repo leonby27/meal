@@ -926,19 +926,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingTargetWeightHint => 'We\'ll calculate timeline and pace';
 
   @override
-  String get safeWeightLossPace => 'Safe pace — 0.5 kg per week';
-
-  @override
-  String get recommendedWeightGainPace => 'Recommended pace — 0.25 kg per week';
-
-  @override
   String get onboardingAgeYearsUnit => 'years';
 
   @override
-  String get onboardingLoadingCalc => 'Calculating metabolism...';
+  String get onboardingLoadingCalc => 'Analyzing your answers...';
 
   @override
-  String get onboardingLoadingNorm => 'Finding your calorie norm...';
+  String get onboardingLoadingNorm => 'Setting your daily targets...';
 
   @override
   String get onboardingLoadingPlan => 'Creating your personal plan...';
@@ -1017,39 +1011,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resultPlanReadyTitle => 'Your personal plan is ready';
 
   @override
-  String resultPlanReadyLose(String delta, int calories) {
-    return 'To lose $delta, start with $calories kcal per day';
-  }
-
-  @override
-  String resultPlanReadyGain(String delta, int calories) {
-    return 'To gain $delta, start with $calories kcal per day';
-  }
-
-  @override
-  String resultPlanReadyMaintain(int calories) {
-    return 'To maintain your weight, start with $calories kcal per day';
-  }
-
-  @override
-  String get resultRingTrustLine =>
-      'Calculated from your answers using the Mifflin–St Jeor formula';
+  String get resultHeroSubtitle =>
+      'We\'ve put together recommendations based on your answers';
 
   @override
   String get resultRingAdjustLine => 'You can adjust these values at any time';
 
   @override
   String get resultGoalCardTitle => 'Your goal';
-
-  @override
-  String resultGoalDateBy(String date) {
-    return 'Approximately by $date';
-  }
-
-  @override
-  String resultGoalPace(String pace) {
-    return 'Realistic pace — about $pace per week';
-  }
 
   @override
   String resultGoalMaintainTitle(String weight) {
@@ -1059,21 +1028,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get resultGoalMaintainSubtitle =>
       'No strict limits — daily balance is what matters';
-
-  @override
-  String get resultBenefitsTitle => 'What you\'ll notice over time';
-
-  @override
-  String get resultBenefitsLose =>
-      'More energy · Better sleep · Less strain on the heart';
-
-  @override
-  String get resultBenefitsGain =>
-      'Strength gains · Better recovery · Steady energy';
-
-  @override
-  String get resultBenefitsMaintain =>
-      'Steady well-being · Better sleep · Less overeating';
 
   @override
   String get resultBridgeTitle =>

@@ -931,20 +931,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get onboardingTargetWeightHint => 'Calcularemos prazos e ritmo';
 
   @override
-  String get safeWeightLossPace => 'Ritmo seguro — 0,5 kg por semana';
-
-  @override
-  String get recommendedWeightGainPace =>
-      'Ritmo recomendado — 0,25 kg por semana';
-
-  @override
   String get onboardingAgeYearsUnit => 'anos';
 
   @override
-  String get onboardingLoadingCalc => 'Calculando metabolismo...';
+  String get onboardingLoadingCalc => 'Analisando suas respostas...';
 
   @override
-  String get onboardingLoadingNorm => 'Encontrando sua norma calórica...';
+  String get onboardingLoadingNorm => 'Configurando suas metas diárias...';
 
   @override
   String get onboardingLoadingPlan => 'Criando seu plano personalizado...';
@@ -1024,23 +1017,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get resultPlanReadyTitle => 'Seu plano personalizado está pronto';
 
   @override
-  String resultPlanReadyLose(String delta, int calories) {
-    return 'Para perder $delta, comece com $calories kcal por dia';
-  }
-
-  @override
-  String resultPlanReadyGain(String delta, int calories) {
-    return 'Para ganhar $delta, comece com $calories kcal por dia';
-  }
-
-  @override
-  String resultPlanReadyMaintain(int calories) {
-    return 'Para manter seu peso, comece com $calories kcal por dia';
-  }
-
-  @override
-  String get resultRingTrustLine =>
-      'Calculado a partir das suas respostas com a fórmula Mifflin–St Jeor';
+  String get resultHeroSubtitle =>
+      'Reunimos recomendações com base nas suas respostas';
 
   @override
   String get resultRingAdjustLine =>
@@ -1050,16 +1028,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get resultGoalCardTitle => 'Sua meta';
 
   @override
-  String resultGoalDateBy(String date) {
-    return 'Aproximadamente até $date';
-  }
-
-  @override
-  String resultGoalPace(String pace) {
-    return 'Ritmo realista — cerca de $pace por semana';
-  }
-
-  @override
   String resultGoalMaintainTitle(String weight) {
     return 'Manter o peso em cerca de $weight';
   }
@@ -1067,21 +1035,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get resultGoalMaintainSubtitle =>
       'Sem restrições rígidas — o equilíbrio diário é o que importa';
-
-  @override
-  String get resultBenefitsTitle => 'O que você notará com o tempo';
-
-  @override
-  String get resultBenefitsLose =>
-      'Mais energia · Melhor sono · Menos esforço sobre o coração';
-
-  @override
-  String get resultBenefitsGain =>
-      'Ganhos de força · Melhor recuperação · Energia constante';
-
-  @override
-  String get resultBenefitsMaintain =>
-      'Bem-estar estável · Melhor sono · Menos comer em excesso';
 
   @override
   String get resultBridgeTitle =>
