@@ -361,7 +361,7 @@
   "onboardingStart": "Начать",
 
   "resultPlanReadyTitle": "Ваш персональный план готов",
-  "resultHeroSubtitle": "Мы собрали рекомендации на основе ваших ответов",
+  "resultHeroSubtitle": "На основе ваших ответов",
   "resultRingAdjustLine": "Цифры можно скорректировать в любой момент",
   "resultGoalCardTitle": "Ваша цель",
   "resultGoalMaintainTitle": "Удерживать вес около {weight}",
@@ -372,6 +372,11 @@
   "resultBridgePremiumLine": "С Premium — без лимита, до самой цели",
   "resultDisclaimerShort": "Рекомендации не заменяют консультацию врача",
   "resultDisclaimerExpand": "Подробнее",
+  "resultSourcesTitle": "Источники",
+  "resultSourceCaloriesLabel": "Норма калорий",
+  "resultSourceMacrosLabel": "Распределение БЖУ",
+  "profileMethodology": "Методика и источники",
+  "profileMethodologyIntro": "Как рассчитываются ваши дневные цели",
   "resultOpenPlan": "Открыть мой план",
 
   "socialProofScaleTitle": "Создано для серьёзного учёта",

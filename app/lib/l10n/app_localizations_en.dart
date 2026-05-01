@@ -1011,8 +1011,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resultPlanReadyTitle => 'Your personal plan is ready';
 
   @override
-  String get resultHeroSubtitle =>
-      'We\'ve put together recommendations based on your answers';
+  String get resultHeroSubtitle => 'Based on your answers';
 
   @override
   String get resultRingAdjustLine => 'You can adjust these values at any time';
@@ -1046,6 +1045,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resultDisclaimerExpand => 'Learn more';
+
+  @override
+  String get resultSourcesTitle => 'Sources';
+
+  @override
+  String get resultSourceCaloriesLabel => 'Calorie target';
+
+  @override
+  String get resultSourceMacrosLabel => 'Macronutrient ranges';
+
+  @override
+  String get profileMethodology => 'Methodology & sources';
+
+  @override
+  String get profileMethodologyIntro => 'How your daily targets are estimated';
 
   @override
   String get resultOpenPlan => 'Open my plan';

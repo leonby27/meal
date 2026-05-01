@@ -1060,6 +1060,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get resultDisclaimerExpand => 'En savoir plus';
 
   @override
+  String get resultSourcesTitle => 'Sources';
+
+  @override
+  String get resultSourceCaloriesLabel => 'Objectif calorique';
+
+  @override
+  String get resultSourceMacrosLabel => 'Répartition des macronutriments';
+
+  @override
+  String get profileMethodology => 'Méthodologie et sources';
+
+  @override
+  String get profileMethodologyIntro =>
+      'Comment vos objectifs quotidiens sont estimés';
+
+  @override
   String get resultOpenPlan => 'Ouvrir mon plan';
 
   @override

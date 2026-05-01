@@ -1055,6 +1055,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get resultDisclaimerExpand => 'Más información';
 
   @override
+  String get resultSourcesTitle => 'Fuentes';
+
+  @override
+  String get resultSourceCaloriesLabel => 'Objetivo de calorías';
+
+  @override
+  String get resultSourceMacrosLabel => 'Distribución de macronutrientes';
+
+  @override
+  String get profileMethodology => 'Metodología y fuentes';
+
+  @override
+  String get profileMethodologyIntro => 'Cómo se estiman tus objetivos diarios';
+
+  @override
   String get resultOpenPlan => 'Abrir mi plan';
 
   @override

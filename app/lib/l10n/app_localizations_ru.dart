@@ -1013,8 +1013,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resultPlanReadyTitle => 'Ваш персональный план готов';
 
   @override
-  String get resultHeroSubtitle =>
-      'Мы собрали рекомендации на основе ваших ответов';
+  String get resultHeroSubtitle => 'На основе ваших ответов';
 
   @override
   String get resultRingAdjustLine =>
@@ -1049,6 +1048,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resultDisclaimerExpand => 'Подробнее';
+
+  @override
+  String get resultSourcesTitle => 'Источники';
+
+  @override
+  String get resultSourceCaloriesLabel => 'Норма калорий';
+
+  @override
+  String get resultSourceMacrosLabel => 'Распределение БЖУ';
+
+  @override
+  String get profileMethodology => 'Методика и источники';
+
+  @override
+  String get profileMethodologyIntro => 'Как рассчитываются ваши дневные цели';
 
   @override
   String get resultOpenPlan => 'Открыть мой план';

@@ -1061,6 +1061,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get resultDisclaimerExpand => 'Mehr erfahren';
 
   @override
+  String get resultSourcesTitle => 'Quellen';
+
+  @override
+  String get resultSourceCaloriesLabel => 'Kalorienziel';
+
+  @override
+  String get resultSourceMacrosLabel => 'Makronährstoffverteilung';
+
+  @override
+  String get profileMethodology => 'Methodik & Quellen';
+
+  @override
+  String get profileMethodologyIntro =>
+      'Wie Ihre täglichen Ziele geschätzt werden';
+
+  @override
   String get resultOpenPlan => 'Meinen Plan öffnen';
 
   @override

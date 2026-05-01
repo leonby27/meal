@@ -349,6 +349,11 @@
   "resultBridgePremiumLine": "Con Premium — sin límites, hasta alcanzar tu objetivo",
   "resultDisclaimerShort": "Las recomendaciones no sustituyen el consejo médico",
   "resultDisclaimerExpand": "Más información",
+  "resultSourcesTitle": "Fuentes",
+  "resultSourceCaloriesLabel": "Objetivo de calorías",
+  "resultSourceMacrosLabel": "Distribución de macronutrientes",
+  "profileMethodology": "Metodología y fuentes",
+  "profileMethodologyIntro": "Cómo se estiman tus objetivos diarios",
   "resultOpenPlan": "Abrir mi plan",
 
   "socialProofScaleTitle": "Hecho para un seguimiento serio",

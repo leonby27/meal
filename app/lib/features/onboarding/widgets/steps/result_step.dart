@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/methodology_sources.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
 
 class ResultStep extends StatefulWidget {
@@ -20,10 +21,13 @@ class _ResultStepState extends State<ResultStep>
   // The internal data model is always kg; we only convert for display.
   static const double _kgToLb = 2.20462;
 
+  // Unified visual rhythm.
+  static const double _cardRadius = 20;
+  static const double _hPad = 16;
+
   AnimationController? _controller;
   Animation<double>? _animation;
   late final ConfettiController _confettiController;
-  bool _disclaimerExpanded = false;
 
   double get _progress => _animation?.value ?? 0.0;
 
@@ -61,12 +65,28 @@ class _ResultStepState extends State<ResultStep>
     return '${kg.round()} ${context.l10n.kgUnit}';
   }
 
+  /// Localized signed delta string for the goal card badge, e.g. "−5 kg"
+  /// for lose or "+3 kg" for gain. Sign is rendered with a typographic
+  /// minus (U+2212) so it lines up well with bold numerals.
+  String _formatDelta(double currentKg, double targetKg) {
+    final deltaKg = targetKg - currentKg;
+    final unit = widget.data.isImperial
+        ? 'lb'
+        : context.l10n.kgUnit;
+    final value = widget.data.isImperial
+        ? (deltaKg.abs() * _kgToLb).round()
+        : deltaKg.abs().round();
+    final sign = deltaKg > 0 ? '+' : '\u2212';
+    return '$sign$value $unit';
+  }
+
   String _formatCalories(int cal) {
     if (cal >= 1000) {
       final whole = cal ~/ 1000;
       final rest = cal % 1000;
-      if (rest == 0) return '$whole 000';
-      return '$whole ${rest.toString().padLeft(3, '0')}';
+      // Non-breaking space so the thousand-separator never wraps.
+      if (rest == 0) return '$whole\u00A0000';
+      return '$whole\u00A0${rest.toString().padLeft(3, '0')}';
     }
     return '$cal';
   }
@@ -91,17 +111,18 @@ class _ResultStepState extends State<ResultStep>
     // Treat any unknown / null goal as "maintain" so we render the
     // simpler maintain-style goal card.
     final isMaintain = goal != 'lose' && goal != 'gain';
+    final isLose = goal == 'lose';
 
     return Stack(
       children: [
         SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: _hPad),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-              // --- Section 1: Hero card (title + calorie target + mascot) ---
+              // --- Hero: title + animated calorie ring (kcal/day in center) ---
               AnimatedBuilder(
                 animation: _animation ?? const AlwaysStoppedAnimation(1.0),
                 builder: (context, _) {
@@ -110,18 +131,18 @@ class _ResultStepState extends State<ResultStep>
                   return _HeroCard(
                     title: context.l10n.resultPlanReadyTitle,
                     subtitle: context.l10n.resultHeroSubtitle,
-                    goalLabel: context.l10n.resultGoalCardTitle,
                     calorieValue: _formatCalories(animCal),
                     unit: context.l10n.kcalPerDay,
+                    progress: p,
                     cardBg: cardBg,
                     lineColor: lineColor,
                     isDark: isDark,
                   );
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-              // --- Section 2: Macro card (segmented bar + per-macro stats) ---
+              // --- Macros: slim segmented bar + 3 centered macro columns ---
               AnimatedBuilder(
                 animation: _animation ?? const AlwaysStoppedAnimation(1.0),
                 builder: (context, _) {
@@ -152,11 +173,12 @@ class _ResultStepState extends State<ResultStep>
                   );
                 },
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
-              // --- Section 4: Goal card (shape depends on goal type) ---
+              // --- Goal card (lose/gain → arrow + delta badge; maintain → text) ---
               _GoalCard(
                 isMaintain: isMaintain,
+                isLose: isLose,
                 regularTitle: context.l10n.resultGoalCardTitle,
                 maintainTitle: isMaintain
                     ? context.l10n.resultGoalMaintainTitle(
@@ -171,13 +193,19 @@ class _ResultStepState extends State<ResultStep>
                 toWeight: isMaintain
                     ? null
                     : _formatWeight(widget.data.targetWeightKg),
+                deltaLabel: isMaintain
+                    ? null
+                    : _formatDelta(
+                        widget.data.weightKg,
+                        widget.data.targetWeightKg,
+                      ),
                 cardBg: cardBg,
                 lineColor: lineColor,
                 isDark: isDark,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
-              // --- Section 6: Free vs Premium bridge ---
+              // --- Free vs Premium bridge (premium line gets primary accent) ---
               _BridgeCard(
                 title: context.l10n.resultBridgeTitle,
                 freeLine: context.l10n.resultBridgeFreeLine,
@@ -186,17 +214,14 @@ class _ResultStepState extends State<ResultStep>
                 lineColor: lineColor,
                 isDark: isDark,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // --- Section 7: Compact disclaimer with "Learn more" toggle ---
-              _ExpandableDisclaimer(
-                shortText: context.l10n.resultDisclaimerShort,
-                fullText: context.l10n.resultDisclaimer,
-                expandLabel: context.l10n.resultDisclaimerExpand,
-                expanded: _disclaimerExpanded,
-                onToggle: () => setState(
-                  () => _disclaimerExpanded = !_disclaimerExpanded,
-                ),
+              // --- Methodology zone: disclaimer + scientific citations ---
+              _MethodologyBlock(
+                disclaimerLabel: context.l10n.resultDisclaimerShort,
+                disclaimerText: context.l10n.resultDisclaimer,
+                caloriesLabel: context.l10n.resultSourceCaloriesLabel,
+                macrosLabel: context.l10n.resultSourceMacrosLabel,
               ),
               const SizedBox(height: 24),
             ],
@@ -238,14 +263,21 @@ class _ResultStepState extends State<ResultStep>
 }
 
 // ---------------------------------------------------------------------------
-// Hero card: title + tagline + big calorie target + mascot illustration slot
+// Hero card
+// ---------------------------------------------------------------------------
+// Anchors the page on a single hero artifact: the daily calorie target
+// rendered as a count-up number inside an animated circular ring. This
+// matches the "moment of completion" pattern used by Cal AI / MyFitnessPal /
+// Yazio result screens, and previews the goal-ring metaphor users will see
+// in the diary screen.
 // ---------------------------------------------------------------------------
 class _HeroCard extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String goalLabel;
   final String calorieValue;
   final String unit;
+  /// 0..1 — drives both the kcal count-up (in the parent) and the ring fill.
+  final double progress;
   final Color cardBg;
   final Color lineColor;
   final bool isDark;
@@ -253,9 +285,9 @@ class _HeroCard extends StatelessWidget {
   const _HeroCard({
     required this.title,
     required this.subtitle,
-    required this.goalLabel,
     required this.calorieValue,
     required this.unit,
+    required this.progress,
     required this.cardBg,
     required this.lineColor,
     required this.isDark,
@@ -264,88 +296,104 @@ class _HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final ringTrack = isDark
+        ? Colors.white.withAlpha(18)
+        : AppColors.primary.withAlpha(20);
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(_ResultStepState._cardRadius),
         border: Border.all(color: lineColor),
         boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       foregroundDecoration: AppTheme.cardEdgeForeground(
         isDark: isDark,
-        radius: 20,
+        radius: _ResultStepState._cardRadius,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Flexible(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: cs.onSurface,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                const Padding(
-                  padding: EdgeInsets.only(top: 2),
-                  child: Icon(
-                    Icons.auto_awesome,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
             Text(
-              subtitle,
+              title,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
-                color: cs.onSurfaceVariant,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(height: 1, color: lineColor),
-            const SizedBox(height: 16),
-            Text(
-              goalLabel,
-              style: TextStyle(
-                fontSize: 13,
-                color: cs.onSurfaceVariant,
-                height: 1.2,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              calorieValue,
-              style: TextStyle(
-                fontSize: 40,
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: cs.onSurface,
-                height: 1.05,
-                letterSpacing: -0.5,
+                height: 1.25,
+                letterSpacing: -0.2,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: 168,
+              height: 168,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 168,
+                    height: 168,
+                    child: CircularProgressIndicator(
+                      // The ring fills in with the same controller that drives
+                      // the kcal count-up so they read as one moment.
+                      value: progress.clamp(0.0, 1.0),
+                      strokeWidth: 10,
+                      strokeCap: StrokeCap.round,
+                      backgroundColor: ringTrack,
+                      valueColor: const AlwaysStoppedAnimation(
+                        AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            calorieValue,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 38,
+                              fontWeight: FontWeight.w800,
+                              color: cs.onSurface,
+                              height: 1.0,
+                              letterSpacing: -1.0,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          unit,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurfaceVariant,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
             Text(
-              unit,
+              subtitle,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
                 color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
+                height: 1.45,
               ),
             ),
           ],
@@ -356,7 +404,7 @@ class _HeroCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Macro card: segmented horizontal bar + per-macro stats + adjust footer
+// Macro card: slim segmented bar + 3 centered macro columns + adjust footer
 // ---------------------------------------------------------------------------
 class _MacroCard extends StatelessWidget {
   final double progress;
@@ -407,18 +455,18 @@ class _MacroCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(_ResultStepState._cardRadius),
         border: Border.all(color: lineColor),
         boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       foregroundDecoration: AppTheme.cardEdgeForeground(
         isDark: isDark,
-        radius: 20,
+        radius: _ResultStepState._cardRadius,
       ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -428,67 +476,71 @@ class _MacroCard extends StatelessWidget {
                   carbsFraction: carbsFraction,
                   fatFraction: fatFraction,
                 ),
-                const SizedBox(height: 18),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _MacroStatColumn(
-                        label: proteinLabel,
-                        dotColor: AppColors.blue,
-                        value: '$proteinGrams $gramsUnit',
-                        percent: '$proteinPct%',
+                const SizedBox(height: 22),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: _MacroStatColumn(
+                          label: proteinLabel,
+                          dotColor: AppColors.blue,
+                          value: '$proteinGrams\u00A0$gramsUnit',
+                          percent: '$proteinPct%',
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: _MacroStatColumn(
-                        label: carbsLabel,
-                        dotColor: AppColors.green,
-                        value: '$carbsGrams $gramsUnit',
-                        percent: '$carbsPct%',
+                      _ColumnDivider(color: lineColor),
+                      Expanded(
+                        child: _MacroStatColumn(
+                          label: carbsLabel,
+                          dotColor: AppColors.green,
+                          value: '$carbsGrams\u00A0$gramsUnit',
+                          percent: '$carbsPct%',
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: _MacroStatColumn(
-                        label: fatLabel,
-                        dotColor: AppColors.orange,
-                        value: '$fatGrams $gramsUnit',
-                        percent: '$fatPct%',
+                      _ColumnDivider(color: lineColor),
+                      Expanded(
+                        child: _MacroStatColumn(
+                          label: fatLabel,
+                          dotColor: AppColors.orange,
+                          value: '$fatGrams\u00A0$gramsUnit',
+                          percent: '$fatPct%',
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
           Container(height: 1, color: lineColor),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.refresh_rounded,
-                  size: 16,
-                  color: cs.onSurfaceVariant,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    adjustLine,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: cs.onSurfaceVariant,
-                      height: 1.3,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Text(
+              adjustLine,
+              style: TextStyle(
+                fontSize: 12,
+                color: cs.onSurfaceVariant,
+                height: 1.3,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ColumnDivider extends StatelessWidget {
+  final Color color;
+  const _ColumnDivider({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Container(width: 1, color: color),
     );
   }
 }
@@ -512,7 +564,7 @@ class _SegmentedMacroBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 14,
+      height: 8,
       child: CustomPaint(
         size: Size.infinite,
         painter: _MacroBarPainter(
@@ -601,9 +653,11 @@ class _MacroStatColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -621,38 +675,40 @@ class _MacroStatColumn extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: cs.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
+                  letterSpacing: 0.1,
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: value,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface,
-                ),
-              ),
-              TextSpan(
-                text: ' ($percent)',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ],
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              color: cs.onSurface,
+              height: 1.1,
+              letterSpacing: -0.2,
+            ),
           ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          percent,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: cs.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -662,24 +718,32 @@ class _MacroStatColumn extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Goal card
 // ---------------------------------------------------------------------------
+// Lose / gain: weight from → weight to with a colored delta badge that
+// matches the goal direction (orange for lose, green for gain).
+// Maintain: short two-line text card with the same icon-on-left layout.
+// ---------------------------------------------------------------------------
 class _GoalCard extends StatelessWidget {
   final bool isMaintain;
+  final bool isLose;
   final String regularTitle;
   final String? maintainTitle;
   final String? maintainSubtitle;
   final String? fromWeight;
   final String? toWeight;
+  final String? deltaLabel;
   final Color cardBg;
   final Color lineColor;
   final bool isDark;
 
   const _GoalCard({
     required this.isMaintain,
+    required this.isLose,
     required this.regularTitle,
     required this.maintainTitle,
     required this.maintainSubtitle,
     required this.fromWeight,
     required this.toWeight,
+    required this.deltaLabel,
     required this.cardBg,
     required this.lineColor,
     required this.isDark,
@@ -695,13 +759,13 @@ class _GoalCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_ResultStepState._cardRadius),
         border: Border.all(color: lineColor),
         boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       foregroundDecoration: AppTheme.cardEdgeForeground(
         isDark: isDark,
-        radius: 16,
+        radius: _ResultStepState._cardRadius,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -731,18 +795,51 @@ class _GoalCard extends StatelessWidget {
   }
 
   Widget _buildLoseGain(BuildContext context, ColorScheme cs) {
+    // Orange = lose direction (matches food/calorie semantics in this app),
+    // green = gain direction. Both stay within the existing palette.
+    final deltaColor = isLose ? AppColors.orange : AppColors.green;
+    final deltaBg = isLose
+        ? AppColors.orange.withAlpha(28)
+        : AppColors.green.withAlpha(28);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 2),
-        Text(
-          regularTitle,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: cs.onSurfaceVariant,
-            letterSpacing: 0.2,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                regularTitle.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: cs.onSurfaceVariant,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ),
+            if (deltaLabel != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: deltaBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  deltaLabel!,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: deltaColor,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 6),
         Row(
@@ -752,14 +849,14 @@ class _GoalCard extends StatelessWidget {
               fromWeight ?? '',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface,
+                fontWeight: FontWeight.w600,
+                color: cs.onSurfaceVariant,
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Icon(
-                Icons.arrow_forward,
+                Icons.arrow_forward_rounded,
                 size: 18,
                 color: cs.onSurfaceVariant,
               ),
@@ -767,7 +864,7 @@ class _GoalCard extends StatelessWidget {
             Text(
               toWeight ?? '',
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primary,
               ),
@@ -809,6 +906,10 @@ class _GoalCard extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Free vs Premium bridge card
 // ---------------------------------------------------------------------------
+// The premium row sits inside its own subtle primary-tinted container with
+// a thicker left accent bar — gives it clear visual priority over the free
+// row without needing a new CTA in this section.
+// ---------------------------------------------------------------------------
 class _BridgeCard extends StatelessWidget {
   final String title;
   final String freeLine;
@@ -829,19 +930,22 @@ class _BridgeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final premiumBg = isDark
+        ? AppColors.primary.withAlpha(28)
+        : AppColors.primary.withAlpha(18);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_ResultStepState._cardRadius),
         border: Border.all(color: lineColor),
         boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       foregroundDecoration: AppTheme.cardEdgeForeground(
         isDark: isDark,
-        radius: 16,
+        radius: _ResultStepState._cardRadius,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -855,19 +959,82 @@ class _BridgeCard extends StatelessWidget {
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 12),
-          _BridgeLine(
-            text: freeLine,
-            iconColor: cs.onSurfaceVariant,
-            textColor: cs.onSurfaceVariant,
-            bold: false,
+          const SizedBox(height: 14),
+          // Free — muted plain row.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Icon(
+                    Icons.check_rounded,
+                    size: 18,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    freeLine,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: cs.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          _BridgeLine(
-            text: premiumLine,
-            iconColor: AppColors.primary,
-            textColor: cs.onSurface,
-            bold: true,
+          const SizedBox(height: 10),
+          // Premium — accented row with primary tint and crown icon.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: premiumBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 1),
+                        child: Icon(
+                          Icons.workspace_premium_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          premiumLine,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(width: 4, color: AppColors.primary),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -875,111 +1042,91 @@ class _BridgeCard extends StatelessWidget {
   }
 }
 
-class _BridgeLine extends StatelessWidget {
-  final String text;
-  final Color iconColor;
-  final Color textColor;
-  final bool bold;
+// ---------------------------------------------------------------------------
+// Always-visible methodology block: the health disclaimer and scientific
+// sources behind the daily calorie / macronutrient recommendations. Required
+// by App Store Review guideline 1.4.1 (citations for in-app health/medical
+// calculations).
+// ---------------------------------------------------------------------------
+class _MethodologyBlock extends StatelessWidget {
+  final String disclaimerLabel;
+  final String disclaimerText;
+  final String caloriesLabel;
+  final String macrosLabel;
 
-  const _BridgeLine({
-    required this.text,
-    required this.iconColor,
-    required this.textColor,
-    required this.bold,
+  const _MethodologyBlock({
+    required this.disclaimerLabel,
+    required this.disclaimerText,
+    required this.caloriesLabel,
+    required this.macrosLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final cs = Theme.of(context).colorScheme;
+    final labelStyle = TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      color: cs.onSurfaceVariant,
+      height: 1.4,
+    );
+    final bodyStyle = TextStyle(
+      fontSize: 11,
+      color: cs.onSurfaceVariant.withAlpha(170),
+      height: 1.5,
+    );
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Icon(Icons.check_rounded, size: 18, color: iconColor),
+        _MethodologyLine(
+          label: disclaimerLabel,
+          text: disclaimerText,
+          labelStyle: labelStyle,
+          bodyStyle: bodyStyle,
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: bold ? FontWeight.w600 : FontWeight.w500,
-              color: textColor,
-              height: 1.4,
-            ),
-          ),
+        const SizedBox(height: 8),
+        _MethodologyLine(
+          label: caloriesLabel,
+          text: kMethodologyCitationCalories,
+          labelStyle: labelStyle,
+          bodyStyle: bodyStyle,
+        ),
+        const SizedBox(height: 8),
+        _MethodologyLine(
+          label: macrosLabel,
+          text: kMethodologyCitationMacros,
+          labelStyle: labelStyle,
+          bodyStyle: bodyStyle,
         ),
       ],
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Expandable disclaimer
-// ---------------------------------------------------------------------------
-class _ExpandableDisclaimer extends StatelessWidget {
-  final String shortText;
-  final String fullText;
-  final String expandLabel;
-  final bool expanded;
-  final VoidCallback onToggle;
+class _MethodologyLine extends StatelessWidget {
+  final String label;
+  final String text;
+  final TextStyle labelStyle;
+  final TextStyle bodyStyle;
 
-  const _ExpandableDisclaimer({
-    required this.shortText,
-    required this.fullText,
-    required this.expandLabel,
-    required this.expanded,
-    required this.onToggle,
+  const _MethodologyLine({
+    required this.label,
+    required this.text,
+    required this.labelStyle,
+    required this.bodyStyle,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    final disclaimerStyle = TextStyle(
-      fontSize: 11,
-      color: cs.onSurfaceVariant.withAlpha(170),
-      height: 1.5,
-    );
-    final expandStyle = TextStyle(
-      fontSize: 11,
-      color: cs.onSurfaceVariant,
-      decoration: TextDecoration.underline,
-      height: 1.5,
-    );
-
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      child: Column(
+    return Text.rich(
+      TextSpan(
         children: [
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(text: 'ⓘ  ', style: disclaimerStyle),
-                TextSpan(text: shortText, style: disclaimerStyle),
-                const TextSpan(text: '  ·  '),
-                WidgetSpan(
-                  alignment: PlaceholderAlignment.middle,
-                  child: GestureDetector(
-                    onTap: onToggle,
-                    child: Text(expandLabel, style: expandStyle),
-                  ),
-                ),
-              ],
-            ),
-            textAlign: TextAlign.center,
-          ),
-          if (expanded) ...[
-            const SizedBox(height: 8),
-            Text(
-              fullText,
-              style: disclaimerStyle,
-              textAlign: TextAlign.center,
-            ),
-          ],
+          TextSpan(text: '$label — ', style: labelStyle),
+          TextSpan(text: text, style: bodyStyle),
         ],
       ),
+      textAlign: TextAlign.start,
     );
   }
 }

@@ -13,6 +13,7 @@ import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/methodology_sources.dart';
 
 /// When `true`, Profile shows the app theme row again (`ThemeNotifier` + picker).
 const bool kShowAppThemePicker = true;
@@ -1041,8 +1042,131 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                   : context.l10n.pushNotificationsShortOff,
               onTap: () => context.push('/reminders'),
             ),
+            const SizedBox(height: 12),
+            _settingsRow(
+              icon: Icons.menu_book_outlined,
+              iconBg: AppColors.primary,
+              label: context.l10n.profileMethodology,
+              onTap: _showMethodologySheet,
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showMethodologySheet() {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = _isDark;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        final mediaPad = MediaQuery.of(sheetContext).padding.bottom;
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 8, 20, 20 + mediaPad),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: cs.onSurfaceVariant.withAlpha(70),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  context.l10n.profileMethodology,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  context.l10n.profileMethodologyIntro,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: cs.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  context.l10n.resultDisclaimer,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: cs.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  context.l10n.resultSourcesTitle.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _methodologyCitation(
+                  label: context.l10n.resultSourceCaloriesLabel,
+                  citation: kMethodologyCitationCalories,
+                ),
+                const SizedBox(height: 10),
+                _methodologyCitation(
+                  label: context.l10n.resultSourceMacrosLabel,
+                  citation: kMethodologyCitationMacros,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _methodologyCitation({
+    required String label,
+    required String citation,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$label — ',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurface,
+              height: 1.5,
+            ),
+          ),
+          TextSpan(
+            text: citation,
+            style: TextStyle(
+              fontSize: 12,
+              color: cs.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

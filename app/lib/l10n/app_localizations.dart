@@ -1981,7 +1981,7 @@ abstract class AppLocalizations {
   /// No description provided for @resultHeroSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Мы собрали рекомендации на основе ваших ответов'**
+  /// **'На основе ваших ответов'**
   String get resultHeroSubtitle;
 
   /// No description provided for @resultRingAdjustLine.
@@ -2037,6 +2037,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Подробнее'**
   String get resultDisclaimerExpand;
+
+  /// No description provided for @resultSourcesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источники'**
+  String get resultSourcesTitle;
+
+  /// No description provided for @resultSourceCaloriesLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Норма калорий'**
+  String get resultSourceCaloriesLabel;
+
+  /// No description provided for @resultSourceMacrosLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Распределение БЖУ'**
+  String get resultSourceMacrosLabel;
+
+  /// No description provided for @profileMethodology.
+  ///
+  /// In ru, this message translates to:
+  /// **'Методика и источники'**
+  String get profileMethodology;
+
+  /// No description provided for @profileMethodologyIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как рассчитываются ваши дневные цели'**
+  String get profileMethodologyIntro;
 
   /// No description provided for @resultOpenPlan.
   ///

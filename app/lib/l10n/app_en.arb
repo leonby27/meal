@@ -339,7 +339,7 @@
   "onboardingStart": "Start",
 
   "resultPlanReadyTitle": "Your personal plan is ready",
-  "resultHeroSubtitle": "We've put together recommendations based on your answers",
+  "resultHeroSubtitle": "Based on your answers",
   "resultRingAdjustLine": "You can adjust these values at any time",
   "resultGoalCardTitle": "Your goal",
   "resultGoalMaintainTitle": "Maintain weight at about {weight}",
@@ -349,6 +349,11 @@
   "resultBridgePremiumLine": "With Premium — no limits, all the way to your goal",
   "resultDisclaimerShort": "Recommendations do not replace medical advice",
   "resultDisclaimerExpand": "Learn more",
+  "resultSourcesTitle": "Sources",
+  "resultSourceCaloriesLabel": "Calorie target",
+  "resultSourceMacrosLabel": "Macronutrient ranges",
+  "profileMethodology": "Methodology & sources",
+  "profileMethodologyIntro": "How your daily targets are estimated",
   "resultOpenPlan": "Open my plan",
 
   "socialProofScaleTitle": "Built for serious tracking",
