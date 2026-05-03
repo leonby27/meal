@@ -972,7 +972,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resultDisclaimer =>
-      'Приложение предоставляет информацию о питании, но не предназначено для диагностики, лечения или профилактики заболеваний. Оно не заменяет консультацию врача. При проблемах со здоровьем обращайтесь к специалисту.';
+      'Только оценка питания. Не медицинская рекомендация.';
 
   @override
   String get kcalPerDay => 'ккал/день';
@@ -1059,10 +1059,41 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resultSourceMacrosLabel => 'Распределение БЖУ';
 
   @override
-  String get profileMethodology => 'Методика и источники';
+  String get resultSourcesCta => 'Источники и методика';
+
+  @override
+  String get profileMethodology => 'Источники и методика питания';
 
   @override
   String get profileMethodologyIntro => 'Как рассчитываются ваши дневные цели';
+
+  @override
+  String get methodologyCaloriesSection => 'Норма калорий';
+
+  @override
+  String get methodologyMacrosSection => 'Цели по БЖУ';
+
+  @override
+  String get methodologyGeneralSection => 'Общие рекомендации по питанию';
+
+  @override
+  String get methodologySourceMifflinDescription =>
+      'Формула BMR для оценки калорий.';
+
+  @override
+  String get methodologySourceDriDescription =>
+      'Диапазоны для белков, жиров и углеводов.';
+
+  @override
+  String get methodologySourceUsdaDescription =>
+      'DRI-референсы по калориям и нутриентам.';
+
+  @override
+  String get methodologySourceWhoDescription =>
+      'Общие рекомендации по здоровому питанию.';
+
+  @override
+  String get methodologyOpenSourceFailed => 'Не удалось открыть источник.';
 
   @override
   String get resultOpenPlan => 'Открыть мой план';

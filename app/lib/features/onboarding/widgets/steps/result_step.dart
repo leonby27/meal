@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
-import 'package:meal_tracker/core/utils/methodology_sources.dart';
+import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
 
 class ResultStep extends StatefulWidget {
@@ -244,8 +244,9 @@ class _ResultStepState extends State<ResultStep> with TickerProviderStateMixin {
                         _MethodologyBlock(
                           disclaimerLabel: context.l10n.resultDisclaimerShort,
                           disclaimerText: context.l10n.resultDisclaimer,
-                          caloriesLabel: context.l10n.resultSourceCaloriesLabel,
-                          macrosLabel: context.l10n.resultSourceMacrosLabel,
+                          sourcesLabel: context.l10n.resultSourcesCta,
+                          onSourcesTap: () =>
+                              showMethodologySourcesSheet(context),
                         ),
                       ],
                     ),
@@ -1077,29 +1078,29 @@ class _BridgeCard extends StatelessWidget {
 class _MethodologyBlock extends StatelessWidget {
   final String disclaimerLabel;
   final String disclaimerText;
-  final String caloriesLabel;
-  final String macrosLabel;
+  final String sourcesLabel;
+  final VoidCallback onSourcesTap;
 
   const _MethodologyBlock({
     required this.disclaimerLabel,
     required this.disclaimerText,
-    required this.caloriesLabel,
-    required this.macrosLabel,
+    required this.sourcesLabel,
+    required this.onSourcesTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final labelStyle = TextStyle(
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: FontWeight.w600,
-      color: cs.onSurfaceVariant,
+      color: cs.onSurfaceVariant.withAlpha(145),
       height: 1.28,
     );
     final bodyStyle = TextStyle(
-      fontSize: 11,
-      color: cs.onSurfaceVariant.withAlpha(170),
-      height: 1.32,
+      fontSize: 10,
+      color: cs.onSurfaceVariant.withAlpha(135),
+      height: 1.26,
     );
 
     return Column(
@@ -1111,20 +1112,8 @@ class _MethodologyBlock extends StatelessWidget {
           labelStyle: labelStyle,
           bodyStyle: bodyStyle,
         ),
-        const SizedBox(height: 7),
-        _MethodologyLine(
-          label: caloriesLabel,
-          text: kMethodologyCitationCalories,
-          labelStyle: labelStyle,
-          bodyStyle: bodyStyle,
-        ),
-        const SizedBox(height: 7),
-        _MethodologyLine(
-          label: macrosLabel,
-          text: kMethodologyCitationMacros,
-          labelStyle: labelStyle,
-          bodyStyle: bodyStyle,
-        ),
+        const SizedBox(height: 6),
+        _SourcesLink(label: sourcesLabel, onTap: onSourcesTap),
       ],
     );
   }
@@ -1153,6 +1142,47 @@ class _MethodologyLine extends StatelessWidget {
         ],
       ),
       textAlign: TextAlign.start,
+    );
+  }
+}
+
+class _SourcesLink extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _SourcesLink({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final linkColor = isDark
+        ? AppColors.darkSecondaryDark
+        : AppColors.lightSecondaryDark;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.menu_book_outlined, size: 13, color: linkColor),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: linkColor,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(Icons.chevron_right, size: 13, color: linkColor),
+          ],
+        ),
+      ),
     );
   }
 }

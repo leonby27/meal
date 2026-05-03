@@ -1915,7 +1915,7 @@ abstract class AppLocalizations {
   /// No description provided for @resultDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'Приложение предоставляет информацию о питании, но не предназначено для диагностики, лечения или профилактики заболеваний. Оно не заменяет консультацию врача. При проблемах со здоровьем обращайтесь к специалисту.'**
+  /// **'Только оценка питания. Не медицинская рекомендация.'**
   String get resultDisclaimer;
 
   /// No description provided for @kcalPerDay.
@@ -2056,10 +2056,16 @@ abstract class AppLocalizations {
   /// **'Распределение БЖУ'**
   String get resultSourceMacrosLabel;
 
+  /// No description provided for @resultSourcesCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источники и методика'**
+  String get resultSourcesCta;
+
   /// No description provided for @profileMethodology.
   ///
   /// In ru, this message translates to:
-  /// **'Методика и источники'**
+  /// **'Источники и методика питания'**
   String get profileMethodology;
 
   /// No description provided for @profileMethodologyIntro.
@@ -2067,6 +2073,54 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Как рассчитываются ваши дневные цели'**
   String get profileMethodologyIntro;
+
+  /// No description provided for @methodologyCaloriesSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Норма калорий'**
+  String get methodologyCaloriesSection;
+
+  /// No description provided for @methodologyMacrosSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цели по БЖУ'**
+  String get methodologyMacrosSection;
+
+  /// No description provided for @methodologyGeneralSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Общие рекомендации по питанию'**
+  String get methodologyGeneralSection;
+
+  /// No description provided for @methodologySourceMifflinDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Формула BMR для оценки калорий.'**
+  String get methodologySourceMifflinDescription;
+
+  /// No description provided for @methodologySourceDriDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Диапазоны для белков, жиров и углеводов.'**
+  String get methodologySourceDriDescription;
+
+  /// No description provided for @methodologySourceUsdaDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'DRI-референсы по калориям и нутриентам.'**
+  String get methodologySourceUsdaDescription;
+
+  /// No description provided for @methodologySourceWhoDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Общие рекомендации по здоровому питанию.'**
+  String get methodologySourceWhoDescription;
+
+  /// No description provided for @methodologyOpenSourceFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось открыть источник.'**
+  String get methodologyOpenSourceFailed;
 
   /// No description provided for @resultOpenPlan.
   ///

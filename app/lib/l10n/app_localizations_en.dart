@@ -970,7 +970,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resultDisclaimer =>
-      'This app provides nutrition information but is not intended for diagnosis, treatment, or disease prevention. It does not replace professional medical advice. Always consult a healthcare professional for health-related decisions.';
+      'Nutrition estimates only. Not medical advice.';
 
   @override
   String get kcalPerDay => 'kcal/day';
@@ -1056,10 +1056,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resultSourceMacrosLabel => 'Macronutrient ranges';
 
   @override
-  String get profileMethodology => 'Methodology & sources';
+  String get resultSourcesCta => 'Sources and methodology';
+
+  @override
+  String get profileMethodology => 'Nutrition sources & methodology';
 
   @override
   String get profileMethodologyIntro => 'How your daily targets are estimated';
+
+  @override
+  String get methodologyCaloriesSection => 'Calorie target';
+
+  @override
+  String get methodologyMacrosSection => 'Macronutrient targets';
+
+  @override
+  String get methodologyGeneralSection => 'General nutrition guidance';
+
+  @override
+  String get methodologySourceMifflinDescription =>
+      'BMR formula for calorie estimates.';
+
+  @override
+  String get methodologySourceDriDescription =>
+      'Reference ranges for protein, fat, and carbs.';
+
+  @override
+  String get methodologySourceUsdaDescription =>
+      'DRI-based calorie and nutrient references.';
+
+  @override
+  String get methodologySourceWhoDescription =>
+      'General healthy eating guidance.';
+
+  @override
+  String get methodologyOpenSourceFailed => 'Could not open this source.';
 
   @override
   String get resultOpenPlan => 'Open my plan';
