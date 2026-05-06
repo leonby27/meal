@@ -1246,6 +1246,24 @@ abstract class AppLocalizations {
   /// **'Макросы сохранены'**
   String get macrosSavedToast;
 
+  /// No description provided for @updateDish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить блюдо'**
+  String get updateDish;
+
+  /// No description provided for @refineDish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточнить блюдо'**
+  String get refineDish;
+
+  /// No description provided for @refineDishHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточнить блюдо ...'**
+  String get refineDishHint;
+
   /// No description provided for @activityWalking.
   ///
   /// In ru, this message translates to:

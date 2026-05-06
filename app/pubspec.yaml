@@ -110,6 +110,7 @@ flutter:
     - assets/database/products.db
     - assets/animations/
     - assets/icons/
+    - assets/mascot/
     - assets/onboarding/dark/
     - assets/onboarding/light/
 

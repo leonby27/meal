@@ -617,6 +617,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get macrosSavedToast => 'Макросы сохранены';
 
   @override
+  String get updateDish => 'Обновить блюдо';
+
+  @override
+  String get refineDish => 'Уточнить блюдо';
+
+  @override
+  String get refineDishHint => 'Уточнить блюдо ...';
+
+  @override
   String get activityWalking => 'Ходьба';
 
   @override

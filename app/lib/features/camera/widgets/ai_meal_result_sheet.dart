@@ -38,7 +38,8 @@ enum _HealthProfile {
 
 class _IngredientEntry {
   final TextEditingController nameCtl;
-  final TextEditingController gramsCtl;
+  final TextEditingController caloriesCtl;
+  double grams;
   double proteinPer100g;
   double fatPer100g;
   double carbsPer100g;
@@ -52,7 +53,8 @@ class _IngredientEntry {
 
   _IngredientEntry({
     required this.nameCtl,
-    required this.gramsCtl,
+    required this.caloriesCtl,
+    required this.grams,
     required this.proteinPer100g,
     required this.fatPer100g,
     required this.carbsPer100g,
@@ -69,7 +71,7 @@ class _IngredientEntry {
 
   void dispose() {
     nameCtl.dispose();
-    gramsCtl.dispose();
+    caloriesCtl.dispose();
   }
 }
 
@@ -416,6 +418,18 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   final _carbsCtl = TextEditingController();
   final _caloriesCtl = TextEditingController();
 
+  /// Free-form text the user can supply alongside the macros editor to
+  /// refine the dish ("with double cheese", "small portion", …). When this
+  /// has any content the bottom button switches its icon from a check to
+  /// a send arrow to telegraph that tapping submits a refinement.
+  final _refineCtl = TextEditingController();
+  final _refineFocus = FocusNode();
+
+  /// True while the refine API call is in flight. Shown as an inline
+  /// spinner inside the action button; once the response lands we hand
+  /// off to the full staged loading screen.
+  bool _refining = false;
+
   List<_IngredientEntry> _ingredients = [];
   bool _updatingControllers = false;
   bool _saving = false;
@@ -433,9 +447,26 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   bool _isLoading = false;
   String? _loadingError;
-  Timer? _textTimer;
-  int _textIndex = 0;
   late final AnimationController _spinController;
+
+  /// Three-stage progress for the AI loading screen. Each stage runs in
+  /// sequence: "analyzing" → "recognizing" → "counting calories". Each fills
+  /// naturally at its own pace; we never force-snap them to 1.0 just because
+  /// the AI returned early — the bars play out and only then do we hand off
+  /// to the result UI. If the AI is slower than the chain, the third bar
+  /// holds at full and we wait for the response.
+  late final AnimationController _stage1Ctl;
+  late final AnimationController _stage2Ctl;
+  late final AnimationController _stage3Ctl;
+  late final Animation<double> _stage1Anim;
+  late final Animation<double> _stage2Anim;
+  late final Animation<double> _stage3Anim;
+
+  /// Result/error stashed while we wait for stage 3 to finish. We only
+  /// transition to the next screen when both the bars are full AND the AI
+  /// call is back.
+  Map<String, dynamic>? _pendingResultData;
+  String? _pendingErrorMessage;
 
   /// Drives the count-up reveal of the overview card values (calorie ring,
   /// activity rows, macros, health rating, daily %). Plays once after the
@@ -443,18 +474,36 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   late final AnimationController _overviewIntroCtl;
   late final Animation<double> _overviewIntro;
   bool _overviewIntroStarted = false;
-  late List<String> _loadingTexts;
-  bool _loadingTextsInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _loadingTexts = [];
 
     _spinController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 2800),
     );
+    _stage1Ctl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    );
+    _stage2Ctl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2800),
+    );
+    _stage3Ctl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    );
+    _stage1Anim =
+        CurvedAnimation(parent: _stage1Ctl, curve: Curves.easeOutCubic);
+    _stage2Anim =
+        CurvedAnimation(parent: _stage2Ctl, curve: Curves.easeOutCubic);
+    _stage3Anim =
+        CurvedAnimation(parent: _stage3Ctl, curve: Curves.easeOutQuart);
+    _stage1Ctl.addStatusListener(_onStage1Status);
+    _stage2Ctl.addStatusListener(_onStage2Status);
+    _stage3Ctl.addStatusListener(_onStage3Status);
     _overviewIntroCtl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -466,8 +515,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     if (widget.pendingResult != null) {
       _isLoading = true;
-      _startLoadingTexts();
       _spinController.repeat();
+      _stage1Ctl.forward();
       _awaitResult();
     } else if (widget.result != null) {
       _initResultControllers(widget.result!);
@@ -487,35 +536,52 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_loadingTextsInitialized) {
-      _loadingTextsInitialized = true;
-      _loadingTexts = widget.imageBytes != null
-          ? [
-              context.l10n.aiAnalyzingPhoto,
-              context.l10n.aiRecognizingIngredients,
-              context.l10n.aiCountingCalories,
-              context.l10n.aiDeterminingMacros,
-              context.l10n.aiAlmostDone,
-            ]
-          : [
-              context.l10n.aiAnalyzingData,
-              context.l10n.aiRecognizingIngredients,
-              context.l10n.aiCountingCalories,
-              context.l10n.aiDeterminingMacros,
-              context.l10n.aiAlmostDone,
-            ];
-    }
+  void _onStage1Status(AnimationStatus s) {
+    if (s == AnimationStatus.completed && _isLoading) _stage2Ctl.forward();
   }
 
-  void _startLoadingTexts() {
-    _textTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
-      if (!mounted) return;
+  void _onStage2Status(AnimationStatus s) {
+    if (s == AnimationStatus.completed && _isLoading) _stage3Ctl.forward();
+  }
+
+  void _onStage3Status(AnimationStatus s) {
+    if (s == AnimationStatus.completed && _isLoading) _maybeFinishLoading();
+  }
+
+  /// Called when either (a) the AI call finishes or (b) stage 3 finishes —
+  /// whichever happens later. Only when both conditions are met do we hand
+  /// off to the result/error UI, so the user always sees the bar fill all
+  /// the way through. We also pause briefly after the last bar completes so
+  /// the user can register the third check before the screen swaps out.
+  static const Duration _postCompleteHold = Duration(milliseconds: 700);
+  bool _finishScheduled = false;
+
+  void _maybeFinishLoading() {
+    if (!_isLoading) return;
+    if (_stage3Ctl.status != AnimationStatus.completed) return;
+    if (_pendingResultData == null && _pendingErrorMessage == null) return;
+    if (_finishScheduled) return;
+    _finishScheduled = true;
+
+    Future<void>.delayed(_postCompleteHold, () {
+      if (!mounted || !_isLoading) return;
+
+      _spinController.stop();
+      if (_pendingErrorMessage != null) {
+        setState(() {
+          _isLoading = false;
+          _loadingError = _pendingErrorMessage;
+        });
+        return;
+      }
       setState(() {
-        _textIndex = (_textIndex + 1) % _loadingTexts.length;
+        _isLoading = false;
+        _initResultControllers(_pendingResultData!);
       });
+      // If this loading round was a refinement on an existing log, the new
+      // values must reach the diary record without forcing the user to tap
+      // anywhere. _scheduleAutosave is a no-op for fresh dishes (no log id).
+      _scheduleAutosave();
     });
   }
 
@@ -523,30 +589,18 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     try {
       final result = await widget.pendingResult!;
       if (!mounted) return;
-      _textTimer?.cancel();
-      _spinController.stop();
-      setState(() {
-        _isLoading = false;
-        _initResultControllers(result);
-      });
+      _pendingResultData = result;
+      _maybeFinishLoading();
     } on NetworkException catch (e) {
       debugPrint('AI recognition network error: ${e.message}');
       if (!mounted) return;
-      _textTimer?.cancel();
-      _spinController.stop();
-      setState(() {
-        _isLoading = false;
-        _loadingError = e.message;
-      });
+      _pendingErrorMessage = e.message;
+      _maybeFinishLoading();
     } catch (e, st) {
       debugPrint('AI recognition error: $e\n$st');
       if (!mounted) return;
-      _textTimer?.cancel();
-      _spinController.stop();
-      setState(() {
-        _isLoading = false;
-        _loadingError = context.l10n.aiRecognitionFailed;
-      });
+      _pendingErrorMessage = context.l10n.aiRecognitionFailed;
+      _maybeFinishLoading();
     }
   }
 
@@ -566,9 +620,12 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   @override
   void dispose() {
+    _flushAutosave();
     _spinController.dispose();
+    _stage1Ctl.dispose();
+    _stage2Ctl.dispose();
+    _stage3Ctl.dispose();
     _overviewIntroCtl.dispose();
-    _textTimer?.cancel();
     _toastTimer?.cancel();
     _toastEntry?.remove();
     _toastVisible.dispose();
@@ -578,6 +635,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     _fatCtl.dispose();
     _carbsCtl.dispose();
     _caloriesCtl.dispose();
+    _refineCtl.dispose();
+    _refineFocus.dispose();
     for (final ing in _ingredients) {
       ing.dispose();
     }
@@ -624,13 +683,12 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       final cleanName = match != null
           ? rawName.replaceFirst(match.group(0)!, '').trim()
           : rawName;
-      final gramsPerUnit =
-          (i['grams_per_unit'] as num?)?.toDouble() ??
+      final gramsPerUnit = (i['grams_per_unit'] as num?)?.toDouble() ??
           (count > 0 ? grams / count : 0.0);
-
       return _IngredientEntry(
         nameCtl: TextEditingController(text: cleanName),
-        gramsCtl: TextEditingController(text: _fmt(grams)),
+        caloriesCtl: TextEditingController(text: _fmt(calories)),
+        grams: grams,
         proteinPer100g: grams > 0 ? protein / grams * 100 : 0,
         fatPer100g: grams > 0 ? fat / grams * 100 : 0,
         carbsPer100g: grams > 0 ? carbs / grams * 100 : 0,
@@ -656,10 +714,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     if (_ingredients.isEmpty) return null;
     return jsonEncode(
       _ingredients.map((ing) {
-        final grams = _val(ing.gramsCtl);
         return <String, dynamic>{
           'name': ing.nameCtl.text.trim(),
-          'grams': grams,
+          'grams': ing.grams,
           'protein': ing.protein,
           'fat': ing.fat,
           'carbs': ing.carbs,
@@ -703,6 +760,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     _updatingControllers = false;
     setState(() {});
+    _scheduleAutosave();
   }
 
   void _recalcFromCalories() {
@@ -729,41 +787,86 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     _updatingControllers = false;
     setState(() {});
+    _scheduleAutosave();
   }
 
-  void _onIngredientGramsChanged(int index) {
-    if (_updatingControllers) return;
-    _updatingControllers = true;
-
-    final ing = _ingredients[index];
-    final g = _val(ing.gramsCtl);
-    final f = g / 100;
-    ing.protein = ing.proteinPer100g * f;
-    ing.fat = ing.fatPer100g * f;
-    ing.carbs = ing.carbsPer100g * f;
-    ing.calories = ing.caloriesPer100g * f;
-
-    _recalcTotalsFromIngredients();
-
-    _updatingControllers = false;
-    setState(() {});
-  }
-
+  /// Stepper bumped the unit count (e.g. 2 → 3 eggs). Rescales grams from
+  /// the captured per-unit weight, then reapplies the per-100g macros so
+  /// calories/protein/fat/carbs all track the new portion. Per-100g ratios
+  /// are unchanged — only the absolute portion size is.
   void _onIngredientCountChanged(int index, int delta) {
     final ing = _ingredients[index];
     final newCount = (ing.count + delta).clamp(1, 99);
     if (newCount == ing.count) return;
+    if (_updatingControllers) return;
+    _updatingControllers = true;
 
     ing.count = newCount;
-    final newGrams = ing.gramsPerUnit * newCount;
-    ing.gramsCtl.text = _fmt(newGrams);
-    _onIngredientGramsChanged(index);
+    ing.grams = ing.gramsPerUnit * newCount;
+    final factor = ing.grams / 100;
+    ing.protein = ing.proteinPer100g * factor;
+    ing.fat = ing.fatPer100g * factor;
+    ing.carbs = ing.carbsPer100g * factor;
+    ing.calories = ing.caloriesPer100g * factor;
+    ing.caloriesCtl.text = _fmt(ing.calories);
+
+    _recalcTotalsFromIngredients();
+    _captureMacroRatio();
+
+    _updatingControllers = false;
+    setState(() {});
+    _scheduleAutosave();
+  }
+
+  /// User edited the calorie field for ingredient [index]. We treat the new
+  /// calorie figure as the source of truth and scale this ingredient's
+  /// macros proportionally so the per-100g composition stays consistent
+  /// with the new energy figure. Then we recompute the dish-level totals
+  /// (top analytics card reflects the change immediately).
+  void _onIngredientCaloriesChanged(int index) {
+    if (_updatingControllers) return;
+    _updatingControllers = true;
+
+    final ing = _ingredients[index];
+    final newCal = _val(ing.caloriesCtl);
+    final oldCal = ing.calories;
+
+    if (oldCal > 0 && newCal >= 0) {
+      final factor = newCal / oldCal;
+      ing.calories = newCal;
+      ing.protein = ing.protein * factor;
+      ing.fat = ing.fat * factor;
+      ing.carbs = ing.carbs * factor;
+      // Per-100g rates follow the same scaling, so future edits remain
+      // consistent if this ingredient is rescaled again.
+      ing.proteinPer100g = ing.proteinPer100g * factor;
+      ing.fatPer100g = ing.fatPer100g * factor;
+      ing.carbsPer100g = ing.carbsPer100g * factor;
+      ing.caloriesPer100g = ing.caloriesPer100g * factor;
+    } else if (oldCal == 0 && newCal > 0 && ing.grams > 0) {
+      // Came in at zero calories — distribute the new value as pure carbs
+      // so the totals at least reflect something. User can fix macros via
+      // the top-level edit if they care about the exact split.
+      ing.calories = newCal;
+      ing.carbs = newCal / 4;
+      ing.caloriesPer100g = newCal / ing.grams * 100;
+      ing.carbsPer100g = ing.carbs / ing.grams * 100;
+    } else {
+      ing.calories = newCal;
+    }
+
+    _recalcTotalsFromIngredients();
+    _captureMacroRatio();
+
+    _updatingControllers = false;
+    setState(() {});
+    _scheduleAutosave();
   }
 
   void _recalcTotalsFromIngredients() {
     double totalGrams = 0, totalP = 0, totalF = 0, totalC = 0, totalCal = 0;
     for (final i in _ingredients) {
-      totalGrams += _val(i.gramsCtl);
+      totalGrams += i.grams;
       totalP += i.protein;
       totalF += i.fat;
       totalC += i.carbs;
@@ -786,6 +889,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     }
 
     _updatingControllers = false;
+    _scheduleAutosave();
     setState(() {});
   }
 
@@ -905,6 +1009,156 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     if (mounted) context.pop(true);
   }
 
+  // ── Silent autosave ────────────────────────────────────────────────
+  // Ingredient edits and removals persist immediately so closing the
+  // modal (X button, swipe-down, tapping outside) never loses changes.
+  // We debounce ~400ms to coalesce typing bursts.
+
+  Timer? _autosaveTimer;
+
+  void _scheduleAutosave() {
+    final logId = widget.existingLogId ?? widget.sourceLogId;
+    if (logId == null) return; // brand-new dish, no record yet
+    _autosaveTimer?.cancel();
+    _autosaveTimer = Timer(
+      const Duration(milliseconds: 400),
+      () => _persistCurrentState(logId),
+    );
+  }
+
+  /// Flushes any pending debounced write — call before closing the modal.
+  void _flushAutosave() {
+    if (_autosaveTimer?.isActive != true) return;
+    _autosaveTimer?.cancel();
+    _autosaveTimer = null;
+    final logId = widget.existingLogId ?? widget.sourceLogId;
+    if (logId == null) return;
+    _persistCurrentState(logId);
+  }
+
+  Future<void> _persistCurrentState(String logId) async {
+    try {
+      final db = await AppDatabase.getInstance();
+      final companion = FoodLogsCompanion(
+        grams: drift.Value(_val(_totalGramsCtl)),
+        protein: drift.Value(_val(_proteinCtl)),
+        fat: drift.Value(_val(_fatCtl)),
+        carbs: drift.Value(_val(_carbsCtl)),
+        calories: drift.Value(_val(_caloriesCtl)),
+        ingredientsJson: drift.Value(_ingredientsJson()),
+        updatedAt: drift.Value(DateTime.now()),
+        synced: const drift.Value(false),
+      );
+      await db.updateFoodLog(logId, companion);
+    } catch (e, st) {
+      debugPrint('Autosave failed: $e\n$st');
+    }
+  }
+
+  /// Re-runs AI recognition with the current dish details + the user's
+  /// refinement text appended, so the model adjusts the existing dish
+  /// instead of starting from scratch. The macros editor stays on screen
+  /// with an inline button spinner; when the response lands we drop the
+  /// edit pane and the user is back on the overview with the new numbers
+  /// — no full staged-loading detour.
+  Future<void> _onRefineDish() async {
+    final refinement = _refineCtl.text.trim();
+    if (refinement.isEmpty) {
+      _onSaveMacros();
+      return;
+    }
+    final prompt = _composeRefinementPrompt(refinement);
+    final fallbackError = context.l10n.aiRecognitionFailed;
+
+    _refineFocus.unfocus();
+    setState(() => _refining = true);
+
+    Map<String, dynamic>? result;
+    String? error;
+    try {
+      final api = ApiClient();
+      final locale = LocaleNotifier.instance.value.languageCode;
+      result = await api.recognizeText(prompt, locale: locale);
+    } on NetworkException catch (e) {
+      debugPrint('Refine network error: ${e.message}');
+      error = e.message;
+    } catch (e, st) {
+      debugPrint('Refine error: $e\n$st');
+      error = fallbackError;
+    }
+
+    if (!mounted) return;
+
+    if (error != null || result == null) {
+      setState(() => _refining = false);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(error ?? fallbackError),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      return;
+    }
+
+    _refineCtl.clear();
+    // Replay the overview intro animation once so the freshly refined
+    // numbers count up rather than just snapping in.
+    _overviewIntroStarted = false;
+    _overviewIntroCtl.value = 0;
+    setState(() {
+      _refining = false;
+      _paramsEditMode = false;
+      _initResultControllers(result!);
+    });
+    _scheduleAutosave();
+  }
+
+  /// Builds the text we send to `/api/recognize-text`. We hand the model
+  /// the dish as it currently stands (name, totals, ingredients) and tack
+  /// on the user's clarification, so the response is a delta over the
+  /// existing entry rather than a fresh recognition.
+  String _composeRefinementPrompt(String refinement) {
+    final buffer = StringBuffer();
+    final name = _nameCtl.text.trim();
+    if (name.isNotEmpty) buffer.write(name);
+
+    final cal = _val(_caloriesCtl);
+    final p = _val(_proteinCtl);
+    final f = _val(_fatCtl);
+    final cb = _val(_carbsCtl);
+    if (cal > 0) {
+      if (buffer.isNotEmpty) buffer.write(' — ');
+      buffer.write(
+        '${cal.round()} kcal, '
+        'P${p.round()}/F${f.round()}/C${cb.round()}',
+      );
+    }
+
+    if (_ingredients.isNotEmpty) {
+      final parts = _ingredients
+          .map((i) {
+            final n = i.nameCtl.text.trim();
+            if (n.isEmpty) return null;
+            return '$n ${i.grams.round()}g';
+          })
+          .whereType<String>()
+          .join(', ');
+      if (parts.isNotEmpty) {
+        if (buffer.isNotEmpty) buffer.write(' (');
+        buffer.write(parts);
+        if (buffer.toString().contains('(')) buffer.write(')');
+      }
+    }
+
+    if (buffer.isEmpty) return refinement;
+    buffer.write('. Refinement: ');
+    buffer.write(refinement);
+    return buffer.toString();
+  }
+
   /// Commits the macros edits made in the inline editor.
   ///
   /// We persist to whichever log id we have on hand — `existingLogId` for the
@@ -1010,7 +1264,10 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                   bottom: keyboardHeight > 0 ? keyboardHeight : 0,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  // 8px outer inset → photo edges sit 8px from the screen.
+                  // Body cards inside the Stack add another 8px of inset
+                  // (= 16px total from the screen) per spec.
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1028,57 +1285,34 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                               8,
                               0,
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (_isLoading)
-                                  _buildLoadingBody(c)
-                                else if (_loadingError != null)
-                                  _buildErrorBody(c)
-                                else ...[
-                                  _buildAnalyticsCardShell(
-                                    c,
-                                    AnimatedSize(
-                                      duration:
-                                          const Duration(milliseconds: 260),
-                                      curve: Curves.easeOutCubic,
-                                      alignment: Alignment.topCenter,
-                                      child: AnimatedSwitcher(
-                                        duration:
-                                            const Duration(milliseconds: 200),
-                                        switchInCurve: Curves.easeOutCubic,
-                                        switchOutCurve: Curves.easeInCubic,
-                                        transitionBuilder:
-                                            (child, animation) =>
-                                                FadeTransition(
-                                          opacity: animation,
-                                          child: child,
-                                        ),
-                                        layoutBuilder: (current, previous) =>
-                                            Stack(
-                                          alignment: Alignment.topCenter,
-                                          children: [
-                                            ...previous,
-                                            ?current,
-                                          ],
-                                        ),
-                                        child: KeyedSubtree(
-                                          key: ValueKey(_paramsEditMode),
-                                          child: _paramsEditMode
-                                              ? _buildParametersSection(c)
-                                              : _buildOverviewCard(c),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_ingredients.isNotEmpty) ...[
-                                    const SizedBox(height: 16),
-                                    _buildIngredientsSection(c),
+                            // Cross-fade between loading, error and result
+                            // bodies so the swap feels like one continuous
+                            // surface settling rather than a jump cut. The
+                            // surrounding AnimatedSize lerps the height
+                            // change so the modal doesn't snap when the
+                            // result body's content is taller.
+                            child: AnimatedSize(
+                              duration: const Duration(milliseconds: 320),
+                              curve: Curves.easeOutCubic,
+                              alignment: Alignment.topCenter,
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 320),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                transitionBuilder: (child, animation) =>
+                                    FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                ),
+                                layoutBuilder: (current, previous) => Stack(
+                                  alignment: Alignment.topCenter,
+                                  children: [
+                                    ...previous,
+                                    ?current,
                                   ],
-                                  const SizedBox(height: 12),
-                                ],
-                              ],
+                                ),
+                                child: _buildBodyForCurrentState(c),
+                              ),
                             ),
                           ),
                         ],
@@ -1088,54 +1322,162 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                 ),
               ),
             ),
-            if (!_isLoading && _loadingError == null)
-              _buildBottomBar(c, keyboardHeight > 0 ? 0 : bottomPadding),
-            if (_isLoading || _loadingError != null)
-              SizedBox(height: bottomPadding + 8),
+            // Bottom bar fades in only when we have a result to act on; the
+            // loading + error states don't need an action button. Wrapping
+            // in AnimatedSize keeps the modal height transition continuous
+            // with the body cross-fade above.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 280),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+                child: (!_isLoading && _loadingError == null)
+                    ? KeyedSubtree(
+                        key: const ValueKey('bottom-action'),
+                        child: _buildBottomBar(
+                          c,
+                          keyboardHeight > 0 ? 0 : bottomPadding,
+                        ),
+                      )
+                    : KeyedSubtree(
+                        key: const ValueKey('bottom-spacer'),
+                        child: SizedBox(height: bottomPadding + 8),
+                      ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
+  /// Returns the body widget for the current sheet state — loading mascot,
+  /// error block, or the result/edit cards. Each branch is wrapped in a
+  /// `KeyedSubtree` with a stable string key so the surrounding
+  /// `AnimatedSwitcher` recognises a state change and cross-fades between
+  /// the old and new tree instead of snap-replacing it.
+  Widget _buildBodyForCurrentState(_AiSheetColors c) {
+    if (_isLoading) {
+      return KeyedSubtree(
+        key: const ValueKey('loading'),
+        child: _buildLoadingBody(c),
+      );
+    }
+    if (_loadingError != null) {
+      return KeyedSubtree(
+        key: const ValueKey('error'),
+        child: _buildErrorBody(c),
+      );
+    }
+    return KeyedSubtree(
+      key: const ValueKey('result'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildAnalyticsCardShell(
+            c,
+            AnimatedSize(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.topCenter,
+                  children: [
+                    ...previous,
+                    ?current,
+                  ],
+                ),
+                child: KeyedSubtree(
+                  key: ValueKey(_paramsEditMode),
+                  child: _paramsEditMode
+                      ? _buildParametersSection(c)
+                      : _buildOverviewCard(c),
+                ),
+              ),
+            ),
+          ),
+          if (_ingredients.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildIngredientsSection(c),
+          ],
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLoadingBody(_AiSheetColors c) {
+    final l10n = context.l10n;
+    final labelColor = c.isDark
+        ? AppColors.darkPrimaryLight
+        : AppColors.lightPrimaryLight;
+    final doneColor =
+        c.isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final trackColor = c.isDark
+        ? AppColors.lineDT200
+        : AppColors.lineLight200;
+
+    // Outer scroll padding contributes 8px on each side, so 28px here lands
+    // the progress bars at exactly 36px from the screen edges.
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 4,
-                    strokeCap: StrokeCap.round,
-                    valueColor:
-                        const AlwaysStoppedAnimation(AppColors.primary),
-                    backgroundColor: AppColors.primary.withAlpha(40),
+          Center(child: _MeditatingMascot(float: _spinController)),
+          const SizedBox(height: 4),
+          AnimatedBuilder(
+            animation: Listenable.merge([
+              _stage1Anim,
+              _stage2Anim,
+              _stage3Anim,
+            ]),
+            builder: (context, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _LoadingProgressRow(
+                    label: l10n.aiAnalyzingData,
+                    progress: _stage1Anim.value,
+                    labelColor: labelColor,
+                    doneColor: doneColor,
+                    trackColor: trackColor,
                   ),
-                ),
-                const SizedBox(height: 24),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Text(
-                    _loadingTexts[_textIndex],
-                    key: ValueKey(_textIndex),
-                    style: TextStyle(
-                      color: c.secondaryText,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      height: 20 / 15,
-                    ),
+                  const SizedBox(height: 16),
+                  _LoadingProgressRow(
+                    label: l10n.aiRecognizingIngredients,
+                    progress: _stage2Anim.value,
+                    labelColor: labelColor,
+                    doneColor: doneColor,
+                    trackColor: trackColor,
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 16),
+                  _LoadingProgressRow(
+                    label: l10n.aiCountingCalories,
+                    progress: _stage3Anim.value,
+                    labelColor: labelColor,
+                    doneColor: doneColor,
+                    trackColor: trackColor,
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -1213,11 +1555,11 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     if (isFreshPhoto) {
       imageWidget = Image.memory(widget.imageBytes!, fit: BoxFit.cover);
     } else if (_resolvedImageFile != null) {
-      imageWidget = Image.file(_resolvedImageFile!, fit: BoxFit.contain);
+      imageWidget = Image.file(_resolvedImageFile!, fit: BoxFit.cover);
     } else {
       imageWidget = CachedNetworkImage(
         imageUrl: _networkImageUrl!,
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
         placeholder: (context, url) => const Center(
           child: SizedBox(
             width: 24,
@@ -1235,7 +1577,11 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       height: 221,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isFreshPhoto ? null : c.surfaceBg,
+        // Fresh camera shots fill the frame on their own, so we let the
+        // image's own pixels show. DB/network images sometimes ship with
+        // transparency or product cut-outs — fall back to a flat white
+        // canvas so they read clearly in both light and dark themes.
+        color: isFreshPhoto ? null : Colors.white,
         border: Border.all(color: c.borderColor),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -2125,48 +2471,151 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           onChanged: (_) => _recalcFromMacros(),
         ),
         const SizedBox(height: 12),
+        _buildRefineField(c),
+        const SizedBox(height: 12),
         _buildSaveMacrosButton(c),
       ],
     );
   }
 
-  /// Outlined success button at the bottom of the macros editor — commits the
-  /// edits and returns to the read-only overview card.
-  Widget _buildSaveMacrosButton(_AiSheetColors c) {
+  Widget _buildRefineField(_AiSheetColors c) {
+    final hint =
+        c.isDark ? AppColors.darkOnSurfaceVariant : AppColors.lightOnSurfaceVariant;
+    // GestureDetector covers the full 44×W bordered area so any tap (even
+    // on the empty hint side) focuses the field — without it taps only
+    // landed on the actual text glyphs.
     return GestureDetector(
-      onTap: _onSaveMacros,
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _refineFocus.requestFocus(),
       child: Container(
         height: 44,
-        width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.green.withAlpha(102),
+            color: c.isDark ? AppColors.lineDT200 : AppColors.lineLight200,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: TextField(
+          controller: _refineCtl,
+          focusNode: _refineFocus,
+          textInputAction: TextInputAction.done,
+          textAlignVertical: TextAlignVertical.center,
+          onSubmitted: (_) {
+            if (_refineCtl.text.trim().isEmpty) {
+              _onSaveMacros();
+            } else {
+              _onRefineDish();
+            }
+          },
+          style: TextStyle(
+            color: c.onSurface,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            height: 18 / 14,
+          ),
+          decoration: InputDecoration(
+            // 44px height − 18px line ≈ 13px symmetric vertical padding so
+            // the cursor sits dead center.
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            // Theme-level dark TextField fillColor leaks through unless we
+            // pin the field as unfilled — that produces the inner grey block.
+            filled: false,
+            fillColor: Colors.transparent,
+            hintText: context.l10n.refineDishHint,
+            hintStyle: TextStyle(
+              color: hint,
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 18 / 14,
+            ),
           ),
         ),
-        alignment: Alignment.center,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle_outline_rounded,
-              color: AppColors.green,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              context.l10n.saveMacros,
-              style: const TextStyle(
-                color: AppColors.green,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 18 / 14,
-              ),
-            ),
-          ],
-        ),
       ),
+    );
+  }
+
+  /// Outlined action button under the macros editor. Three states:
+  ///
+  ///   - empty refine → green check + "Обновить блюдо" (commits local edits).
+  ///   - refine has text → blue send + "Уточнить блюдо" (submits to AI).
+  ///   - while the refine call is in flight → blue outline with an inline
+  ///     spinner. After the response arrives we hand off to the full
+  ///     staged loading screen.
+  ///
+  /// Listens directly to the controller so the colour/icon swap doesn't
+  /// rely on parent setState bubbling through animated switchers above.
+  Widget _buildSaveMacrosButton(_AiSheetColors c) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _refineCtl,
+      builder: (context, value, _) {
+        final hasRefine = value.text.trim().isNotEmpty;
+        final accent =
+            (hasRefine || _refining) ? AppColors.primary : AppColors.green;
+        final label =
+            hasRefine ? context.l10n.refineDish : context.l10n.updateDish;
+        return GestureDetector(
+          onTap: _refining
+              ? null
+              : (hasRefine ? _onRefineDish : _onSaveMacros),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            height: 44,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: accent.withAlpha(102)),
+            ),
+            alignment: Alignment.center,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: _refining
+                  ? SizedBox(
+                      key: const ValueKey('refining'),
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(accent),
+                      ),
+                    )
+                  : Row(
+                      key: ValueKey('idle-$hasRefine'),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (hasRefine)
+                          SvgPicture.asset(
+                            'assets/icons/send.svg',
+                            width: 20,
+                            height: 20,
+                            colorFilter:
+                                ColorFilter.mode(accent, BlendMode.srcIn),
+                          )
+                        else
+                          Icon(Icons.check_circle, color: accent, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            height: 18 / 14,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -2280,19 +2729,37 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   Widget _buildIngredientRow(_AiSheetColors c, int index) {
     final ing = _ingredients[index];
+    final secondary =
+        c.isDark ? AppColors.darkSecondaryDark : AppColors.lightSecondaryDark;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Text(
-            ing.nameCtl.text,
-            style: TextStyle(
-              color: c.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 18 / 14,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                ing.nameCtl.text,
+                style: TextStyle(
+                  color: c.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 18 / 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              Text(
+                context.l10n.gramsValue(ing.grams.round()),
+                style: TextStyle(
+                  color: secondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  height: 14 / 12,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 8),
@@ -2300,7 +2767,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           _buildStepper(c, index, ing.count),
           const SizedBox(width: 8),
         ],
-        _buildGramsField(c, ing.gramsCtl, index),
+        _buildIngredientCaloriesField(c, ing.caloriesCtl, index),
         const SizedBox(width: 8),
         GestureDetector(
           onTap: () => _removeIngredient(index),
@@ -2343,7 +2810,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           ),
         ),
         SizedBox(
-          width: 28,
+          width: 24,
           child: Text(
             '$count',
             textAlign: TextAlign.center,
@@ -2371,13 +2838,13 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
   }
 
-  Widget _buildGramsField(
+  Widget _buildIngredientCaloriesField(
     _AiSheetColors c,
     TextEditingController controller,
     int index,
   ) {
     return Container(
-      width: 70,
+      width: 80,
       decoration: BoxDecoration(
         border: Border.all(color: c.borderColor),
         borderRadius: BorderRadius.circular(8),
@@ -2408,11 +2875,12 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                 isDense: true,
                 filled: false,
               ),
-              onChanged: (_) => _onIngredientGramsChanged(index),
+              onChanged: (_) => _onIngredientCaloriesChanged(index),
             ),
           ),
+          const SizedBox(width: 4),
           Text(
-            context.l10n.gramsUnitDot,
+            'Cal',
             style: TextStyle(
               color: c.onSurface.withAlpha(128),
               fontSize: 14,
@@ -2427,7 +2895,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   Widget _buildBottomBar(_AiSheetColors c, double bottomPadding) {
     return Container(
-      padding: EdgeInsets.fromLTRB(12, 8, 12, bottomPadding + 8),
+      padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPadding + 8),
       decoration: BoxDecoration(
         color: c.sheetBg,
       ),
@@ -2582,6 +3050,134 @@ class _RingSegment {
   const _RingSegment(this.share, this.colors);
   final double share;
   final List<Color> colors;
+}
+
+/// Cabbage mascot that breathes up-and-down while the AI is recognising the
+/// dish. A blurred radial ellipse beneath it doubles as a contact shadow —
+/// it widens and darkens slightly as the mascot dips, sells the float.
+class _MeditatingMascot extends StatelessWidget {
+  const _MeditatingMascot({required this.float});
+
+  /// 0..1 looping animation that drives one breath cycle.
+  final Animation<double> float;
+
+  static const double _mascotSize = 140;
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: SizedBox(
+        width: _mascotSize,
+        height: _mascotSize + 6,
+        child: AnimatedBuilder(
+          animation: float,
+          builder: (context, child) {
+            // Sin wave: -1 (top of breath) → 0 → 1 (bottom of breath).
+            final phase = math.sin(float.value * 2 * math.pi);
+            final lift = -phase * 5 - 2;
+            return Transform.translate(
+              offset: Offset(0, lift),
+              child: child,
+            );
+          },
+          child: Center(
+            child: Image.asset(
+              'assets/mascot/meditate.png',
+              width: _mascotSize,
+              height: _mascotSize,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoadingProgressRow extends StatelessWidget {
+  const _LoadingProgressRow({
+    required this.label,
+    required this.progress,
+    required this.labelColor,
+    required this.doneColor,
+    required this.trackColor,
+  });
+
+  final String label;
+  final double progress;
+  final Color labelColor;
+  final Color doneColor;
+  final Color trackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = progress.isNaN ? 0.0 : progress.clamp(0.0, 1.0);
+    final done = clamped >= 0.999;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            // AnimatedDefaultTextStyle interpolates colour and weight without
+            // remounting the Text widget — no font-baseline pop on completion.
+            // We hold weight at a single value so glyph metrics don't shift
+            // and produce a horizontal jitter as the bar fills.
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              style: TextStyle(
+                color: done ? doneColor : labelColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                height: 16 / 13,
+              ),
+              child: Text(label),
+            ),
+            const SizedBox(width: 4),
+            // Icon is always laid out (zero-sized when hidden) so the row
+            // width stays stable; we just fade + scale the check in.
+            AnimatedScale(
+              scale: done ? 1.0 : 0.6,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutBack,
+              child: AnimatedOpacity(
+                opacity: done ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: SvgPicture.asset(
+                  'assets/icons/check.svg',
+                  width: 16,
+                  height: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 6,
+          decoration: BoxDecoration(
+            color: trackColor,
+            borderRadius: BorderRadius.circular(3),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: clamped <= 0 ? 0.001 : clamped,
+              heightFactor: 1,
+              child: const DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.green,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// Lightweight toast surfaced inside the modal's own overlay so it sits
