@@ -562,6 +562,42 @@ abstract class AppLocalizations {
   /// **'Учёт питания и калорий'**
   String get calorieTracking;
 
+  /// No description provided for @mergeLocalDataTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести локальные данные?'**
+  String get mergeLocalDataTitle;
+
+  /// No description provided for @mergeLocalDataBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'У вас есть данные, введённые без аккаунта. Перенесите их в облако, иначе они будут заменены данными из аккаунта.'**
+  String get mergeLocalDataBody;
+
+  /// No description provided for @mergeLocalDataKeep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести'**
+  String get mergeLocalDataKeep;
+
+  /// No description provided for @mergeLocalDataReplace.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заменить из облака'**
+  String get mergeLocalDataReplace;
+
+  /// No description provided for @loginSyncing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Синхронизация…'**
+  String get loginSyncing;
+
+  /// No description provided for @loginSyncFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось синхронизировать данные. Попробуйте позже.'**
+  String get loginSyncFailed;
+
   /// No description provided for @loginTitle.
   ///
   /// In ru, this message translates to:

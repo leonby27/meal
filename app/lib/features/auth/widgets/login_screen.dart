@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/services/login_sync_flow.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -29,20 +30,31 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = AuthService();
     final ok = await auth.signInWithGoogle();
     if (!mounted) return;
-    setState(() => _loading = false);
-    if (!ok && auth.lastSignInError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.lastSignInError!),
-          duration: const Duration(seconds: 6),
-        ),
-      );
+    if (!ok) {
+      setState(() => _loading = false);
+      if (auth.lastSignInError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.lastSignInError!),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+      return;
     }
+    await LoginSyncFlow.runAfterSignIn(context);
+    if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _signInWithApple() async {
     setState(() => _loading = true);
-    await AuthService().signInWithApple();
+    final ok = await AuthService().signInWithApple();
+    if (!mounted) return;
+    if (!ok) {
+      setState(() => _loading = false);
+      return;
+    }
+    await LoginSyncFlow.runAfterSignIn(context);
     if (mounted) setState(() => _loading = false);
   }
 

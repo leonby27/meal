@@ -11,6 +11,7 @@ import 'package:meal_tracker/core/build_info.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
+import 'package:meal_tracker/core/services/login_sync_flow.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
@@ -210,29 +211,34 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
     final auth = AuthService();
     final success = await auth.signInWithGoogle();
     if (!mounted) return;
-    if (success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.signedInSnackbar)));
-      setState(() {});
-    } else if (auth.lastSignInError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.lastSignInError!),
-          duration: const Duration(seconds: 6),
-        ),
-      );
+    if (!success) {
+      if (auth.lastSignInError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.lastSignInError!),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+      return;
     }
+    await LoginSyncFlow.runAfterSignIn(context);
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.signedInSnackbar)));
+    setState(() {});
   }
 
   Future<void> _signInWithAppleFromGuest() async {
     final success = await AuthService().signInWithApple();
-    if (success && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.signedInSnackbar)));
-      setState(() {});
-    }
+    if (!mounted || !success) return;
+    await LoginSyncFlow.runAfterSignIn(context);
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.signedInSnackbar)));
+    setState(() {});
   }
 
   Future<void> _startOverOnboarding() async {

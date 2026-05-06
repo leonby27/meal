@@ -82,6 +82,12 @@
   "skipLogin": "Continuar sem entrar",
   "signInSyncHint": "Entrar permite sincronizar dados\nentre dispositivos",
   "calorieTracking": "Acompanhamento nutricional e calórico",
+  "mergeLocalDataTitle": "Migrar dados locais?",
+  "mergeLocalDataBody": "Você tem dados inseridos sem uma conta. Migre-os para a nuvem, ou serão substituídos pelos dados da sua conta.",
+  "mergeLocalDataKeep": "Migrar",
+  "mergeLocalDataReplace": "Substituir pela nuvem",
+  "loginSyncing": "Sincronizando…",
+  "loginSyncFailed": "Não foi possível sincronizar os dados. Tente novamente mais tarde.",
 
   "loginTitle": "Entrar",
   "registerTitle": "Cadastrar",

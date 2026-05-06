@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
+import 'package:uuid/uuid.dart';
 
 part 'app_database.g.dart';
 
@@ -553,7 +554,7 @@ class AppDatabase extends _$AppDatabase {
       final newDate = DateTime(toDate.year, toDate.month, toDate.day, 12);
       await addFoodLog(
         FoodLogsCompanion.insert(
-          id: '${DateTime.now().microsecondsSinceEpoch}_$count',
+          id: const Uuid().v4(),
           productId: Value(log.productId),
           productName: log.productName,
           mealType: log.mealType,

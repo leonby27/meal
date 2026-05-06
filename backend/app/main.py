@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.database import engine, Base, async_session
-from app.routers import auth, recognize, products, sync
+from app.routers import auth, recognize, products, sync, users
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,8 @@ async def _run_migrations():
     migrations = [
         ("products", "barcode", "VARCHAR(50)"),
         ("products", "source", "VARCHAR(50)"),
+        ("food_logs", "image_url", "VARCHAR(2000)"),
+        ("food_logs", "ingredients_json", "TEXT"),
     ]
     async with engine.begin() as conn:
         for table, column, col_type in migrations:
@@ -94,6 +96,7 @@ app.include_router(auth.router)
 app.include_router(recognize.router)
 app.include_router(products.router)
 app.include_router(sync.router)
+app.include_router(users.router)
 
 
 @app.get("/")

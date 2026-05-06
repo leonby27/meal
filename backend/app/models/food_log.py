@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, date
 from typing import Optional
 
-from sqlalchemy import String, Float, DateTime, Date, Enum, ForeignKey, func, Integer
+from sqlalchemy import String, Float, DateTime, Date, Enum, ForeignKey, Text, func, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -34,6 +34,8 @@ class FoodLog(Base):
     fat: Mapped[float] = mapped_column(Float, default=0)
     carbs: Mapped[float] = mapped_column(Float, default=0)
     calories: Mapped[float] = mapped_column(Float, default=0)
+    image_url: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
+    ingredients_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )

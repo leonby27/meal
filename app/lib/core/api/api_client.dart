@@ -267,6 +267,23 @@ class ApiClient {
     return _handleResponse(response);
   }
 
+  /// GET that returns a JSON array. The plain [get] insists on a Map body
+  /// because most endpoints respond with one, but `/api/sync/pull` is a
+  /// legitimate exception.
+  Future<List<dynamic>> getList(
+    String path, {
+    Map<String, String>? params,
+  }) async {
+    var uri = Uri.parse('$_baseUrl$path');
+    if (params != null) {
+      uri = uri.replace(queryParameters: params);
+    }
+    final response = await _withRetry(
+      () => _client.get(uri, headers: _headers).timeout(_requestTimeout),
+    );
+    return _handleListResponse(response);
+  }
+
   Future<Map<String, dynamic>> delete(String path) async {
     final response = await _withRetry(
       () => _client
@@ -538,6 +555,19 @@ class ApiClient {
       return currentL10n.networkConnectionReset;
     }
     return currentL10n.networkGenericError;
+  }
+
+  List<dynamic> _handleListResponse(http.Response response) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      // Reuse the same error path (parses {detail: {kind, message}} if present)
+      _handleResponse(response);
+    }
+    final body = jsonDecode(response.body);
+    if (body is List) return body;
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: 'Expected JSON array, got ${body.runtimeType}',
+    );
   }
 
   Map<String, dynamic> _handleResponse(http.Response response) {

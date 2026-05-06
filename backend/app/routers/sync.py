@@ -24,6 +24,8 @@ class FoodLogEntry(BaseModel):
     fat: float
     carbs: float
     calories: float
+    image_url: Optional[str] = None
+    ingredients_json: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -46,7 +48,10 @@ async def sync_push(
     for entry_data in req.entries:
         entry = FoodLogEntry(**entry_data) if isinstance(entry_data, dict) else entry_data
         existing = await db.execute(
-            select(FoodLog).where(FoodLog.id == entry.id)
+            select(FoodLog).where(
+                FoodLog.id == entry.id,
+                FoodLog.user_id == user_id,
+            )
         )
         log = existing.scalar_one_or_none()
 
@@ -59,6 +64,8 @@ async def sync_push(
             log.fat = entry.fat
             log.carbs = entry.carbs
             log.calories = entry.calories
+            log.image_url = entry.image_url
+            log.ingredients_json = entry.ingredients_json
         else:
             log = FoodLog(
                 id=entry.id,
@@ -72,6 +79,8 @@ async def sync_push(
                 fat=entry.fat,
                 carbs=entry.carbs,
                 calories=entry.calories,
+                image_url=entry.image_url,
+                ingredients_json=entry.ingredients_json,
             )
             db.add(log)
         synced += 1
@@ -105,6 +114,8 @@ async def sync_pull(
         fat=log.fat,
         carbs=log.carbs,
         calories=log.calories,
+        image_url=log.image_url,
+        ingredients_json=log.ingredients_json,
         created_at=log.created_at,
         updated_at=log.updated_at,
     ) for log in logs]

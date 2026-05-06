@@ -260,6 +260,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get calorieTracking => 'Suivi nutritionnel et calorique';
 
   @override
+  String get mergeLocalDataTitle => 'Migrer les données locales ?';
+
+  @override
+  String get mergeLocalDataBody =>
+      'Vous avez des données saisies sans compte. Migrez-les vers le cloud, sinon elles seront remplacées par les données du compte.';
+
+  @override
+  String get mergeLocalDataKeep => 'Migrer';
+
+  @override
+  String get mergeLocalDataReplace => 'Remplacer par le cloud';
+
+  @override
+  String get loginSyncing => 'Synchronisation…';
+
+  @override
+  String get loginSyncFailed =>
+      'Impossible de synchroniser les données. Réessayez plus tard.';
+
+  @override
   String get loginTitle => 'Connexion';
 
   @override

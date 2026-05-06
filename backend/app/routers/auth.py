@@ -12,6 +12,7 @@ from app.config import settings
 from app.database import get_db
 from app.models.food_log import FoodLog
 from app.models.user import User
+from app.models.user_setting import UserSetting
 from app.routers.deps import get_current_user_id
 from app.services.auth import get_password_hash, verify_password, create_access_token
 
@@ -196,6 +197,7 @@ async def delete_current_account(
     db: AsyncSession = Depends(get_db),
 ):
     await db.execute(delete(FoodLog).where(FoodLog.user_id == user_id))
+    await db.execute(delete(UserSetting).where(UserSetting.user_id == user_id))
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()

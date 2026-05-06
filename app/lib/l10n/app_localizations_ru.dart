@@ -259,6 +259,26 @@ class AppLocalizationsRu extends AppLocalizations {
   String get calorieTracking => 'Учёт питания и калорий';
 
   @override
+  String get mergeLocalDataTitle => 'Перенести локальные данные?';
+
+  @override
+  String get mergeLocalDataBody =>
+      'У вас есть данные, введённые без аккаунта. Перенесите их в облако, иначе они будут заменены данными из аккаунта.';
+
+  @override
+  String get mergeLocalDataKeep => 'Перенести';
+
+  @override
+  String get mergeLocalDataReplace => 'Заменить из облака';
+
+  @override
+  String get loginSyncing => 'Синхронизация…';
+
+  @override
+  String get loginSyncFailed =>
+      'Не удалось синхронизировать данные. Попробуйте позже.';
+
+  @override
   String get loginTitle => 'Вход';
 
   @override

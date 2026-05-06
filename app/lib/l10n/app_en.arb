@@ -82,6 +82,12 @@
   "skipLogin": "Continue without signing in",
   "signInSyncHint": "Signing in allows you to sync data\nacross devices",
   "calorieTracking": "Nutrition & calorie tracking",
+  "mergeLocalDataTitle": "Migrate local data?",
+  "mergeLocalDataBody": "You have data entered without an account. Migrate it to the cloud — otherwise it will be replaced with data from your account.",
+  "mergeLocalDataKeep": "Migrate",
+  "mergeLocalDataReplace": "Replace from cloud",
+  "loginSyncing": "Syncing…",
+  "loginSyncFailed": "Couldn't sync your data. Please try again later.",
 
   "loginTitle": "Sign In",
   "registerTitle": "Sign Up",
