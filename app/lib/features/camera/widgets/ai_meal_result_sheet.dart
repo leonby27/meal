@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -20,6 +21,20 @@ import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/l10n/app_localizations.dart';
+
+/// Coarse profile of a dish derived from its macro distribution and
+/// calorie density. Drives both the lead sentence in the health
+/// description and the trait modifier (so we don't repeat ourselves).
+enum _HealthProfile {
+  veggie,
+  highProtein,
+  leanProtein,
+  carbHeavy,
+  fatHeavy,
+  sweet,
+  ultraProcessed,
+  balanced,
+}
 
 class _IngredientEntry {
   final TextEditingController nameCtl;
@@ -110,6 +125,12 @@ class AiMealResultSheet extends StatefulWidget {
   final Map<String, dynamic>? result;
   final Uint8List? imageBytes;
   final String? existingLogId;
+
+  /// Set in the "duplicate" flow (tap an existing diary card). The bottom
+  /// action still creates a new log, but the inline "Save macros" button
+  /// writes the edits back to this source record so the user's tweaks
+  /// survive closing the modal.
+  final String? sourceLogId;
   final String? imagePath;
   final Future<Map<String, dynamic>>? pendingResult;
 
@@ -120,6 +141,7 @@ class AiMealResultSheet extends StatefulWidget {
     this.result,
     this.imageBytes,
     this.existingLogId,
+    this.sourceLogId,
     this.imagePath,
     this.pendingResult,
   });
@@ -348,6 +370,7 @@ class AiMealResultSheet extends StatefulWidget {
         mealType: log.mealType,
         dateStr: dateStr,
         result: result,
+        sourceLogId: log.id,
         imagePath: log.imageUrl,
       ),
     );
@@ -546,6 +569,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     _spinController.dispose();
     _overviewIntroCtl.dispose();
     _textTimer?.cancel();
+    _toastTimer?.cancel();
+    _toastEntry?.remove();
+    _toastVisible.dispose();
     _nameCtl.dispose();
     _totalGramsCtl.dispose();
     _proteinCtl.dispose();
@@ -617,6 +643,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         gramsPerUnit: gramsPerUnit,
       );
     }).toList();
+
+    _captureMacroRatio();
   }
 
   String _fmt(double v) =>
@@ -643,6 +671,26 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
   }
 
+  /// Cached macro split (each macro's share of total calories) from the last
+  /// time the dish had non-zero macros. Lets us redistribute calories back
+  /// onto P/F/C if the user clears them and re-enters a value — otherwise
+  /// macros would stay stuck at zero with no way to recover the ratio.
+  ({double p, double f, double c})? _lastMacroCalShares;
+
+  void _captureMacroRatio() {
+    final p = _val(_proteinCtl);
+    final f = _val(_fatCtl);
+    final cb = _val(_carbsCtl);
+    final total = p * 4 + f * 9 + cb * 4;
+    if (total > 0) {
+      _lastMacroCalShares = (
+        p: (p * 4) / total,
+        f: (f * 9) / total,
+        c: (cb * 4) / total,
+      );
+    }
+  }
+
   void _recalcFromMacros() {
     if (_updatingControllers) return;
     _updatingControllers = true;
@@ -651,6 +699,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final f = _val(_fatCtl);
     final c = _val(_carbsCtl);
     _caloriesCtl.text = _fmt(p * 4 + f * 9 + c * 4);
+    _captureMacroRatio();
 
     _updatingControllers = false;
     setState(() {});
@@ -668,6 +717,14 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       _proteinCtl.text = _fmt(_val(_proteinCtl) * factor);
       _fatCtl.text = _fmt(_val(_fatCtl) * factor);
       _carbsCtl.text = _fmt(_val(_carbsCtl) * factor);
+      _captureMacroRatio();
+    } else if (currentCal > 0 && _lastMacroCalShares != null) {
+      // Macros got zeroed out (likely from clearing calories first).
+      // Redistribute the new calorie value using the last known ratio.
+      final r = _lastMacroCalShares!;
+      _proteinCtl.text = _fmt(currentCal * r.p / 4);
+      _fatCtl.text = _fmt(currentCal * r.f / 9);
+      _carbsCtl.text = _fmt(currentCal * r.c / 4);
     }
 
     _updatingControllers = false;
@@ -848,6 +905,82 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     if (mounted) context.pop(true);
   }
 
+  /// Commits the macros edits made in the inline editor.
+  ///
+  /// We persist to whichever log id we have on hand — `existingLogId` for the
+  /// edit flow, `sourceLogId` for the duplicate flow. Both ultimately point
+  /// at a real diary record, so the user's tweaks survive closing the modal
+  /// regardless of how they opened it.
+  ///
+  /// For brand-new dishes (camera/search) there's no record yet, so we just
+  /// keep the values in the controllers — they get persisted when the user
+  /// taps the bottom action button.
+  Future<void> _onSaveMacros() async {
+    final logId = widget.existingLogId ?? widget.sourceLogId;
+    if (logId != null) {
+      try {
+        final db = await AppDatabase.getInstance();
+        final companion = FoodLogsCompanion(
+          grams: drift.Value(_val(_totalGramsCtl)),
+          protein: drift.Value(_val(_proteinCtl)),
+          fat: drift.Value(_val(_fatCtl)),
+          carbs: drift.Value(_val(_carbsCtl)),
+          calories: drift.Value(_val(_caloriesCtl)),
+          ingredientsJson: drift.Value(_ingredientsJson()),
+          updatedAt: drift.Value(DateTime.now()),
+          synced: const drift.Value(false),
+        );
+        await db.updateFoodLog(logId, companion);
+      } catch (e, st) {
+        debugPrint('Failed to persist macros: $e\n$st');
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _paramsEditMode = false);
+    _showInModalToast(context.l10n.macrosSavedToast);
+  }
+
+  // ── In-modal toast ─────────────────────────────────────────────────
+  // Uses the modal's own Overlay so the message appears above the bottom
+  // action button instead of being clipped by the sheet (a SnackBar from
+  // ScaffoldMessenger ends up hidden under the sheet on iOS).
+
+  OverlayEntry? _toastEntry;
+  Timer? _toastTimer;
+  late final ValueNotifier<bool> _toastVisible = ValueNotifier(false);
+
+  void _showInModalToast(String message) {
+    _toastTimer?.cancel();
+    _toastEntry?.remove();
+
+    final overlay = Overlay.maybeOf(context, rootOverlay: false);
+    if (overlay == null) return;
+
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    _toastVisible.value = false;
+    _toastEntry = OverlayEntry(
+      builder: (_) => _AiSheetToast(
+        message: message,
+        bottomOffset: bottomInset + 80,
+        visible: _toastVisible,
+      ),
+    );
+    overlay.insert(_toastEntry!);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _toastVisible.value = true;
+    });
+    _toastTimer = Timer(const Duration(milliseconds: 1800), _hideToast);
+  }
+
+  void _hideToast() {
+    _toastVisible.value = false;
+    Future.delayed(const Duration(milliseconds: 220), () {
+      _toastEntry?.remove();
+      _toastEntry = null;
+    });
+  }
+
   static const _warningBg = Color(0x26FF6686);
   static const _warningIcon = Color(0xFFFF6686);
 
@@ -881,67 +1014,74 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (hasImage) _buildImageCard(c),
-                      // Body content overlaps the photo by 24px so the stats
-                      // card visually anchors the dish image. Cards inset 8px
-                      // on each side relative to the photo (Figma layout).
-                      Transform.translate(
-                        offset: Offset(0, hasImage ? -24 : 0),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (_isLoading)
-                                _buildLoadingBody(c)
-                              else if (_loadingError != null)
-                                _buildErrorBody(c)
-                              else ...[
-                                _buildAnalyticsCardShell(
-                                  c,
-                                  AnimatedSize(
-                                    duration:
-                                        const Duration(milliseconds: 260),
-                                    curve: Curves.easeOutCubic,
-                                    alignment: Alignment.topCenter,
-                                    child: AnimatedSwitcher(
+                      // Photo + body in a Stack so the body card overlaps
+                      // the photo by 24px without leaving phantom whitespace
+                      // at the bottom. Cards are inset 8px on each side
+                      // relative to the photo (Figma layout).
+                      Stack(
+                        children: [
+                          if (hasImage) _buildImageCard(c),
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              8,
+                              hasImage ? 221 - 24 : 0,
+                              8,
+                              0,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_isLoading)
+                                  _buildLoadingBody(c)
+                                else if (_loadingError != null)
+                                  _buildErrorBody(c)
+                                else ...[
+                                  _buildAnalyticsCardShell(
+                                    c,
+                                    AnimatedSize(
                                       duration:
-                                          const Duration(milliseconds: 200),
-                                      switchInCurve: Curves.easeOutCubic,
-                                      switchOutCurve: Curves.easeInCubic,
-                                      transitionBuilder:
-                                          (child, animation) =>
-                                              FadeTransition(
-                                        opacity: animation,
-                                        child: child,
-                                      ),
-                                      layoutBuilder: (current, previous) =>
-                                          Stack(
-                                        alignment: Alignment.topCenter,
-                                        children: [
-                                          ...previous,
-                                          ?current,
-                                        ],
-                                      ),
-                                      child: KeyedSubtree(
-                                        key: ValueKey(_paramsEditMode),
-                                        child: _paramsEditMode
-                                            ? _buildParametersSection(c)
-                                            : _buildOverviewCard(c),
+                                          const Duration(milliseconds: 260),
+                                      curve: Curves.easeOutCubic,
+                                      alignment: Alignment.topCenter,
+                                      child: AnimatedSwitcher(
+                                        duration:
+                                            const Duration(milliseconds: 200),
+                                        switchInCurve: Curves.easeOutCubic,
+                                        switchOutCurve: Curves.easeInCubic,
+                                        transitionBuilder:
+                                            (child, animation) =>
+                                                FadeTransition(
+                                          opacity: animation,
+                                          child: child,
+                                        ),
+                                        layoutBuilder: (current, previous) =>
+                                            Stack(
+                                          alignment: Alignment.topCenter,
+                                          children: [
+                                            ...previous,
+                                            ?current,
+                                          ],
+                                        ),
+                                        child: KeyedSubtree(
+                                          key: ValueKey(_paramsEditMode),
+                                          child: _paramsEditMode
+                                              ? _buildParametersSection(c)
+                                              : _buildOverviewCard(c),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                if (_ingredients.isNotEmpty) ...[
-                                  const SizedBox(height: 16),
-                                  _buildIngredientsSection(c),
+                                  if (_ingredients.isNotEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    _buildIngredientsSection(c),
+                                  ],
+                                  const SizedBox(height: 12),
                                 ],
-                                const SizedBox(height: 16),
                               ],
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
@@ -1772,14 +1912,164 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     return const [Color(0xFF3DA43B), Color(0xFF8FCB3B)];
   }
 
+  /// Composes a description from three signals so each food gets copy
+  /// that actually fits it:
+  ///
+  ///   1. **Lead** — describes the food *kind* (veggie, lean protein,
+  ///      sweet, etc.) so spinach and chicken don't sound the same even
+  ///      when they share a score.
+  ///   2. **Trait** — adds one notable nutritional fact only if it isn't
+  ///      already implied by the lead (e.g. "notably protein-rich" on a
+  ///      veggie that happens to be high-protein, but not on a lean
+  ///      protein dish where the lead already says it).
+  ///   3. **Advice** — score-band guidance ("great fit for most days" /
+  ///      "best occasional") so the recommendation matches the rating.
+  ///
+  /// Order matters in the lead block: most specific signals first.
   String _healthDescription(int score) {
     final raw = widget.result?['health_comment'] as String?;
     if (raw != null && raw.trim().isNotEmpty) return raw.trim();
     final l10n = context.l10n;
-    if (score >= 9) return l10n.healthDescGreat;
-    if (score >= 7) return l10n.healthDescGood;
-    if (score >= 4) return l10n.healthDescFair;
-    return l10n.healthDescPoor;
+
+    final p = _val(_proteinCtl);
+    final f = _val(_fatCtl);
+    final cb = _val(_carbsCtl);
+    final cal = _val(_caloriesCtl);
+    final grams = _val(_totalGramsCtl);
+    if (cal <= 0 || grams <= 0) {
+      return '${l10n.healthDescBalanced} ${_healthAdvice(l10n, score)}';
+    }
+
+    final calDensity = cal / grams;
+    final fatShare = (f * 9) / cal;
+    final proteinShare = (p * 4) / cal;
+    final carbShare = (cb * 4) / cal;
+
+    final profile = _healthProfile(
+      calDensity: calDensity,
+      fatShare: fatShare,
+      proteinShare: proteinShare,
+      carbShare: carbShare,
+    );
+    final lead = _healthLead(l10n, profile, score);
+    final trait = _healthTrait(
+      l10n,
+      profile: profile,
+      calDensity: calDensity,
+      fatShare: fatShare,
+      proteinShare: proteinShare,
+      carbShare: carbShare,
+    );
+    final advice = _healthAdvice(l10n, score);
+
+    return [lead, ?trait, advice].join(' ');
+  }
+
+  _HealthProfile _healthProfile({
+    required double calDensity,
+    required double fatShare,
+    required double proteinShare,
+    required double carbShare,
+  }) {
+    if (calDensity < 0.7) return _HealthProfile.veggie;
+    if (calDensity > 3.5 && carbShare > 0.55 && proteinShare < 0.10) {
+      return _HealthProfile.sweet;
+    }
+    if (fatShare > 0.50 || (calDensity > 4.0 && fatShare > 0.40)) {
+      return _HealthProfile.fatHeavy;
+    }
+    if (proteinShare > 0.50) return _HealthProfile.highProtein;
+    if (proteinShare > 0.30 && fatShare < 0.35) {
+      return _HealthProfile.leanProtein;
+    }
+    if (carbShare > 0.55 && proteinShare < 0.15) {
+      return _HealthProfile.carbHeavy;
+    }
+    if (calDensity > 3.5 && proteinShare < 0.20) {
+      return _HealthProfile.ultraProcessed;
+    }
+    return _HealthProfile.balanced;
+  }
+
+  String _healthLead(AppLocalizations l10n, _HealthProfile profile, int score) {
+    switch (profile) {
+      case _HealthProfile.veggie:
+        return l10n.healthDescVeggie;
+      case _HealthProfile.highProtein:
+        return l10n.healthDescHighProtein;
+      case _HealthProfile.leanProtein:
+        return l10n.healthDescLeanProtein;
+      case _HealthProfile.carbHeavy:
+        return l10n.healthDescCarbHeavy;
+      case _HealthProfile.fatHeavy:
+        return l10n.healthDescFatHeavy;
+      case _HealthProfile.sweet:
+        return l10n.healthDescSweet;
+      case _HealthProfile.ultraProcessed:
+        return l10n.healthDescUltraProcessed;
+      case _HealthProfile.balanced:
+        if (score >= 9) return l10n.healthDescGreat;
+        if (score >= 7) return l10n.healthDescBalanced;
+        if (score >= 4) return l10n.healthDescFair;
+        return l10n.healthDescPoor;
+    }
+  }
+
+  /// Picks the most informative trait that the lead hasn't already covered.
+  /// Returns null when nothing notable would add value.
+  String? _healthTrait(
+    AppLocalizations l10n, {
+    required _HealthProfile profile,
+    required double calDensity,
+    required double fatShare,
+    required double proteinShare,
+    required double carbShare,
+  }) {
+    bool leadCovers(_HealthProfile p) => profile == p;
+
+    // Notable protein on a non-protein lead (e.g. high-protein veggie).
+    if (proteinShare > 0.30 &&
+        !leadCovers(_HealthProfile.highProtein) &&
+        !leadCovers(_HealthProfile.leanProtein)) {
+      return l10n.healthTraitHighProtein;
+    }
+
+    // Calorie-light on something that isn't already a veggie.
+    if (calDensity < 1.0 && !leadCovers(_HealthProfile.veggie)) {
+      return l10n.healthTraitLowCalDensity;
+    }
+
+    // Fat-heaviness when not already the lead.
+    if (fatShare > 0.45 &&
+        !leadCovers(_HealthProfile.fatHeavy) &&
+        !leadCovers(_HealthProfile.sweet)) {
+      return l10n.healthTraitHighFat;
+    }
+
+    // Carb-dominant when not already the lead.
+    if (carbShare > 0.55 &&
+        !leadCovers(_HealthProfile.carbHeavy) &&
+        !leadCovers(_HealthProfile.sweet)) {
+      return l10n.healthTraitHighCarb;
+    }
+
+    // Truly balanced macros (no macro > 50% of cals).
+    if (proteinShare < 0.50 &&
+        fatShare < 0.45 &&
+        carbShare < 0.55 &&
+        proteinShare > 0.15 &&
+        leadCovers(_HealthProfile.balanced)) {
+      return l10n.healthTraitBalancedMacros;
+    }
+
+    return null;
+  }
+
+  String _healthAdvice(AppLocalizations l10n, int score) {
+    if (score >= 9) return l10n.healthAdviceGreat;
+    if (score >= 7) return l10n.healthAdviceGood;
+    if (score >= 4) return l10n.healthAdviceFair;
+    return l10n.healthAdvicePoor;
   }
 
   String _formatCalories(double v) {
@@ -1844,7 +2134,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   /// edits and returns to the read-only overview card.
   Widget _buildSaveMacrosButton(_AiSheetColors c) {
     return GestureDetector(
-      onTap: () => setState(() => _paramsEditMode = false),
+      onTap: _onSaveMacros,
       child: Container(
         height: 44,
         width: double.infinity,
@@ -2292,4 +2582,93 @@ class _RingSegment {
   const _RingSegment(this.share, this.colors);
   final double share;
   final List<Color> colors;
+}
+
+/// Lightweight toast surfaced inside the modal's own overlay so it sits
+/// above the bottom action button instead of being clipped by the sheet.
+/// A regular SnackBar from `ScaffoldMessenger` would render under the sheet
+/// on iOS and never reach the user.
+class _AiSheetToast extends StatelessWidget {
+  const _AiSheetToast({
+    required this.message,
+    required this.bottomOffset,
+    required this.visible,
+  });
+
+  final String message;
+  final double bottomOffset;
+  final ValueListenable<bool> visible;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: bottomOffset,
+      child: IgnorePointer(
+        // Material wrapper provides default text styles + Directionality so
+        // the toast text doesn't render with the "missing parent" yellow
+        // debug underlines you get on raw Overlay children.
+        child: Material(
+          type: MaterialType.transparency,
+          child: ValueListenableBuilder<bool>(
+            valueListenable: visible,
+            builder: (context, isVisible, child) {
+              return AnimatedSlide(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                offset: isVisible ? Offset.zero : const Offset(0, 0.35),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 220),
+                  opacity: isVisible ? 1 : 0,
+                  child: child,
+                ),
+              );
+            },
+            child: Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 320),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xE6111317),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 18,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.green,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          height: 18 / 14,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

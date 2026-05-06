@@ -633,6 +633,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveMacros => 'Save macros';
 
   @override
+  String get macrosSavedToast => 'Macros saved';
+
+  @override
   String get activityWalking => 'Walking';
 
   @override
@@ -674,6 +677,65 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get healthDescGreat =>
       'Nutrient-dense and well-balanced — a great choice.';
+
+  @override
+  String get healthDescVeggie =>
+      'Light and water-rich — packed with micronutrients per calorie.';
+
+  @override
+  String get healthDescHighProtein =>
+      'Protein-dominant — great for satiety and recovery.';
+
+  @override
+  String get healthDescLeanProtein =>
+      'Lean protein with low fat — a strong building block.';
+
+  @override
+  String get healthDescBalanced =>
+      'Balanced macros — fits well into most meal plans.';
+
+  @override
+  String get healthDescCarbHeavy =>
+      'Carb-forward — pair with protein or veggies for staying power.';
+
+  @override
+  String get healthDescFatHeavy =>
+      'Calorie-dense from fats — keep an eye on portion size.';
+
+  @override
+  String get healthDescSweet =>
+      'Sugary and energy-dense — keep this one occasional.';
+
+  @override
+  String get healthDescUltraProcessed =>
+      'Calorie-dense with little protein — limit how often you eat it.';
+
+  @override
+  String get healthTraitHighProtein => 'Notably protein-rich.';
+
+  @override
+  String get healthTraitLowCalDensity => 'Easy on the calorie budget.';
+
+  @override
+  String get healthTraitHighFat => 'Calorie-dense from fat.';
+
+  @override
+  String get healthTraitHighCarb => 'Carbs make up the bulk.';
+
+  @override
+  String get healthTraitBalancedMacros => 'Macros are evenly split.';
+
+  @override
+  String get healthAdviceGreat => 'Great fit for most days.';
+
+  @override
+  String get healthAdviceGood => 'A solid pick for a balanced day.';
+
+  @override
+  String get healthAdviceFair => 'Enjoy in moderation.';
+
+  @override
+  String get healthAdvicePoor => 'Best kept as an occasional treat.';
 
   @override
   String get ofYourDailyCalories => 'of your daily calories';

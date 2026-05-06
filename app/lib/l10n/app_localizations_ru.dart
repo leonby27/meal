@@ -634,6 +634,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get saveMacros => 'Сохранить макросы';
 
   @override
+  String get macrosSavedToast => 'Макросы сохранены';
+
+  @override
   String get activityWalking => 'Ходьба';
 
   @override
@@ -675,6 +678,64 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get healthDescGreat =>
       'Богато нутриентами и сбалансировано — отличный выбор.';
+
+  @override
+  String get healthDescVeggie =>
+      'Лёгкий и водянистый — много микронутриентов на калорию.';
+
+  @override
+  String get healthDescHighProtein =>
+      'С перевесом в белок — отлично насыщает и помогает восстановлению.';
+
+  @override
+  String get healthDescLeanProtein =>
+      'Нежирный белок — хорошая основа для рациона.';
+
+  @override
+  String get healthDescBalanced =>
+      'Сбалансированные макросы — впишется в большинство планов питания.';
+
+  @override
+  String get healthDescCarbHeavy =>
+      'Много углеводов — добавь белок или овощи, чтобы насытило надолго.';
+
+  @override
+  String get healthDescFatHeavy => 'Калорийный из-за жиров — следи за порцией.';
+
+  @override
+  String get healthDescSweet =>
+      'Сладкий и энергоёмкий — лучше как нечастое удовольствие.';
+
+  @override
+  String get healthDescUltraProcessed =>
+      'Калорий много, белка мало — старайся не есть часто.';
+
+  @override
+  String get healthTraitHighProtein => 'Заметно богат белком.';
+
+  @override
+  String get healthTraitLowCalDensity => 'Легко вписывается в дневную норму.';
+
+  @override
+  String get healthTraitHighFat => 'Калорийный за счёт жиров.';
+
+  @override
+  String get healthTraitHighCarb => 'Основа — углеводы.';
+
+  @override
+  String get healthTraitBalancedMacros => 'Макросы распределены равномерно.';
+
+  @override
+  String get healthAdviceGreat => 'Подходит почти каждый день.';
+
+  @override
+  String get healthAdviceGood => 'Удачный выбор для сбалансированного дня.';
+
+  @override
+  String get healthAdviceFair => 'Ешь умеренно.';
+
+  @override
+  String get healthAdvicePoor => 'Лучше как редкое удовольствие.';
 
   @override
   String get ofYourDailyCalories => 'от дневной нормы';
