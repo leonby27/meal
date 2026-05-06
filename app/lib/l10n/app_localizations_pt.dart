@@ -609,6 +609,63 @@ class AppLocalizationsPt extends AppLocalizations {
   String get saveChanges => 'Salvar';
 
   @override
+  String get logEntry => 'Registrar';
+
+  @override
+  String get saveMacros => 'Salvar macros';
+
+  @override
+  String get activityWalking => 'Caminhada';
+
+  @override
+  String get activityBicycle => 'Ciclismo';
+
+  @override
+  String get activityResting => 'Repouso';
+
+  @override
+  String approxHours(int count) {
+    return '~ $count h';
+  }
+
+  @override
+  String approxMinutes(int count) {
+    return '~ $count min';
+  }
+
+  @override
+  String get healthRatingLabel => 'Saúde';
+
+  @override
+  String healthRatingValue(int value) {
+    return '$value / 10';
+  }
+
+  @override
+  String get healthDescPoor =>
+      'Muitas calorias, açúcares, gordura ou sal — melhor como prazer ocasional.';
+
+  @override
+  String get healthDescFair =>
+      'Saboroso e saciante, mas provavelmente rico em calorias, gordura e sal.';
+
+  @override
+  String get healthDescGood =>
+      'Refeição equilibrada com uma boa mistura de macros.';
+
+  @override
+  String get healthDescGreat =>
+      'Rica em nutrientes e bem equilibrada — uma ótima escolha.';
+
+  @override
+  String get ofYourDailyCalories => 'da sua meta diária';
+
+  @override
+  String dailyCaloriesPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
   String get recognizeDish => 'Reconhecer prato';
 
   @override

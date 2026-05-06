@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:drift/drift.dart' as drift;
@@ -18,6 +19,7 @@ import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/l10n/app_localizations.dart';
 
 class _IngredientEntry {
   final TextEditingController nameCtl;
@@ -84,6 +86,22 @@ class _AiSheetColors {
       isDark ? const Color(0xFF2A2E38) : const Color(0xFFE8EBEF);
   Color get stepperBg =>
       isDark ? AppColors.darkSurface2 : AppColors.lightDisabledBg;
+
+  /// Figma `Base/Back` — slightly tinted neutral background used for inset
+  /// rows like the activity strip. One step darker than the parent card.
+  Color get back =>
+      isDark ? AppColors.darkScaffold : AppColors.lightScaffold;
+
+  /// Figma `Base/On Back 2` — small chip/icon surface that sits on top of
+  /// `back`. One step lighter than [back] so it visually pops.
+  Color get onBack2 =>
+      isDark ? AppColors.darkSurface : AppColors.lightOnBack;
+
+  /// Figma `Base/Surface` — neutral surface token used for inset chips
+  /// (e.g. the Edit button). Light mirrors the Figma value, dark uses an
+  /// elevated surface so the chip contrasts with the parent card.
+  Color get baseSurface =>
+      isDark ? AppColors.darkSurface : AppColors.lightScaffold;
 }
 
 class AiMealResultSheet extends StatefulWidget {
@@ -367,7 +385,7 @@ class AiMealResultSheet extends StatefulWidget {
 }
 
 class _AiMealResultSheetState extends State<AiMealResultSheet>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _nameCtl = TextEditingController();
   final _totalGramsCtl = TextEditingController();
   final _proteinCtl = TextEditingController();
@@ -381,11 +399,27 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   File? _resolvedImageFile;
   String? _networkImageUrl;
 
+  /// View vs. edit mode for the macros/calories card. View mode shows the
+  /// new Figma overview design (read-only); edit mode swaps in the existing
+  /// parameter inputs so the user can fine-tune values.
+  bool _paramsEditMode = false;
+
+  /// Daily calorie target loaded from settings. Used for the "X% of your
+  /// daily calories" indicator. 0 means goal not loaded yet — hide percent.
+  double _dailyCalorieGoal = 0;
+
   bool _isLoading = false;
   String? _loadingError;
   Timer? _textTimer;
   int _textIndex = 0;
   late final AnimationController _spinController;
+
+  /// Drives the count-up reveal of the overview card values (calorie ring,
+  /// activity rows, macros, health rating, daily %). Plays once after the
+  /// sheet opens; subsequent edits don't replay it.
+  late final AnimationController _overviewIntroCtl;
+  late final Animation<double> _overviewIntro;
+  bool _overviewIntroStarted = false;
   late List<String> _loadingTexts;
   bool _loadingTextsInitialized = false;
 
@@ -398,6 +432,14 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     );
+    _overviewIntroCtl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    _overviewIntro = CurvedAnimation(
+      parent: _overviewIntroCtl,
+      curve: Curves.easeOutCubic,
+    );
 
     if (widget.pendingResult != null) {
       _isLoading = true;
@@ -409,6 +451,17 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     }
 
     _resolveImagePath();
+    _loadDailyCalorieGoal();
+  }
+
+  Future<void> _loadDailyCalorieGoal() async {
+    final db = await AppDatabase.getInstance();
+    final raw = await db.getSetting('calorie_goal');
+    if (!mounted) return;
+    final value = double.tryParse(raw ?? '');
+    if (value != null && value > 0) {
+      setState(() => _dailyCalorieGoal = value);
+    }
   }
 
   @override
@@ -491,6 +544,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   @override
   void dispose() {
     _spinController.dispose();
+    _overviewIntroCtl.dispose();
     _textTimer?.cancel();
     _nameCtl.dispose();
     _totalGramsCtl.dispose();
@@ -794,27 +848,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     if (mounted) context.pop(true);
   }
 
-  // ── Macro bar ratio ──────────────────────────────────────────
-  double get _totalMacros => _val(_proteinCtl) + _val(_fatCtl) + _val(_carbsCtl);
-
-  double _macroRatio(double macroValue) {
-    final total = _totalMacros;
-    if (total <= 0) return 0;
-    return (macroValue / total).clamp(0.0, 1.0);
-  }
-
   static const _warningBg = Color(0x26FF6686);
   static const _warningIcon = Color(0xFFFF6686);
-
-  static const _proteinGradient = LinearGradient(
-    colors: [Color(0xFFF0681B), Color(0xFFD91D1D)],
-  );
-  static const _fatGradient = LinearGradient(
-    colors: [Color(0xFFFFBB00), Color(0xFFD0FF00)],
-  );
-  static const _carbsGradient = LinearGradient(
-    colors: [Color(0xFF1787D1), Color(0xFF17D1C7)],
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -846,24 +881,68 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (hasImage) ...[
-                        _buildImageCard(c),
-                        const SizedBox(height: 24),
-                      ],
-                      if (_isLoading)
-                        _buildLoadingBody(c)
-                      else if (_loadingError != null)
-                        _buildErrorBody(c)
-                      else ...[
-                        _buildNameSection(c),
-                        const SizedBox(height: 24),
-                        _buildParametersSection(c),
-                        if (_ingredients.isNotEmpty) ...[
-                          const SizedBox(height: 24),
-                          _buildIngredientsSection(c),
-                        ],
-                        const SizedBox(height: 16),
-                      ],
+                      if (hasImage) _buildImageCard(c),
+                      // Body content overlaps the photo by 24px so the stats
+                      // card visually anchors the dish image. Cards inset 8px
+                      // on each side relative to the photo (Figma layout).
+                      Transform.translate(
+                        offset: Offset(0, hasImage ? -24 : 0),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_isLoading)
+                                _buildLoadingBody(c)
+                              else if (_loadingError != null)
+                                _buildErrorBody(c)
+                              else ...[
+                                _buildAnalyticsCardShell(
+                                  c,
+                                  AnimatedSize(
+                                    duration:
+                                        const Duration(milliseconds: 260),
+                                    curve: Curves.easeOutCubic,
+                                    alignment: Alignment.topCenter,
+                                    child: AnimatedSwitcher(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      switchInCurve: Curves.easeOutCubic,
+                                      switchOutCurve: Curves.easeInCubic,
+                                      transitionBuilder:
+                                          (child, animation) =>
+                                              FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      ),
+                                      layoutBuilder: (current, previous) =>
+                                          Stack(
+                                        alignment: Alignment.topCenter,
+                                        children: [
+                                          ...previous,
+                                          ?current,
+                                        ],
+                                      ),
+                                      child: KeyedSubtree(
+                                        key: ValueKey(_paramsEditMode),
+                                        child: _paramsEditMode
+                                            ? _buildParametersSection(c)
+                                            : _buildOverviewCard(c),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                if (_ingredients.isNotEmpty) ...[
+                                  const SizedBox(height: 16),
+                                  _buildIngredientsSection(c),
+                                ],
+                                const SizedBox(height: 16),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1026,154 +1105,778 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   }
 
   Widget _buildHeader(_AiSheetColors c) {
-    final title = _isLoading
-        ? context.l10n.aiRecognizingDish
-        : _isEditing
-            ? context.l10n.edit
-            : context.l10n.addDish;
+    final String title;
+    if (_isLoading) {
+      title = context.l10n.aiRecognizingDish;
+    } else if (_loadingError != null) {
+      title = _isEditing ? context.l10n.edit : context.l10n.addDish;
+    } else {
+      final name = _nameCtl.text.trim();
+      title = name.isEmpty ? context.l10n.defaultDishName : name;
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 12, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: c.onSurface,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              height: 24 / 18,
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: c.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                height: 24 / 18,
+              ),
             ),
           ),
-          if (!_isLoading)
+          if (!_isLoading) ...[
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: () => Navigator.of(context).pop(),
               child: Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: c.surfaceBg,
+                  color: c.cardBg,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.close, color: c.onSurface, size: 20),
               ),
             ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildNameSection(_AiSheetColors c) {
+  // ── New design: read-only overview card ──────────────────────────────
+  Widget _buildOverviewCard(_AiSheetColors c) {
+    final l10n = context.l10n;
+    final calories = _val(_caloriesCtl);
+    final protein = _val(_proteinCtl);
+    final fat = _val(_fatCtl);
+    final carbs = _val(_carbsCtl);
+
+    final pCal = protein * 4;
+    final fCal = fat * 9;
+    final cCal = carbs * 4;
+    final macroCalSum = pCal + fCal + cCal;
+    final pShare = macroCalSum > 0 ? pCal / macroCalSum : 0.0;
+    final fShare = macroCalSum > 0 ? fCal / macroCalSum : 0.0;
+    final cShare = macroCalSum > 0 ? cCal / macroCalSum : 0.0;
+
+    final dailyPercent = _dailyCalorieGoal > 0
+        ? (calories / _dailyCalorieGoal * 100).round().clamp(0, 999)
+        : null;
+
+    final score = _computeHealthScore();
+    final scoreRatio = (score / 10).clamp(0.0, 1.0);
+    final description = _healthDescription(score);
+
+    // Kick the count-up animation off the first time the overview is shown.
+    if (!_overviewIntroStarted) {
+      _overviewIntroStarted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _overviewIntroCtl.forward();
+      });
+    }
+
+    return AnimatedBuilder(
+      animation: _overviewIntro,
+      builder: (context, _) {
+        final t = _overviewIntro.value;
+        return _buildOverviewCardContent(
+          c: c,
+          l10n: l10n,
+          progress: t,
+          calories: calories,
+          protein: protein,
+          fat: fat,
+          carbs: carbs,
+          pShare: pShare,
+          fShare: fShare,
+          cShare: cShare,
+          dailyPercent: dailyPercent,
+          score: score,
+          scoreRatio: scoreRatio,
+          description: description,
+        );
+      },
+    );
+  }
+
+  /// Outer card chrome shared between the read-only overview and the macros
+  /// editor. Keeping it mounted across mode toggles avoids a layout flash —
+  /// only the inner column swaps and the height animates smoothly.
+  Widget _buildAnalyticsCardShell(_AiSheetColors c, Widget child) {
+    return Container(
+      decoration: BoxDecoration(
+        color: c.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: c.isDark ? AppColors.darkBack2 : AppColors.lightBack2,
+          width: 2,
+        ),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: child,
+    );
+  }
+
+  Widget _buildOverviewCardContent({
+    required _AiSheetColors c,
+    required AppLocalizations l10n,
+    required double progress,
+    required double calories,
+    required double protein,
+    required double fat,
+    required double carbs,
+    required double pShare,
+    required double fShare,
+    required double cShare,
+    required int? dailyPercent,
+    required int score,
+    required double scoreRatio,
+    required String description,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          context.l10n.dishNameLabel,
-          style: TextStyle(
-            color: c.secondaryText,
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            height: 18 / 14,
+          // Calorie ring + activity rows
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildCalorieRing(
+                c,
+                calories * progress,
+                pShare * progress,
+                fShare * progress,
+                cShare * progress,
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildActivityRow(
+                      c,
+                      icon: Icons.directions_walk_rounded,
+                      label: l10n.activityWalking,
+                      value: _formatActivityHours(calories * progress / 250),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildActivityRow(
+                      c,
+                      icon: Icons.directions_bike_rounded,
+                      label: l10n.activityBicycle,
+                      value: _formatActivityHours(calories * progress / 600),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildActivityRow(
+                      c,
+                      svgAsset: 'assets/icons/sleep.svg',
+                      svgWidth: 16,
+                      svgHeight: 10,
+                      label: l10n.activityResting,
+                      value: _formatActivityHours(calories * progress / 70),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 48,
-          decoration: BoxDecoration(
-            color: c.cardBg,
-            border: Border.all(color: c.borderColor),
-            borderRadius: BorderRadius.circular(20),
+          const SizedBox(height: 16),
+          // Macro pills
+          Row(
+            children: [
+              Expanded(
+                child: _buildMacroPill(
+                  c,
+                  iconAsset: 'assets/icons/belok.svg',
+                  letter: l10n.proteinShort,
+                  grams: protein * progress,
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                    colors: [Color(0x26F0681B), Color(0x26D91D1D)],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMacroPill(
+                  c,
+                  iconAsset: 'assets/icons/fat.svg',
+                  letter: l10n.fatShort,
+                  grams: fat * progress,
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                    colors: [Color(0x26FFBB00), Color(0x26D0FF00)],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMacroPill(
+                  c,
+                  iconAsset: 'assets/icons/uglevod.svg',
+                  letter: l10n.carbsShort,
+                  grams: carbs * progress,
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                    colors: [Color(0x261787D1), Color(0x2617D1C7)],
+                  ),
+                ),
+              ),
+            ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          alignment: Alignment.centerLeft,
-          child: TextField(
-            controller: _nameCtl,
+          const SizedBox(height: 16),
+          _buildHealthCard(
+            c,
+            score: score,
+            scoreRatio: scoreRatio,
+            description: description,
+            progress: progress,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: () => setState(() => _paramsEditMode = true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: c.baseSurface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: c.isDark
+                            ? AppColors.darkSecondaryDark
+                            : AppColors.lightSecondaryDark,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.edit,
+                        style: TextStyle(
+                          color: c.isDark
+                              ? AppColors.darkPrimaryLight
+                              : AppColors.lightPrimaryLight,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          height: 18 / 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (dailyPercent != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${(dailyPercent * progress).round()}%',
+                      style: TextStyle(
+                        color: c.onSurface,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.ofYourDailyCalories,
+                      style: TextStyle(
+                        color: c.onSurface.withAlpha(128),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
+    );
+  }
+
+  Widget _buildCalorieRing(
+    _AiSheetColors c,
+    double calories,
+    double pShare,
+    double fShare,
+    double cShare,
+  ) {
+    return SizedBox(
+      width: 106,
+      height: 105,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: const Size(94, 94),
+            painter: _CalorieRingPainter(
+              proteinShare: pShare,
+              fatShare: fShare,
+              carbsShare: cShare,
+              trackColor: c.barTrack,
+            ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _formatCalories(calories),
+                style: TextStyle(
+                  color: c.onSurface,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                ),
+              ),
+              Text(
+                context.l10n.kcalUnit,
+                style: TextStyle(
+                  color: c.secondaryText,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityRow(
+    _AiSheetColors c, {
+    IconData? icon,
+    String? svgAsset,
+    double svgWidth = 16,
+    double svgHeight = 16,
+    required String label,
+    required String value,
+  }) {
+    assert(icon != null || svgAsset != null);
+    return Container(
+      decoration: BoxDecoration(
+        color: c.back,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 24,
+            decoration: BoxDecoration(
+              color: c.onBack2,
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x081B364A),
+                  offset: Offset(0, 5),
+                  blurRadius: 20,
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: svgAsset != null
+                ? SvgPicture.asset(
+                    svgAsset,
+                    width: svgWidth,
+                    height: svgHeight,
+                    colorFilter: ColorFilter.mode(
+                      c.onSurface,
+                      BlendMode.srcIn,
+                    ),
+                  )
+                : Icon(icon, size: 16, color: c.onSurface),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: c.isDark
+                    ? AppColors.darkPrimaryLight
+                    : AppColors.lightPrimaryLight,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                height: 16 / 13,
+              ),
+            ),
+          ),
+          Text(
+            value,
             style: TextStyle(
               color: c.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 18 / 14,
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-              isDense: true,
-              filled: false,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 16 / 13,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacroPill(
+    _AiSheetColors c, {
+    required String iconAsset,
+    required String letter,
+    required double grams,
+    required LinearGradient gradient,
+  }) {
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            alignment: Alignment.center,
+            child: SvgPicture.asset(iconAsset, width: 18, height: 18),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              letter.toUpperCase(),
+              style: TextStyle(
+                color: c.onSurface,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                height: 16 / 13,
+              ),
+            ),
+          ),
+          Text(
+            context.l10n.gramsValue(grams.round()),
+            style: TextStyle(
+              color: c.onSurface,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 16 / 13,
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHealthCard(
+    _AiSheetColors c, {
+    required int score,
+    required double scoreRatio,
+    required String description,
+    double progress = 1,
+  }) {
+    final l10n = context.l10n;
+    final displayScore = (score * progress).round();
+    final displayRatio = scoreRatio * progress;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: c.cardBg,
+        border: Border.all(color: c.borderColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.fromLTRB(8, 8, 16, 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: SvgPicture.asset('assets/icons/heart_rating.svg'),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.healthRatingLabel,
+                        style: TextStyle(
+                          color: c.onSurface,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          height: 16 / 13,
+                        ),
+                      ),
+                      Text(
+                        l10n.healthRatingValue(displayScore),
+                        style: TextStyle(
+                          color: c.onSurface,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          height: 16 / 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: c.isDark
+                          ? AppColors.lineDT200
+                          : AppColors.lineLight200,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FractionallySizedBox(
+                        widthFactor:
+                            displayRatio <= 0 ? 0.001 : displayRatio,
+                        heightFactor: 1,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: _healthBarGradient(score),
+                            ),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 11),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: c.isDark
+                          ? AppColors.darkPrimaryLight
+                          : AppColors.lightPrimaryLight,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      height: 16 / 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Heuristic 1–10 health score. Backend may override via
+  /// `result['health_rating']`.
+  ///
+  /// We start at a neutral 5 and adjust based on two signals:
+  ///
+  ///   1. **Calorie density** (kcal per gram) — the strongest proxy for
+  ///      whole vs. processed foods. Vegetables and broths sit well below
+  ///      1 kcal/g; oils and sweets above 4. Big swings here.
+  ///   2. **Macro balance** — penalise fat-dominant meals, reward
+  ///      protein-dominant ones.
+  ///
+  /// Tested against: spinach (~10), grilled chicken (~8), burger (~4),
+  /// chocolate bar (~2).
+  int _computeHealthScore() {
+    final raw = (widget.result?['health_rating'] as num?)?.toInt();
+    if (raw != null) return raw.clamp(0, 10);
+
+    final p = _val(_proteinCtl);
+    final f = _val(_fatCtl);
+    final cal = _val(_caloriesCtl);
+    final grams = _val(_totalGramsCtl);
+    if (cal <= 0 || grams <= 0) return 7;
+
+    final calDensity = cal / grams;
+    final fatCalShare = (f * 9) / cal;
+    final proteinCalShare = (p * 4) / cal;
+
+    var score = 5.0;
+
+    // Calorie density (kcal/g): the strongest single predictor of whether
+    // a food is whole/water-rich vs. processed/oily.
+    if (calDensity < 0.6) {
+      score += 4; // vegetables, broths, leafy greens
+    } else if (calDensity < 1.2) {
+      score += 3; // fruit, low-fat dairy, beans
+    } else if (calDensity < 2.0) {
+      score += 1; // lean meats, whole grains
+    } else if (calDensity < 3.0) {
+      score += 0; // mixed dishes
+    } else if (calDensity < 4.0) {
+      score -= 1; // dense/processed
+    } else {
+      score -= 2; // oils, sweets, snacks
+    }
+
+    // Fat-dominant meals.
+    if (fatCalShare > 0.55) {
+      score -= 2;
+    } else if (fatCalShare > 0.40) {
+      score -= 1;
+    }
+
+    // Protein-rich meals.
+    if (proteinCalShare > 0.40) {
+      score += 2;
+    } else if (proteinCalShare > 0.25) {
+      score += 1;
+    }
+
+    return score.round().clamp(1, 10);
+  }
+
+  /// Health bar gradient picked by score band:
+  ///   1–3 → red ("poor"), 4–6 → amber ("fair"), 7–10 → green ("good").
+  /// Each band uses a 2-stop gradient so the fill keeps the same depth/feel
+  /// regardless of score, only the hue shifts.
+  List<Color> _healthBarGradient(int score) {
+    if (score <= 3) {
+      return const [Color(0xFFEE2750), Color(0xFFFF6686)];
+    }
+    if (score <= 6) {
+      return const [Color(0xFFF0681B), Color(0xFFFFBB00)];
+    }
+    return const [Color(0xFF3DA43B), Color(0xFF8FCB3B)];
+  }
+
+  String _healthDescription(int score) {
+    final raw = widget.result?['health_comment'] as String?;
+    if (raw != null && raw.trim().isNotEmpty) return raw.trim();
+    final l10n = context.l10n;
+    if (score >= 9) return l10n.healthDescGreat;
+    if (score >= 7) return l10n.healthDescGood;
+    if (score >= 4) return l10n.healthDescFair;
+    return l10n.healthDescPoor;
+  }
+
+  String _formatCalories(double v) {
+    if (v <= 0) return '0';
+    return v.round().toString();
+  }
+
+  String _formatActivityHours(double hours) {
+    if (hours.isNaN || hours <= 0) {
+      return context.l10n.approxMinutes(0);
+    }
+    if (hours < 1) {
+      final minutes = (hours * 60).round().clamp(1, 59);
+      return context.l10n.approxMinutes(minutes);
+    }
+    return context.l10n.approxHours(hours.round().clamp(1, 99));
+  }
+
+  Widget _buildParametersSection(_AiSheetColors c) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildParamRow(
+          c,
+          iconAsset: 'assets/icons/cal.svg',
+          label: l10n.caloriesKcalLabel,
+          controller: _caloriesCtl,
+          onChanged: (_) => _recalcFromCalories(),
         ),
+        const SizedBox(height: 12),
+        _buildParamRow(
+          c,
+          iconAsset: 'assets/icons/belok.svg',
+          label: l10n.proteinGramsLabel,
+          controller: _proteinCtl,
+          onChanged: (_) => _recalcFromMacros(),
+        ),
+        const SizedBox(height: 12),
+        _buildParamRow(
+          c,
+          iconAsset: 'assets/icons/fat.svg',
+          label: l10n.fatGramsLabel,
+          controller: _fatCtl,
+          onChanged: (_) => _recalcFromMacros(),
+        ),
+        const SizedBox(height: 12),
+        _buildParamRow(
+          c,
+          iconAsset: 'assets/icons/uglevod.svg',
+          label: l10n.carbsGramsLabel,
+          controller: _carbsCtl,
+          onChanged: (_) => _recalcFromMacros(),
+        ),
+        const SizedBox(height: 12),
+        _buildSaveMacrosButton(c),
       ],
     );
   }
 
-  Widget _buildParametersSection(_AiSheetColors c) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          context.l10n.dishParameters,
-          style: TextStyle(
-            color: c.secondaryText,
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            height: 18 / 14,
+  /// Outlined success button at the bottom of the macros editor — commits the
+  /// edits and returns to the read-only overview card.
+  Widget _buildSaveMacrosButton(_AiSheetColors c) {
+    return GestureDetector(
+      onTap: () => setState(() => _paramsEditMode = false),
+      child: Container(
+        height: 44,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.green.withAlpha(102),
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: c.cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: AppTheme.cardEdgeBorder(isDark: c.isDark),
-            boxShadow: AppTheme.cardEdgeShadows(isDark: c.isDark),
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              _buildParamRow(
-                c,
-                iconAsset: 'assets/icons/cal.svg',
-                label: context.l10n.caloriesKcalLabel,
-                controller: _caloriesCtl,
-                onChanged: (_) => _recalcFromCalories(),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.check_circle_outline_rounded,
+              color: AppColors.green,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              context.l10n.saveMacros,
+              style: const TextStyle(
+                color: AppColors.green,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 18 / 14,
               ),
-              const SizedBox(height: 12),
-              _buildParamRow(
-                c,
-                iconAsset: 'assets/icons/belok.svg',
-                label: context.l10n.proteinGramsLabel,
-                controller: _proteinCtl,
-                barGradient: _proteinGradient,
-                barRatio: _macroRatio(_val(_proteinCtl)),
-                onChanged: (_) => _recalcFromMacros(),
-              ),
-              const SizedBox(height: 12),
-              _buildParamRow(
-                c,
-                iconAsset: 'assets/icons/fat.svg',
-                label: context.l10n.fatGramsLabel,
-                controller: _fatCtl,
-                barGradient: _fatGradient,
-                barRatio: _macroRatio(_val(_fatCtl)),
-                onChanged: (_) => _recalcFromMacros(),
-              ),
-              const SizedBox(height: 12),
-              _buildParamRow(
-                c,
-                iconAsset: 'assets/icons/uglevod.svg',
-                label: context.l10n.carbsGramsLabel,
-                controller: _carbsCtl,
-                barGradient: _carbsGradient,
-                barRatio: _macroRatio(_val(_carbsCtl)),
-                onChanged: (_) => _recalcFromMacros(),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -1182,8 +1885,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     required String iconAsset,
     required String label,
     required TextEditingController controller,
-    LinearGradient? barGradient,
-    double? barRatio,
     required ValueChanged<String> onChanged,
   }) {
     return Row(
@@ -1207,40 +1908,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             ),
           ),
         ),
-        if (barGradient != null && barRatio != null) ...[
-          _buildMacroBar(c, barGradient, barRatio),
-          const SizedBox(width: 8),
-        ],
         _buildValueField(c, controller, onChanged),
       ],
-    );
-  }
-
-  Widget _buildMacroBar(
-    _AiSheetColors c,
-    LinearGradient gradient,
-    double ratio,
-  ) {
-    return SizedBox(
-      width: 52,
-      height: 12,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: Stack(
-          children: [
-            Container(color: c.barTrack),
-            FractionallySizedBox(
-              widthFactor: ratio,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: gradient,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1300,8 +1969,10 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           decoration: BoxDecoration(
             color: c.cardBg,
             borderRadius: BorderRadius.circular(20),
-            border: AppTheme.cardEdgeBorder(isDark: c.isDark),
-            boxShadow: AppTheme.cardEdgeShadows(isDark: c.isDark),
+            border: Border.all(
+              color: c.isDark ? AppColors.darkBack2 : AppColors.lightBack2,
+              width: 2,
+            ),
           ),
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -1502,11 +2173,123 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                 ),
               ),
               const SizedBox(width: 4),
-              Text(_isEditing ? context.l10n.saveChanges : context.l10n.saveEntry),
+              Text(_isEditing ? context.l10n.saveChanges : context.l10n.logEntry),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+/// Renders the segmented calorie ring used in the meal overview card.
+///
+/// Each macro (protein/fat/carbs) draws a coloured arc whose sweep is
+/// proportional to its share of total macro calories. A small radial gap
+/// separates segments — matching the Figma reference.
+class _CalorieRingPainter extends CustomPainter {
+  _CalorieRingPainter({
+    required this.proteinShare,
+    required this.fatShare,
+    required this.carbsShare,
+    required this.trackColor,
+  });
+
+  final double proteinShare;
+  final double fatShare;
+  final double carbsShare;
+  final Color trackColor;
+
+  static const double _strokeWidth = 9;
+  static const double _gapPx = 2;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.shortestSide - _strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    // Convert a fixed pixel gap into the angle subtended on the ring.
+    final gap = radius > 0 ? _gapPx / radius : 0.0;
+
+    final track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth
+      ..color = trackColor;
+    canvas.drawCircle(center, radius, track);
+
+    // Solid colors per macro — using a sweep gradient on a long segment
+    // makes the gradient stretch so far that the segment reads as two
+    // separate colors. A single saturated tone keeps each macro recognisable
+    // regardless of arc length. Order clockwise from top: protein → fat → carbs.
+    final raw = <_RingSegment>[
+      if (proteinShare > 0)
+        _RingSegment(proteinShare, const [Color(0xFFE4431C)]),
+      if (fatShare > 0)
+        _RingSegment(fatShare, const [Color(0xFFEFD400)]),
+      if (carbsShare > 0)
+        _RingSegment(carbsShare, const [Color(0xFF17ACCC)]),
+    ];
+    if (raw.isEmpty) return;
+
+    // Drop slivers smaller than the gap — drawing them produces an isolated
+    // stub flanked by two gaps that reads as a "hole" in the ring. Their
+    // share is absorbed into the previous segment so total sweep is preserved.
+    final segments = <_RingSegment>[];
+    final minShare = (gap * 1.5) / (2 * math.pi);
+    for (final s in raw) {
+      if (s.share < minShare && segments.isNotEmpty) {
+        final last = segments.removeLast();
+        segments.add(_RingSegment(last.share + s.share, last.colors));
+      } else {
+        segments.add(s);
+      }
+    }
+    if (segments.length >= 2 &&
+        segments.first.share < minShare &&
+        raw.length > 1) {
+      final first = segments.removeAt(0);
+      final last = segments.removeLast();
+      segments.add(_RingSegment(last.share + first.share, last.colors));
+    }
+
+    final useGaps = segments.length > 1;
+    var start = -math.pi / 2;
+    for (final segment in segments) {
+      final share = 2 * math.pi * segment.share;
+      final sweep = useGaps ? share - gap : share;
+      if (sweep <= 0) {
+        start += share;
+        continue;
+      }
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _strokeWidth
+        ..strokeCap = StrokeCap.butt;
+      if (segment.colors.length == 1) {
+        paint.color = segment.colors.single;
+      } else {
+        paint.shader = SweepGradient(
+          startAngle: start,
+          endAngle: start + sweep,
+          colors: segment.colors,
+        ).createShader(rect);
+      }
+      canvas.drawArc(rect, start, sweep, false, paint);
+      start += share;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CalorieRingPainter old) {
+    return old.proteinShare != proteinShare ||
+        old.fatShare != fatShare ||
+        old.carbsShare != carbsShare ||
+        old.trackColor != trackColor;
+  }
+}
+
+class _RingSegment {
+  const _RingSegment(this.share, this.colors);
+  final double share;
+  final List<Color> colors;
 }

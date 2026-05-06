@@ -1228,6 +1228,96 @@ abstract class AppLocalizations {
   /// **'Сохранить'**
   String get saveChanges;
 
+  /// No description provided for @logEntry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записать'**
+  String get logEntry;
+
+  /// No description provided for @saveMacros.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить макросы'**
+  String get saveMacros;
+
+  /// No description provided for @activityWalking.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ходьба'**
+  String get activityWalking;
+
+  /// No description provided for @activityBicycle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Велосипед'**
+  String get activityBicycle;
+
+  /// No description provided for @activityResting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Покой'**
+  String get activityResting;
+
+  /// No description provided for @approxHours.
+  ///
+  /// In ru, this message translates to:
+  /// **'~ {count} ч'**
+  String approxHours(int count);
+
+  /// No description provided for @approxMinutes.
+  ///
+  /// In ru, this message translates to:
+  /// **'~ {count} мин'**
+  String approxMinutes(int count);
+
+  /// No description provided for @healthRatingLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Польза'**
+  String get healthRatingLabel;
+
+  /// No description provided for @healthRatingValue.
+  ///
+  /// In ru, this message translates to:
+  /// **'{value} / 10'**
+  String healthRatingValue(int value);
+
+  /// No description provided for @healthDescPoor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Высокая калорийность, простые углеводы, жиры или соль — лучше как редкое удовольствие.'**
+  String get healthDescPoor;
+
+  /// No description provided for @healthDescFair.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вкусно и сытно, но, скорее всего, много калорий, простых углеводов, жиров и соли.'**
+  String get healthDescFair;
+
+  /// No description provided for @healthDescGood.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбалансированный приём пищи с разумным соотношением макроэлементов.'**
+  String get healthDescGood;
+
+  /// No description provided for @healthDescGreat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Богато нутриентами и сбалансировано — отличный выбор.'**
+  String get healthDescGreat;
+
+  /// No description provided for @ofYourDailyCalories.
+  ///
+  /// In ru, this message translates to:
+  /// **'от дневной нормы'**
+  String get ofYourDailyCalories;
+
+  /// No description provided for @dailyCaloriesPercent.
+  ///
+  /// In ru, this message translates to:
+  /// **'{percent}%'**
+  String dailyCaloriesPercent(int percent);
+
   /// No description provided for @recognizeDish.
   ///
   /// In ru, this message translates to:
