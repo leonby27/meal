@@ -485,15 +485,15 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
     _stage1Ctl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 1400),
     );
     _stage2Ctl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 1700),
     );
     _stage3Ctl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(milliseconds: 2800),
     );
     _stage1Anim =
         CurvedAnimation(parent: _stage1Ctl, curve: Curves.easeOutCubic);
@@ -2489,48 +2489,52 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       onTap: () => _refineFocus.requestFocus(),
       child: Container(
         height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           border: Border.all(
             color: c.isDark ? AppColors.lineDT200 : AppColors.lineLight200,
           ),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: TextField(
-          controller: _refineCtl,
-          focusNode: _refineFocus,
-          textInputAction: TextInputAction.done,
-          textAlignVertical: TextAlignVertical.center,
-          onSubmitted: (_) {
-            if (_refineCtl.text.trim().isEmpty) {
-              _onSaveMacros();
-            } else {
-              _onRefineDish();
-            }
-          },
-          style: TextStyle(
-            color: c.onSurface,
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            height: 18 / 14,
-          ),
-          decoration: InputDecoration(
-            // 44px height − 18px line ≈ 13px symmetric vertical padding so
-            // the cursor sits dead center.
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            // Theme-level dark TextField fillColor leaks through unless we
-            // pin the field as unfilled — that produces the inner grey block.
-            filled: false,
-            fillColor: Colors.transparent,
-            hintText: context.l10n.refineDishHint,
-            hintStyle: TextStyle(
-              color: hint,
+        // Center wrapper + isCollapsed/zero contentPadding gives TextField
+        // its intrinsic line-height; the Container then perfectly centers
+        // it. Cross-platform — Android wasn't honouring textAlignVertical
+        // with non-zero contentPadding and shifted the glyphs downward.
+        child: Center(
+          child: TextField(
+            controller: _refineCtl,
+            focusNode: _refineFocus,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) {
+              if (_refineCtl.text.trim().isEmpty) {
+                _onSaveMacros();
+              } else {
+                _onRefineDish();
+              }
+            },
+            style: TextStyle(
+              color: c.onSurface,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               height: 18 / 14,
+            ),
+            decoration: InputDecoration(
+              isCollapsed: true,
+              contentPadding: EdgeInsets.zero,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              // Theme-level dark TextField fillColor leaks through unless we
+              // pin the field as unfilled — that produces the inner grey block.
+              filled: false,
+              fillColor: Colors.transparent,
+              hintText: context.l10n.refineDishHint,
+              hintStyle: TextStyle(
+                color: hint,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                height: 18 / 14,
+              ),
             ),
           ),
         ),
