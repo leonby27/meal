@@ -481,7 +481,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     _spinController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 1700),
     );
     _stage1Ctl = AnimationController(
       vsync: this,
@@ -3078,10 +3078,13 @@ class _MeditatingMascot extends StatelessWidget {
           builder: (context, child) {
             // Sin wave: -1 (top of breath) → 0 → 1 (bottom of breath).
             final phase = math.sin(float.value * 2 * math.pi);
-            final lift = -phase * 5 - 2;
+            final lift = -phase * 8 - 2; // taller bob
+            // Subtle scale pulse layered on top of the bob makes the breath
+            // read as inhale/exhale rather than a flat hover.
+            final scale = 1 + 0.03 * phase;
             return Transform.translate(
               offset: Offset(0, lift),
-              child: child,
+              child: Transform.scale(scale: scale, child: child),
             );
           },
           child: Center(
