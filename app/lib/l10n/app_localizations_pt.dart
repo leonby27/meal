@@ -615,6 +615,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get saveMacros => 'Salvar macros';
 
   @override
+  String get macrosSavedToast => 'Macros salvos';
+
+  @override
   String get activityWalking => 'Caminhada';
 
   @override
@@ -656,6 +659,65 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get healthDescGreat =>
       'Rica em nutrientes e bem equilibrada — uma ótima escolha.';
+
+  @override
+  String get healthDescVeggie =>
+      'Leve e rico em água — muitos micronutrientes por caloria.';
+
+  @override
+  String get healthDescHighProtein =>
+      'Predomina a proteína — sacia bem e ajuda na recuperação.';
+
+  @override
+  String get healthDescLeanProtein =>
+      'Proteína magra — uma base sólida para a dieta.';
+
+  @override
+  String get healthDescBalanced =>
+      'Macros equilibrados — combina com a maioria dos planos.';
+
+  @override
+  String get healthDescCarbHeavy =>
+      'Carboidrato em destaque — combine com proteína ou vegetais.';
+
+  @override
+  String get healthDescFatHeavy =>
+      'Calórico por causa da gordura — cuide da porção.';
+
+  @override
+  String get healthDescSweet =>
+      'Doce e energético — melhor manter como exceção.';
+
+  @override
+  String get healthDescUltraProcessed =>
+      'Muitas calorias e pouca proteína — limite a frequência.';
+
+  @override
+  String get healthTraitHighProtein => 'Especialmente rico em proteína.';
+
+  @override
+  String get healthTraitLowCalDensity => 'Cabe fácil na sua meta diária.';
+
+  @override
+  String get healthTraitHighFat => 'Calórico por causa da gordura.';
+
+  @override
+  String get healthTraitHighCarb => 'Predomina em carboidratos.';
+
+  @override
+  String get healthTraitBalancedMacros => 'Macros bem distribuídos.';
+
+  @override
+  String get healthAdviceGreat => 'Combina com quase todo dia.';
+
+  @override
+  String get healthAdviceGood => 'Boa escolha para um dia equilibrado.';
+
+  @override
+  String get healthAdviceFair => 'Aproveite com moderação.';
+
+  @override
+  String get healthAdvicePoor => 'Melhor como prazer ocasional.';
 
   @override
   String get ofYourDailyCalories => 'da sua meta diária';

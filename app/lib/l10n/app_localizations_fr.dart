@@ -617,6 +617,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get saveMacros => 'Enregistrer les macros';
 
   @override
+  String get macrosSavedToast => 'Macros enregistrés';
+
+  @override
   String get activityWalking => 'Marche';
 
   @override
@@ -658,6 +661,64 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get healthDescGreat =>
       'Riche en nutriments et bien équilibré — un excellent choix.';
+
+  @override
+  String get healthDescVeggie =>
+      'Léger et riche en eau — beaucoup de micronutriments par calorie.';
+
+  @override
+  String get healthDescHighProtein =>
+      'Très protéiné — rassasiant et bon pour la récupération.';
+
+  @override
+  String get healthDescLeanProtein =>
+      'Protéine maigre — une base solide pour ton menu.';
+
+  @override
+  String get healthDescBalanced =>
+      'Macros équilibrés — s\'adapte à la plupart des régimes.';
+
+  @override
+  String get healthDescCarbHeavy =>
+      'Riche en glucides — associe à des protéines ou des légumes.';
+
+  @override
+  String get healthDescFatHeavy =>
+      'Calorique à cause des matières grasses — surveille la portion.';
+
+  @override
+  String get healthDescSweet => 'Sucré et énergétique — à garder occasionnel.';
+
+  @override
+  String get healthDescUltraProcessed =>
+      'Calorique avec peu de protéines — à limiter.';
+
+  @override
+  String get healthTraitHighProtein => 'Particulièrement riche en protéines.';
+
+  @override
+  String get healthTraitLowCalDensity => 'Léger pour ton budget calorique.';
+
+  @override
+  String get healthTraitHighFat => 'Calorique à cause des graisses.';
+
+  @override
+  String get healthTraitHighCarb => 'Surtout des glucides.';
+
+  @override
+  String get healthTraitBalancedMacros => 'Les macros sont équilibrés.';
+
+  @override
+  String get healthAdviceGreat => 'Convient à presque tous les jours.';
+
+  @override
+  String get healthAdviceGood => 'Bon choix pour une journée équilibrée.';
+
+  @override
+  String get healthAdviceFair => 'À déguster avec modération.';
+
+  @override
+  String get healthAdvicePoor => 'À garder pour les occasions.';
 
   @override
   String get ofYourDailyCalories => 'de ton apport journalier';

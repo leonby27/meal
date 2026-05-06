@@ -615,6 +615,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get saveMacros => 'Makros speichern';
 
   @override
+  String get macrosSavedToast => 'Makros gespeichert';
+
+  @override
   String get activityWalking => 'Gehen';
 
   @override
@@ -656,6 +659,63 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get healthDescGreat =>
       'Nährstoffreich und ausgewogen — eine sehr gute Wahl.';
+
+  @override
+  String get healthDescVeggie =>
+      'Leicht und wasserreich — viele Mikronährstoffe pro Kalorie.';
+
+  @override
+  String get healthDescHighProtein =>
+      'Eiweißbetont — sehr sättigend und gut für die Regeneration.';
+
+  @override
+  String get healthDescLeanProtein => 'Mageres Eiweiß — eine starke Grundlage.';
+
+  @override
+  String get healthDescBalanced =>
+      'Ausgewogene Makros — passt in die meisten Pläne.';
+
+  @override
+  String get healthDescCarbHeavy =>
+      'Kohlenhydrat-lastig — mit Eiweiß oder Gemüse kombinieren.';
+
+  @override
+  String get healthDescFatHeavy =>
+      'Kalorienreich durch Fett — auf die Portion achten.';
+
+  @override
+  String get healthDescSweet => 'Süß und energiereich — lieber selten essen.';
+
+  @override
+  String get healthDescUltraProcessed =>
+      'Viele Kalorien, wenig Eiweiß — selten essen.';
+
+  @override
+  String get healthTraitHighProtein => 'Besonders eiweißreich.';
+
+  @override
+  String get healthTraitLowCalDensity => 'Passt locker ins Tagesbudget.';
+
+  @override
+  String get healthTraitHighFat => 'Kalorisch durch Fett.';
+
+  @override
+  String get healthTraitHighCarb => 'Vor allem Kohlenhydrate.';
+
+  @override
+  String get healthTraitBalancedMacros => 'Makros sind gleichmäßig verteilt.';
+
+  @override
+  String get healthAdviceGreat => 'Passt gut zu fast jedem Tag.';
+
+  @override
+  String get healthAdviceGood => 'Solide Wahl für einen ausgewogenen Tag.';
+
+  @override
+  String get healthAdviceFair => 'In Maßen genießen.';
+
+  @override
+  String get healthAdvicePoor => 'Lieber nur gelegentlich.';
 
   @override
   String get ofYourDailyCalories => 'von deiner Tagesmenge';

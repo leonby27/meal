@@ -1240,6 +1240,12 @@ abstract class AppLocalizations {
   /// **'Сохранить макросы'**
   String get saveMacros;
 
+  /// No description provided for @macrosSavedToast.
+  ///
+  /// In ru, this message translates to:
+  /// **'Макросы сохранены'**
+  String get macrosSavedToast;
+
   /// No description provided for @activityWalking.
   ///
   /// In ru, this message translates to:
@@ -1305,6 +1311,108 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Богато нутриентами и сбалансировано — отличный выбор.'**
   String get healthDescGreat;
+
+  /// No description provided for @healthDescVeggie.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лёгкий и водянистый — много микронутриентов на калорию.'**
+  String get healthDescVeggie;
+
+  /// No description provided for @healthDescHighProtein.
+  ///
+  /// In ru, this message translates to:
+  /// **'С перевесом в белок — отлично насыщает и помогает восстановлению.'**
+  String get healthDescHighProtein;
+
+  /// No description provided for @healthDescLeanProtein.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нежирный белок — хорошая основа для рациона.'**
+  String get healthDescLeanProtein;
+
+  /// No description provided for @healthDescBalanced.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбалансированные макросы — впишется в большинство планов питания.'**
+  String get healthDescBalanced;
+
+  /// No description provided for @healthDescCarbHeavy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много углеводов — добавь белок или овощи, чтобы насытило надолго.'**
+  String get healthDescCarbHeavy;
+
+  /// No description provided for @healthDescFatHeavy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Калорийный из-за жиров — следи за порцией.'**
+  String get healthDescFatHeavy;
+
+  /// No description provided for @healthDescSweet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сладкий и энергоёмкий — лучше как нечастое удовольствие.'**
+  String get healthDescSweet;
+
+  /// No description provided for @healthDescUltraProcessed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Калорий много, белка мало — старайся не есть часто.'**
+  String get healthDescUltraProcessed;
+
+  /// No description provided for @healthTraitHighProtein.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заметно богат белком.'**
+  String get healthTraitHighProtein;
+
+  /// No description provided for @healthTraitLowCalDensity.
+  ///
+  /// In ru, this message translates to:
+  /// **'Легко вписывается в дневную норму.'**
+  String get healthTraitLowCalDensity;
+
+  /// No description provided for @healthTraitHighFat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Калорийный за счёт жиров.'**
+  String get healthTraitHighFat;
+
+  /// No description provided for @healthTraitHighCarb.
+  ///
+  /// In ru, this message translates to:
+  /// **'Основа — углеводы.'**
+  String get healthTraitHighCarb;
+
+  /// No description provided for @healthTraitBalancedMacros.
+  ///
+  /// In ru, this message translates to:
+  /// **'Макросы распределены равномерно.'**
+  String get healthTraitBalancedMacros;
+
+  /// No description provided for @healthAdviceGreat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подходит почти каждый день.'**
+  String get healthAdviceGreat;
+
+  /// No description provided for @healthAdviceGood.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удачный выбор для сбалансированного дня.'**
+  String get healthAdviceGood;
+
+  /// No description provided for @healthAdviceFair.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ешь умеренно.'**
+  String get healthAdviceFair;
+
+  /// No description provided for @healthAdvicePoor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лучше как редкое удовольствие.'**
+  String get healthAdvicePoor;
 
   /// No description provided for @ofYourDailyCalories.
   ///
