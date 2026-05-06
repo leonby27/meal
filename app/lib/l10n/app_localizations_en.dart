@@ -636,6 +636,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get macrosSavedToast => 'Macros saved';
 
   @override
+  String get updateDish => 'Update dish';
+
+  @override
+  String get refineDish => 'Refine dish';
+
+  @override
+  String get refineDishHint => 'Refine the dish ...';
+
+  @override
   String get activityWalking => 'Walking';
 
   @override

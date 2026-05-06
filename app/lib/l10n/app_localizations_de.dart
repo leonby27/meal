@@ -638,6 +638,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get macrosSavedToast => 'Makros gespeichert';
 
   @override
+  String get updateDish => 'Gericht aktualisieren';
+
+  @override
+  String get refineDish => 'Gericht präzisieren';
+
+  @override
+  String get refineDishHint => 'Gericht präzisieren ...';
+
+  @override
   String get activityWalking => 'Gehen';
 
   @override
