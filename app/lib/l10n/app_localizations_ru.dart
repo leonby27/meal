@@ -628,6 +628,63 @@ class AppLocalizationsRu extends AppLocalizations {
   String get saveChanges => 'Сохранить';
 
   @override
+  String get logEntry => 'Записать';
+
+  @override
+  String get saveMacros => 'Сохранить макросы';
+
+  @override
+  String get activityWalking => 'Ходьба';
+
+  @override
+  String get activityBicycle => 'Велосипед';
+
+  @override
+  String get activityResting => 'Покой';
+
+  @override
+  String approxHours(int count) {
+    return '~ $count ч';
+  }
+
+  @override
+  String approxMinutes(int count) {
+    return '~ $count мин';
+  }
+
+  @override
+  String get healthRatingLabel => 'Польза';
+
+  @override
+  String healthRatingValue(int value) {
+    return '$value / 10';
+  }
+
+  @override
+  String get healthDescPoor =>
+      'Высокая калорийность, простые углеводы, жиры или соль — лучше как редкое удовольствие.';
+
+  @override
+  String get healthDescFair =>
+      'Вкусно и сытно, но, скорее всего, много калорий, простых углеводов, жиров и соли.';
+
+  @override
+  String get healthDescGood =>
+      'Сбалансированный приём пищи с разумным соотношением макроэлементов.';
+
+  @override
+  String get healthDescGreat =>
+      'Богато нутриентами и сбалансировано — отличный выбор.';
+
+  @override
+  String get ofYourDailyCalories => 'от дневной нормы';
+
+  @override
+  String dailyCaloriesPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
   String get recognizeDish => 'Распознать блюдо';
 
   @override
