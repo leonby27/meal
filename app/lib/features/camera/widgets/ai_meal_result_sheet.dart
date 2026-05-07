@@ -2196,8 +2196,17 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   ///
   /// Tested against: spinach (~10), grilled chicken (~8), burger (~4),
   /// chocolate bar (~2).
+  /// Returns whichever map currently holds the recognition result. For
+  /// flows that pass it via the constructor we read [PaywallScreen.result];
+  /// for the async loading flow the data lands in [_pendingResultData] only
+  /// after the API returns. Reading just `widget.result` would silently
+  /// miss \`health_rating\` / \`health_comment\` for every photo / text
+  /// recognition that goes through the loading path.
+  Map<String, dynamic>? get _resultData =>
+      widget.result ?? _pendingResultData;
+
   int _computeHealthScore() {
-    final raw = (widget.result?['health_rating'] as num?)?.toInt();
+    final raw = (_resultData?['health_rating'] as num?)?.toInt();
     if (raw != null) return raw.clamp(0, 10);
 
     final p = _val(_proteinCtl);
@@ -2274,7 +2283,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   ///
   /// Order matters in the lead block: most specific signals first.
   String _healthDescription(int score) {
-    final raw = widget.result?['health_comment'] as String?;
+    final raw = _resultData?['health_comment'] as String?;
     if (raw != null && raw.trim().isNotEmpty) return raw.trim();
     final l10n = context.l10n;
 
