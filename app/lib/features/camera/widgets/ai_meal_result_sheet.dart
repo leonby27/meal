@@ -331,6 +331,8 @@ class AiMealResultSheet extends StatefulWidget {
         'calories': log.calories,
       },
       'ingredients': ingredients,
+      if (log.healthRating != null) 'health_rating': log.healthRating,
+      if (log.healthComment != null) 'health_comment': log.healthComment,
     };
 
     await showModalBottomSheet<void>(
@@ -369,6 +371,8 @@ class AiMealResultSheet extends StatefulWidget {
         'calories': log.calories,
       },
       'ingredients': ingredients,
+      if (log.healthRating != null) 'health_rating': log.healthRating,
+      if (log.healthComment != null) 'health_comment': log.healthComment,
     };
 
     final saved = await showModalBottomSheet<bool>(
@@ -1030,6 +1034,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         carbs: drift.Value(_val(_carbsCtl)),
         calories: drift.Value(_val(_caloriesCtl)),
         ingredientsJson: drift.Value(ingredientsJson),
+        healthRating: drift.Value(_persistedHealthRating),
+        healthComment: drift.Value(_persistedHealthComment),
         updatedAt: drift.Value(DateTime.now()),
         synced: const drift.Value(false),
       );
@@ -1050,6 +1056,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         calories: drift.Value(_val(_caloriesCtl)),
         imageUrl: drift.Value(imageUrl),
         ingredientsJson: drift.Value(ingredientsJson),
+        healthRating: drift.Value(_persistedHealthRating),
+        healthComment: drift.Value(_persistedHealthComment),
       ));
 
       final auth = AuthService();
@@ -1098,6 +1106,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         carbs: drift.Value(_val(_carbsCtl)),
         calories: drift.Value(_val(_caloriesCtl)),
         ingredientsJson: drift.Value(_ingredientsJson()),
+        healthRating: drift.Value(_persistedHealthRating),
+        healthComment: drift.Value(_persistedHealthComment),
         updatedAt: drift.Value(DateTime.now()),
         synced: const drift.Value(false),
       );
@@ -1233,6 +1243,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           carbs: drift.Value(_val(_carbsCtl)),
           calories: drift.Value(_val(_caloriesCtl)),
           ingredientsJson: drift.Value(_ingredientsJson()),
+          healthRating: drift.Value(_persistedHealthRating),
+          healthComment: drift.Value(_persistedHealthComment),
           updatedAt: drift.Value(DateTime.now()),
           synced: const drift.Value(false),
         );
@@ -2256,6 +2268,21 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   /// recognition that goes through the loading path.
   Map<String, dynamic>? get _resultData =>
       widget.result ?? _pendingResultData;
+
+  /// AI-supplied health score (1-10) carried via the result map. Persisted
+  /// to the food log so reopening a saved meal shows the same number we
+  /// computed when the dish was first recognised, instead of falling back
+  /// to the local heuristic and confusing the user with a different value.
+  int? get _persistedHealthRating =>
+      (_resultData?['health_rating'] as num?)?.toInt();
+
+  /// AI-supplied health comment paired with [_persistedHealthRating].
+  /// Stored alongside it so the same explanation reappears on reopen.
+  String? get _persistedHealthComment {
+    final raw = _resultData?['health_comment'];
+    if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+    return null;
+  }
 
   int _computeHealthScore() {
     final raw = (_resultData?['health_rating'] as num?)?.toInt();

@@ -1,3 +1,3 @@
-const String appVersion = '1.0.1';
-const int buildNumber = 55;
-const String buildDate = '2026-04-30';
+const String appVersion = '1.0.2';
+const int buildNumber = 62;
+const String buildDate = '2026-05-07';

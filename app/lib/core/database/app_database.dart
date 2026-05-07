@@ -59,6 +59,10 @@ class FoodLogs extends Table {
   TextColumn get imageUrl => text().nullable().named('image_url')();
   TextColumn get ingredientsJson =>
       text().nullable().named('ingredients_json')();
+  IntColumn get healthRating =>
+      integer().nullable().named('health_rating')();
+  TextColumn get healthComment =>
+      text().nullable().named('health_comment')();
   DateTimeColumn get createdAt =>
       dateTime().withDefault(currentDateAndTime).named('created_at')();
   DateTimeColumn get updatedAt =>
@@ -117,7 +121,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -136,6 +140,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.addColumn(foodLogs, foodLogs.ingredientsJson);
+      }
+      if (from < 5) {
+        await m.addColumn(foodLogs, foodLogs.healthRating);
+        await m.addColumn(foodLogs, foodLogs.healthComment);
       }
     },
   );
