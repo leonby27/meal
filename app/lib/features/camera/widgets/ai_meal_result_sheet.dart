@@ -188,6 +188,14 @@ class AiMealResultSheet extends StatefulWidget {
     String? dateStr,
     required Uint8List imageBytes,
   }) {
+    // Kick off the JPEG decode now so it overlaps the sheet's slide-up
+    // animation. Without this, Image.memory inside the loading body
+    // decodes on first paint and the photo flashes in a frame after the
+    // rest of the modal — a visible blink. We deliberately don't await:
+    // the cache hit by the time the user can see the photo card is
+    // enough; missing it falls back to the original async-decode behaviour.
+    precacheImage(MemoryImage(imageBytes), context);
+
     final future = _runRecognition(() async {
       final api = ApiClient();
       final locale = LocaleNotifier.instance.value.languageCode;
@@ -253,6 +261,10 @@ class AiMealResultSheet extends StatefulWidget {
     required String text,
     required Uint8List imageBytes,
   }) {
+    // See the comment in [showWithLoading] — same pre-decode trick so the
+    // photo doesn't flash in late on the loading screen.
+    precacheImage(MemoryImage(imageBytes), context);
+
     final future = _runRecognition(() async {
       final api = ApiClient();
       final locale = LocaleNotifier.instance.value.languageCode;
@@ -491,19 +503,20 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       vsync: this,
       duration: const Duration(milliseconds: 1700),
     );
-    _stage3Ctl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2800),
-    );
+    // Stage 3 doesn't have a "natural" end-time — it has to last as long
+    // as the AI takes. We split it in two phases inside [_runStage3]: a
+    // long approach to 90% (decelerating, so the bar visibly slows near
+    // the end) and a quick snap to 100% the moment the result arrives.
+    // The controller lower/upper bound stays 0..1; durations are passed
+    // per-animateTo so we can swap pace mid-animation.
+    _stage3Ctl = AnimationController(vsync: this);
     _stage1Anim =
         CurvedAnimation(parent: _stage1Ctl, curve: Curves.easeOutCubic);
     _stage2Anim =
         CurvedAnimation(parent: _stage2Ctl, curve: Curves.easeOutCubic);
-    _stage3Anim =
-        CurvedAnimation(parent: _stage3Ctl, curve: Curves.easeOutQuart);
+    _stage3Anim = _stage3Ctl.view;
     _stage1Ctl.addStatusListener(_onStage1Status);
     _stage2Ctl.addStatusListener(_onStage2Status);
-    _stage3Ctl.addStatusListener(_onStage3Status);
     _overviewIntroCtl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -541,24 +554,65 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   }
 
   void _onStage2Status(AnimationStatus s) {
-    if (s == AnimationStatus.completed && _isLoading) _stage3Ctl.forward();
+    if (s == AnimationStatus.completed && _isLoading) {
+      unawaited(_runStage3());
+    }
   }
 
-  void _onStage3Status(AnimationStatus s) {
-    if (s == AnimationStatus.completed && _isLoading) _maybeFinishLoading();
+  /// Signals to [_runStage3] that the AI call has resolved (success or
+  /// error). Recreated on every loading round so a stale completer can't
+  /// fire across runs.
+  Completer<void>? _resultReady;
+
+  /// Stage 3 has two phases:
+  ///   1. **Approach** — animate to 90% with a decelerating curve. By
+  ///      the time we reach the upper end the bar is visibly slowing,
+  ///      hinting that something is still being computed.
+  ///   2. **Finish** — once the AI returns, snap from wherever we are
+  ///      to 100% over a short, easy curve, then hand off to the result
+  ///      UI via [_maybeFinishLoading]. If the AI was already ready by
+  ///      the time the approach finishes, this happens back-to-back —
+  ///      no perceptible hold.
+  Future<void> _runStage3() async {
+    await _stage3Ctl.animateTo(
+      0.9,
+      duration: const Duration(milliseconds: 2200),
+      curve: Curves.easeOutQuart,
+    );
+    if (!_isLoading) return;
+
+    if (_pendingResultData == null && _pendingErrorMessage == null) {
+      _resultReady ??= Completer<void>();
+      await _resultReady!.future;
+    }
+    if (!_isLoading) return;
+
+    await _stage3Ctl.animateTo(
+      1.0,
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeOutCubic,
+    );
+    if (!_isLoading) return;
+    _maybeFinishLoading();
   }
 
-  /// Called when either (a) the AI call finishes or (b) stage 3 finishes —
-  /// whichever happens later. Only when both conditions are met do we hand
-  /// off to the result/error UI, so the user always sees the bar fill all
-  /// the way through. We also pause briefly after the last bar completes so
-  /// the user can register the third check before the screen swaps out.
+  /// Called once the AI call has settled (success or error). Wakes
+  /// [_runStage3] if it's parked at 90% waiting for us; otherwise the
+  /// flag is read on the next stage 3 frame.
+  void _signalResultReady() {
+    final completer = _resultReady;
+    if (completer != null && !completer.isCompleted) completer.complete();
+  }
+
+  /// Called once stage 3 has reached 100% AND the AI result is in. Holds
+  /// briefly so the third check has time to register, then swaps the
+  /// loading body for the result/error body.
   static const Duration _postCompleteHold = Duration(milliseconds: 700);
   bool _finishScheduled = false;
 
   void _maybeFinishLoading() {
     if (!_isLoading) return;
-    if (_stage3Ctl.status != AnimationStatus.completed) return;
+    if (_stage3Ctl.value < 1.0) return;
     if (_pendingResultData == null && _pendingErrorMessage == null) return;
     if (_finishScheduled) return;
     _finishScheduled = true;
@@ -590,18 +644,16 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       final result = await widget.pendingResult!;
       if (!mounted) return;
       _pendingResultData = result;
-      _maybeFinishLoading();
     } on NetworkException catch (e) {
       debugPrint('AI recognition network error: ${e.message}');
       if (!mounted) return;
       _pendingErrorMessage = e.message;
-      _maybeFinishLoading();
     } catch (e, st) {
       debugPrint('AI recognition error: $e\n$st');
       if (!mounted) return;
       _pendingErrorMessage = context.l10n.aiRecognitionFailed;
-      _maybeFinishLoading();
     }
+    _signalResultReady();
   }
 
   void _resolveImagePath() {
@@ -3075,7 +3127,7 @@ class _MeditatingMascot extends StatelessWidget {
   /// 0..1 looping animation that drives one breath cycle.
   final Animation<double> float;
 
-  static const double _mascotSize = 140;
+  static const double _mascotSize = 120;
 
   @override
   Widget build(BuildContext context) {
@@ -3088,10 +3140,10 @@ class _MeditatingMascot extends StatelessWidget {
           builder: (context, child) {
             // Sin wave: -1 (top of breath) → 0 → 1 (bottom of breath).
             final phase = math.sin(float.value * 2 * math.pi);
-            final lift = -phase * 8 - 2; // taller bob
+            final lift = -phase * 5 - 1; // gentle bob
             // Subtle scale pulse layered on top of the bob makes the breath
             // read as inhale/exhale rather than a flat hover.
-            final scale = 1 + 0.03 * phase;
+            final scale = 1 + 0.02 * phase;
             return Transform.translate(
               offset: Offset(0, lift),
               child: Transform.scale(scale: scale, child: child),
