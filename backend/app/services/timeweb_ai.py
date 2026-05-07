@@ -23,7 +23,9 @@ _JSON_SCHEMA = """{
     {"name": "Hard cheese", "grams": 30, "protein": 7.5, "fat": 8.4, "carbs": 0.0, "calories": 105}
   ],
   "per_100g": {"protein": 10.5, "fat": 8.5, "carbs": 2.2, "calories": 127},
-  "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278}
+  "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278},
+  "health_rating": 7,
+  "health_comment": "Сбалансированный завтрак с хорошим белком; помидоры добавляют клетчатку, сыр — насыщенный жир."
 }"""
 
 # BCP-47 / ISO 639-1 language code → full English language name.
@@ -110,6 +112,18 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   separately so the client can re-total when the user changes piece
   counts.
 - `total` must equal the sum across ingredients (within 1–2%).
+- `health_rating` is an integer 1–10 estimating how well this dish fits a
+  normal balanced diet. Anchors: 1 = very unhealthy (deep-fried, sugary,
+  ultra-processed); 5 = neutral everyday food; 10 = exceptionally healthy
+  (whole, minimally processed, balanced macros). Consider nutrient density,
+  macro balance, processing level and calorie density. A protein-rich dish
+  with normal saturated fat (eggs and cheese, lean meat) is NOT
+  automatically unhealthy — judge it as part of a typical day.
+- `health_comment` is one short sentence (≤ 25 words), addressed to the
+  user, in the same language as the rest of the response. Explain the
+  rating with the most relevant strengths/weaknesses (e.g. high protein,
+  added sugar, processed meat, low calorie density). Do not repeat the
+  numeric rating inside the comment.
 
 Respond STRICTLY as JSON (no markdown, no text before or after):
 """ + _JSON_SCHEMA

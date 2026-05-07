@@ -38,6 +38,8 @@ class RecognitionResponse(BaseModel):
     ingredients: List[Ingredient]
     per_100g: NutritionInfo
     total: NutritionInfo
+    health_rating: int | None = None
+    health_comment: str | None = None
 
 
 class TextRecognitionRequest(BaseModel):
