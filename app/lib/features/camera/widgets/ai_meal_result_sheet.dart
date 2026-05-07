@@ -1310,7 +1310,17 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final screenHeight = MediaQuery.of(context).size.height;
     final hasImage = widget.imageBytes != null || _resolvedImageFile != null || _networkImageUrl != null;
 
-    return ConstrainedBox(
+    // The sheet is rendered behind any visible system keyboard, so without
+    // this AnimatedPadding the bottom rows of the ingredient editor (calorie
+    // input + delete chip) sit underneath the keyboard. Padding the entire
+    // sheet by viewInsets.bottom shifts it up to stay above the keyboard;
+    // Scrollable.ensureVisible inside SingleChildScrollView then scrolls
+    // the focused field into the visible area.
+    return AnimatedPadding(
+      padding: EdgeInsets.only(bottom: keyboardHeight),
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      child: ConstrainedBox(
       constraints: BoxConstraints(maxHeight: screenHeight * 0.95),
       child: Container(
         decoration: BoxDecoration(
@@ -1324,9 +1334,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             _buildHeader(c),
             Flexible(
               child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  bottom: keyboardHeight > 0 ? keyboardHeight : 0,
-                ),
                 child: Padding(
                   // 8px outer inset → photo edges sit 8px from the screen.
                   // Body cards inside the Stack add another 8px of inset
@@ -1416,6 +1423,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             ),
           ],
         ),
+      ),
       ),
     );
   }
