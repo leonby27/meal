@@ -1370,7 +1370,42 @@ class AppLocalizationsFr extends AppLocalizations {
   String get paywallPerYear => 'an';
 
   @override
-  String get paywallTrialBadge => '3 JOURS GRATUITS';
+  String get paywallTrialBadge => '3 jours gratuits';
+
+  @override
+  String get paywallYearlyDiscount => '-73%';
+
+  @override
+  String get paywallSubtitle =>
+      'Profitez de toutes les fonctionnalités premium de BodyMeal Pro.';
+
+  @override
+  String get paywallFeatureAiTitle => 'Reconnaissance IA';
+
+  @override
+  String get paywallFeatureAiDesc =>
+      'Prenez une photo — l\'IA donne calories et nutriments en une seconde.';
+
+  @override
+  String get paywallFeatureDiaryTitle => 'Journal alimentaire';
+
+  @override
+  String get paywallFeatureDiaryDesc =>
+      'Enregistrez tous vos repas sans limite, chaque jour.';
+
+  @override
+  String get paywallFeatureAnalyticsTitle => 'Analyses détaillées';
+
+  @override
+  String get paywallFeatureAnalyticsDesc =>
+      'Calories, macros et progression vers vos objectifs sur toute période.';
+
+  @override
+  String get paywallFeatureBarcodeTitle => 'Scanner de codes-barres';
+
+  @override
+  String get paywallFeatureBarcodeDesc =>
+      'Pointez la caméra sur l\'emballage — les données s\'ajoutent seules.';
 
   @override
   String get paywallNoPaymentNow => 'Aucun paiement requis maintenant';

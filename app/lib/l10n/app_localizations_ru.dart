@@ -1358,7 +1358,42 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paywallPerYear => 'год';
 
   @override
-  String get paywallTrialBadge => '3 ДНЯ БЕСПЛАТНО';
+  String get paywallTrialBadge => '3 дня бесплатно';
+
+  @override
+  String get paywallYearlyDiscount => '-73%';
+
+  @override
+  String get paywallSubtitle =>
+      'Максимум возможностей и эксклюзивные функции с подпиской BodyMeal Pro';
+
+  @override
+  String get paywallFeatureAiTitle => 'ИИ-распознование';
+
+  @override
+  String get paywallFeatureAiDesc =>
+      'Сфотографируй — ИИ определит калории и нутриенты за секунду.';
+
+  @override
+  String get paywallFeatureDiaryTitle => 'Дневник питания';
+
+  @override
+  String get paywallFeatureDiaryDesc =>
+      'Записывайте все приёмы пищи без ограничений, каждый день.';
+
+  @override
+  String get paywallFeatureAnalyticsTitle => 'Детальная аналитика';
+
+  @override
+  String get paywallFeatureAnalyticsDesc =>
+      'Графики калорий, БЖУ и прогресс по вашим целям за любой период.';
+
+  @override
+  String get paywallFeatureBarcodeTitle => 'Сканер штрихкодов';
+
+  @override
+  String get paywallFeatureBarcodeDesc =>
+      'Наведите камеру на упаковку — данные подтянутся сами.';
 
   @override
   String get paywallNoPaymentNow => 'Платёж сейчас не требуется';

@@ -456,7 +456,17 @@
       "price": {"type": "String"}
     }
   },
-  "paywallTrialBadge": "3 TAGE GRATIS",
+  "paywallTrialBadge": "3 Tage gratis",
+  "paywallYearlyDiscount": "-73%",
+  "paywallSubtitle": "Hol dir das volle BodyMeal Pro mit allen Premium-Funktionen.",
+  "paywallFeatureAiTitle": "KI-Erkennung",
+  "paywallFeatureAiDesc": "Foto machen — die KI erkennt Kalorien und Nährwerte in Sekunden.",
+  "paywallFeatureDiaryTitle": "Ernährungstagebuch",
+  "paywallFeatureDiaryDesc": "Alle Mahlzeiten unbegrenzt protokollieren, jeden Tag.",
+  "paywallFeatureAnalyticsTitle": "Detaillierte Analysen",
+  "paywallFeatureAnalyticsDesc": "Kalorien, Makros und Zielfortschritt über jeden Zeitraum.",
+  "paywallFeatureBarcodeTitle": "Barcode-Scanner",
+  "paywallFeatureBarcodeDesc": "Kamera auf die Verpackung halten — Daten werden automatisch übernommen.",
   "paywallNoPaymentNow": "Jetzt keine Zahlung erforderlich",
   "paywallStartTrial": "Testphase starten",
   "paywallTrialDisclaimer": "3 Tage kostenlos, dann 39,99 $/Jahr",

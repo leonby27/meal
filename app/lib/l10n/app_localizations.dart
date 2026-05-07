@@ -2581,8 +2581,68 @@ abstract class AppLocalizations {
   /// No description provided for @paywallTrialBadge.
   ///
   /// In ru, this message translates to:
-  /// **'3 ДНЯ БЕСПЛАТНО'**
+  /// **'3 дня бесплатно'**
   String get paywallTrialBadge;
+
+  /// No description provided for @paywallYearlyDiscount.
+  ///
+  /// In ru, this message translates to:
+  /// **'-73%'**
+  String get paywallYearlyDiscount;
+
+  /// No description provided for @paywallSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Максимум возможностей и эксклюзивные функции с подпиской BodyMeal Pro'**
+  String get paywallSubtitle;
+
+  /// No description provided for @paywallFeatureAiTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'ИИ-распознование'**
+  String get paywallFeatureAiTitle;
+
+  /// No description provided for @paywallFeatureAiDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сфотографируй — ИИ определит калории и нутриенты за секунду.'**
+  String get paywallFeatureAiDesc;
+
+  /// No description provided for @paywallFeatureDiaryTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дневник питания'**
+  String get paywallFeatureDiaryTitle;
+
+  /// No description provided for @paywallFeatureDiaryDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записывайте все приёмы пищи без ограничений, каждый день.'**
+  String get paywallFeatureDiaryDesc;
+
+  /// No description provided for @paywallFeatureAnalyticsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Детальная аналитика'**
+  String get paywallFeatureAnalyticsTitle;
+
+  /// No description provided for @paywallFeatureAnalyticsDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Графики калорий, БЖУ и прогресс по вашим целям за любой период.'**
+  String get paywallFeatureAnalyticsDesc;
+
+  /// No description provided for @paywallFeatureBarcodeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканер штрихкодов'**
+  String get paywallFeatureBarcodeTitle;
+
+  /// No description provided for @paywallFeatureBarcodeDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Наведите камеру на упаковку — данные подтянутся сами.'**
+  String get paywallFeatureBarcodeDesc;
 
   /// No description provided for @paywallNoPaymentNow.
   ///

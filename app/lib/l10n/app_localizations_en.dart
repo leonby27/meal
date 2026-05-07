@@ -1354,7 +1354,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallPerYear => 'year';
 
   @override
-  String get paywallTrialBadge => '3 DAYS FREE';
+  String get paywallTrialBadge => '3 days free';
+
+  @override
+  String get paywallYearlyDiscount => '-73%';
+
+  @override
+  String get paywallSubtitle =>
+      'Unlock the full BodyMeal Pro experience with every premium feature.';
+
+  @override
+  String get paywallFeatureAiTitle => 'AI recognition';
+
+  @override
+  String get paywallFeatureAiDesc =>
+      'Snap a photo — AI returns calories and nutrients in a second.';
+
+  @override
+  String get paywallFeatureDiaryTitle => 'Food diary';
+
+  @override
+  String get paywallFeatureDiaryDesc =>
+      'Log every meal without limits, every single day.';
+
+  @override
+  String get paywallFeatureAnalyticsTitle => 'Detailed analytics';
+
+  @override
+  String get paywallFeatureAnalyticsDesc =>
+      'Calories, macros and goal progress charted over any period.';
+
+  @override
+  String get paywallFeatureBarcodeTitle => 'Barcode scanner';
+
+  @override
+  String get paywallFeatureBarcodeDesc =>
+      'Point the camera at a label — data fills in automatically.';
 
   @override
   String get paywallNoPaymentNow => 'No payment required now';

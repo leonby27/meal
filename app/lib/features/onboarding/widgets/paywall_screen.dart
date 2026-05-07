@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:meal_tracker/app/theme.dart';
@@ -61,7 +60,6 @@ class _PaywallScreenState extends State<PaywallScreen>
       ),
     );
 
-    // Make sure products are fetched by the time the user taps the CTA.
     sub.ensureProductsLoaded();
   }
 
@@ -71,14 +69,10 @@ class _PaywallScreenState extends State<PaywallScreen>
     }
   }
 
-  /// Fires on every [SubscriptionService] state change — triggers a rebuild
-  /// so the CTA can reflect loading / disabled / ready states.
   void _onStateChanged() {
     if (mounted) setState(() {});
   }
 
-  /// Handles one-shot events delivered via the broadcast event stream.
-  /// Every event corresponds to exactly one UI reaction (dialog or snackbar).
   void _onSubEvent(SubEvent event) {
     if (!mounted) return;
     final l = context.l10n;
@@ -95,10 +89,8 @@ class _PaywallScreenState extends State<PaywallScreen>
       case PaymentPendingEvent():
         _showErrorDialog(l.paywallErrorPaymentPending, showRetry: false);
       case PurchaseCanceledEvent():
-        // Silent — user explicitly dismissed the Apple sheet.
         break;
       case PurchaseSuccessEvent():
-        // Navigation happens via AuthService listener when premium flips on.
         break;
       case RestoreCompletedEvent(foundActive: final found):
         ScaffoldMessenger.of(context).showSnackBar(
@@ -120,13 +112,6 @@ class _PaywallScreenState extends State<PaywallScreen>
     _eventsSub?.cancel();
     _enterController.dispose();
     super.dispose();
-  }
-
-  String get _trialEndDate {
-    final end = DateTime.now().add(const Duration(days: 3));
-    return DateFormat.yMMMMd(
-      Localizations.localeOf(context).toString(),
-    ).format(end);
   }
 
   ProductDetails? get _weeklyProduct =>
@@ -151,18 +136,14 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   String _weeklyPriceLabel(SubscriptionService sub) {
     final p = _weeklyProduct;
-    if (p == null && _productsLoadFailed(sub)) {
-      return '—';
-    }
+    if (p == null && _productsLoadFailed(sub)) return '—';
     if (p == null) return context.l10n.paywallLoadingPrice;
     return '${p.price} / ${context.l10n.paywallPerWeek}';
   }
 
   String _yearlyPriceLabel(SubscriptionService sub) {
     final p = _yearlyProduct;
-    if (p == null && _productsLoadFailed(sub)) {
-      return '—';
-    }
+    if (p == null && _productsLoadFailed(sub)) return '—';
     if (p == null) return context.l10n.paywallLoadingPrice;
     return '${p.price} / ${context.l10n.paywallPerYear}';
   }
@@ -180,8 +161,6 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   Future<void> _subscribe() async {
     final sub = SubscriptionService();
-    // The CTA is only enabled when products are ready; this guard is a
-    // belt-and-braces safety net rather than an expected code path.
     if (sub.products.isEmpty) return;
 
     final productId = _selectedPlan == 0
@@ -195,12 +174,8 @@ class _PaywallScreenState extends State<PaywallScreen>
     }
 
     await sub.buy(product);
-    // Success / failure / cancel are delivered via the events stream.
   }
 
-  /// Triggers a user-initiated restore. The service emits a
-  /// [RestoreCompletedEvent] or [RestoreFailedEvent] which is handled in
-  /// [_onSubEvent] — this function just fires and forgets.
   void _restore() {
     SubscriptionService().restore();
   }
@@ -282,305 +257,110 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isHard = _isHardPaywall;
     final canGoBack = !isHard && Navigator.of(context).canPop();
     final sub = SubscriptionService();
 
+    final bgColor = isDark ? AppColors.darkBack3 : AppColors.lightBack3;
+    final textPrimary = isDark
+        ? AppColors.darkOnSurface
+        : AppColors.lightOnSurface;
+    final textSecondary = isDark
+        ? AppColors.darkSecondaryDark
+        : AppColors.lightSecondaryDark;
+    final textPrimaryLight = isDark
+        ? AppColors.darkPrimaryLight
+        : AppColors.lightPrimaryLight;
+
     return PopScope(
       canPop: canGoBack,
       child: Scaffold(
+        backgroundColor: bgColor,
         body: Stack(
           children: [
             SafeArea(
+              bottom: false,
               child: FadeTransition(
                 opacity: _fadeIn,
                 child: SlideTransition(
                   position: _slideUp,
                   child: Column(
                     children: [
-                      // --- Top bar ---
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                      _TopBar(
+                        canGoBack: canGoBack,
+                        canSkip: !isHard,
+                        isDark: isDark,
+                        onBack: () => Navigator.of(context).pop(),
+                        onRestore: _restore,
+                        onTerms: () => launchUrl(
+                          Uri.parse(_termsUrl),
+                          mode: LaunchMode.externalApplication,
                         ),
-                        child: Row(
-                          children: [
-                            if (canGoBack)
-                              IconButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                icon: Icon(
-                                  Icons.arrow_back,
-                                  color: cs.onSurface,
-                                  size: 24,
-                                ),
-                              )
-                            else
-                              const SizedBox(width: 48),
-                            const Spacer(),
-                            PopupMenuButton<String>(
-                              icon: Icon(
-                                Icons.more_vert,
-                                color: cs.onSurfaceVariant,
-                                size: 24,
-                              ),
-                              onSelected: (value) {
-                                switch (value) {
-                                  case 'restore':
-                                    _restore();
-                                  case 'terms':
-                                    launchUrl(
-                                      Uri.parse(_termsUrl),
-                                      mode: LaunchMode.externalApplication,
-                                    );
-                                  case 'privacy':
-                                    launchUrl(
-                                      Uri.parse(_privacyUrl),
-                                      mode: LaunchMode.externalApplication,
-                                    );
-                                  case 'code':
-                                    _redeemCode();
-                                  case 'restart':
-                                    AuthService().resetOnboarding();
-                                }
-                              },
-                              itemBuilder: (_) => [
-                                PopupMenuItem(
-                                  value: 'restore',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.refresh,
-                                        size: 20,
-                                        color: cs.onSurface,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(context.l10n.paywallRestore),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem(
-                                  value: 'terms',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.description_outlined,
-                                        size: 20,
-                                        color: cs.onSurface,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(context.l10n.paywallTerms),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem(
-                                  value: 'privacy',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.lock_outline,
-                                        size: 20,
-                                        color: cs.onSurface,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(context.l10n.paywallPrivacy),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem(
-                                  value: 'code',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.card_giftcard,
-                                        size: 20,
-                                        color: cs.onSurface,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(context.l10n.paywallHaveCode),
-                                    ],
-                                  ),
-                                ),
-                                if (kDebugMode) ...[
-                                  PopupMenuItem(
-                                    value: 'restart',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.restart_alt,
-                                          size: 20,
-                                          color: cs.onSurface,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(context.l10n.restartOnboarding),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ],
+                        onPrivacy: () => launchUrl(
+                          Uri.parse(_privacyUrl),
+                          mode: LaunchMode.externalApplication,
                         ),
+                        onCode: _redeemCode,
+                        onSkip: _skip,
+                        onRestart: () => AuthService().resetOnboarding(),
                       ),
-
-                      // --- Scrollable content ---
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              _Hero(isDark: isDark, bgColor: bgColor),
                               const SizedBox(height: 8),
-
-                              // --- Title ---
+                              _BrandTitle(textPrimary: textPrimary),
+                              const SizedBox(height: 12),
                               Text(
-                                isHard
-                                    ? context.l10n.paywallHardTitle
-                                    : _selectedPlanHasTrial
-                                    ? context.l10n.paywallTitle
-                                    : context.l10n.paywallWeeklyTitle,
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.25,
-                                  color: cs.onSurface,
-                                ),
+                                context.l10n.paywallSubtitle,
                                 textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 32),
-
-                              if (!isHard) ...[
-                                IndexedStack(
-                                  index: _selectedPlanHasTrial ? 1 : 0,
-                                  sizing: StackFit.loose,
-                                  children: [
-                                    Column(
-                                      children: [
-                                        _TimelineItem(
-                                          svgAsset:
-                                              'assets/icons/lock_unlocked.svg',
-                                          iconBg: cs.primary,
-                                          title: context
-                                              .l10n
-                                              .paywallWeeklyTimelineTodayTitle,
-                                          description: context
-                                              .l10n
-                                              .paywallWeeklyTimelineTodayDesc,
-                                          isFirst: true,
-                                          isLast: false,
-                                        ),
-                                        _TimelineItem(
-                                          icon: Icons.trending_up_rounded,
-                                          iconBg: cs.primary,
-                                          title: context
-                                              .l10n
-                                              .paywallWeeklyTimelineRenewTitle,
-                                          description: context
-                                              .l10n
-                                              .paywallWeeklyTimelineRenewDesc,
-                                          isFirst: false,
-                                          isLast: false,
-                                        ),
-                                        _TimelineItem(
-                                          icon: Icons.cancel_rounded,
-                                          iconBg: cs.inverseSurface,
-                                          iconColor: cs.surface,
-                                          title: context
-                                              .l10n
-                                              .paywallWeeklyTimelineCancelTitle,
-                                          description: context
-                                              .l10n
-                                              .paywallWeeklyTimelineCancelDesc,
-                                          isFirst: false,
-                                          isLast: true,
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [
-                                        _TimelineItem(
-                                          svgAsset:
-                                              'assets/icons/lock_unlocked.svg',
-                                          iconBg: cs.primary,
-                                          title: context
-                                              .l10n
-                                              .paywallTimelineTodayTitle,
-                                          description: context
-                                              .l10n
-                                              .paywallTimelineTodayDesc,
-                                          isFirst: true,
-                                          isLast: false,
-                                        ),
-                                        _TimelineItem(
-                                          svgAsset: 'assets/icons/bell.svg',
-                                          iconBg: cs.primary,
-                                          title: context
-                                              .l10n
-                                              .paywallTimelineReminderTitle,
-                                          description: context
-                                              .l10n
-                                              .paywallTimelineReminderDesc,
-                                          isFirst: false,
-                                          isLast: false,
-                                        ),
-                                        _TimelineItem(
-                                          svgAsset: 'assets/icons/crown.svg',
-                                          iconBg: cs.inverseSurface,
-                                          iconColor: cs.surface,
-                                          title: context
-                                              .l10n
-                                              .paywallTimelinePayTitle,
-                                          description: context.l10n
-                                              .paywallTimelinePayDesc(
-                                                _trialEndDate,
-                                              ),
-                                          isFirst: false,
-                                          isLast: true,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  height: 20 / 16,
+                                  color: textSecondary,
                                 ),
-                                const SizedBox(height: 28),
-                              ],
-
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _PlanCard(
-                                      title: context.l10n.paywallMonthly,
-                                      price: _weeklyPriceLabel(sub),
-                                      badge: null,
-                                      isSelected: _selectedPlan == 0,
-                                      isLoading:
-                                          _weeklyProduct == null &&
-                                          _productsAreLoading(sub),
-                                      onTap: () =>
-                                          setState(() => _selectedPlan = 0),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _PlanCard(
-                                      title: context.l10n.paywallYearly,
-                                      price: _yearlyPriceLabel(sub),
-                                      badge: isHard || !_selectedPlanHasTrial
-                                          ? null
-                                          : context.l10n.paywallTrialBadge,
-                                      isSelected: _selectedPlan == 1,
-                                      isLoading:
-                                          _yearlyProduct == null &&
-                                          _productsAreLoading(sub),
-                                      onTap: () =>
-                                          setState(() => _selectedPlan = 1),
-                                    ),
-                                  ),
-                                ],
                               ),
-                              const SizedBox(height: 20),
-
-                              if (!isHard)
+                              const SizedBox(height: 24),
+                              _PlanRow(
+                                title: context.l10n.paywallYearly,
+                                price: _yearlyPriceLabel(sub),
+                                discountBadge:
+                                    context.l10n.paywallYearlyDiscount,
+                                trialBadge: !isHard
+                                    ? context.l10n.paywallTrialBadge
+                                    : null,
+                                isSelected: _selectedPlan == 1,
+                                isLoading:
+                                    _yearlyProduct == null &&
+                                    _productsAreLoading(sub),
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                onTap: () =>
+                                    setState(() => _selectedPlan = 1),
+                              ),
+                              const SizedBox(height: 6),
+                              _PlanRow(
+                                title: context.l10n.paywallMonthly,
+                                price: _weeklyPriceLabel(sub),
+                                discountBadge: null,
+                                trialBadge: null,
+                                isSelected: _selectedPlan == 0,
+                                isLoading:
+                                    _weeklyProduct == null &&
+                                    _productsAreLoading(sub),
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                onTap: () =>
+                                    setState(() => _selectedPlan = 0),
+                              ),
+                              if (!isHard) ...[
+                                const SizedBox(height: 14),
                                 Visibility(
                                   visible: _selectedPlanHasTrial,
                                   maintainState: true,
@@ -589,10 +369,14 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        Icons.check,
-                                        size: 18,
-                                        color: cs.onSurface,
+                                      SvgPicture.asset(
+                                        'assets/paywall/check.svg',
+                                        width: 18,
+                                        height: 18,
+                                        colorFilter: ColorFilter.mode(
+                                          textPrimaryLight,
+                                          BlendMode.srcIn,
+                                        ),
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -600,19 +384,78 @@ class _PaywallScreenState extends State<PaywallScreen>
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w500,
-                                          color: cs.onSurface,
+                                          height: 18 / 14,
+                                          color: textPrimaryLight,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              const SizedBox(height: 24),
+                              ],
+                              const SizedBox(height: 16),
+                              _FeatureCard(
+                                imageAsset: 'assets/paywall/feature_ai.png',
+                                title: context.l10n.paywallFeatureAiTitle,
+                                description: context.l10n.paywallFeatureAiDesc,
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
+                              const SizedBox(height: 8),
+                              _FeatureCard(
+                                imageAsset: 'assets/paywall/feature_diary.png',
+                                title: context.l10n.paywallFeatureDiaryTitle,
+                                description:
+                                    context.l10n.paywallFeatureDiaryDesc,
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
+                              const SizedBox(height: 8),
+                              _FeatureCard(
+                                imageAsset:
+                                    'assets/paywall/feature_analytics.png',
+                                title: context
+                                    .l10n
+                                    .paywallFeatureAnalyticsTitle,
+                                description:
+                                    context.l10n.paywallFeatureAnalyticsDesc,
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
+                              const SizedBox(height: 8),
+                              _FeatureCard(
+                                imageAsset:
+                                    'assets/paywall/feature_barcode.png',
+                                title:
+                                    context.l10n.paywallFeatureBarcodeTitle,
+                                description:
+                                    context.l10n.paywallFeatureBarcodeDesc,
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
                             ],
                           ),
                         ),
                       ),
-
-                      _buildBottomCTA(context, sub),
+                      _BottomCTA(
+                        bgColor: bgColor,
+                        isDark: isDark,
+                        sub: sub,
+                        canSubscribe:
+                            sub.state == SubState.ready &&
+                            _selectedProduct != null,
+                        canRetry: _productsLoadFailed(sub),
+                        isPurchasing: sub.state == SubState.purchasing,
+                        isLoading: _productsAreLoading(sub),
+                        ctaLabel: _ctaLabel(),
+                        disclaimer: isHard
+                            ? context.l10n.paywallHardDisclaimer
+                            : _selectedPlanDisclaimer(),
+                        onSubscribe: _subscribe,
+                      ),
                     ],
                   ),
                 ),
@@ -629,200 +472,236 @@ class _PaywallScreenState extends State<PaywallScreen>
     );
   }
 
-  Widget _buildBottomCTA(BuildContext context, SubscriptionService sub) {
-    final cs = Theme.of(context).colorScheme;
-    final isHard = _isHardPaywall;
-
-    // The main CTA is tappable only when products are loaded and no purchase
-    // is currently in flight.
-    final bool isPurchasing = sub.state == SubState.purchasing;
-    final bool isLoading = _productsAreLoading(sub);
-    final bool canSubscribe =
-        sub.state == SubState.ready && _selectedProduct != null;
-    final bool canRetry = _productsLoadFailed(sub);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: isPurchasing
-                  ? null
-                  : canSubscribe
-                  ? _subscribe
-                  : canRetry
-                  ? SubscriptionService().retryProductsLoading
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: cs.onSurface,
-                foregroundColor: cs.surface,
-                disabledBackgroundColor: cs.onSurface.withAlpha(90),
-                disabledForegroundColor: cs.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                elevation: 0,
-              ),
-              child: (isPurchasing || isLoading)
-                  ? SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        valueColor: AlwaysStoppedAnimation(cs.surface),
-                      ),
-                    )
-                  : Text(
-                      canRetry
-                          ? context.l10n.paywallTryAgain
-                          : isHard
-                          ? context.l10n.paywallSubscribeNow
-                          : _selectedPlanHasTrial
-                          ? context.l10n.paywallStartTrial
-                          : context.l10n.paywallSubscribeNow,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            isHard
-                ? context.l10n.paywallHardDisclaimer
-                : _selectedPlanDisclaimer(),
-            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
-            textAlign: TextAlign.center,
-          ),
-          if (!isHard) ...[
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: _skip,
-              style: TextButton.styleFrom(
-                minimumSize: const Size(0, 32),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                context.l10n.paywallSkip,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
+  String _ctaLabel() {
+    final l = context.l10n;
+    if (_productsLoadFailed(SubscriptionService())) return l.paywallTryAgain;
+    if (_isHardPaywall) return l.paywallSubscribeNow;
+    return _selectedPlanHasTrial ? l.paywallStartTrial : l.paywallSubscribeNow;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Vertical timeline item
+// Top bar with back arrow and kebab menu
 // ---------------------------------------------------------------------------
-class _TimelineItem extends StatelessWidget {
-  final String? svgAsset;
-  final IconData? icon;
-  final Color iconBg;
-  final Color? iconColor;
-  final String title;
-  final String description;
-  final bool isFirst;
-  final bool isLast;
+class _TopBar extends StatelessWidget {
+  final bool canGoBack;
+  final bool canSkip;
+  final bool isDark;
+  final VoidCallback onBack;
+  final VoidCallback onRestore;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
+  final VoidCallback onCode;
+  final VoidCallback onSkip;
+  final VoidCallback onRestart;
 
-  const _TimelineItem({
-    this.svgAsset,
-    this.icon,
-    required this.iconBg,
-    this.iconColor,
-    required this.title,
-    required this.description,
-    required this.isFirst,
-    required this.isLast,
+  const _TopBar({
+    required this.canGoBack,
+    required this.canSkip,
+    required this.isDark,
+    required this.onBack,
+    required this.onRestore,
+    required this.onTerms,
+    required this.onPrivacy,
+    required this.onCode,
+    required this.onSkip,
+    required this.onRestart,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final iconColor = isDark
+        ? AppColors.darkOnSurface
+        : AppColors.lightOnSurface;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
 
-    return IntrinsicHeight(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left column: circle + line
-          SizedBox(
-            width: 48,
-            child: Column(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: icon != null
-                        ? Icon(icon, size: 24, color: iconColor ?? Colors.white)
-                        : SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: SvgPicture.asset(
-                              svgAsset!,
-                              fit: BoxFit.contain,
-                              colorFilter: ColorFilter.mode(
-                                iconColor ?? Colors.white,
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                          ),
+          if (canGoBack)
+            _SquareIconButton(
+              bgColor: surfaceColor,
+              isDark: isDark,
+              onTap: onBack,
+              child: Icon(Icons.arrow_back, color: iconColor, size: 20),
+            )
+          else
+            const SizedBox(width: 32, height: 32),
+          const Spacer(),
+          PopupMenuButton<String>(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            offset: const Offset(0, 40),
+            child: _SquareIconButton(
+              bgColor: surfaceColor,
+              isDark: isDark,
+              onTap: null,
+              child: Icon(Icons.more_vert, color: iconColor, size: 20),
+            ),
+            onSelected: (value) {
+              switch (value) {
+                case 'restore':
+                  onRestore();
+                case 'terms':
+                  onTerms();
+                case 'privacy':
+                  onPrivacy();
+                case 'code':
+                  onCode();
+                case 'skip':
+                  onSkip();
+                case 'restart':
+                  onRestart();
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'restore',
+                child: _MenuRow(
+                  icon: Icons.refresh,
+                  label: context.l10n.paywallRestore,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'terms',
+                child: _MenuRow(
+                  icon: Icons.description_outlined,
+                  label: context.l10n.paywallTerms,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'privacy',
+                child: _MenuRow(
+                  icon: Icons.lock_outline,
+                  label: context.l10n.paywallPrivacy,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'code',
+                child: _MenuRow(
+                  icon: Icons.card_giftcard,
+                  label: context.l10n.paywallHaveCode,
+                ),
+              ),
+              if (canSkip)
+                PopupMenuItem(
+                  value: 'skip',
+                  child: _MenuRow(
+                    icon: Icons.skip_next_outlined,
+                    label: context.l10n.paywallSkip,
                   ),
                 ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: cs.outline.withAlpha(50),
-                    ),
+              if (kDebugMode)
+                PopupMenuItem(
+                  value: 'restart',
+                  child: _MenuRow(
+                    icon: Icons.restart_alt,
+                    label: context.l10n.restartOnboarding,
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 2),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: cs.onSurface,
-                    ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _MenuRow({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: cs.onSurface),
+        const SizedBox(width: 12),
+        Text(label),
+      ],
+    );
+  }
+}
+
+class _SquareIconButton extends StatelessWidget {
+  final Color bgColor;
+  final bool isDark;
+  final VoidCallback? onTap;
+  final Widget child;
+
+  const _SquareIconButton({
+    required this.bgColor,
+    required this.isDark,
+    required this.onTap,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x081B364A),
+              blurRadius: 10,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Top illustration — separate light/dark assets per design
+// ---------------------------------------------------------------------------
+class _Hero extends StatelessWidget {
+  final bool isDark;
+  final Color bgColor;
+  const _Hero({required this.isDark, required this.bgColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = isDark
+        ? 'assets/paywall/dark/hero.png'
+        : 'assets/paywall/light/hero.png';
+
+    return SizedBox(
+      height: 200,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(asset, fit: BoxFit.contain),
+          // Subtle bottom fade so the illustration blends into the page bg.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 24,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [bgColor.withAlpha(0), bgColor],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: cs.onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -833,135 +712,149 @@ class _TimelineItem extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Plan card (monthly / yearly)
+// "BodyMeal" + Pro badge title row
 // ---------------------------------------------------------------------------
-class _PlanCard extends StatelessWidget {
+class _BrandTitle extends StatelessWidget {
+  final Color textPrimary;
+  const _BrandTitle({required this.textPrimary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'BodyMeal',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            height: 1.2,
+            color: textPrimary,
+          ),
+        ),
+        const SizedBox(width: 6),
+        SvgPicture.asset(
+          'assets/paywall/pro.svg',
+          height: 24,
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Plan row (yearly/weekly) with checkbox, optional discount pill and trial chip
+// ---------------------------------------------------------------------------
+class _PlanRow extends StatelessWidget {
   final String title;
   final String price;
-  final String? badge;
+  final String? discountBadge;
+  final String? trialBadge;
   final bool isSelected;
   final bool isLoading;
+  final bool isDark;
+  final Color textPrimary;
+  final Color textSecondary;
   final VoidCallback onTap;
 
-  const _PlanCard({
+  const _PlanRow({
     required this.title,
     required this.price,
-    required this.badge,
+    required this.discountBadge,
+    required this.trialBadge,
     required this.isSelected,
     required this.isLoading,
+    required this.isDark,
+    required this.textPrimary,
+    required this.textSecondary,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final surface = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inverse = cs.inverseSurface;
+    final inverseText = cs.onInverseSurface;
 
     return GestureDetector(
       onTap: isLoading ? null : onTap,
+      behavior: HitTestBehavior.opaque,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(16),
+            height: 48,
             decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? cs.onSurface : cs.outline.withAlpha(80),
-                width: isSelected ? 2 : 1,
+              color: surface,
+              borderRadius: BorderRadius.circular(12),
+              border: const Border(
+                top: BorderSide(color: AppColors.lineDT50, width: 2),
               ),
               boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
             ),
-            foregroundDecoration: AppTheme.cardEdgeForeground(
-              isDark: isDark,
-              radius: 20,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                    const Spacer(),
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isSelected ? cs.onSurface : Colors.transparent,
-                        border: Border.all(
-                          color: isSelected
-                              ? cs.onSurface
-                              : cs.outline.withAlpha(120),
-                          width: 2,
-                        ),
-                      ),
-                      child: isSelected
-                          ? Icon(Icons.check, size: 14, color: cs.surface)
-                          : null,
-                    ),
-                  ],
+                _RadioIcon(isSelected: isSelected),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 20 / 16,
+                    color: textPrimary,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                if (discountBadge != null) ...[
+                  const SizedBox(width: 4),
+                  _DiscountPill(text: discountBadge!),
+                ],
+                const Spacer(),
                 if (isLoading)
                   SizedBox(
-                    height: 22,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(
-                            cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(textSecondary),
                     ),
                   )
                 else
                   Text(
                     price,
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: cs.onSurface,
+                      fontSize: 16,
+                      height: 20 / 16,
+                      color: textSecondary,
                     ),
                   ),
               ],
             ),
           ),
-          if (badge != null)
+          if (trialBadge != null)
             Positioned(
               top: -10,
-              right: 12,
+              right: 14,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                  horizontal: 6,
+                  vertical: 3,
                 ),
                 decoration: BoxDecoration(
-                  color: cs.onSurface,
-                  borderRadius: BorderRadius.circular(8),
+                  color: inverse,
+                  borderRadius: BorderRadius.circular(5),
                 ),
                 child: Text(
-                  badge!,
+                  trialBadge!,
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: cs.surface,
-                    letterSpacing: 0.5,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    height: 14 / 12,
+                    color: inverseText,
                   ),
                 ),
               ),
@@ -972,8 +865,265 @@ class _PlanCard extends StatelessWidget {
   }
 }
 
+class _RadioIcon extends StatelessWidget {
+  final bool isSelected;
+  const _RadioIcon({required this.isSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: SvgPicture.asset(
+        isSelected
+            ? 'assets/paywall/radio_on.svg'
+            : 'assets/paywall/radio_off.svg',
+      ),
+    );
+  }
+}
+
+class _DiscountPill extends StatelessWidget {
+  final String text;
+  const _DiscountPill({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.green,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          height: 14 / 12,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
-// Promo code input sheet
+// Feature card (image + title + description)
+// ---------------------------------------------------------------------------
+class _FeatureCard extends StatelessWidget {
+  final String imageAsset;
+  final String title;
+  final String description;
+  final bool isDark;
+  final Color textPrimary;
+  final Color textSecondary;
+
+  const _FeatureCard({
+    required this.imageAsset,
+    required this.title,
+    required this.description,
+    required this.isDark,
+    required this.textPrimary,
+    required this.textSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(16),
+        border: const Border(
+          top: BorderSide(color: AppColors.lineDT50, width: 2),
+        ),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: Image.asset(imageAsset, fit: BoxFit.contain),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 20 / 16,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 18 / 14,
+                    color: textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Bottom CTA block: primary button + disclaimer + optional skip
+// ---------------------------------------------------------------------------
+class _BottomCTA extends StatelessWidget {
+  final Color bgColor;
+  final bool isDark;
+  final SubscriptionService sub;
+  final bool canSubscribe;
+  final bool canRetry;
+  final bool isPurchasing;
+  final bool isLoading;
+  final String ctaLabel;
+  final String disclaimer;
+  final VoidCallback onSubscribe;
+
+  const _BottomCTA({
+    required this.bgColor,
+    required this.isDark,
+    required this.sub,
+    required this.canSubscribe,
+    required this.canRetry,
+    required this.isPurchasing,
+    required this.isLoading,
+    required this.ctaLabel,
+    required this.disclaimer,
+    required this.onSubscribe,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dividerColor = isDark
+        ? AppColors.darkDividerLight
+        : AppColors.lightDividerLight;
+    final disclaimerColor = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+
+    final VoidCallback? handler = isPurchasing
+        ? null
+        : canSubscribe
+        ? onSubscribe
+        : canRetry
+        ? SubscriptionService().retryProductsLoading
+        : null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border(top: BorderSide(color: dividerColor, width: 1)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _PrimaryButton(
+              label: ctaLabel,
+              isLoading: isPurchasing || isLoading,
+              onPressed: handler,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              disclaimer,
+              style: TextStyle(fontSize: 11, color: disclaimerColor),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final bool isLoading;
+  final VoidCallback? onPressed;
+
+  const _PrimaryButton({
+    required this.label,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onPressed != null && !isLoading;
+
+    return GestureDetector(
+      onTap: isEnabled ? onPressed : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 60,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: isEnabled
+              ? AppColors.primary
+              : AppColors.primary.withAlpha(120),
+          borderRadius: BorderRadius.circular(20),
+          border: const Border(
+            top: BorderSide(color: Color(0xFF74A6FF), width: 1),
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0xFF153773),
+              offset: Offset(0, 4),
+              blurRadius: 0,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                ),
+              )
+            : Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  height: 22 / 16,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Promo code input sheet (unchanged)
 // ---------------------------------------------------------------------------
 class _PromoCodeSheet extends StatefulWidget {
   const _PromoCodeSheet();
