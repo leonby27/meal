@@ -11,6 +11,15 @@ from sqlalchemy import text
 from app.database import engine, Base, async_session
 from app.routers import auth, recognize, products, sync, users
 
+# Without explicit configuration the root logger only emits WARNING+, so
+# every `logger.info(...)` in app.* services/routers (recognition timing,
+# AI parse diagnostics, etc.) was invisible in container stdout — we only
+# saw uvicorn access lines. Setting INFO restores app-level observability.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
 logger = logging.getLogger(__name__)
 
 SELF_PING_INTERVAL = int(os.getenv("SELF_PING_INTERVAL", "240"))

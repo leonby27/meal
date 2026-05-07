@@ -324,12 +324,23 @@ def _parse_ai_response(data: dict) -> dict:
 
     try:
         parsed = json.loads(cleaned)
+        has_health = "health_rating" in parsed
         logger.info(
-            "AI parsed: ingredients=%d health_rating=%s finish_reason=%s",
+            "AI parsed: ingredients=%d health_rating=%s health_in_raw=%s "
+            "finish_reason=%s",
             len(parsed.get("ingredients") or []),
             parsed.get("health_rating"),
+            "health_rating" in (content or ""),
             finish_reason,
         )
+        if not has_health:
+            # Print the tail of the raw response — it's where health_rating
+            # would be and lets us see whether the model wrote it but JSON
+            # extraction missed it, vs. the model not writing it at all.
+            logger.warning(
+                "AI parsed: health_rating MISSING. raw_tail=%r",
+                (content or "")[-300:],
+            )
         return parsed
     except json.JSONDecodeError as e:
         truncated = finish_reason == "length"
