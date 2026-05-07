@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 _JSON_SCHEMA = """{
   "name": "Dish name",
+  "health_rating": 7,
+  "health_comment": "Сбалансированный завтрак с хорошим белком; помидоры добавляют клетчатку, сыр — насыщенный жир.",
   "total_grams": 350,
   "ingredients": [
     {"name": "Chicken egg (2 шт.)", "grams": 110, "protein": 14.0, "fat": 11.0, "carbs": 0.8, "calories": 155},
@@ -23,9 +25,7 @@ _JSON_SCHEMA = """{
     {"name": "Hard cheese", "grams": 30, "protein": 7.5, "fat": 8.4, "carbs": 0.0, "calories": 105}
   ],
   "per_100g": {"protein": 10.5, "fat": 8.5, "carbs": 2.2, "calories": 127},
-  "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278},
-  "health_rating": 7,
-  "health_comment": "Сбалансированный завтрак с хорошим белком; помидоры добавляют клетчатку, сыр — насыщенный жир."
+  "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278}
 }"""
 
 # BCP-47 / ISO 639-1 language code → full English language name.
@@ -134,13 +134,15 @@ Respond STRICTLY as JSON (no markdown, no text before or after):
 
 _IMAGE_TASK_EN = """You are a professional dietitian / nutritionist. Analyse the food photograph and determine:
 1. Dish name
-2. Ingredient list with approximate weights
-3. Protein / fat / carbs / calories for the whole portion and per 100 g"""
+2. Health rating (1-10) and a one-sentence health comment
+3. Ingredient list with approximate weights
+4. Protein / fat / carbs / calories for the whole portion and per 100 g"""
 
 _TEXT_TASK_EN = """You are a professional dietitian / nutritionist. From the user's textual description of food, determine:
 1. Dish name
-2. Ingredient list with approximate weights
-3. Protein / fat / carbs / calories for the whole portion and per 100 g
+2. Health rating (1-10) and a one-sentence health comment
+3. Ingredient list with approximate weights
+4. Protein / fat / carbs / calories for the whole portion and per 100 g
 
 If the user gave an explicit weight — use it. Otherwise estimate a
 standard portion."""
