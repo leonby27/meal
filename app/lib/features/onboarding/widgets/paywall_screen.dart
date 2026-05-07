@@ -307,13 +307,19 @@ class _PaywallScreenState extends State<PaywallScreen>
                       ),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                          padding: const EdgeInsets.only(bottom: 24),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               _Hero(isDark: isDark, bgColor: bgColor),
                               const SizedBox(height: 8),
-                              _BrandTitle(textPrimary: textPrimary),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    _BrandTitle(textPrimary: textPrimary),
                               const SizedBox(height: 12),
                               Text(
                                 context.l10n.paywallSubtitle,
@@ -435,6 +441,9 @@ class _PaywallScreenState extends State<PaywallScreen>
                                 isDark: isDark,
                                 textPrimary: textPrimary,
                                 textSecondary: textSecondary,
+                              ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -681,12 +690,16 @@ class _Hero extends StatelessWidget {
         ? 'assets/paywall/dark/hero.png'
         : 'assets/paywall/light/hero.png';
 
-    return SizedBox(
-      height: 200,
+    // Both light and dark hero PNGs are ~1570×808 (≈1.94:1). AspectRatio
+    // makes the widget stretch edge-to-edge while keeping proportions, so
+    // the illustration goes from screen edge to screen edge regardless of
+    // device width.
+    return AspectRatio(
+      aspectRatio: 1572 / 808,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(asset, fit: BoxFit.contain),
+          Image.asset(asset, fit: BoxFit.cover),
           // Subtle bottom fade so the illustration blends into the page bg.
           Positioned(
             left: 0,
