@@ -2263,7 +2263,7 @@ abstract class AppLocalizations {
   /// No description provided for @resultBridgeFreeLine.
   ///
   /// In ru, this message translates to:
-  /// **'Бесплатно — 10 записей еды, чтобы попробовать'**
+  /// **'Бесплатно — 3 записи еды, чтобы попробовать'**
   String get resultBridgeFreeLine;
 
   /// No description provided for @resultBridgePremiumLine.

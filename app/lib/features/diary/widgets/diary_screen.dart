@@ -1823,7 +1823,7 @@ class _DiaryScreenState extends State<DiaryScreen>
     final auth = AuthService();
     final showBanner =
         !auth.isPremium &&
-        auth.freeEntriesUsed >= 6 &&
+        auth.freeEntriesUsed >= 2 &&
         !auth.freeTrialExhausted;
 
     final bottomPadding =

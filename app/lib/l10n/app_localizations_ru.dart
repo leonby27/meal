@@ -1181,7 +1181,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resultBridgeFreeLine =>
-      'Бесплатно — 10 записей еды, чтобы попробовать';
+      'Бесплатно — 3 записи еды, чтобы попробовать';
 
   @override
   String get resultBridgePremiumLine => 'С Premium — без лимита, до самой цели';

@@ -26,7 +26,7 @@ class AuthService extends ChangeNotifier {
   static const String _freeEntriesUsedKey = 'free_entries_used';
   static const String _lastSeenBuildKey = 'last_seen_build';
   static const String _authProviderKey = 'auth_provider';
-  static const int freeEntryLimit = 10;
+  static const int freeEntryLimit = 3;
 
   /// Values stored in [_authProviderKey].
   static const String providerGoogle = 'google';

@@ -413,7 +413,7 @@
   "@resultGoalMaintainTitle": { "placeholders": { "weight": { "type": "String" } } },
   "resultGoalMaintainSubtitle": "Без жёстких ограничений — баланс на каждый день",
   "resultBridgeTitle": "Чтобы план работал — его нужно вести каждый день",
-  "resultBridgeFreeLine": "Бесплатно — 10 записей еды, чтобы попробовать",
+  "resultBridgeFreeLine": "Бесплатно — 3 записи еды, чтобы попробовать",
   "resultBridgePremiumLine": "С Premium — без лимита, до самой цели",
   "resultDisclaimerShort": "Рекомендации не заменяют консультацию врача",
   "resultDisclaimerExpand": "Подробнее",

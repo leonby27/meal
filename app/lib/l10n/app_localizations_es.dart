@@ -1186,7 +1186,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get resultBridgeFreeLine =>
-      'Gratis — 10 registros de comida para probarlo';
+      'Gratis — 3 registros de comida para probarlo';
 
   @override
   String get resultBridgePremiumLine =>

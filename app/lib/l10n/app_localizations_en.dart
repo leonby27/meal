@@ -1177,7 +1177,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'For the plan to work, you need to track every day';
 
   @override
-  String get resultBridgeFreeLine => 'Free — 10 meal entries to try it out';
+  String get resultBridgeFreeLine => 'Free — 3 meal entries to try it out';
 
   @override
   String get resultBridgePremiumLine =>

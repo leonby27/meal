@@ -1190,7 +1190,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get resultBridgeFreeLine =>
-      'Gratuit — 10 enregistrements de repas pour essayer';
+      'Gratuit — 3 enregistrements de repas pour essayer';
 
   @override
   String get resultBridgePremiumLine =>
