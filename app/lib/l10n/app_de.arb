@@ -82,10 +82,9 @@
   "skipLogin": "Ohne Anmeldung fortfahren",
   "signInSyncHint": "Mit Anmeldung können Sie Daten\nzwischen Geräten synchronisieren",
   "calorieTracking": "Ernährungs- & Kalorienverfolgung",
-  "mergeLocalDataTitle": "Lokale Daten übertragen?",
-  "mergeLocalDataBody": "Sie haben Daten ohne Konto eingegeben. Übertragen Sie sie in die Cloud — sonst werden sie durch die Konto-Daten ersetzt.",
+  "mergeLocalDataTitle": "Aktuelle Daten in dein Konto übertragen?",
   "mergeLocalDataKeep": "Übertragen",
-  "mergeLocalDataReplace": "Aus Cloud ersetzen",
+  "mergeLocalDataReplace": "So lassen",
   "loginSyncing": "Synchronisiere…",
   "loginSyncFailed": "Daten konnten nicht synchronisiert werden. Bitte später erneut versuchen.",
 

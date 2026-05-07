@@ -55,7 +55,6 @@ class LoginSyncFlow {
         canPop: false,
         child: AlertDialog(
           title: Text(ctx.l10n.mergeLocalDataTitle),
-          content: Text(ctx.l10n.mergeLocalDataBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),

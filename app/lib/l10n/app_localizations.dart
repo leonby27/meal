@@ -565,14 +565,8 @@ abstract class AppLocalizations {
   /// No description provided for @mergeLocalDataTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Перенести локальные данные?'**
+  /// **'Хотите перенести последние данные в свой аккаунт?'**
   String get mergeLocalDataTitle;
-
-  /// No description provided for @mergeLocalDataBody.
-  ///
-  /// In ru, this message translates to:
-  /// **'У вас есть данные, введённые без аккаунта. Перенесите их в облако, иначе они будут заменены данными из аккаунта.'**
-  String get mergeLocalDataBody;
 
   /// No description provided for @mergeLocalDataKeep.
   ///
@@ -583,7 +577,7 @@ abstract class AppLocalizations {
   /// No description provided for @mergeLocalDataReplace.
   ///
   /// In ru, this message translates to:
-  /// **'Заменить из облака'**
+  /// **'Оставить как есть'**
   String get mergeLocalDataReplace;
 
   /// No description provided for @loginSyncing.
