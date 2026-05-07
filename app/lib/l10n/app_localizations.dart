@@ -2587,7 +2587,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallYearlyDiscount.
   ///
   /// In ru, this message translates to:
-  /// **'-73%'**
+  /// **'-85%'**
   String get paywallYearlyDiscount;
 
   /// No description provided for @paywallSubtitle.

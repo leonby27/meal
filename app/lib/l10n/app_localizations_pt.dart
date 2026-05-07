@@ -1368,7 +1368,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get paywallTrialBadge => '3 dias grátis';
 
   @override
-  String get paywallYearlyDiscount => '-73%';
+  String get paywallYearlyDiscount => '-85%';
 
   @override
   String get paywallSubtitle =>
