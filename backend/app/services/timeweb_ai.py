@@ -124,6 +124,10 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   rating with the most relevant strengths/weaknesses (e.g. high protein,
   added sugar, processed meat, low calorie density). Do not repeat the
   numeric rating inside the comment.
+- `health_rating` and `health_comment` are REQUIRED. Always include both
+  fields, even when the dish is plain or the photo is ambiguous. Keep
+  ingredient names concise so the response fits within the token budget
+  and these two fields are never omitted.
 
 Respond STRICTLY as JSON (no markdown, no text before or after):
 """ + _JSON_SCHEMA
@@ -167,7 +171,7 @@ def build_text_prompt(locale: str | None) -> str:
 
 MAX_DIMENSION = 768
 JPEG_QUALITY = 75
-MAX_TOKENS = 1800
+MAX_TOKENS = 2400
 
 HTTP_TIMEOUT = 60.0
 MAX_ATTEMPTS = 3
@@ -317,7 +321,14 @@ def _parse_ai_response(data: dict) -> dict:
     cleaned = _clean_json_text(candidate)
 
     try:
-        return json.loads(cleaned)
+        parsed = json.loads(cleaned)
+        logger.info(
+            "AI parsed: ingredients=%d health_rating=%s finish_reason=%s",
+            len(parsed.get("ingredients") or []),
+            parsed.get("health_rating"),
+            finish_reason,
+        )
+        return parsed
     except json.JSONDecodeError as e:
         truncated = finish_reason == "length"
         logger.error(
