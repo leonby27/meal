@@ -1549,10 +1549,11 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   }
 
   Widget _buildImageCard(_AiSheetColors c) {
-    final isFreshPhoto = widget.imageBytes != null;
+    final isOpaquePhoto =
+        widget.imageBytes != null || _resolvedImageFile != null;
 
     Widget imageWidget;
-    if (isFreshPhoto) {
+    if (widget.imageBytes != null) {
       imageWidget = Image.memory(widget.imageBytes!, fit: BoxFit.cover);
     } else if (_resolvedImageFile != null) {
       imageWidget = Image.file(_resolvedImageFile!, fit: BoxFit.cover);
@@ -1577,11 +1578,11 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       height: 221,
       width: double.infinity,
       decoration: BoxDecoration(
-        // Fresh camera shots fill the frame on their own, so we let the
-        // image's own pixels show. DB/network images sometimes ship with
-        // transparency or product cut-outs — fall back to a flat white
-        // canvas so they read clearly in both light and dark themes.
-        color: isFreshPhoto ? null : Colors.white,
+        // Real photos (camera / saved meal file) are opaque — no canvas
+        // needed, and a white one would bleed through the antialiased
+        // rounded clip as a 1-px halo. Network images may be product
+        // cut-outs with transparency, so they keep the flat-white canvas.
+        color: isOpaquePhoto ? null : Colors.white,
         border: Border.all(color: c.borderColor),
         borderRadius: BorderRadius.circular(12),
       ),
