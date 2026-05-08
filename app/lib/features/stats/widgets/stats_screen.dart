@@ -222,12 +222,39 @@ class _StatsScreenState extends State<StatsScreen> {
     _ChartMetric.carbs => 'assets/icons/uglevod.svg',
   };
 
-  Color _metricAccent(_ChartMetric m) => switch (m) {
-    _ChartMetric.calories => const Color(0xFFFBAE2E),
-    _ChartMetric.protein => const Color(0xFFEE2750),
-    _ChartMetric.fat => const Color(0xFFFFBB00),
-    _ChartMetric.carbs => const Color(0xFF17B7D1),
-  };
+  /// Accent color used for the highlight icon tint + metric label.
+  /// Calorie amber and fat yellow read fine on the dark on-back-4
+  /// surface but go washed-out on the white light surface, so we shift
+  /// them to deeper variants in light theme.
+  Color _metricAccent(_ChartMetric m) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return switch (m) {
+      _ChartMetric.calories => isDark
+          ? const Color(0xFFFBAE2E)
+          : const Color(0xFFE08405),
+      _ChartMetric.protein => const Color(0xFFEE2750),
+      _ChartMetric.fat => isDark
+          ? const Color(0xFFFFBB00)
+          : const Color(0xFFC79100),
+      _ChartMetric.carbs => const Color(0xFF17B7D1),
+    };
+  }
+
+  /// Bar fill color for a given metric — mirrors `_DonutPainter` /
+  /// `_CalorieRingPainter` so the trend bars and highlight bars share
+  /// the same visual language as the macro donut. Calories stay green;
+  /// fat yellow is darkened in light theme for legibility.
+  Color _metricBarColor(_ChartMetric m) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return switch (m) {
+      _ChartMetric.calories => AppColors.green,
+      _ChartMetric.protein => const Color(0xFFE4431C),
+      _ChartMetric.fat => isDark
+          ? const Color(0xFFEFD400)
+          : const Color(0xFFC8A800),
+      _ChartMetric.carbs => const Color(0xFF17ACCC),
+    };
+  }
 
   // ── Build ───────────────────────────────────────────────────
 
@@ -247,27 +274,36 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
       body: !_ready
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
+          // SingleChildScrollView + Column (instead of ListView) so the
+          // animated children (donut, bars, count-ups) stay mounted while
+          // the user scrolls. ListView recycles children that leave the
+          // viewport — re-mounting them would replay the intro animation
+          // every time the user scrolled back up, which felt janky.
+          : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                _PeriodTabs(
-                  current: _period,
-                  onChanged: _setPeriod,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 24),
-                _SectionTitle(text: l10n.summarySection),
-                const SizedBox(height: 12),
-                _buildSummaryRow(isDark),
-                const SizedBox(height: 12),
-                _buildMacrosCard(isDark),
-                const SizedBox(height: 24),
-                _buildTrends(isDark),
-                const SizedBox(height: 24),
-                _buildHighlights(isDark),
-                const SizedBox(height: 24),
-                _buildByDays(isDark),
-              ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _PeriodTabs(
+                    current: _period,
+                    onChanged: _setPeriod,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 24),
+                  _SectionTitle(text: l10n.summarySection),
+                  const SizedBox(height: 12),
+                  _buildSummaryRow(isDark),
+                  // Macros progress card hidden for now — under review.
+                  // const SizedBox(height: 12),
+                  // _buildMacrosCard(isDark),
+                  const SizedBox(height: 24),
+                  _buildTrends(isDark),
+                  const SizedBox(height: 24),
+                  _buildHighlights(isDark),
+                  const SizedBox(height: 24),
+                  _buildByDays(isDark),
+                ],
+              ),
             ),
     );
   }
@@ -305,7 +341,10 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   // ── Macros card (3 progress bars) ───────────────────────────
+  // Currently hidden in `build()`; kept around so we can flip it back on
+  // quickly without restoring it from git.
 
+  // ignore: unused_element
   Widget _buildMacrosCard(bool isDark) {
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final trackColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
@@ -497,6 +536,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   metric: _trendMetric,
                   period: _period,
                   isDark: isDark,
+                  barColor: _metricBarColor(_trendMetric),
                 ),
               ),
             ],
@@ -623,38 +663,107 @@ class _StatsScreenState extends State<StatsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              _buildHighlightBlock(
-                value: curAvg,
-                metric: _highlightMetric,
-                pillText: hasPrevious
-                    ? '${percentChange >= 0 ? '+' : ''}$percentChange%'
-                    : null,
-                pillColor: !hasPrevious
-                    ? null
-                    : (isHigher ? AppColors.error : AppColors.green),
+              // Two stacked bars compare the current period to the
+              // previous one (or to the goal when there's no previous
+              // period). The larger of the two values gets the full bar
+              // width, the smaller is proportionally shorter. Current is
+              // always green; reference is gray.
+              ..._buildHighlightBars(
+                curAvg: curAvg,
+                prevAvg: prevAvg,
+                hasPrevious: hasPrevious,
+                isHigher: isHigher,
+                percentChange: percentChange,
+                diffAbs: diff.abs(),
                 primary: primary,
                 secondary: secondary,
+                isDark: isDark,
               ),
-              if (hasPrevious) ...[
-                const SizedBox(height: 16),
-                _buildHighlightBlock(
-                  value: prevAvg,
-                  metric: _highlightMetric,
-                  pillText: _highlightMetric == _ChartMetric.calories
-                      ? l10n.calDifferenceCount(diff.abs().round())
-                      : '${diff.abs().toInt()} ${_metricShort(_highlightMetric)}',
-                  pillColor: isDark
-                      ? AppColors.darkSecondaryExtraLight
-                      : AppColors.lightSecondaryExtraLight,
-                  primary: primary,
-                  secondary: secondary,
-                ),
-              ],
             ],
           ),
         ),
       ],
     );
+  }
+
+  List<Widget> _buildHighlightBars({
+    required double curAvg,
+    required double prevAvg,
+    required bool hasPrevious,
+    required bool isHigher,
+    required int percentChange,
+    required double diffAbs,
+    required Color primary,
+    required Color secondary,
+    required bool isDark,
+  }) {
+    final l10n = context.l10n;
+    final goal = _metricGoal(_highlightMetric);
+
+    final grayColor = isDark
+        ? AppColors.darkSecondaryExtraLight
+        : AppColors.lightSecondaryExtraLight;
+    // Current bar takes the metric's macro color (mirrors the donut):
+    // green for calories, red-orange for protein, yellow for fat, teal
+    // for carbs. The +/- direction is communicated by the description
+    // text + sign in the pill, so the bar color stays "ours" regardless
+    // of whether the user is above or below last week.
+    final fillColor = _metricBarColor(_highlightMetric);
+
+    if (!hasPrevious) {
+      // No previous period to compare against → render the current value
+      // as a green fill stacked on top of a half-transparent gray track
+      // that represents the user's goal, like a classic progress bar.
+      final goalSafe = goal <= 0 ? 1.0 : goal;
+      final fillFrac = (curAvg / goalSafe).clamp(0.0, 1.0);
+      return [
+        _buildHighlightRow(
+          value: curAvg,
+          widthFraction: fillFrac,
+          barColor: fillColor,
+          pillText: null,
+          primary: primary,
+          secondary: secondary,
+          showValueText: true,
+          trackColor: grayColor.withValues(alpha: 0.5),
+        ),
+      ];
+    }
+
+    // Has a previous period → match the original mockup: two stacked rows
+    // (current on top, previous below). The larger value owns the full
+    // bar width; the smaller is proportionally shorter.
+    final ref = math.max(curAvg, prevAvg);
+    final refSafe = ref <= 0 ? 1.0 : ref;
+    final currentFrac = (curAvg / refSafe).clamp(0.0, 1.0);
+    final prevFrac = (prevAvg / refSafe).clamp(0.0, 1.0);
+
+    final currentPillText = '${percentChange >= 0 ? '+' : ''}$percentChange%';
+    final prevPillText = _highlightMetric == _ChartMetric.calories
+        ? l10n.calDifferenceCount(diffAbs.round())
+        : '${diffAbs.toInt()} ${_metricShort(_highlightMetric)}';
+
+    return [
+      _buildHighlightRow(
+        value: curAvg,
+        widthFraction: currentFrac,
+        barColor: fillColor,
+        pillText: currentPillText,
+        primary: primary,
+        secondary: secondary,
+        showValueText: true,
+      ),
+      const SizedBox(height: 16),
+      _buildHighlightRow(
+        value: prevAvg,
+        widthFraction: prevFrac,
+        barColor: grayColor,
+        pillText: prevPillText,
+        primary: primary,
+        secondary: secondary,
+        showValueText: true,
+      ),
+    ];
   }
 
   String _metricShort(_ChartMetric m) => switch (m) {
@@ -664,15 +773,18 @@ class _StatsScreenState extends State<StatsScreen> {
     _ChartMetric.carbs => context.l10n.carbsShort,
   };
 
-  Widget _buildHighlightBlock({
+  Widget _buildHighlightRow({
     required double value,
-    required _ChartMetric metric,
+    required double widthFraction,
+    required Color barColor,
     required String? pillText,
-    required Color? pillColor,
     required Color primary,
     required Color secondary,
+    required bool showValueText,
+    Color? trackColor,
   }) {
     final l10n = context.l10n;
+    final metric = _highlightMetric;
 
     String formatValue(double v) {
       return metric == _ChartMetric.calories
@@ -683,67 +795,47 @@ class _StatsScreenState extends State<StatsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            // Counts up to the highlight value, re-tweens on metric switch.
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: value),
-              duration: _kIntroDur,
-              curve: _kCurve,
-              builder: (_, v, _) => Text(
-                formatValue(v),
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  height: 32 / 24,
-                  color: primary,
+        if (showValueText) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: value),
+                duration: _kIntroDur,
+                curve: _kCurve,
+                builder: (_, v, _) => Text(
+                  formatValue(v),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    height: 32 / 24,
+                    color: primary,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                l10n.averageADay,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  height: 18 / 14,
-                  color: secondary,
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  l10n.averageADay,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    height: 18 / 14,
+                    color: secondary,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        if (pillText != null) ...[
-          const SizedBox(height: 6),
-          AnimatedContainer(
-            duration: _kSwitchDur,
-            curve: _kCurve,
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: pillColor,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: AnimatedSwitcher(
-              duration: _kSwitchDur,
-              switchInCurve: _kCurve,
-              switchOutCurve: Curves.easeInCubic,
-              child: Text(
-                pillText,
-                key: ValueKey(pillText),
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  height: 14 / 12,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            ],
           ),
+          const SizedBox(height: 6),
         ],
+        _HighlightBar(
+          widthFraction: widthFraction,
+          color: barColor,
+          text: pillText,
+          trackColor: trackColor,
+        ),
       ],
     );
   }
@@ -830,9 +922,14 @@ class _StatsScreenState extends State<StatsScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
+                                  // Short calorie unit (Cal / Ккал / etc.).
+                                  // NB: never derive this with substring on
+                                  // `caloriesLabel` — for ru the result is
+                                  // "Кал", which has an unfortunate other
+                                  // meaning. Always use the localized short.
                                   isEmpty
                                       ? '—'
-                                      : '${_fmtNumberWithComma(day.calories.toInt())} ${l10n.caloriesLabel.substring(0, math.min(3, l10n.caloriesLabel.length))}',
+                                      : '${_fmtNumberWithComma(day.calories.toInt())} ${l10n.analyticsMetricCal}',
                                   style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
@@ -987,11 +1084,11 @@ class _PeriodTabs extends StatelessWidget {
               onTap: () => onChanged(p),
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(3),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeInOut,
-                  height: 36,
+                  height: 30,
                   decoration: BoxDecoration(
                     color: selected ? selectedBg : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
@@ -1009,9 +1106,9 @@ class _PeriodTabs extends StatelessWidget {
                   child: Text(
                     p.label(context),
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      height: 24 / 15,
+                      height: 20 / 14,
                       color: selected ? selectedText : unselectedText,
                     ),
                   ),
@@ -1125,7 +1222,14 @@ class _StreakCard extends StatelessWidget {
   final DateTime today;
   const _StreakCard({required this.streak, required this.today});
 
-  static const _accent = Color(0xFFFBAE2E);
+  // Per-theme amber. The Figma value (#FBAE2E) reads great on the dark
+  // card surface but goes a touch washed-out on the white light surface,
+  // so we shift to a deeper amber there for legibility.
+  static const _accentDark = Color(0xFFFBAE2E);
+  static const _accentLight = Color(0xFFE08405);
+
+  static Color _accentFor(bool isDark) =>
+      isDark ? _accentDark : _accentLight;
 
   @override
   Widget build(BuildContext context) {
@@ -1165,8 +1269,20 @@ class _StreakCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (ctx, constraints) {
           final cardW = constraints.maxWidth;
-          // Days row is 154px wide in Figma — center it.
-          const daysRowW = 154.0;
+          // Figma reference: 174.5px wide card, 154px-wide days row →
+          // ~10px side margin. The bottom margin is ~12px (`166 − 154.55`).
+          // To stay readable on narrower screens (Android, foldables) we
+          // make the days row shrink so the side margin stays at least
+          // equal to the bottom margin, then we scale the dots and
+          // letters proportionally.
+          const figmaRowW = 154.0;
+          const minSideMargin = 12.0;
+          final maxRowW = (cardW - 2 * minSideMargin).clamp(0.0, figmaRowW);
+          final daysRowW = maxRowW;
+          final scale = figmaRowW > 0 ? daysRowW / figmaRowW : 1.0;
+          final dotSize = (20.0 * scale).clamp(12.0, 20.0);
+          final letterFont = (12.0 * scale).clamp(9.0, 12.0);
+          final letterLineH = (14.0 * scale).clamp(11.0, 14.0);
           final daysRowLeft = (cardW - daysRowW) / 2;
 
           return Stack(
@@ -1197,11 +1313,11 @@ class _StreakCard extends StatelessWidget {
                   builder: (_, value, _) => Text(
                     value.round().toString(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
                       height: 36 / 28,
-                      color: _accent,
+                      color: _accentFor(isDark),
                     ),
                   ),
                 ),
@@ -1214,11 +1330,11 @@ class _StreakCard extends StatelessWidget {
                 child: Text(
                   context.l10n.dayStreak,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                     height: 20 / 15,
-                    color: _accent,
+                    color: _accentFor(isDark),
                   ),
                 ),
               ),
@@ -1227,17 +1343,19 @@ class _StreakCard extends StatelessWidget {
                 top: 116.55,
                 left: daysRowLeft,
                 width: daysRowW,
-                height: 16,
+                height: letterLineH,
                 child: Row(
                   children: List.generate(7, (i) {
                     return Expanded(
                       child: Text(
                         dayLetters[i],
                         textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.visible,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: letterFont,
                           fontWeight: FontWeight.w600,
-                          height: 14 / 12,
+                          height: letterLineH / letterFont,
                           color: letterColor,
                         ),
                       ),
@@ -1250,11 +1368,15 @@ class _StreakCard extends StatelessWidget {
                 top: 134.55,
                 left: daysRowLeft,
                 width: daysRowW,
-                height: 20,
+                height: dotSize,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: List.generate(7, (i) {
-                    return _StreakDot(filled: filled[i], isDark: isDark);
+                    return _StreakDot(
+                      filled: filled[i],
+                      isDark: isDark,
+                      size: dotSize,
+                    );
                   }),
                 ),
               ),
@@ -1269,16 +1391,36 @@ class _StreakCard extends StatelessWidget {
 class _StreakDot extends StatelessWidget {
   final bool filled;
   final bool isDark;
-  const _StreakDot({required this.filled, required this.isDark});
+  final double size;
+  const _StreakDot({
+    required this.filled,
+    required this.isDark,
+    this.size = 20,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // The bundled SVGs are baked for the dark theme (#FBAE2E filled,
+    // #4D546B empty). On the light card surface the empty dots read too
+    // heavy and the orange goes a touch washed-out, so we re-tint via
+    // ColorFilter.srcIn — which only repaints the visible (non-transparent)
+    // pixels, leaving the cut-out check inside the filled dot showing
+    // through to the card background as before.
+    Color? tint;
+    if (!isDark) {
+      tint = filled
+          ? _StreakCard._accentLight
+          : AppColors.lightSecondaryExtraLight;
+    }
     return SvgPicture.asset(
       filled
           ? 'assets/icons/streak_dot_done.svg'
           : 'assets/icons/streak_dot_empty.svg',
-      width: 20,
-      height: 20,
+      width: size,
+      height: size,
+      colorFilter: tint == null
+          ? null
+          : ColorFilter.mode(tint, BlendMode.srcIn),
     );
   }
 }
@@ -1481,7 +1623,7 @@ class _AnimatedDonutState extends State<_AnimatedDonut>
                   ),
                 ),
                 Text(
-                  'Cal',
+                  context.l10n.analyticsMetricCal,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
@@ -1834,6 +1976,113 @@ class _PositionedValueLabel extends StatelessWidget {
   }
 }
 
+// ── Highlight comparison bar ─────────────────────────────────────
+//
+// Pill-shaped horizontal bar used in the Highlights card. Width is a
+// fraction of the parent's max width — the larger of the two compared
+// values takes 1.0, the smaller takes its proportional share. A floor
+// (`_minTextFraction`) keeps narrow bars wide enough to show their
+// label. Width animates on metric/period switch via TweenAnimationBuilder.
+
+class _HighlightBar extends StatelessWidget {
+  final double widthFraction;
+  final Color color;
+  final String? text;
+
+  /// When non-null, a full-width track is rendered behind the bar. Used
+  /// for the "no previous period" case where the colored bar fills part
+  /// of the goal track (classic progress-bar style).
+  final Color? trackColor;
+
+  // Bars narrower than this can't fit "−23%" / "5 cal" comfortably, so
+  // we floor the fraction to keep the label readable. ≈ 60px on a
+  // ~330px-wide card.
+  static const double _minTextFraction = 0.18;
+  static const double _height = 24;
+  static const double _radius = 6;
+
+  const _HighlightBar({
+    required this.widthFraction,
+    required this.color,
+    required this.text,
+    this.trackColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (ctx, constraints) {
+        final maxW = constraints.maxWidth;
+        final fraction = (text == null
+                ? widthFraction
+                : math.max(widthFraction, _minTextFraction))
+            .clamp(0.0, 1.0);
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: fraction),
+          duration: _kIntroDur,
+          curve: _kCurve,
+          builder: (_, f, _) {
+            final fill = Align(
+              alignment: Alignment.centerLeft,
+              child: AnimatedContainer(
+                duration: _kSwitchDur,
+                curve: _kCurve,
+                width: maxW * f,
+                height: _height,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(_radius),
+                ),
+                alignment: Alignment.centerLeft,
+                child: text == null
+                    ? null
+                    : AnimatedSwitcher(
+                        duration: _kSwitchDur,
+                        switchInCurve: _kCurve,
+                        switchOutCurve: Curves.easeInCubic,
+                        child: Text(
+                          text!,
+                          key: ValueKey(text),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            height: 14 / 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+              ),
+            );
+
+            if (trackColor == null) return fill;
+
+            // Stack the colored fill on top of a full-width track, so the
+            // green progress reads as filling up against the goal.
+            return SizedBox(
+              height: _height,
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: trackColor,
+                      borderRadius: BorderRadius.circular(_radius),
+                    ),
+                  ),
+                  fill,
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 // ── Trends bar chart ─────────────────────────────────────────────
 
 class _TrendsBarChart extends StatelessWidget {
@@ -1843,6 +2092,7 @@ class _TrendsBarChart extends StatelessWidget {
   final _ChartMetric metric;
   final _Period period;
   final bool isDark;
+  final Color barColor;
 
   const _TrendsBarChart({
     required this.data,
@@ -1851,6 +2101,7 @@ class _TrendsBarChart extends StatelessWidget {
     required this.metric,
     required this.period,
     required this.isDark,
+    required this.barColor,
   });
 
   @override
@@ -1961,14 +2212,7 @@ class _TrendsBarChart extends StatelessWidget {
                                 Container(
                                   height: clampedGreen,
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.bottomCenter,
-                                      end: Alignment.topCenter,
-                                      colors: [
-                                        Color(0xFF1AAB36),
-                                        Color(0xFF26D43F),
-                                      ],
-                                    ),
+                                    color: barColor,
                                     borderRadius: BorderRadius.only(
                                       topLeft: Radius.circular(
                                           overGoal ? 0 : 4),

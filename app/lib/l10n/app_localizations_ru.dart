@@ -1572,22 +1572,22 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get analyticsPeriod1W => '1 нд';
+  String get analyticsPeriod1W => '1 Н';
 
   @override
-  String get analyticsPeriod2W => '2 нд';
+  String get analyticsPeriod2W => '2 Н';
 
   @override
-  String get analyticsPeriod1M => '1 м';
+  String get analyticsPeriod1M => '1 М';
 
   @override
-  String get analyticsPeriod3M => '3 м';
+  String get analyticsPeriod3M => '3 М';
 
   @override
-  String get analyticsPeriod6M => '6 м';
+  String get analyticsPeriod6M => '6 М';
 
   @override
-  String get analyticsPeriod1Y => '1 г';
+  String get analyticsPeriod1Y => '1 Г';
 
   @override
   String get analyticsMetricCal => 'Ккал';

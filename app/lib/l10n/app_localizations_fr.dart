@@ -1583,22 +1583,22 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get analyticsPeriod1W => '1 sem';
+  String get analyticsPeriod1W => '1 S';
 
   @override
-  String get analyticsPeriod2W => '2 sem';
+  String get analyticsPeriod2W => '2 S';
 
   @override
-  String get analyticsPeriod1M => '1 m';
+  String get analyticsPeriod1M => '1 M';
 
   @override
-  String get analyticsPeriod3M => '3 m';
+  String get analyticsPeriod3M => '3 M';
 
   @override
-  String get analyticsPeriod6M => '6 m';
+  String get analyticsPeriod6M => '6 M';
 
   @override
-  String get analyticsPeriod1Y => '1 an';
+  String get analyticsPeriod1Y => '1 A';
 
   @override
   String get analyticsMetricCal => 'Cal';

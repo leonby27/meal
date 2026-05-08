@@ -2935,37 +2935,37 @@ abstract class AppLocalizations {
   /// No description provided for @analyticsPeriod1W.
   ///
   /// In ru, this message translates to:
-  /// **'1 нд'**
+  /// **'1 Н'**
   String get analyticsPeriod1W;
 
   /// No description provided for @analyticsPeriod2W.
   ///
   /// In ru, this message translates to:
-  /// **'2 нд'**
+  /// **'2 Н'**
   String get analyticsPeriod2W;
 
   /// No description provided for @analyticsPeriod1M.
   ///
   /// In ru, this message translates to:
-  /// **'1 м'**
+  /// **'1 М'**
   String get analyticsPeriod1M;
 
   /// No description provided for @analyticsPeriod3M.
   ///
   /// In ru, this message translates to:
-  /// **'3 м'**
+  /// **'3 М'**
   String get analyticsPeriod3M;
 
   /// No description provided for @analyticsPeriod6M.
   ///
   /// In ru, this message translates to:
-  /// **'6 м'**
+  /// **'6 М'**
   String get analyticsPeriod6M;
 
   /// No description provided for @analyticsPeriod1Y.
   ///
   /// In ru, this message translates to:
-  /// **'1 г'**
+  /// **'1 Г'**
   String get analyticsPeriod1Y;
 
   /// No description provided for @analyticsMetricCal.

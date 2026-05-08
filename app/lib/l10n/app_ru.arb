@@ -548,12 +548,12 @@
   "analyticsHighlightSimilar": "Среднее потребление {metric} за день примерно такое же, как на прошлой неделе.",
   "@analyticsHighlightSimilar": { "placeholders": { "metric": { "type": "String" } } },
 
-  "analyticsPeriod1W": "1 нд",
-  "analyticsPeriod2W": "2 нд",
-  "analyticsPeriod1M": "1 м",
-  "analyticsPeriod3M": "3 м",
-  "analyticsPeriod6M": "6 м",
-  "analyticsPeriod1Y": "1 г",
+  "analyticsPeriod1W": "1 Н",
+  "analyticsPeriod2W": "2 Н",
+  "analyticsPeriod1M": "1 М",
+  "analyticsPeriod3M": "3 М",
+  "analyticsPeriod6M": "6 М",
+  "analyticsPeriod1Y": "1 Г",
 
   "analyticsMetricCal": "Ккал",
   "analyticsMetricProtein": "Белки",
