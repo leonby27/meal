@@ -1552,7 +1552,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get highlightsSection => 'Points forts';
 
   @override
-  String get dayStreak => 'Jours consécutifs';
+  String dayStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Jours consécutifs',
+      one: 'Jour consécutif',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get averageADay => 'moyenne par jour';

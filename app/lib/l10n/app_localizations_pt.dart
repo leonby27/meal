@@ -1546,7 +1546,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get highlightsSection => 'Destaques';
 
   @override
-  String get dayStreak => 'Sequência de dias';
+  String dayStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Dias seguidos',
+      one: 'Dia seguido',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get averageADay => 'média por dia';

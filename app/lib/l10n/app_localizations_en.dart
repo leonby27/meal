@@ -1533,7 +1533,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get highlightsSection => 'Highlights';
 
   @override
-  String get dayStreak => 'Day Streak';
+  String dayStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Day Streak',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get averageADay => 'average a day';
@@ -1591,5 +1598,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyticsMetricFat => 'Fats';
 
   @override
-  String get analyticsMetricCarbs => 'Crbs';
+  String get analyticsMetricCarbs => 'Carbs';
 }

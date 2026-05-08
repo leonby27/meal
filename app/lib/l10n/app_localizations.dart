@@ -2893,8 +2893,8 @@ abstract class AppLocalizations {
   /// No description provided for @dayStreak.
   ///
   /// In ru, this message translates to:
-  /// **'Дней подряд'**
-  String get dayStreak;
+  /// **'{count, plural, =0{Дней подряд} =1{День подряд} few{Дня подряд} many{Дней подряд} other{Дней подряд}}'**
+  String dayStreak(int count);
 
   /// No description provided for @averageADay.
   ///

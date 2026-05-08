@@ -1541,7 +1541,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get highlightsSection => 'Главное';
 
   @override
-  String get dayStreak => 'Дней подряд';
+  String dayStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Дней подряд',
+      many: 'Дней подряд',
+      few: 'Дня подряд',
+      one: 'День подряд',
+      zero: 'Дней подряд',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get averageADay => 'в среднем за день';

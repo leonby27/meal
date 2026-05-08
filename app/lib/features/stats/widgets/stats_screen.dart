@@ -52,6 +52,17 @@ extension _PeriodX on _Period {
 
 enum _ChartMetric { calories, protein, fat, carbs }
 
+/// One column in the trends bar chart. For short periods (1W/2W/1M) a
+/// bucket is a single day; for longer periods we aggregate days into
+/// weeks (3M/6M) or calendar months (1Y) so the chart actually fits and
+/// the bars stay readable. The bucket also carries its own x-axis
+/// label — only some buckets show one (e.g. month boundaries on 3M/6M).
+class _TrendBucket {
+  final double value;
+  final String label;
+  const _TrendBucket({required this.value, required this.label});
+}
+
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
 
@@ -63,7 +74,23 @@ class _StatsScreenState extends State<StatsScreen> {
   late AppDatabase _db;
   bool _ready = false;
 
+  // Bumped after every data load. Used as a `KeyedSubtree` key on the
+  // animated content so that switching periods re-mounts the data
+  // sections — every TweenAnimationBuilder inside replays its intro
+  // from 0 to the new value, which gives a clear "the data refreshed"
+  // moment without showing a loader. Incrementing only AFTER data is
+  // loaded means the new mount immediately targets the new values
+  // (instead of momentarily targeting the previous period's data while
+  // the async fetch is still in flight).
+  int _refreshTick = 0;
+
   _Period _period = _Period.week;
+  // Period the currently-loaded `_data` is for. Stays one tap behind
+  // `_period` until the async load completes — that way the chart's
+  // bucketing logic can't ever read NEW _period over OLD _data and
+  // briefly render the wrong number of bars (the "micro-flicker" on
+  // tab switch).
+  _Period _dataPeriod = _Period.week;
   _ChartMetric _trendMetric = _ChartMetric.calories;
   _ChartMetric _highlightMetric = _ChartMetric.calories;
 
@@ -78,6 +105,11 @@ class _StatsScreenState extends State<StatsScreen> {
   List<_DaySummary> _data = [];
   List<_DaySummary> _previousPeriodData = [];
   int _streak = 0;
+  // Per-day "did the user log anything?" map for the streak card's
+  // swipeable history. Keyed by midnight DateTime. Loaded alongside
+  // the streak so we don't double-query the same days.
+  Map<DateTime, bool> _streakDayLogged = const {};
+  static const int _streakHistoryDays = 84; // 12 weeks
   late DateTime _today;
 
   @override
@@ -111,7 +143,8 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Future<void> _loadData() async {
-    final days = _period.days;
+    final p = _period;
+    final days = p.days;
     final now = DateTime.now();
     final data = <_DaySummary>[];
     for (int i = days - 1; i >= 0; i--) {
@@ -129,34 +162,50 @@ class _StatsScreenState extends State<StatsScreen> {
     }
     _previousPeriodData = previous;
 
-    _streak = await _computeStreak();
+    await _loadStreakAndHistory();
+    // Commit the period the data was loaded for. The chart's
+    // bucketing reads `_dataPeriod`, never `_period` — so it can never
+    // run the new period's logic on the previous period's `_data`.
+    _dataPeriod = p;
   }
 
-  Future<int> _computeStreak() async {
-    int count = 0;
+  /// Single backwards pass: counts the current streak AND records a
+  /// `dayLogged` entry for every day in the last 12 weeks so the
+  /// streak card can let the user swipe through past weeks of dots
+  /// without re-querying the DB on each swipe.
+  Future<void> _loadStreakAndHistory() async {
+    final logged = <DateTime, bool>{};
+    int streak = 0;
+    bool counting = true;
     final start = DateTime.now();
-    for (int i = 0; i < 365; i++) {
+    for (int i = 0; i < _streakHistoryDays; i++) {
       final date = start.subtract(Duration(days: i));
       final logs = await _db.getFoodLogsForDate(date);
       final has = logs.any((l) => l.calories > 0);
-      if (has) {
-        count++;
-      } else {
-        // Allow today to be empty if streak is non-zero (user has not logged yet today)
-        if (i == 0 && count == 0) continue;
-        break;
+      logged[DateTime(date.year, date.month, date.day)] = has;
+      if (counting) {
+        if (has) {
+          streak++;
+        } else if (!(i == 0 && streak == 0)) {
+          // Today empty → grace period; otherwise the streak ends.
+          counting = false;
+        }
       }
     }
-    return count;
+    _streak = streak;
+    _streakDayLogged = logged;
   }
 
   void _setPeriod(_Period p) async {
-    setState(() {
-      _period = p;
-      _ready = false;
-    });
+    if (p == _period) return;
+    // Update the period tab UI immediately so the tap feels responsive.
+    setState(() => _period = p);
     await _loadData();
-    if (mounted) setState(() => _ready = true);
+    if (!mounted) return;
+    // Bump the refresh tick after the data lands — this re-keys the
+    // animated subtree below, so the data sections re-mount and replay
+    // their intro animations against the freshly-loaded values.
+    setState(() => _refreshTick++);
   }
 
   String _fmtNum(double v) {
@@ -290,18 +339,32 @@ class _StatsScreenState extends State<StatsScreen> {
                     isDark: isDark,
                   ),
                   const SizedBox(height: 24),
-                  _SectionTitle(text: l10n.summarySection),
-                  const SizedBox(height: 12),
-                  _buildSummaryRow(isDark),
-                  // Macros progress card hidden for now — under review.
-                  // const SizedBox(height: 12),
-                  // _buildMacrosCard(isDark),
-                  const SizedBox(height: 24),
-                  _buildTrends(isDark),
-                  const SizedBox(height: 24),
-                  _buildHighlights(isDark),
-                  const SizedBox(height: 24),
-                  _buildByDays(isDark),
+                  // Period tabs sit OUTSIDE the keyed subtree — they
+                  // own their own selection animation and shouldn't
+                  // remount on data refresh. Everything below remounts
+                  // each time `_refreshTick` bumps so intro animations
+                  // replay against fresh data.
+                  KeyedSubtree(
+                    key: ValueKey(_refreshTick),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SectionTitle(text: l10n.summarySection),
+                        const SizedBox(height: 12),
+                        _buildSummaryRow(isDark),
+                        // Macros progress card hidden for now —
+                        // under review.
+                        // const SizedBox(height: 12),
+                        // _buildMacrosCard(isDark),
+                        const SizedBox(height: 24),
+                        _buildTrends(isDark),
+                        const SizedBox(height: 24),
+                        _buildHighlights(isDark),
+                        const SizedBox(height: 24),
+                        _buildByDays(isDark),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -325,7 +388,14 @@ class _StatsScreenState extends State<StatsScreen> {
     return IntrinsicHeight(
       child: Row(
         children: [
-          Expanded(child: _StreakCard(streak: _streak, today: _today)),
+          Expanded(
+            child: _StreakCard(
+              streak: _streak,
+              today: _today,
+              dayLogged: _streakDayLogged,
+              maxWeeks: _streakHistoryDays ~/ 7,
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: _AverageDonutCard(
@@ -438,18 +508,167 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
+  // ── Trends bucketing ───────────────────────────────────────
+  //
+  // Maps the raw daily data into bars for the trend chart. For longer
+  // periods we aggregate (weekly for 3M/6M, monthly for 1Y) — daily bars
+  // for those would each be < 1 px wide and visually collapse.
+
+  List<_TrendBucket> _buildTrendBuckets(_ChartMetric metric) {
+    final localeCode = Localizations.localeOf(context).languageCode;
+    final days = _data;
+    if (days.isEmpty) return const [];
+
+    // Two helpers keep the per-period blocks consistent.
+    String dayLetter(DateTime d) =>
+        DateFormat('E', localeCode).format(d).substring(0, 1).toUpperCase();
+    // 3-letter weekday abbreviation, e.g. "Sun" / "Mon" / "Вс" / "Пн".
+    String dayShort(DateTime d) {
+      final raw = DateFormat('E', localeCode).format(d);
+      return raw.length > 3 ? raw.substring(0, 3) : raw;
+    }
+    String monthAbbr(DateTime d) =>
+        DateFormat('MMM', localeCode).format(d);
+
+    // Use `_dataPeriod` (committed only after the async load lands)
+    // rather than `_period` (the tab UI state) — otherwise during a
+    // ~100 ms tap-to-load window we'd dispatch on the new period's
+    // logic with the previous period's `_data`, briefly producing
+    // wrong-shaped buckets and the visible "micro-flicker" on switch.
+    switch (_dataPeriod) {
+      // ── 1W: 7 bars, 3-letter weekday abbreviations — slot is wide
+      //       enough (~40 px) for "Sun" / "Mon" / "Вс" / "Пн".
+      case _Period.week:
+        return [
+          for (final d in days)
+            _TrendBucket(
+              value: _metricValue(d, metric),
+              label: dayShort(d.date),
+            ),
+        ];
+
+      // ── 2W: 14 bars, single-letter weekday — 3-letter would
+      //       overlap on ~20 px slots.
+      case _Period.twoWeeks:
+        return [
+          for (final d in days)
+            _TrendBucket(
+              value: _metricValue(d, metric),
+              label: dayLetter(d.date),
+            ),
+        ];
+
+      // ── 30 daily bars: weekly tick marks using the day-of-month
+      //    number (e.g. "9 16 23 30 7"). The wrap from 30 → small
+      //    number signals a month boundary without a separate label.
+      case _Period.month:
+        final last = days.length - 1;
+        return [
+          for (var i = 0; i < days.length; i++)
+            _TrendBucket(
+              value: _metricValue(days[i], metric),
+              // Anchor the spacing on the latest bar so the rightmost
+              // label sits exactly under "today" rather than drifting.
+              label: (last - i) % 7 == 0
+                  ? days[i].date.day.toString()
+                  : '',
+            ),
+        ];
+
+      // ── Weekly buckets (7-day chunks anchored on the latest day).
+      //    Bucket value is the average daily metric across the chunk.
+      //    Label rules:
+      //      • first bucket → its own month abbreviation, so the chart
+      //        starts with an anchor;
+      //      • any later bucket that *contains the 1st of a new
+      //        calendar month* → that month's abbreviation. Anchoring
+      //        on the actual day of the month boundary (not on the
+      //        chunk's start day) keeps the label spacing even —
+      //        previously labels drifted depending on where chunks
+      //        happened to fall.
+      case _Period.threeMonths:
+      case _Period.sixMonths:
+        final buckets = <_TrendBucket>[];
+        String? lastShown;
+        for (var start = 0; start < days.length; start += 7) {
+          final end = math.min(start + 7, days.length);
+          final chunk = days.sublist(start, end);
+          final avg =
+              chunk.fold(0.0, (s, d) => s + _metricValue(d, metric)) /
+                  chunk.length;
+
+          String? label;
+          // Find the day in this chunk that's the 1st of its month.
+          DateTime? boundary;
+          for (final d in chunk) {
+            if (d.date.day == 1) {
+              boundary = d.date;
+              break;
+            }
+          }
+          if (boundary != null) {
+            label = monthAbbr(boundary);
+          } else if (buckets.isEmpty) {
+            label = monthAbbr(chunk.first.date);
+          }
+          if (label != null && label == lastShown) label = null;
+          if (label != null) lastShown = label;
+
+          buckets.add(_TrendBucket(
+            value: avg,
+            label: label ?? '',
+          ));
+        }
+        return buckets;
+
+      // ── 1Y: 12 monthly buckets. Label every OTHER month so the
+      //       3-letter abbreviations don't crowd each other. Bucket
+      //       value is the average daily metric for the month.
+      case _Period.year:
+        final byMonth = <String, List<_DaySummary>>{};
+        for (final d in days) {
+          final key =
+              '${d.date.year}-${d.date.month.toString().padLeft(2, '0')}';
+          byMonth.putIfAbsent(key, () => []).add(d);
+        }
+        final keys = byMonth.keys.toList()..sort();
+        // Anchor the every-other-month pattern on the LAST bucket so
+        // the rightmost (most recent) month always shows its label.
+        final lastIdx = keys.length - 1;
+        return [
+          for (var i = 0; i < keys.length; i++)
+            (() {
+              final monthDays = byMonth[keys[i]]!;
+              final avg = monthDays.fold(
+                      0.0, (s, d) => s + _metricValue(d, metric)) /
+                  monthDays.length;
+              final showLabel = (lastIdx - i) % 2 == 0;
+              return _TrendBucket(
+                value: avg,
+                label: showLabel ? monthAbbr(monthDays.first.date) : '',
+              );
+            })(),
+        ];
+    }
+  }
+
   // ── Trends section (bar chart) ──────────────────────────────
 
   Widget _buildTrends(bool isDark) {
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final l10n = context.l10n;
 
-    final values = _data.map((d) => _metricValue(d, _trendMetric)).toList();
+    final buckets = _buildTrendBuckets(_trendMetric);
     final goal = _metricGoal(_trendMetric);
-    final nonEmpty = values.where((v) => v > 0).length;
+    // Average % is over RAW daily values so the headline stays
+    // comparable across periods (a weekly bucket's average doesn't
+    // double-count vs. a daily bar's value).
+    final dailyValues =
+        _data.map((d) => _metricValue(d, _trendMetric)).toList();
+    final nonEmpty = dailyValues.where((v) => v > 0).length;
     final avg = nonEmpty == 0
         ? 0.0
-        : values.fold(0.0, (s, v) => s + v) / nonEmpty;
+        : dailyValues.fold(0.0, (s, v) => s + v) / nonEmpty;
     final avgPercent = goal > 0
         ? (avg / goal * 100).clamp(0, 999).toInt()
         : 0;
@@ -500,40 +719,51 @@ class _StatsScreenState extends State<StatsScreen> {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.green.withAlpha(40),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: avgPercent.toDouble()),
-                      duration: _kIntroDur,
+                  // Pill flips from green to red-orange once the period
+                  // average crosses the 100 % goal mark — same warning
+                  // language used by the trend chart's red overshoot top.
+                  Builder(builder: (context) {
+                    final overGoal = avgPercent > 100;
+                    final pillColor =
+                        overGoal ? AppColors.error : AppColors.green;
+                    return AnimatedContainer(
+                      duration: _kSwitchDur,
                       curve: _kCurve,
-                      builder: (_, value, _) => Text(
-                        l10n.percentAverage(value.round()),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          height: 14 / 12,
-                          color: AppColors.green,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: pillColor.withAlpha(40),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: avgPercent.toDouble()),
+                        duration: _kIntroDur,
+                        curve: _kCurve,
+                        builder: (_, value, _) =>
+                            AnimatedDefaultTextStyle(
+                          duration: _kSwitchDur,
+                          curve: _kCurve,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            height: 14 / 12,
+                            color: pillColor,
+                          ),
+                          child: Text(l10n.percentAverage(value.round())),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ],
               ),
               const SizedBox(height: 16),
               SizedBox(
                 height: 180,
                 child: _TrendsBarChart(
-                  data: _data,
-                  values: values,
+                  buckets: buckets,
                   goal: goal,
-                  metric: _trendMetric,
                   period: _period,
                   isDark: isDark,
                   barColor: _metricBarColor(_trendMetric),
@@ -697,7 +927,6 @@ class _StatsScreenState extends State<StatsScreen> {
     required Color secondary,
     required bool isDark,
   }) {
-    final l10n = context.l10n;
     final goal = _metricGoal(_highlightMetric);
 
     final grayColor = isDark
@@ -739,9 +968,6 @@ class _StatsScreenState extends State<StatsScreen> {
     final prevFrac = (prevAvg / refSafe).clamp(0.0, 1.0);
 
     final currentPillText = '${percentChange >= 0 ? '+' : ''}$percentChange%';
-    final prevPillText = _highlightMetric == _ChartMetric.calories
-        ? l10n.calDifferenceCount(diffAbs.round())
-        : '${diffAbs.toInt()} ${_metricShort(_highlightMetric)}';
 
     return [
       _buildHighlightRow(
@@ -758,7 +984,9 @@ class _StatsScreenState extends State<StatsScreen> {
         value: prevAvg,
         widthFraction: prevFrac,
         barColor: grayColor,
-        pillText: prevPillText,
+        // Diff pill on the previous-period bar removed per design —
+        // the +/-% pill on the current bar already conveys the delta.
+        pillText: null,
         primary: primary,
         secondary: secondary,
         showValueText: true,
@@ -766,6 +994,10 @@ class _StatsScreenState extends State<StatsScreen> {
     ];
   }
 
+  // Currently unused; kept for the "diff pill" callsite that was
+  // removed per design feedback. Restore alongside it if the pill
+  // comes back.
+  // ignore: unused_element
   String _metricShort(_ChartMetric m) => switch (m) {
     _ChartMetric.calories => 'cal',
     _ChartMetric.protein => context.l10n.proteinShort,
@@ -1205,6 +1437,35 @@ class _MetricTabs extends StatelessWidget {
   }
 }
 
+// ── First-day-of-week table ──────────────────────────────────────
+//
+// Device-locale-driven mapping. Mirrors CLDR's `firstDay` data:
+//   • Saturday  — most of the Middle East / North Africa (AE, EG, SA …)
+//   • Sunday    — North & Latin America, Israel, Japan, Korea, parts of
+//                 South / South-East Asia, Southern Africa
+//   • Monday    — everything else (ISO 8601 default: Europe, AU/NZ,
+//                 most of Africa, China, Russia, Vietnam …)
+//
+// Returns 0 = Sunday, 1 = Monday, …, 6 = Saturday — same convention
+// as `MaterialLocalizations.firstDayOfWeekIndex`.
+int _firstDayOfWeekForRegion(String? countryCode) {
+  final c = countryCode?.toUpperCase();
+  if (c == null) return 1;
+  const saturday = {
+    'AE', 'BH', 'DJ', 'DZ', 'EG', 'IQ', 'JO', 'KW', 'LY',
+    'MA', 'OM', 'QA', 'SA', 'SD', 'SY', 'YE',
+  };
+  const sunday = {
+    'AR', 'BD', 'BO', 'BR', 'CA', 'CL', 'CO', 'CR', 'DO', 'EC',
+    'GT', 'HK', 'HN', 'IL', 'IN', 'JM', 'JP', 'KE', 'KR', 'MO',
+    'MX', 'NI', 'PA', 'PE', 'PH', 'PK', 'PR', 'PY', 'SG', 'SV',
+    'TH', 'TW', 'US', 'UY', 'VE', 'ZA', 'ZW',
+  };
+  if (saturday.contains(c)) return 6;
+  if (sunday.contains(c)) return 0;
+  return 1; // Monday (ISO 8601 — default for Europe, RU, AU, CN, …).
+}
+
 // ── Streak card ──────────────────────────────────────────────────
 //
 // Matches Figma node 6495:32486 (174.5×166 frame):
@@ -1217,10 +1478,18 @@ class _MetricTabs extends StatelessWidget {
 //                 filled = orange #FBAE2E circle + white check
 //                 empty  = Text/Icons Secondary Light (#4d546b dark) outline
 
-class _StreakCard extends StatelessWidget {
+class _StreakCard extends StatefulWidget {
   final int streak;
   final DateTime today;
-  const _StreakCard({required this.streak, required this.today});
+  final Map<DateTime, bool> dayLogged;
+  final int maxWeeks;
+
+  const _StreakCard({
+    required this.streak,
+    required this.today,
+    required this.dayLogged,
+    required this.maxWeeks,
+  });
 
   // Per-theme amber. The Figma value (#FBAE2E) reads great on the dark
   // card surface but goes a touch washed-out on the white light surface,
@@ -1232,7 +1501,94 @@ class _StreakCard extends StatelessWidget {
       isDark ? _accentDark : _accentLight;
 
   @override
+  State<_StreakCard> createState() => _StreakCardState();
+}
+
+class _StreakCardState extends State<_StreakCard> {
+  late PageController _pages;
+  // Actual number of pages: clamps to the oldest week within the
+  // history window that has at least one logged day. If the user has
+  // only logged today there's just one page; the PageView still bounces
+  // when swiped (BouncingScrollPhysics) so the gesture is acknowledged.
+  // Defaults are non-`late` so hot reload — which doesn't replay
+  // `initState` — can't blow up with `LateInitializationError`.
+  int _pageCount = 1;
+  int _firstDayOfWeek = 1;
+  DateTime _currentWeekStart = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _recompute();
+    _pages = PageController(initialPage: _pageCount - 1);
+  }
+
+  @override
+  void didUpdateWidget(covariant _StreakCard old) {
+    super.didUpdateWidget(old);
+    if (old.dayLogged != widget.dayLogged ||
+        old.maxWeeks != widget.maxWeeks ||
+        !_isSameDay(old.today, widget.today)) {
+      _recompute();
+      _pages.dispose();
+      _pages = PageController(initialPage: _pageCount - 1);
+    }
+  }
+
+  /// Recomputes `_pageCount`, `_firstDayOfWeek`, `_currentWeekStart`
+  /// from the latest props. Pages = (oldest-week-with-data, current).
+  void _recompute() {
+    final deviceLocale =
+        WidgetsBinding.instance.platformDispatcher.locale;
+    _firstDayOfWeek =
+        _firstDayOfWeekForRegion(deviceLocale.countryCode);
+    final today = widget.today;
+    final todayDow = today.weekday % 7;
+    final daysSinceStart = (todayDow - _firstDayOfWeek + 7) % 7;
+    _currentWeekStart =
+        today.subtract(Duration(days: daysSinceStart));
+
+    int oldestWeekBack = 0;
+    for (int wb = 1; wb < widget.maxWeeks; wb++) {
+      final ws = _currentWeekStart.subtract(Duration(days: wb * 7));
+      var hasLog = false;
+      for (int j = 0; j < 7; j++) {
+        final d = ws.add(Duration(days: j));
+        final key = DateTime(d.year, d.month, d.day);
+        if (widget.dayLogged[key] == true) {
+          hasLog = true;
+          break;
+        }
+      }
+      if (hasLog) oldestWeekBack = wb;
+    }
+    _pageCount = oldestWeekBack + 1;
+  }
+
+  static bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  /// Week-start date for the page at [index] (0 = oldest, maxWeeks-1 = current).
+  DateTime _weekStartFor(int index) {
+    final weeksBack = _pageCount - 1 - index;
+    return _currentWeekStart.subtract(Duration(days: weeksBack * 7));
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Always rerun on build — `_recompute` is idempotent (depends only
+    // on widget props) and cheap (≤ 12 × 7 map lookups). Doing it here
+    // means hot reload, which doesn't replay `initState`, can't leave
+    // stale defaults like `_currentWeekStart = DateTime.now()` on the
+    // existing state.
+    _recompute();
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final letterColor = isDark
@@ -1240,22 +1596,6 @@ class _StreakCard extends StatelessWidget {
         : AppColors.lightOnSurfaceVariant;
 
     final localeCode = Localizations.localeOf(context).languageCode;
-    // Figma row reads S M T W T F S → Sun-anchored week.
-    final weekStart = today.subtract(Duration(days: today.weekday % 7));
-    final dayLetters = <String>[];
-    final filled = <bool>[];
-    for (int i = 0; i < 7; i++) {
-      final d = weekStart.add(Duration(days: i));
-      dayLetters.add(
-        DateFormat('E', localeCode).format(d).substring(0, 1).toUpperCase(),
-      );
-      final isFuture = d.isAfter(today) &&
-          !(d.year == today.year &&
-              d.month == today.month &&
-              d.day == today.day);
-      final daysAgo = today.difference(d).inDays;
-      filled.add(!isFuture && daysAgo < streak);
-    }
 
     return Container(
       height: 166,
@@ -1269,21 +1609,16 @@ class _StreakCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (ctx, constraints) {
           final cardW = constraints.maxWidth;
-          // Figma reference: 174.5px wide card, 154px-wide days row →
-          // ~10px side margin. The bottom margin is ~12px (`166 − 154.55`).
-          // To stay readable on narrower screens (Android, foldables) we
-          // make the days row shrink so the side margin stays at least
-          // equal to the bottom margin, then we scale the dots and
-          // letters proportionally.
+          // See `_StreakCard` block in earlier commit for sizing math.
           const figmaRowW = 154.0;
           const minSideMargin = 12.0;
-          final maxRowW = (cardW - 2 * minSideMargin).clamp(0.0, figmaRowW);
+          final maxRowW =
+              (cardW - 2 * minSideMargin).clamp(0.0, figmaRowW);
           final daysRowW = maxRowW;
           final scale = figmaRowW > 0 ? daysRowW / figmaRowW : 1.0;
           final dotSize = (20.0 * scale).clamp(12.0, 20.0);
           final letterFont = (12.0 * scale).clamp(9.0, 12.0);
           final letterLineH = (14.0 * scale).clamp(11.0, 14.0);
-          final daysRowLeft = (cardW - daysRowW) / 2;
 
           return Stack(
             children: [
@@ -1300,89 +1635,176 @@ class _StreakCard extends StatelessWidget {
                   fit: BoxFit.contain,
                 ),
               ),
-              // "27" — center, top=53.55, Inter Bold 28/36.
-              // Counts up from 0 on first paint, re-tweens on streak changes.
+              // Number + "Day Streak" label
               Positioned(
                 top: 53.55,
                 left: 0,
                 right: 0,
                 child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: streak.toDouble()),
+                  tween: Tween(begin: 0, end: widget.streak.toDouble()),
                   duration: _kIntroDur,
                   curve: _kCurve,
-                  builder: (_, value, _) => Text(
-                    value.round().toString(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      height: 36 / 28,
-                      color: _accentFor(isDark),
-                    ),
-                  ),
+                  builder: (_, value, _) {
+                    final n = value.round();
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          n.toString(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            height: 36 / 28,
+                            color: _StreakCard._accentFor(isDark),
+                          ),
+                        ),
+                        Text(
+                          context.l10n.dayStreak(n),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            height: 20 / 15,
+                            color: _StreakCard._accentFor(isDark),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
-              // "Day Streak" — center, top=88.55, Inter Medium 15/20
-              Positioned(
-                top: 88.55,
-                left: 0,
-                right: 0,
-                child: Text(
-                  context.l10n.dayStreak,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    height: 20 / 15,
-                    color: _accentFor(isDark),
-                  ),
-                ),
-              ),
-              // Day-of-week letters row
+              // Swipeable letters + dots — one page per week of
+              // history. We cap pages at the oldest week that has any
+              // logged day, so the user can't swipe back into a stretch
+              // of empty weeks. `BouncingScrollPhysics` gives an
+              // elastic snap-back at both edges (and even on a
+              // single-page card), so a swipe that has nowhere to go
+              // still answers with "we tried".
               Positioned(
                 top: 116.55,
-                left: daysRowLeft,
-                width: daysRowW,
-                height: letterLineH,
-                child: Row(
-                  children: List.generate(7, (i) {
-                    return Expanded(
-                      child: Text(
-                        dayLetters[i],
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.visible,
-                        style: TextStyle(
-                          fontSize: letterFont,
-                          fontWeight: FontWeight.w600,
-                          height: letterLineH / letterFont,
-                          color: letterColor,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              // Check dots row
-              Positioned(
-                top: 134.55,
-                left: daysRowLeft,
-                width: daysRowW,
-                height: dotSize,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(7, (i) {
-                    return _StreakDot(
-                      filled: filled[i],
+                left: 0,
+                right: 0,
+                height: 38,
+                child: PageView.builder(
+                  controller: _pages,
+                  itemCount: _pageCount,
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  itemBuilder: (context, index) {
+                    final weekStart = _weekStartFor(index);
+                    return _StreakWeekRow(
+                      weekStart: weekStart,
+                      today: widget.today,
+                      dayLogged: widget.dayLogged,
+                      rowWidth: daysRowW,
+                      dotSize: dotSize,
+                      letterFont: letterFont,
+                      letterLineH: letterLineH,
+                      letterColor: letterColor,
+                      localeCode: localeCode,
                       isDark: isDark,
-                      size: dotSize,
                     );
-                  }),
+                  },
                 ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// One week's row of day-of-week letters + filled/empty dots,
+/// rendered inside the streak card's PageView. Stateless — the card
+/// state owns the controller and the per-day "logged?" map.
+class _StreakWeekRow extends StatelessWidget {
+  final DateTime weekStart;
+  final DateTime today;
+  final Map<DateTime, bool> dayLogged;
+  final double rowWidth;
+  final double dotSize;
+  final double letterFont;
+  final double letterLineH;
+  final Color letterColor;
+  final String localeCode;
+  final bool isDark;
+
+  const _StreakWeekRow({
+    required this.weekStart,
+    required this.today,
+    required this.dayLogged,
+    required this.rowWidth,
+    required this.dotSize,
+    required this.letterFont,
+    required this.letterLineH,
+    required this.letterColor,
+    required this.localeCode,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final letters = <String>[];
+    final filled = <bool>[];
+    for (int i = 0; i < 7; i++) {
+      final d = weekStart.add(Duration(days: i));
+      letters.add(
+        DateFormat('E', localeCode).format(d).substring(0, 1).toUpperCase(),
+      );
+      final key = DateTime(d.year, d.month, d.day);
+      final isFuture = d.isAfter(today) &&
+          !(d.year == today.year &&
+              d.month == today.month &&
+              d.day == today.day);
+      filled.add(!isFuture && (dayLogged[key] ?? false));
+    }
+
+    return Center(
+      child: SizedBox(
+        width: rowWidth,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: letterLineH,
+              child: Row(
+                children: List.generate(7, (i) {
+                  return Expanded(
+                    child: Text(
+                      letters[i],
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.visible,
+                      style: TextStyle(
+                        fontSize: letterFont,
+                        fontWeight: FontWeight.w600,
+                        height: letterLineH / letterFont,
+                        color: letterColor,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 2),
+            SizedBox(
+              height: dotSize,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(7, (i) {
+                  return _StreakDot(
+                    filled: filled[i],
+                    isDark: isDark,
+                    size: dotSize,
+                  );
+                }),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2086,19 +2508,15 @@ class _HighlightBar extends StatelessWidget {
 // ── Trends bar chart ─────────────────────────────────────────────
 
 class _TrendsBarChart extends StatelessWidget {
-  final List<_DaySummary> data;
-  final List<double> values;
+  final List<_TrendBucket> buckets;
   final double goal;
-  final _ChartMetric metric;
   final _Period period;
   final bool isDark;
   final Color barColor;
 
   const _TrendsBarChart({
-    required this.data,
-    required this.values,
+    required this.buckets,
     required this.goal,
-    required this.metric,
     required this.period,
     required this.isDark,
     required this.barColor,
@@ -2110,22 +2528,35 @@ class _TrendsBarChart extends StatelessWidget {
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
     final gridColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-    final localeCode = Localizations.localeOf(context).languageCode;
 
-    final maxRaw = values.isEmpty
+    final maxRaw = buckets.isEmpty
         ? 0.0
-        : values.reduce((a, b) => a > b ? a : b);
+        : buckets
+            .map((b) => b.value)
+            .reduce((a, b) => a > b ? a : b);
     final goalAxis = goal > 0 ? goal : maxRaw;
     final chartMax = math.max(maxRaw, goalAxis) * 1.15;
     final safeMax = chartMax <= 0 ? 1.0 : chartMax;
 
-    final showDayLabels = period == _Period.week || period == _Period.twoWeeks;
+    // Roughly 20 % of slot width as inter-bar gap, clamped so 7-bar
+    // weeks breathe and 90-bar weekly views still fit. Without this,
+    // periods with many bars used to render with negative-width slots
+    // and the chart visually collapsed.
+    final hasAnyLabel = buckets.any((b) => b.label.isNotEmpty);
 
     return LayoutBuilder(
       builder: (ctx, constraints) {
         const labelHeight = 14.0;
+        // Breathing room between the bottom of each bar and the row
+        // of x-axis labels — without it the labels visually clamp
+        // against the bars on dense charts.
+        const labelGap = 2.0;
         final yAxisWidth = 32.0;
-        final chartHeight = constraints.maxHeight - labelHeight;
+        final chartHeight =
+            constraints.maxHeight - labelHeight - labelGap;
+        final chartWidth = constraints.maxWidth - yAxisWidth;
+        final slotWidth = buckets.isEmpty ? 0.0 : chartWidth / buckets.length;
+        final hPad = (slotWidth * 0.18).clamp(0.5, 8.0);
 
         return Stack(
           children: [
@@ -2149,7 +2580,7 @@ class _TrendsBarChart extends StatelessWidget {
                 right: yAxisWidth,
                 top: chartHeight - (goal / safeMax * chartHeight),
                 child: CustomPaint(
-                  size: Size(constraints.maxWidth - yAxisWidth, 1),
+                  size: Size(chartWidth, 1),
                   painter: _DottedLinePainter(color: AppColors.error),
                 ),
               ),
@@ -2161,8 +2592,8 @@ class _TrendsBarChart extends StatelessWidget {
               height: chartHeight,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(values.length, (i) {
-                  final v = values[i];
+                children: List.generate(buckets.length, (i) {
+                  final v = buckets[i].value;
                   final overGoal = goal > 0 && v > goal;
                   final greenTarget = overGoal
                       ? goal / safeMax * chartHeight
@@ -2170,18 +2601,20 @@ class _TrendsBarChart extends StatelessWidget {
                   final redTarget = overGoal
                       ? (v - goal) / safeMax * chartHeight
                       : 0.0;
-                  // Stagger each bar slightly so the chart "pours in" left-to-right
-                  // on first paint and on metric/period changes.
-                  final stagger = (i * 0.05).clamp(0.0, 0.5);
+                  // Stagger only on shorter periods — for 90-bar charts a
+                  // 5 %/bar offset would push the last bar's animation
+                  // window past the duration entirely.
+                  final stagger = buckets.length <= 14
+                      ? (i * 0.05).clamp(0.0, 0.5)
+                      : 0.0;
+                  // Bars at 0 still want a visible tick so the chart
+                  // doesn't show gaps for empty days.
+                  const minVisibleBar = 2.0;
+                  final radius = buckets.length <= 14 ? 4.0 : 2.0;
                   return Expanded(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: period == _Period.week ? 8 : 2,
-                      ),
+                      padding: EdgeInsets.symmetric(horizontal: hPad),
                       child: TweenAnimationBuilder<double>(
-                        // Tweening on the actual target re-animates whenever
-                        // the metric/period changes (current displayed value
-                        // → new target), not just on first paint.
                         tween: Tween(begin: 0, end: greenTarget),
                         duration: _kIntroDur,
                         curve: Interval(stagger, 1, curve: _kCurve),
@@ -2191,8 +2624,12 @@ class _TrendsBarChart extends StatelessWidget {
                           duration: _kIntroDur,
                           curve: Interval(stagger, 1, curve: _kCurve),
                           builder: (context, redH, _) {
-                            final clampedGreen =
-                                greenH.clamp(0.0, chartHeight);
+                            final hasValue = v > 0;
+                            final clampedGreen = hasValue
+                                ? math
+                                    .max(greenH, minVisibleBar)
+                                    .clamp(0.0, chartHeight)
+                                : greenH.clamp(0.0, chartHeight);
                             final clampedRed =
                                 redH.clamp(0.0, chartHeight);
                             return Column(
@@ -2201,11 +2638,11 @@ class _TrendsBarChart extends StatelessWidget {
                                 if (overGoal && clampedRed > 0.5)
                                   Container(
                                     height: clampedRed,
-                                    decoration: const BoxDecoration(
+                                    decoration: BoxDecoration(
                                       color: AppColors.error,
                                       borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(4),
-                                        topRight: Radius.circular(4),
+                                        topLeft: Radius.circular(radius),
+                                        topRight: Radius.circular(radius),
                                       ),
                                     ),
                                   ),
@@ -2215,9 +2652,9 @@ class _TrendsBarChart extends StatelessWidget {
                                     color: barColor,
                                     borderRadius: BorderRadius.only(
                                       topLeft: Radius.circular(
-                                          overGoal ? 0 : 4),
+                                          overGoal ? 0 : radius),
                                       topRight: Radius.circular(
-                                          overGoal ? 0 : 4),
+                                          overGoal ? 0 : radius),
                                     ),
                                   ),
                                 ),
@@ -2231,31 +2668,45 @@ class _TrendsBarChart extends StatelessWidget {
                 }),
               ),
             ),
-            // Day-of-week labels
-            if (showDayLabels)
+            // Bucket labels — dynamic per-period content baked into
+            // each bucket (day letter / date number / month abbrev).
+            // Each label is positioned absolutely at its bucket's
+            // x-center via Stack + FractionalTranslation, so a 3-letter
+            // "Nov" label can render its full width even when the
+            // bucket's slot is only 11 px wide on dense charts (which
+            // would otherwise visually clip it inside an Expanded).
+            if (hasAnyLabel)
               Positioned(
                 left: 0,
                 right: yAxisWidth,
                 bottom: 0,
                 height: labelHeight,
-                child: Row(
-                  children: List.generate(values.length, (i) {
-                    final raw =
-                        DateFormat('E', localeCode).format(data[i].date);
-                    final letter = raw.length > 3 ? raw.substring(0, 3) : raw;
-                    return Expanded(
-                      child: Text(
-                        letter,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w400,
-                          height: 12 / 10,
-                          color: secondary,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    for (var i = 0; i < buckets.length; i++)
+                      if (buckets[i].label.isNotEmpty)
+                        Positioned(
+                          left: i * slotWidth + slotWidth / 2,
+                          top: 0,
+                          child: FractionalTranslation(
+                            translation: const Offset(-0.5, 0),
+                            child: Text(
+                              buckets[i].label,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.visible,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w400,
+                                height: 12 / 10,
+                                color: secondary,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    );
-                  }),
+                  ],
                 ),
               ),
             // Y-axis labels (right side)

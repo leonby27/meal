@@ -512,7 +512,8 @@
   "summarySection": "Summary",
   "trendsSection": "Trends",
   "highlightsSection": "Highlights",
-  "dayStreak": "Day Streak",
+  "dayStreak": "{count, plural, other{Day Streak}}",
+  "@dayStreak": { "placeholders": { "count": { "type": "int" } } },
   "averageADay": "average a day",
   "calDifferenceCount": "{count} cal difference",
   "@calDifferenceCount": { "placeholders": { "count": { "type": "int" } } },
@@ -535,5 +536,5 @@
   "analyticsMetricCal": "Cal",
   "analyticsMetricProtein": "Prot",
   "analyticsMetricFat": "Fats",
-  "analyticsMetricCarbs": "Crbs"
+  "analyticsMetricCarbs": "Carbs"
 }
