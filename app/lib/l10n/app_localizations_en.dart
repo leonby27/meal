@@ -1519,4 +1519,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get freeLimitReached => 'You\'ve used all free entries';
+
+  @override
+  String get analyticsTitle => 'Analytics';
+
+  @override
+  String get summarySection => 'Summary';
+
+  @override
+  String get trendsSection => 'Trends';
+
+  @override
+  String get highlightsSection => 'Highlights';
+
+  @override
+  String get dayStreak => 'Day Streak';
+
+  @override
+  String get averageADay => 'average a day';
+
+  @override
+  String calDifferenceCount(int count) {
+    return '$count cal difference';
+  }
+
+  @override
+  String percentAverage(int count) {
+    return '$count/100% Average';
+  }
+
+  @override
+  String analyticsHighlightHigher(String metric) {
+    return 'The average $metric intake per day this week is higher than last week.';
+  }
+
+  @override
+  String analyticsHighlightLower(String metric) {
+    return 'The average $metric intake per day this week is lower than last week.';
+  }
+
+  @override
+  String analyticsHighlightSimilar(String metric) {
+    return 'The average $metric intake per day this week is similar to last week.';
+  }
+
+  @override
+  String get analyticsPeriod1W => '1 W';
+
+  @override
+  String get analyticsPeriod2W => '2 W';
+
+  @override
+  String get analyticsPeriod1M => '1 M';
+
+  @override
+  String get analyticsPeriod3M => '3 M';
+
+  @override
+  String get analyticsPeriod6M => '6 M';
+
+  @override
+  String get analyticsPeriod1Y => '1 Y';
+
+  @override
+  String get analyticsMetricCal => 'Cal';
+
+  @override
+  String get analyticsMetricProtein => 'Prot';
+
+  @override
+  String get analyticsMetricFat => 'Fats';
+
+  @override
+  String get analyticsMetricCarbs => 'Crbs';
 }

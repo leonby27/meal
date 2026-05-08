@@ -1535,4 +1535,77 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get freeLimitReached => 'Alle kostenlosen Einträge aufgebraucht';
+
+  @override
+  String get analyticsTitle => 'Analytik';
+
+  @override
+  String get summarySection => 'Zusammenfassung';
+
+  @override
+  String get trendsSection => 'Trends';
+
+  @override
+  String get highlightsSection => 'Highlights';
+
+  @override
+  String get dayStreak => 'Tage-Streak';
+
+  @override
+  String get averageADay => 'Ø pro Tag';
+
+  @override
+  String calDifferenceCount(int count) {
+    return 'Differenz: $count kcal';
+  }
+
+  @override
+  String percentAverage(int count) {
+    return '$count/100 % Durchschnitt';
+  }
+
+  @override
+  String analyticsHighlightHigher(String metric) {
+    return 'Die durchschnittliche $metric-Aufnahme pro Tag ist diese Woche höher als letzte Woche.';
+  }
+
+  @override
+  String analyticsHighlightLower(String metric) {
+    return 'Die durchschnittliche $metric-Aufnahme pro Tag ist diese Woche niedriger als letzte Woche.';
+  }
+
+  @override
+  String analyticsHighlightSimilar(String metric) {
+    return 'Die durchschnittliche $metric-Aufnahme pro Tag ist diese Woche ähnlich wie letzte Woche.';
+  }
+
+  @override
+  String get analyticsPeriod1W => '1 W';
+
+  @override
+  String get analyticsPeriod2W => '2 W';
+
+  @override
+  String get analyticsPeriod1M => '1 M';
+
+  @override
+  String get analyticsPeriod3M => '3 M';
+
+  @override
+  String get analyticsPeriod6M => '6 M';
+
+  @override
+  String get analyticsPeriod1Y => '1 J';
+
+  @override
+  String get analyticsMetricCal => 'Kcal';
+
+  @override
+  String get analyticsMetricProtein => 'Eiw';
+
+  @override
+  String get analyticsMetricFat => 'Fett';
+
+  @override
+  String get analyticsMetricCarbs => 'Kohl';
 }

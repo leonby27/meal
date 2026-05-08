@@ -1527,4 +1527,77 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get freeLimitReached => 'Бесплатные записи закончились';
+
+  @override
+  String get analyticsTitle => 'Аналитика';
+
+  @override
+  String get summarySection => 'Сводка';
+
+  @override
+  String get trendsSection => 'Тренды';
+
+  @override
+  String get highlightsSection => 'Главное';
+
+  @override
+  String get dayStreak => 'Дней подряд';
+
+  @override
+  String get averageADay => 'в среднем за день';
+
+  @override
+  String calDifferenceCount(int count) {
+    return 'Разница $count ккал';
+  }
+
+  @override
+  String percentAverage(int count) {
+    return '$count/100% среднего';
+  }
+
+  @override
+  String analyticsHighlightHigher(String metric) {
+    return 'Среднее потребление $metric за день на этой неделе выше, чем на прошлой.';
+  }
+
+  @override
+  String analyticsHighlightLower(String metric) {
+    return 'Среднее потребление $metric за день на этой неделе ниже, чем на прошлой.';
+  }
+
+  @override
+  String analyticsHighlightSimilar(String metric) {
+    return 'Среднее потребление $metric за день примерно такое же, как на прошлой неделе.';
+  }
+
+  @override
+  String get analyticsPeriod1W => '1 нд';
+
+  @override
+  String get analyticsPeriod2W => '2 нд';
+
+  @override
+  String get analyticsPeriod1M => '1 м';
+
+  @override
+  String get analyticsPeriod3M => '3 м';
+
+  @override
+  String get analyticsPeriod6M => '6 м';
+
+  @override
+  String get analyticsPeriod1Y => '1 г';
+
+  @override
+  String get analyticsMetricCal => 'Ккал';
+
+  @override
+  String get analyticsMetricProtein => 'Белки';
+
+  @override
+  String get analyticsMetricFat => 'Жиры';
+
+  @override
+  String get analyticsMetricCarbs => 'Углев';
 }

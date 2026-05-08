@@ -505,5 +505,34 @@
   "freeEntriesRemaining": "{count, plural, =1{1 entrée gratuite restante} other{{count} entrées gratuites restantes}}",
   "@freeEntriesRemaining": { "placeholders": { "count": { "type": "int" } } },
   "getPro": "Obtenir Pro",
-  "freeLimitReached": "Toutes les entrées gratuites sont épuisées"
+  "freeLimitReached": "Toutes les entrées gratuites sont épuisées",
+
+  "analyticsTitle": "Analytique",
+  "summarySection": "Résumé",
+  "trendsSection": "Tendances",
+  "highlightsSection": "Points forts",
+  "dayStreak": "Jours consécutifs",
+  "averageADay": "moyenne par jour",
+  "calDifferenceCount": "Différence de {count} cal",
+  "@calDifferenceCount": { "placeholders": { "count": { "type": "int" } } },
+  "percentAverage": "{count}/100 % moyenne",
+  "@percentAverage": { "placeholders": { "count": { "type": "int" } } },
+  "analyticsHighlightHigher": "L'apport moyen en {metric} par jour est plus élevé cette semaine que la semaine dernière.",
+  "@analyticsHighlightHigher": { "placeholders": { "metric": { "type": "String" } } },
+  "analyticsHighlightLower": "L'apport moyen en {metric} par jour est plus faible cette semaine que la semaine dernière.",
+  "@analyticsHighlightLower": { "placeholders": { "metric": { "type": "String" } } },
+  "analyticsHighlightSimilar": "L'apport moyen en {metric} par jour est similaire à la semaine dernière.",
+  "@analyticsHighlightSimilar": { "placeholders": { "metric": { "type": "String" } } },
+
+  "analyticsPeriod1W": "1 sem",
+  "analyticsPeriod2W": "2 sem",
+  "analyticsPeriod1M": "1 m",
+  "analyticsPeriod3M": "3 m",
+  "analyticsPeriod6M": "6 m",
+  "analyticsPeriod1Y": "1 an",
+
+  "analyticsMetricCal": "Cal",
+  "analyticsMetricProtein": "Prot",
+  "analyticsMetricFat": "Lip",
+  "analyticsMetricCarbs": "Gluc"
 }

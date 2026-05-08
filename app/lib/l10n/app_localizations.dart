@@ -2865,6 +2865,132 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Бесплатные записи закончились'**
   String get freeLimitReached;
+
+  /// No description provided for @analyticsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аналитика'**
+  String get analyticsTitle;
+
+  /// No description provided for @summarySection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сводка'**
+  String get summarySection;
+
+  /// No description provided for @trendsSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренды'**
+  String get trendsSection;
+
+  /// No description provided for @highlightsSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Главное'**
+  String get highlightsSection;
+
+  /// No description provided for @dayStreak.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дней подряд'**
+  String get dayStreak;
+
+  /// No description provided for @averageADay.
+  ///
+  /// In ru, this message translates to:
+  /// **'в среднем за день'**
+  String get averageADay;
+
+  /// No description provided for @calDifferenceCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разница {count} ккал'**
+  String calDifferenceCount(int count);
+
+  /// No description provided for @percentAverage.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count}/100% среднего'**
+  String percentAverage(int count);
+
+  /// No description provided for @analyticsHighlightHigher.
+  ///
+  /// In ru, this message translates to:
+  /// **'Среднее потребление {metric} за день на этой неделе выше, чем на прошлой.'**
+  String analyticsHighlightHigher(String metric);
+
+  /// No description provided for @analyticsHighlightLower.
+  ///
+  /// In ru, this message translates to:
+  /// **'Среднее потребление {metric} за день на этой неделе ниже, чем на прошлой.'**
+  String analyticsHighlightLower(String metric);
+
+  /// No description provided for @analyticsHighlightSimilar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Среднее потребление {metric} за день примерно такое же, как на прошлой неделе.'**
+  String analyticsHighlightSimilar(String metric);
+
+  /// No description provided for @analyticsPeriod1W.
+  ///
+  /// In ru, this message translates to:
+  /// **'1 нд'**
+  String get analyticsPeriod1W;
+
+  /// No description provided for @analyticsPeriod2W.
+  ///
+  /// In ru, this message translates to:
+  /// **'2 нд'**
+  String get analyticsPeriod2W;
+
+  /// No description provided for @analyticsPeriod1M.
+  ///
+  /// In ru, this message translates to:
+  /// **'1 м'**
+  String get analyticsPeriod1M;
+
+  /// No description provided for @analyticsPeriod3M.
+  ///
+  /// In ru, this message translates to:
+  /// **'3 м'**
+  String get analyticsPeriod3M;
+
+  /// No description provided for @analyticsPeriod6M.
+  ///
+  /// In ru, this message translates to:
+  /// **'6 м'**
+  String get analyticsPeriod6M;
+
+  /// No description provided for @analyticsPeriod1Y.
+  ///
+  /// In ru, this message translates to:
+  /// **'1 г'**
+  String get analyticsPeriod1Y;
+
+  /// No description provided for @analyticsMetricCal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ккал'**
+  String get analyticsMetricCal;
+
+  /// No description provided for @analyticsMetricProtein.
+  ///
+  /// In ru, this message translates to:
+  /// **'Белки'**
+  String get analyticsMetricProtein;
+
+  /// No description provided for @analyticsMetricFat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Жиры'**
+  String get analyticsMetricFat;
+
+  /// No description provided for @analyticsMetricCarbs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Углев'**
+  String get analyticsMetricCarbs;
 }
 
 class _AppLocalizationsDelegate

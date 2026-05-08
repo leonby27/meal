@@ -529,5 +529,34 @@
   "freeEntriesRemaining": "{count, plural, =1{Осталась 1 бесплатная запись} few{Осталось {count} бесплатные записи} many{Осталось {count} бесплатных записей} other{Осталось {count} бесплатных записей}}",
   "@freeEntriesRemaining": { "placeholders": { "count": { "type": "int" } } },
   "getPro": "Получить Pro",
-  "freeLimitReached": "Бесплатные записи закончились"
+  "freeLimitReached": "Бесплатные записи закончились",
+
+  "analyticsTitle": "Аналитика",
+  "summarySection": "Сводка",
+  "trendsSection": "Тренды",
+  "highlightsSection": "Главное",
+  "dayStreak": "Дней подряд",
+  "averageADay": "в среднем за день",
+  "calDifferenceCount": "Разница {count} ккал",
+  "@calDifferenceCount": { "placeholders": { "count": { "type": "int" } } },
+  "percentAverage": "{count}/100% среднего",
+  "@percentAverage": { "placeholders": { "count": { "type": "int" } } },
+  "analyticsHighlightHigher": "Среднее потребление {metric} за день на этой неделе выше, чем на прошлой.",
+  "@analyticsHighlightHigher": { "placeholders": { "metric": { "type": "String" } } },
+  "analyticsHighlightLower": "Среднее потребление {metric} за день на этой неделе ниже, чем на прошлой.",
+  "@analyticsHighlightLower": { "placeholders": { "metric": { "type": "String" } } },
+  "analyticsHighlightSimilar": "Среднее потребление {metric} за день примерно такое же, как на прошлой неделе.",
+  "@analyticsHighlightSimilar": { "placeholders": { "metric": { "type": "String" } } },
+
+  "analyticsPeriod1W": "1 нд",
+  "analyticsPeriod2W": "2 нд",
+  "analyticsPeriod1M": "1 м",
+  "analyticsPeriod3M": "3 м",
+  "analyticsPeriod6M": "6 м",
+  "analyticsPeriod1Y": "1 г",
+
+  "analyticsMetricCal": "Ккал",
+  "analyticsMetricProtein": "Белки",
+  "analyticsMetricFat": "Жиры",
+  "analyticsMetricCarbs": "Углев"
 }

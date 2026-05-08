@@ -1,9 +1,54 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+
+// ── Animation conventions (mirrors `_CalorieRingPainter` /
+//   `_overviewIntro` patterns in `ai_meal_result_sheet.dart`) ────────
+//
+// All data on the analytics screen counts up / sweeps in once on first
+// build, and re-tweens between old and new values on subsequent rebuilds
+// (period switch, metric switch). We rely on Flutter's
+// `TweenAnimationBuilder` semantics — when its `tween.end` changes, it
+// continues from the currently-displayed value rather than restarting at
+// `begin`, giving free state-change animation in addition to the intro.
+//
+// Curves and durations are picked from the existing codebase (>90% of
+// animations use `easeOutCubic`; data intros land in the 600–800 ms band).
+const Duration _kIntroDur = Duration(milliseconds: 750);
+const Duration _kDataDur = Duration(milliseconds: 600);
+const Duration _kSwitchDur = Duration(milliseconds: 220);
+const Curve _kCurve = Curves.easeOutCubic;
+
+enum _Period { week, twoWeeks, month, threeMonths, sixMonths, year }
+
+extension _PeriodX on _Period {
+  int get days => switch (this) {
+    _Period.week => 7,
+    _Period.twoWeeks => 14,
+    _Period.month => 30,
+    _Period.threeMonths => 90,
+    _Period.sixMonths => 180,
+    _Period.year => 365,
+  };
+
+  String label(BuildContext context) {
+    final l10n = context.l10n;
+    return switch (this) {
+      _Period.week => l10n.analyticsPeriod1W,
+      _Period.twoWeeks => l10n.analyticsPeriod2W,
+      _Period.month => l10n.analyticsPeriod1M,
+      _Period.threeMonths => l10n.analyticsPeriod3M,
+      _Period.sixMonths => l10n.analyticsPeriod6M,
+      _Period.year => l10n.analyticsPeriod1Y,
+    };
+  }
+}
 
 enum _ChartMetric { calories, protein, fat, carbs }
 
@@ -16,9 +61,12 @@ class StatsScreen extends StatefulWidget {
 
 class _StatsScreenState extends State<StatsScreen> {
   late AppDatabase _db;
-  bool _dbReady = false;
-  List<_DaySummary> _data = [];
-  int _periodDays = 7;
+  bool _ready = false;
+
+  _Period _period = _Period.week;
+  _ChartMetric _trendMetric = _ChartMetric.calories;
+  _ChartMetric _highlightMetric = _ChartMetric.calories;
+
   double _goalCalories = 2000;
   double _goalProtein = 100;
   double _goalFat = 70;
@@ -26,11 +74,16 @@ class _StatsScreenState extends State<StatsScreen> {
   bool _showProtein = true;
   bool _showFat = true;
   bool _showCarbs = true;
-  _ChartMetric _selectedMetric = _ChartMetric.calories;
+
+  List<_DaySummary> _data = [];
+  List<_DaySummary> _previousPeriodData = [];
+  int _streak = 0;
+  late DateTime _today;
 
   @override
   void initState() {
     super.initState();
+    _today = DateTime.now();
     _initDb();
   }
 
@@ -38,7 +91,7 @@ class _StatsScreenState extends State<StatsScreen> {
     _db = await AppDatabase.getInstance();
     await _loadGoals();
     await _loadData();
-    if (mounted) setState(() => _dbReady = true);
+    if (mounted) setState(() => _ready = true);
   }
 
   Future<void> _loadGoals() async {
@@ -58,189 +111,868 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Future<void> _loadData() async {
+    final days = _period.days;
     final now = DateTime.now();
     final data = <_DaySummary>[];
-
-    for (int i = _periodDays - 1; i >= 0; i--) {
+    for (int i = days - 1; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final logs = await _db.getFoodLogsForDate(date);
-      data.add(
-        _DaySummary(
-          date: date,
-          calories: logs.fold(0.0, (s, l) => s + l.calories),
-          protein: logs.fold(0.0, (s, l) => s + l.protein),
-          fat: logs.fold(0.0, (s, l) => s + l.fat),
-          carbs: logs.fold(0.0, (s, l) => s + l.carbs),
-          totalGrams: logs.fold(0.0, (s, l) => s + l.grams),
-        ),
-      );
+      data.add(_DaySummary.fromLogs(date, logs));
     }
-
     _data = data;
-  }
 
-  void _setPeriod(int days) async {
-    _periodDays = days;
-    await _loadData();
-    setState(() {});
-  }
-
-  // ── Helpers ──────────────────────────────────────────────────
-
-  String _formatNumber(double value) {
-    final intVal = value.toInt();
-    if (intVal >= 1000) {
-      final str = intVal.toString();
-      final buffer = StringBuffer();
-      for (var i = 0; i < str.length; i++) {
-        if (i > 0 && (str.length - i) % 3 == 0) buffer.write('\u{00A0}');
-        buffer.write(str[i]);
-      }
-      return buffer.toString();
+    final previous = <_DaySummary>[];
+    for (int i = days * 2 - 1; i >= days; i--) {
+      final date = now.subtract(Duration(days: i));
+      final logs = await _db.getFoodLogsForDate(date);
+      previous.add(_DaySummary.fromLogs(date, logs));
     }
-    return intVal.toString();
+    _previousPeriodData = previous;
+
+    _streak = await _computeStreak();
   }
 
-  String _formatDayDate(DateTime date) {
-    final locale = Localizations.localeOf(context).languageCode;
-    final dayOfWeek = DateFormat('E', locale).format(date);
-    final capitalized = dayOfWeek[0].toUpperCase() + dayOfWeek.substring(1);
-    final dayMonth = DateFormat('d MMM', locale).format(date);
-    return '$capitalized, $dayMonth';
+  Future<int> _computeStreak() async {
+    int count = 0;
+    final start = DateTime.now();
+    for (int i = 0; i < 365; i++) {
+      final date = start.subtract(Duration(days: i));
+      final logs = await _db.getFoodLogsForDate(date);
+      final has = logs.any((l) => l.calories > 0);
+      if (has) {
+        count++;
+      } else {
+        // Allow today to be empty if streak is non-zero (user has not logged yet today)
+        if (i == 0 && count == 0) continue;
+        break;
+      }
+    }
+    return count;
   }
 
-  // ── Metric maps ──────────────────────────────────────────────
+  void _setPeriod(_Period p) async {
+    setState(() {
+      _period = p;
+      _ready = false;
+    });
+    await _loadData();
+    if (mounted) setState(() => _ready = true);
+  }
 
-  static const _metricGradients = <_ChartMetric, LinearGradient>{
-    _ChartMetric.calories: LinearGradient(
-      colors: [Color(0xFF22D33A), Color(0xFF1EBF92)],
-    ),
-    _ChartMetric.protein: LinearGradient(
-      colors: [Color(0xFFD91D1D), Color(0xFFF0681B)],
-    ),
-    _ChartMetric.fat: LinearGradient(
-      colors: [Color(0xFFD0FF00), Color(0xFFFFBB00)],
-    ),
-    _ChartMetric.carbs: LinearGradient(
-      colors: [Color(0xFF17D1C7), Color(0xFF1787D1)],
-    ),
+  String _fmtNum(double v) {
+    final i = v.toInt();
+    if (i >= 1000) {
+      final s = i.toString();
+      final b = StringBuffer();
+      for (var k = 0; k < s.length; k++) {
+        if (k > 0 && (s.length - k) % 3 == 0) b.write('\u{00A0}');
+        b.write(s[k]);
+      }
+      return b.toString();
+    }
+    return i.toString();
+  }
+
+  String _fmtNumberWithComma(int v) {
+    final s = v.toString();
+    final b = StringBuffer();
+    for (var k = 0; k < s.length; k++) {
+      if (k > 0 && (s.length - k) % 3 == 0) b.write(',');
+      b.write(s[k]);
+    }
+    return b.toString();
+  }
+
+  // ── Metric helpers ─────────────────────────────────────────
+  double _metricValue(_DaySummary d, _ChartMetric m) => switch (m) {
+    _ChartMetric.calories => d.calories,
+    _ChartMetric.protein => d.protein,
+    _ChartMetric.fat => d.fat,
+    _ChartMetric.carbs => d.carbs,
   };
 
-  static const _metricBarGradients = <_ChartMetric, LinearGradient>{
-    _ChartMetric.calories: LinearGradient(
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
-      colors: [Color(0xFF22D33A), Color(0xFF1EBF92)],
-    ),
-    _ChartMetric.protein: LinearGradient(
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
-      colors: [Color(0xFFD91D1D), Color(0xFFF0681B)],
-    ),
-    _ChartMetric.fat: LinearGradient(
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
-      colors: [Color(0xFFD0FF00), Color(0xFFFFBB00)],
-    ),
-    _ChartMetric.carbs: LinearGradient(
-      begin: Alignment.bottomCenter,
-      end: Alignment.topCenter,
-      colors: [Color(0xFF17D1C7), Color(0xFF1787D1)],
-    ),
+  double _metricGoal(_ChartMetric m) => switch (m) {
+    _ChartMetric.calories => _goalCalories,
+    _ChartMetric.protein => _goalProtein,
+    _ChartMetric.fat => _goalFat,
+    _ChartMetric.carbs => _goalCarbs,
   };
 
-  Map<_ChartMetric, String> _metricLabels(BuildContext context) => {
-    _ChartMetric.calories: context.l10n.caloriesLabel,
-    _ChartMetric.protein: context.l10n.proteinLabel,
-    _ChartMetric.fat: context.l10n.fatLabel,
-    _ChartMetric.carbs: context.l10n.carbsLabel,
+  String _metricLabel(_ChartMetric m) => switch (m) {
+    _ChartMetric.calories => context.l10n.caloriesLabel,
+    _ChartMetric.protein => context.l10n.proteinLabel,
+    _ChartMetric.fat => context.l10n.fatLabel,
+    _ChartMetric.carbs => context.l10n.carbsLabel,
   };
 
-  // ── Build ────────────────────────────────────────────────────
+  String _metricTabLabel(_ChartMetric m) {
+    final l10n = context.l10n;
+    return switch (m) {
+      _ChartMetric.calories => l10n.analyticsMetricCal,
+      _ChartMetric.protein => l10n.analyticsMetricProtein,
+      _ChartMetric.fat => l10n.analyticsMetricFat,
+      _ChartMetric.carbs => l10n.analyticsMetricCarbs,
+    };
+  }
+
+  String _metricIconAsset(_ChartMetric m) => switch (m) {
+    _ChartMetric.calories => 'assets/icons/cal.svg',
+    _ChartMetric.protein => 'assets/icons/belok.svg',
+    _ChartMetric.fat => 'assets/icons/fat.svg',
+    _ChartMetric.carbs => 'assets/icons/uglevod.svg',
+  };
+
+  Color _metricAccent(_ChartMetric m) => switch (m) {
+    _ChartMetric.calories => const Color(0xFFFBAE2E),
+    _ChartMetric.protein => const Color(0xFFEE2750),
+    _ChartMetric.fat => const Color(0xFFFFBB00),
+    _ChartMetric.carbs => const Color(0xFF17B7D1),
+  };
+
+  // ── Build ───────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    if (!_dbReady) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    final nonEmptyDays = _data.where((d) => d.calories > 0).toList();
-    final daysCount = nonEmptyDays.length;
-    final avgCalories = daysCount > 0
-        ? nonEmptyDays.fold(0.0, (s, d) => s + d.calories) / daysCount
-        : 0.0;
-    final avgProtein = daysCount > 0
-        ? nonEmptyDays.fold(0.0, (s, d) => s + d.protein) / daysCount
-        : 0.0;
-    final avgFat = daysCount > 0
-        ? nonEmptyDays.fold(0.0, (s, d) => s + d.fat) / daysCount
-        : 0.0;
-    final avgCarbs = daysCount > 0
-        ? nonEmptyDays.fold(0.0, (s, d) => s + d.carbs) / daysCount
-        : 0.0;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final appBarBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final scaffoldBg = isDark ? AppColors.darkBack2 : AppColors.lightBack2;
+    final appBarBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final l10n = context.l10n;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
-        title: Text(context.l10n.statsTitle),
+        title: Text(l10n.analyticsTitle),
         backgroundColor: appBarBg,
         surfaceTintColor: Colors.transparent,
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      body: !_ready
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                _PeriodTabs(
+                  current: _period,
+                  onChanged: _setPeriod,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 24),
+                _SectionTitle(text: l10n.summarySection),
+                const SizedBox(height: 12),
+                _buildSummaryRow(isDark),
+                const SizedBox(height: 12),
+                _buildMacrosCard(isDark),
+                const SizedBox(height: 24),
+                _buildTrends(isDark),
+                const SizedBox(height: 24),
+                _buildHighlights(isDark),
+                const SizedBox(height: 24),
+                _buildByDays(isDark),
+              ],
+            ),
+    );
+  }
+
+  // ── Summary row (streak + average donut) ────────────────────
+
+  Widget _buildSummaryRow(bool isDark) {
+    final cal = _data.fold(0.0, (s, d) => s + d.calories);
+    final prot = _data.fold(0.0, (s, d) => s + d.protein);
+    final fat = _data.fold(0.0, (s, d) => s + d.fat);
+    final carbs = _data.fold(0.0, (s, d) => s + d.carbs);
+    final nonEmptyDays = _data.where((d) => d.calories > 0).length;
+    final divisor = nonEmptyDays == 0 ? 1 : nonEmptyDays;
+    final avgCal = cal / divisor;
+    final avgProt = prot / divisor;
+    final avgFat = fat / divisor;
+    final avgCarbs = carbs / divisor;
+
+    return IntrinsicHeight(
+      child: Row(
         children: [
-          _buildPeriodSelector(),
-          const SizedBox(height: 24),
-          _buildSectionLabel(context.l10n.averageLabel),
-          const SizedBox(height: 8),
-          _buildAverageCard(avgCalories, avgProtein, avgFat, avgCarbs),
-          const SizedBox(height: 24),
-          _buildChartDropdown(),
-          const SizedBox(height: 8),
-          _buildSelectedBarChart(),
-          const SizedBox(height: 24),
-          _buildSectionLabel(context.l10n.byDays),
-          const SizedBox(height: 8),
-          _buildDaysCard(),
+          Expanded(child: _StreakCard(streak: _streak, today: _today)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _AverageDonutCard(
+              calories: avgCal,
+              proteinCal: avgProt * 4,
+              fatCal: avgFat * 9,
+              carbsCal: avgCarbs * 4,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ── Section label ────────────────────────────────────────────
+  // ── Macros card (3 progress bars) ───────────────────────────
 
-  Widget _buildSectionLabel(String text) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = isDark
+  Widget _buildMacrosCard(bool isDark) {
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final trackColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    final secondary = isDark
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        height: 18 / 14,
-        color: color,
+    final primary = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final l10n = context.l10n;
+
+    final nonEmptyDays = _data.where((d) => d.calories > 0).length;
+    final divisor = nonEmptyDays == 0 ? 1 : nonEmptyDays;
+    final avgProt = _data.fold(0.0, (s, d) => s + d.protein) / divisor;
+    final avgFat = _data.fold(0.0, (s, d) => s + d.fat) / divisor;
+    final avgCarbs = _data.fold(0.0, (s, d) => s + d.carbs) / divisor;
+
+    final rows = <Widget>[];
+    if (_showProtein) {
+      rows.add(
+        _MacroProgressRow(
+          iconAsset: 'assets/icons/belok.svg',
+          current: avgProt,
+          goal: _goalProtein,
+          currentLabel: '${avgProt.toInt()} ${l10n.proteinShort}',
+          goalLabel: l10n.proteinGoalLabel(_goalProtein.toInt()),
+          gradient: const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFFD91D1D), Color(0xFFF0681B)],
+          ),
+          trackColor: trackColor,
+          labelColor: secondary,
+          valueLabelColor: primary,
+          cardColor: cardBg,
+        ),
+      );
+    }
+    if (_showFat) {
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: 20));
+      rows.add(
+        _MacroProgressRow(
+          iconAsset: 'assets/icons/fat.svg',
+          current: avgFat,
+          goal: _goalFat,
+          currentLabel: '${avgFat.toInt()} ${l10n.fatShort}',
+          goalLabel: l10n.fatGoalLabel(_goalFat.toInt()),
+          gradient: const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFFFFBB00), Color(0xFFD0FF00)],
+          ),
+          trackColor: trackColor,
+          labelColor: secondary,
+          valueLabelColor: primary,
+          cardColor: cardBg,
+        ),
+      );
+    }
+    if (_showCarbs) {
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: 20));
+      rows.add(
+        _MacroProgressRow(
+          iconAsset: 'assets/icons/uglevod.svg',
+          current: avgCarbs,
+          goal: _goalCarbs,
+          currentLabel: '${avgCarbs.toInt()} ${l10n.carbsShort}',
+          goalLabel: l10n.carbsGoalLabel(_goalCarbs.toInt()),
+          gradient: const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFF17D1C7), Color(0xFF1787D1)],
+          ),
+          trackColor: trackColor,
+          labelColor: secondary,
+          valueLabelColor: primary,
+          cardColor: cardBg,
+        ),
+      );
+    }
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: AppTheme.cardEdgeBorder(isDark: isDark),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
+      padding: const EdgeInsets.fromLTRB(12, 18, 12, 18),
+      child: Column(mainAxisSize: MainAxisSize.min, children: rows),
     );
   }
 
-  // ── Period selector ──────────────────────────────────────────
+  // ── Trends section (bar chart) ──────────────────────────────
 
-  Widget _buildPeriodSelector() {
-    final cs = Theme.of(context).colorScheme;
+  Widget _buildTrends(bool isDark) {
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final l10n = context.l10n;
+
+    final values = _data.map((d) => _metricValue(d, _trendMetric)).toList();
+    final goal = _metricGoal(_trendMetric);
+    final nonEmpty = values.where((v) => v > 0).length;
+    final avg = nonEmpty == 0
+        ? 0.0
+        : values.fold(0.0, (s, v) => s + v) / nonEmpty;
+    final avgPercent = goal > 0
+        ? (avg / goal * 100).clamp(0, 999).toInt()
+        : 0;
+
+    final localeCode = Localizations.localeOf(context).languageCode;
+    final dateFormat = DateFormat('d MMM', localeCode);
+    final firstDate = _data.isNotEmpty
+        ? _data.first.date
+        : DateTime.now().subtract(Duration(days: _period.days - 1));
+    final lastDate = _data.isNotEmpty ? _data.last.date : DateTime.now();
+    final dateRange =
+        '${dateFormat.format(firstDate)} - ${dateFormat.format(lastDate)}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeaderWithTabs(
+          title: l10n.trendsSection,
+          metric: _trendMetric,
+          onChanged: (m) => setState(() => _trendMetric = m),
+          tabLabelBuilder: _metricTabLabel,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: AppTheme.cardEdgeBorder(isDark: isDark),
+            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      dateRange,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        height: 18 / 14,
+                        color: isDark
+                            ? AppColors.darkOnSurfaceVariant
+                            : AppColors.lightOnSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withAlpha(40),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: avgPercent.toDouble()),
+                      duration: _kIntroDur,
+                      curve: _kCurve,
+                      builder: (_, value, _) => Text(
+                        l10n.percentAverage(value.round()),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          height: 14 / 12,
+                          color: AppColors.green,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 180,
+                child: _TrendsBarChart(
+                  data: _data,
+                  values: values,
+                  goal: goal,
+                  metric: _trendMetric,
+                  period: _period,
+                  isDark: isDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Highlights section ──────────────────────────────────────
+
+  Widget _buildHighlights(bool isDark) {
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final l10n = context.l10n;
+    final secondary = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+    final primary = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+
+    final currentNonEmpty = _data.where((d) => d.calories > 0).length;
+    final previousNonEmpty = _previousPeriodData
+        .where((d) => d.calories > 0)
+        .length;
+
+    final curDiv = currentNonEmpty == 0 ? 1 : currentNonEmpty;
+    final prevDiv = previousNonEmpty == 0 ? 1 : previousNonEmpty;
+
+    final curAvg =
+        _data.fold(0.0, (s, d) => s + _metricValue(d, _highlightMetric)) /
+        curDiv;
+    final prevAvg =
+        _previousPeriodData.fold(
+          0.0,
+          (s, d) => s + _metricValue(d, _highlightMetric),
+        ) /
+        prevDiv;
+
+    final diff = curAvg - prevAvg;
+    final hasPrevious = previousNonEmpty > 0 && prevAvg > 0;
+    final percentChange = hasPrevious ? (diff / prevAvg * 100).round() : 0;
+    final isHigher = hasPrevious && diff > 0;
+    final isLower = hasPrevious && diff < 0;
+
+    final metricLabelLower = _metricLabel(_highlightMetric).toLowerCase();
+
+    final description = !hasPrevious
+        ? l10n.analyticsHighlightSimilar(metricLabelLower)
+        : isHigher
+        ? l10n.analyticsHighlightHigher(metricLabelLower)
+        : isLower
+        ? l10n.analyticsHighlightLower(metricLabelLower)
+        : l10n.analyticsHighlightSimilar(metricLabelLower);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeaderWithTabs(
+          title: l10n.highlightsSection,
+          metric: _highlightMetric,
+          onChanged: (m) => setState(() => _highlightMetric = m),
+          tabLabelBuilder: _metricTabLabel,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: AppTheme.cardEdgeBorder(isDark: isDark),
+            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon + metric name. Cross-fade when the highlight metric
+              // changes so the orange "Calories"/"Protein"/etc. label swaps
+              // smoothly instead of snapping.
+              AnimatedSwitcher(
+                duration: _kSwitchDur,
+                switchInCurve: _kCurve,
+                switchOutCurve: Curves.easeInCubic,
+                child: Row(
+                  key: ValueKey(_highlightMetric),
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: SvgPicture.asset(
+                        _metricIconAsset(_highlightMetric),
+                        width: 20,
+                        height: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _metricLabel(_highlightMetric),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        height: 18 / 14,
+                        color: _metricAccent(_highlightMetric),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Description text — cross-fade between trend phrasings
+              // (higher / lower / similar).
+              AnimatedSwitcher(
+                duration: _kSwitchDur,
+                switchInCurve: _kCurve,
+                switchOutCurve: Curves.easeInCubic,
+                child: Text(
+                  description,
+                  key: ValueKey(description),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    height: 18 / 14,
+                    color: primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildHighlightBlock(
+                value: curAvg,
+                metric: _highlightMetric,
+                pillText: hasPrevious
+                    ? '${percentChange >= 0 ? '+' : ''}$percentChange%'
+                    : null,
+                pillColor: !hasPrevious
+                    ? null
+                    : (isHigher ? AppColors.error : AppColors.green),
+                primary: primary,
+                secondary: secondary,
+              ),
+              if (hasPrevious) ...[
+                const SizedBox(height: 16),
+                _buildHighlightBlock(
+                  value: prevAvg,
+                  metric: _highlightMetric,
+                  pillText: _highlightMetric == _ChartMetric.calories
+                      ? l10n.calDifferenceCount(diff.abs().round())
+                      : '${diff.abs().toInt()} ${_metricShort(_highlightMetric)}',
+                  pillColor: isDark
+                      ? AppColors.darkSecondaryExtraLight
+                      : AppColors.lightSecondaryExtraLight,
+                  primary: primary,
+                  secondary: secondary,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _metricShort(_ChartMetric m) => switch (m) {
+    _ChartMetric.calories => 'cal',
+    _ChartMetric.protein => context.l10n.proteinShort,
+    _ChartMetric.fat => context.l10n.fatShort,
+    _ChartMetric.carbs => context.l10n.carbsShort,
+  };
+
+  Widget _buildHighlightBlock({
+    required double value,
+    required _ChartMetric metric,
+    required String? pillText,
+    required Color? pillColor,
+    required Color primary,
+    required Color secondary,
+  }) {
+    final l10n = context.l10n;
+
+    String formatValue(double v) {
+      return metric == _ChartMetric.calories
+          ? _fmtNum(v)
+          : v.toInt().toString();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            // Counts up to the highlight value, re-tweens on metric switch.
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: value),
+              duration: _kIntroDur,
+              curve: _kCurve,
+              builder: (_, v, _) => Text(
+                formatValue(v),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  height: 32 / 24,
+                  color: primary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                l10n.averageADay,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  height: 18 / 14,
+                  color: secondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (pillText != null) ...[
+          const SizedBox(height: 6),
+          AnimatedContainer(
+            duration: _kSwitchDur,
+            curve: _kCurve,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: pillColor,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: AnimatedSwitcher(
+              duration: _kSwitchDur,
+              switchInCurve: _kCurve,
+              switchOutCurve: Curves.easeInCubic,
+              child: Text(
+                pillText,
+                key: ValueKey(pillText),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  height: 14 / 12,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ── By days section ─────────────────────────────────────────
+
+  Widget _buildByDays(bool isDark) {
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final secondary = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+    final primary = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final divider = isDark ? AppColors.lineDT100 : AppColors.lineLight200;
+    final l10n = context.l10n;
+
+    final recent = _data.reversed.take(_period.days).toList();
+    final localeCode = Localizations.localeOf(context).languageCode;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionTitle(text: l10n.byDays),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: AppTheme.cardEdgeBorder(isDark: isDark),
+            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            children: List.generate(recent.length, (i) {
+              final day = recent[i];
+              final percent = _goalCalories > 0
+                  ? (day.calories / _goalCalories * 100).round()
+                  : 0;
+              final isOver = percent > 100;
+              final isEmpty = day.calories == 0;
+
+              final dayOfWeek = DateFormat('E', localeCode).format(day.date);
+              final capitalized =
+                  dayOfWeek[0].toUpperCase() + dayOfWeek.substring(1);
+              final dayMonth = DateFormat('MMM dd', localeCode).format(day.date);
+              final dateLabel = '$capitalized, $dayMonth';
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                dateLabel,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  height: 20 / 15,
+                                  color: primary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l10n.totalGrams(day.totalGrams.toInt()),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  height: 14 / 12,
+                                  color: secondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  isEmpty
+                                      ? '—'
+                                      : '${_fmtNumberWithComma(day.calories.toInt())} ${l10n.caloriesLabel.substring(0, math.min(3, l10n.caloriesLabel.length))}',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    height: 20 / 15,
+                                    color: isEmpty ? secondary : primary,
+                                  ),
+                                ),
+                                if (!isEmpty) ...[
+                                  Text(
+                                    ' · ',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      height: 20 / 15,
+                                      color: primary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '$percent%',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      height: 20 / 15,
+                                      color: isOver
+                                          ? AppColors.error
+                                          : primary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${l10n.proteinShort}${day.protein.toInt()} ${l10n.fatShort}${day.fat.toInt()} ${l10n.carbsShort}${day.carbs.toInt()}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                height: 14 / 12,
+                                color: secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (i < recent.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      child: Container(height: 1, color: divider),
+                    ),
+                ],
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Section title ────────────────────────────────────────────────
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkUnderBack : AppColors.lightUnderBack;
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        height: 24 / 18,
+        color: isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface,
+      ),
+    );
+  }
+}
 
-    final tabs = [
-      (value: 7, label: context.l10n.periodWeek),
-      (value: 14, label: context.l10n.period2Weeks),
-      (value: 30, label: context.l10n.periodMonth),
-    ];
+// ── Section header with metric tabs ──────────────────────────────
+
+class _SectionHeaderWithTabs extends StatelessWidget {
+  final String title;
+  final _ChartMetric metric;
+  final ValueChanged<_ChartMetric> onChanged;
+  final String Function(_ChartMetric) tabLabelBuilder;
+  final bool isDark;
+
+  const _SectionHeaderWithTabs({
+    required this.title,
+    required this.metric,
+    required this.onChanged,
+    required this.tabLabelBuilder,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: _SectionTitle(text: title)),
+        _MetricTabs(
+          current: metric,
+          onChanged: onChanged,
+          labelBuilder: tabLabelBuilder,
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+}
+
+// ── Period tabs (1W…1Y) ──────────────────────────────────────────
+
+class _PeriodTabs extends StatelessWidget {
+  final _Period current;
+  final ValueChanged<_Period> onChanged;
+  final bool isDark;
+
+  const _PeriodTabs({
+    required this.current,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isDark ? AppColors.darkUnderBack : AppColors.lightUnderBack;
+    final selectedBg = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final selectedText = isDark
+        ? AppColors.darkOnSurface
+        : AppColors.lightOnSurface;
+    final unselectedText = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
 
     return Container(
       decoration: BoxDecoration(
@@ -248,25 +980,22 @@ class _StatsScreenState extends State<StatsScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        children: tabs.map((tab) {
-          final isSelected = _periodDays == tab.value;
+        children: _Period.values.map((p) {
+          final selected = p == current;
           return Expanded(
             child: GestureDetector(
-              onTap: () => _setPeriod(tab.value),
+              onTap: () => onChanged(p),
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.all(4),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 180),
                   curve: Curves.easeInOut,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
+                  height: 36,
                   decoration: BoxDecoration(
-                    color: isSelected ? cs.surface : Colors.transparent,
+                    color: selected ? selectedBg : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
-                    boxShadow: isSelected
+                    boxShadow: selected
                         ? [
                             BoxShadow(
                               color: const Color(0x1A050C26),
@@ -278,12 +1007,12 @@ class _StatsScreenState extends State<StatsScreen> {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    tab.label,
+                    p.label(context),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       height: 24 / 15,
-                      color: isSelected ? cs.onSurface : cs.onSurfaceVariant,
+                      color: selected ? selectedText : unselectedText,
                     ),
                   ),
                 ),
@@ -294,225 +1023,138 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
     );
   }
+}
 
-  // ── Average card ─────────────────────────────────────────────
+// ── Metric tabs (Cal/Prot/Fats/Crbs) ─────────────────────────────
 
-  Widget _buildAverageCard(double cal, double prot, double fat, double carbs) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-    final trackColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-    final secondaryText = isDark
-        ? AppColors.darkOnSurfaceVariant
-        : AppColors.lightOnSurfaceVariant;
-    final primaryText = isDark
+class _MetricTabs extends StatelessWidget {
+  final _ChartMetric current;
+  final ValueChanged<_ChartMetric> onChanged;
+  final String Function(_ChartMetric) labelBuilder;
+  final bool isDark;
+
+  const _MetricTabs({
+    required this.current,
+    required this.onChanged,
+    required this.labelBuilder,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isDark ? AppColors.darkUnderBack : AppColors.lightUnderBack;
+    final selectedBg = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final selectedText = isDark
         ? AppColors.darkOnSurface
         : AppColors.lightOnSurface;
-
-    final rows = <Widget>[];
-
-    rows.add(
-      _buildIconProgressRow(
-        icon: '🔥',
-        current: cal,
-        goal: _goalCalories,
-        gradient: _metricGradients[_ChartMetric.calories]!,
-        currentLabel: context.l10n.kcalValue(_formatNumber(cal)),
-        goalLabel: context.l10n.kcalValue(_formatNumber(_goalCalories)),
-        trackColor: trackColor,
-        cardBg: cardBg,
-        primaryText: primaryText,
-        secondaryText: secondaryText,
-      ),
-    );
-
-    if (_showProtein) {
-      rows.add(const SizedBox(height: 20));
-      rows.add(
-        _buildIconProgressRow(
-          icon: '🥩',
-          current: prot,
-          goal: _goalProtein,
-          gradient: _metricGradients[_ChartMetric.protein]!,
-          currentLabel: '${prot.toInt()} ${context.l10n.proteinShort}',
-          goalLabel: context.l10n.proteinGoalLabel(_goalProtein.toInt()),
-          trackColor: trackColor,
-          cardBg: cardBg,
-          primaryText: primaryText,
-          secondaryText: secondaryText,
-        ),
-      );
-    }
-
-    if (_showFat) {
-      rows.add(const SizedBox(height: 20));
-      rows.add(
-        _buildIconProgressRow(
-          icon: '🥑',
-          current: fat,
-          goal: _goalFat,
-          gradient: _metricGradients[_ChartMetric.fat]!,
-          currentLabel: '${fat.toInt()} ${context.l10n.fatShort}',
-          goalLabel: context.l10n.fatGoalLabel(_goalFat.toInt()),
-          trackColor: trackColor,
-          cardBg: cardBg,
-          primaryText: primaryText,
-          secondaryText: secondaryText,
-        ),
-      );
-    }
-
-    if (_showCarbs) {
-      rows.add(const SizedBox(height: 20));
-      rows.add(
-        _buildIconProgressRow(
-          icon: '🍞',
-          current: carbs,
-          goal: _goalCarbs,
-          gradient: _metricGradients[_ChartMetric.carbs]!,
-          currentLabel: '${carbs.toInt()} ${context.l10n.carbsShort}',
-          goalLabel: context.l10n.carbsGoalLabel(_goalCarbs.toInt()),
-          trackColor: trackColor,
-          cardBg: cardBg,
-          primaryText: primaryText,
-          secondaryText: secondaryText,
-        ),
-      );
-    }
+    final unselectedText = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
 
     return Container(
       decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: AppTheme.cardEdgeBorder(isDark: isDark),
-        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-      child: Column(mainAxisSize: MainAxisSize.min, children: rows),
-    );
-  }
-
-  Widget _buildIconProgressRow({
-    required String icon,
-    required double current,
-    required double goal,
-    required LinearGradient gradient,
-    required String currentLabel,
-    required String goalLabel,
-    required Color trackColor,
-    required Color cardBg,
-    required Color primaryText,
-    required Color secondaryText,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 28,
-          height: 28,
-          child: Center(
-            child: Text(icon, style: const TextStyle(fontSize: 20)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatsProgressBar(
-            current: current,
-            goal: goal,
-            gradient: gradient,
-            currentLabel: currentLabel,
-            goalLabel: goalLabel,
-            trackColor: trackColor,
-            labelColor: secondaryText,
-            valueLabelColor: primaryText,
-            cardColor: cardBg,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── Chart dropdown ───────────────────────────────────────────
-
-  Widget _buildChartDropdown() {
-    return PopupMenuButton<_ChartMetric>(
-      onSelected: (metric) => setState(() => _selectedMetric = metric),
-      offset: const Offset(0, 4),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
-      position: PopupMenuPosition.under,
-      tooltip: '',
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            _metricLabels(context)[_selectedMetric]!,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 18 / 14,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(width: 2),
-          const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 20,
-            color: AppColors.primary,
-          ),
-        ],
-      ),
-      itemBuilder: (context) => _ChartMetric.values
-          .map(
-            (m) => PopupMenuItem(
-              value: m,
-              child: Text(
-                _metricLabels(context)[m]!,
-                style: TextStyle(
-                  fontWeight: m == _selectedMetric
-                      ? FontWeight.w600
-                      : FontWeight.w400,
+      child: IntrinsicWidth(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: _ChartMetric.values.map((m) {
+            final selected = m == current;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(m),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeInOut,
+                    height: 26,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    decoration: BoxDecoration(
+                      color: selected ? selectedBg : Colors.transparent,
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: selected
+                          ? [
+                              BoxShadow(
+                                color: const Color(0x1A050C26),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      labelBuilder(m),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 16 / 13,
+                        color: selected ? selectedText : unselectedText,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          )
-          .toList(),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
+}
 
-  // ── Bar chart ────────────────────────────────────────────────
+// ── Streak card ──────────────────────────────────────────────────
+//
+// Matches Figma node 6495:32486 (174.5×166 frame):
+//  • Flame group: 63×48 at (54, 12)         — assets/icons/flame.svg
+//  • "27" text:   center, top=53.55, font 28/36 bold, color #FBAE2E
+//  • "Day Streak" label: center, top=88.55, Inter Medium 15/20, #FBAE2E
+//  • Day letters: row width 154 at top=116.55, Inter SemiBold 12/14
+//                 color Text/Icons Secondary (#686f87 dark / #83899f light)
+//  • Check dots:  row width 154 at top=134.55, 7×20 dots, gap 2px
+//                 filled = orange #FBAE2E circle + white check
+//                 empty  = Text/Icons Secondary Light (#4d546b dark) outline
 
-  Widget _buildSelectedBarChart() {
+class _StreakCard extends StatelessWidget {
+  final int streak;
+  final DateTime today;
+  const _StreakCard({required this.streak, required this.today});
+
+  static const _accent = Color(0xFFFBAE2E);
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final letterColor = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
 
-    List<double> values;
-    double goal;
-
-    switch (_selectedMetric) {
-      case _ChartMetric.calories:
-        values = _data.map((d) => d.calories).toList();
-        goal = _goalCalories;
-      case _ChartMetric.protein:
-        values = _data.map((d) => d.protein).toList();
-        goal = _goalProtein;
-      case _ChartMetric.fat:
-        values = _data.map((d) => d.fat).toList();
-        goal = _goalFat;
-      case _ChartMetric.carbs:
-        values = _data.map((d) => d.carbs).toList();
-        goal = _goalCarbs;
+    final localeCode = Localizations.localeOf(context).languageCode;
+    // Figma row reads S M T W T F S → Sun-anchored week.
+    final weekStart = today.subtract(Duration(days: today.weekday % 7));
+    final dayLetters = <String>[];
+    final filled = <bool>[];
+    for (int i = 0; i < 7; i++) {
+      final d = weekStart.add(Duration(days: i));
+      dayLetters.add(
+        DateFormat('E', localeCode).format(d).substring(0, 1).toUpperCase(),
+      );
+      final isFuture = d.isAfter(today) &&
+          !(d.year == today.year &&
+              d.month == today.month &&
+              d.day == today.day);
+      final daysAgo = today.difference(d).inDays;
+      filled.add(!isFuture && daysAgo < streak);
     }
 
-    final gradient = _metricBarGradients[_selectedMetric]!;
-    final maxVal = values.isEmpty
-        ? 1.0
-        : values.reduce((a, b) => a > b ? a : b).clamp(1, double.infinity);
-    final chartMax = goal > maxVal ? goal * 1.1 : maxVal * 1.1;
-    final showDayLabels = _periodDays <= 14;
-    final showValueLabels = _periodDays <= 7;
-
     return Container(
-      height: 180,
+      height: 166,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
@@ -520,204 +1162,476 @@ class _StatsScreenState extends State<StatsScreen> {
         boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(16),
       child: LayoutBuilder(
-        builder: (context, constraints) {
-          final barAreaHeight = constraints.maxHeight;
-          final barMax = (barAreaHeight - 30).clamp(10.0, barAreaHeight);
+        builder: (ctx, constraints) {
+          final cardW = constraints.maxWidth;
+          // Days row is 154px wide in Figma — center it.
+          const daysRowW = 154.0;
+          final daysRowLeft = (cardW - daysRowW) / 2;
+
           return Stack(
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(values.length, (i) {
-                  final v = values[i];
-                  final h = (v / chartMax * barMax).clamp(2.0, barMax);
-                  final isToday = i == values.length - 1;
-                  final overGoal = v > goal;
-                  return Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: _periodDays <= 14 ? 3 : 1,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          if (showValueLabels && v > 0)
-                            Text(
-                              v.toInt().toString(),
-                              maxLines: 1,
-                              overflow: TextOverflow.clip,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    fontSize: 9,
-                                    color: overGoal ? AppColors.orange : null,
-                                  ),
-                            ),
-                          const SizedBox(height: 2),
-                          Container(
-                            height: h,
-                            decoration: BoxDecoration(
-                              gradient: gradient,
-                              borderRadius: BorderRadius.circular(
-                                _periodDays <= 14 ? 4 : 2,
-                              ),
-                            ),
-                            foregroundDecoration: !isToday
-                                ? BoxDecoration(
-                                    color: cardBg.withAlpha(120),
-                                    borderRadius: BorderRadius.circular(
-                                      _periodDays <= 14 ? 4 : 2,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(height: 4),
-                          if (showDayLabels)
-                            Text(
-                              DateFormat(
-                                'E',
-                                Localizations.localeOf(context).languageCode,
-                              ).format(_data[i].date).substring(0, 2),
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    fontSize: 9,
-                                    fontWeight: isToday
-                                        ? FontWeight.bold
-                                        : null,
-                                  ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+              // Flame group (63×48 at top=12, centered horizontally)
+              Positioned(
+                top: 12,
+                left: (cardW - 63) / 2,
+                width: 63,
+                height: 48,
+                child: SvgPicture.asset(
+                  'assets/icons/flame.svg',
+                  width: 63,
+                  height: 48,
+                  fit: BoxFit.contain,
+                ),
               ),
-              if (goal > 0)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: (goal / chartMax * barMax).clamp(0, barMax),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 1,
-                          color: AppColors.error.withAlpha(120),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        goal.toInt().toString(),
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: AppColors.error.withAlpha(180),
-                        ),
-                      ),
-                    ],
+              // "27" — center, top=53.55, Inter Bold 28/36.
+              // Counts up from 0 on first paint, re-tweens on streak changes.
+              Positioned(
+                top: 53.55,
+                left: 0,
+                right: 0,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: streak.toDouble()),
+                  duration: _kIntroDur,
+                  curve: _kCurve,
+                  builder: (_, value, _) => Text(
+                    value.round().toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      height: 36 / 28,
+                      color: _accent,
+                    ),
                   ),
                 ),
+              ),
+              // "Day Streak" — center, top=88.55, Inter Medium 15/20
+              Positioned(
+                top: 88.55,
+                left: 0,
+                right: 0,
+                child: Text(
+                  context.l10n.dayStreak,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    height: 20 / 15,
+                    color: _accent,
+                  ),
+                ),
+              ),
+              // Day-of-week letters row
+              Positioned(
+                top: 116.55,
+                left: daysRowLeft,
+                width: daysRowW,
+                height: 16,
+                child: Row(
+                  children: List.generate(7, (i) {
+                    return Expanded(
+                      child: Text(
+                        dayLetters[i],
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          height: 14 / 12,
+                          color: letterColor,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              // Check dots row
+              Positioned(
+                top: 134.55,
+                left: daysRowLeft,
+                width: daysRowW,
+                height: 20,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(7, (i) {
+                    return _StreakDot(filled: filled[i], isDark: isDark);
+                  }),
+                ),
+              ),
             ],
           );
         },
       ),
     );
   }
+}
 
-  // ── Days card ────────────────────────────────────────────────
+class _StreakDot extends StatelessWidget {
+  final bool filled;
+  final bool isDark;
+  const _StreakDot({required this.filled, required this.isDark});
 
-  Widget _buildDaysCard() {
+  @override
+  Widget build(BuildContext context) {
+    return SvgPicture.asset(
+      filled
+          ? 'assets/icons/streak_dot_done.svg'
+          : 'assets/icons/streak_dot_empty.svg',
+      width: 20,
+      height: 20,
+    );
+  }
+}
+
+// ── Average donut card ───────────────────────────────────────────
+
+class _AverageDonutCard extends StatelessWidget {
+  final double calories;
+  final double proteinCal;
+  final double fatCal;
+  final double carbsCal;
+
+  const _AverageDonutCard({
+    required this.calories,
+    required this.proteinCal,
+    required this.fatCal,
+    required this.carbsCal,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-    final primaryText = isDark
-        ? AppColors.darkOnSurface
-        : AppColors.lightOnSurface;
-    final secondaryText = isDark
-        ? AppColors.darkOnSurfaceVariant
-        : AppColors.lightOnSurfaceVariant;
+    final primary = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final secondary = isDark
+        ? AppColors.darkSecondaryDark
+        : AppColors.lightSecondaryDark;
+    final trackColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
-    final recent = _data.reversed.take(7).toList();
+    final total = proteinCal + fatCal + carbsCal;
+    final pProt = total <= 0 ? 0.0 : proteinCal / total;
+    final pCarbs = total <= 0 ? 0.0 : carbsCal / total;
+    final pFat = total <= 0 ? 0.0 : fatCal / total;
 
     return Container(
+      height: 166,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
         border: AppTheme.cardEdgeBorder(isDark: isDark),
-        boxShadow: AppTheme.cardElevatedShadows(isDark: isDark),
+        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(recent.length, (i) {
-          final day = recent[i];
-          final percent = _goalCalories > 0
-              ? (day.calories / _goalCalories * 100).toInt()
-              : 0;
-          final isEmpty = day.calories == 0;
-          final calColor = isEmpty ? secondaryText : primaryText;
-
-          return Padding(
-            padding: EdgeInsets.only(bottom: i < recent.length - 1 ? 16 : 0),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatDayDate(day.date),
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        height: 20 / 15,
-                        color: primaryText,
-                      ),
-                    ),
-                    Text(
-                      '${context.l10n.kcalValueInt(day.calories.toInt())} · $percent%',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        height: 20 / 15,
-                        color: calColor,
-                      ),
-                    ),
-                  ],
+        children: [
+          Expanded(
+            child: Center(
+              child: SizedBox(
+                width: 110,
+                height: 110,
+                child: _AnimatedDonut(
+                  proteinFraction: pProt,
+                  carbsFraction: pCarbs,
+                  fatFraction: pFat,
+                  calories: calories,
+                  trackColor: trackColor,
+                  primary: primary,
+                  secondary: secondary,
                 ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      context.l10n.totalGrams(day.totalGrams.toInt()),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        height: 14 / 12,
-                        color: secondaryText,
-                      ),
-                    ),
-                    Text(
-                      '${context.l10n.proteinShort}${day.protein.toInt()} ${context.l10n.fatShort}${day.fat.toInt()} ${context.l10n.carbsShort}${day.carbs.toInt()}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        height: 14 / 12,
-                        color: secondaryText,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-          );
-        }),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              context.l10n.averageLabel,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                height: 20 / 15,
+                color: primary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── Progress bar ─────────────────────────────────────────────────
+/// Wraps the donut painter + its centre label and lerps every value
+/// (arc fractions and the calorie counter) towards their new targets
+/// on each rebuild — same convention as `_overviewIntro` in the meal
+/// result sheet.
+class _AnimatedDonut extends StatefulWidget {
+  final double proteinFraction;
+  final double carbsFraction;
+  final double fatFraction;
+  final double calories;
+  final Color trackColor;
+  final Color primary;
+  final Color secondary;
 
-class _StatsProgressBar extends StatelessWidget {
+  const _AnimatedDonut({
+    required this.proteinFraction,
+    required this.carbsFraction,
+    required this.fatFraction,
+    required this.calories,
+    required this.trackColor,
+    required this.primary,
+    required this.secondary,
+  });
+
+  @override
+  State<_AnimatedDonut> createState() => _AnimatedDonutState();
+}
+
+class _AnimatedDonutState extends State<_AnimatedDonut>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctl;
+  late Animation<double> _curve;
+
+  // Snapshot of the values the donut is currently displaying. We tween
+  // from this snapshot to the latest widget values so period/metric
+  // changes interpolate smoothly instead of snapping.
+  double _fromProtein = 0;
+  double _fromCarbs = 0;
+  double _fromFat = 0;
+  double _fromCalories = 0;
+
+  double _toProtein = 0;
+  double _toCarbs = 0;
+  double _toFat = 0;
+  double _toCalories = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = AnimationController(vsync: this, duration: _kIntroDur);
+    _curve = CurvedAnimation(parent: _ctl, curve: _kCurve);
+    _toProtein = widget.proteinFraction;
+    _toCarbs = widget.carbsFraction;
+    _toFat = widget.fatFraction;
+    _toCalories = widget.calories;
+    _ctl.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedDonut old) {
+    super.didUpdateWidget(old);
+    final changed = old.proteinFraction != widget.proteinFraction ||
+        old.carbsFraction != widget.carbsFraction ||
+        old.fatFraction != widget.fatFraction ||
+        old.calories != widget.calories;
+    if (!changed) return;
+
+    final t = _curve.value;
+    _fromProtein = _lerp(_fromProtein, _toProtein, t);
+    _fromCarbs = _lerp(_fromCarbs, _toCarbs, t);
+    _fromFat = _lerp(_fromFat, _toFat, t);
+    _fromCalories = _lerp(_fromCalories, _toCalories, t);
+
+    _toProtein = widget.proteinFraction;
+    _toCarbs = widget.carbsFraction;
+    _toFat = widget.fatFraction;
+    _toCalories = widget.calories;
+
+    _ctl.duration = _kDataDur;
+    _ctl.forward(from: 0);
+  }
+
+  static double _lerp(double a, double b, double t) => a + (b - a) * t;
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _curve,
+      builder: (context, _) {
+        final t = _curve.value;
+        final prot = _lerp(_fromProtein, _toProtein, t);
+        final carbs = _lerp(_fromCarbs, _toCarbs, t);
+        final fat = _lerp(_fromFat, _toFat, t);
+        final cal = _lerp(_fromCalories, _toCalories, t);
+        final total = prot + carbs + fat;
+        return CustomPaint(
+          painter: _DonutPainter(
+            proteinFraction: prot,
+            carbsFraction: carbs,
+            fatFraction: fat,
+            trackColor: widget.trackColor,
+            isEmpty: total <= 0,
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  cal.round().toString(),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    height: 24 / 20,
+                    color: widget.primary,
+                  ),
+                ),
+                Text(
+                  'Cal',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    height: 18 / 14,
+                    color: widget.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DonutPainter extends CustomPainter {
+  final double proteinFraction;
+  final double carbsFraction;
+  final double fatFraction;
+  final Color trackColor;
+  final bool isEmpty;
+
+  static const _strokeWidth = 12.0;
+  // Gap between segments measured along the arc, in logical px.
+  static const _gapPx = 2.0;
+
+  // Match the per-product calorie ring (`_CalorieRingPainter`) so the
+  // analytics donut reads as the same chart family as the meal cards.
+  static const _proteinColor = Color(0xFFE4431C);
+  static const _fatColor = Color(0xFFEFD400);
+  static const _carbsColor = Color(0xFF17ACCC);
+
+  _DonutPainter({
+    required this.proteinFraction,
+    required this.carbsFraction,
+    required this.fatFraction,
+    required this.trackColor,
+    required this.isEmpty,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = math.min(size.width, size.height) / 2 - _strokeWidth / 2;
+    final rect = Rect.fromCircle(
+      center: size.center(Offset.zero),
+      radius: radius,
+    );
+
+    final track = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth;
+    canvas.drawArc(rect, 0, 2 * math.pi, false, track);
+
+    if (isEmpty) return;
+
+    final segments = <(double fraction, Color color)>[
+      (proteinFraction, _proteinColor),
+      (carbsFraction, _carbsColor),
+      (fatFraction, _fatColor),
+    ];
+
+    // Convert 2px arc-length gap into radians for this radius.
+    final gapAngle = _gapPx / radius;
+    final visibleSegments = segments.where((s) => s.$1 > 0).length;
+    final totalGap = gapAngle * visibleSegments;
+    final available = 2 * math.pi - totalGap;
+
+    double startAngle = -math.pi / 2 + gapAngle / 2;
+
+    for (final seg in segments) {
+      if (seg.$1 <= 0) continue;
+      final sweep = seg.$1 * available;
+      final paint = Paint()
+        ..color = seg.$2
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _strokeWidth
+        ..strokeCap = StrokeCap.butt;
+      canvas.drawArc(rect, startAngle, sweep, false, paint);
+      startAngle += sweep + gapAngle;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter old) =>
+      old.proteinFraction != proteinFraction ||
+      old.carbsFraction != carbsFraction ||
+      old.fatFraction != fatFraction ||
+      old.isEmpty != isEmpty ||
+      old.trackColor != trackColor;
+}
+
+// ── Macro progress row ───────────────────────────────────────────
+
+class _MacroProgressRow extends StatelessWidget {
+  final String iconAsset;
+  final double current;
+  final double goal;
+  final String currentLabel;
+  final String goalLabel;
+  final LinearGradient gradient;
+  final Color trackColor;
+  final Color labelColor;
+  final Color valueLabelColor;
+  final Color cardColor;
+
+  const _MacroProgressRow({
+    required this.iconAsset,
+    required this.current,
+    required this.goal,
+    required this.currentLabel,
+    required this.goalLabel,
+    required this.gradient,
+    required this.trackColor,
+    required this.labelColor,
+    required this.valueLabelColor,
+    required this.cardColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 24,
+          height: 24,
+          child: SvgPicture.asset(iconAsset, width: 24, height: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _MacroBar(
+            current: current,
+            goal: goal,
+            gradient: gradient,
+            currentLabel: currentLabel,
+            goalLabel: goalLabel,
+            trackColor: trackColor,
+            labelColor: labelColor,
+            valueLabelColor: valueLabelColor,
+            cardColor: cardColor,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MacroBar extends StatelessWidget {
   final double current;
   final double goal;
   final LinearGradient gradient;
@@ -728,13 +1642,14 @@ class _StatsProgressBar extends StatelessWidget {
   final Color valueLabelColor;
   final Color cardColor;
 
-  static const double _barHeight = 12;
-  static const double _barTop = 2;
+  static const double _barHeight = 8;
+  static const double _barTop = 4;
   static const double _markerHeight = 16;
+  static const double _markerTop = 0;
   static const double _labelTop = 20;
   static const double _barRadius = 4;
 
-  const _StatsProgressBar({
+  const _MacroBar({
     required this.current,
     required this.goal,
     required this.gradient,
@@ -748,17 +1663,44 @@ class _StatsProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
+    final progressTarget =
+        goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
 
     return SizedBox(
       height: 38,
       child: LayoutBuilder(
-        builder: (context, constraints) {
+        builder: (ctx, constraints) {
           final totalWidth = constraints.maxWidth;
-          final fillWidth = totalWidth * progress;
-          final markerX = totalWidth * progress;
+          // Animate fill width and marker position together — re-tweens
+          // from the currently-displayed progress to the new value when
+          // the period switches.
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progressTarget),
+            duration: _kIntroDur,
+            curve: _kCurve,
+            builder: (context, progress, _) {
+              final fillWidth = totalWidth * progress;
+              final markerX = totalWidth * progress;
+              return _buildBar(
+                totalWidth: totalWidth,
+                fillWidth: fillWidth,
+                markerX: markerX,
+                progress: progress,
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
 
-          return Stack(
+  Widget _buildBar({
+    required double totalWidth,
+    required double fillWidth,
+    required double markerX,
+    required double progress,
+  }) {
+    return Stack(
             clipBehavior: Clip.none,
             children: [
               Positioned(
@@ -798,19 +1740,13 @@ class _StatsProgressBar extends StatelessWidget {
               if (progress > 0 && progress < 1.0)
                 Positioned(
                   left: markerX - 0.75,
-                  top: 0,
+                  top: _markerTop,
                   child: Container(
                     width: 1.5,
                     height: _markerHeight,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(40),
-                          blurRadius: 2,
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -840,46 +1776,360 @@ class _StatsProgressBar extends StatelessWidget {
                   ),
                 ),
               ),
-              _buildPositionedValueLabel(markerX, totalWidth),
-            ],
-          );
-        },
-      ),
+        _PositionedValueLabel(
+          markerX: markerX,
+          totalWidth: totalWidth,
+          label: currentLabel,
+          color: valueLabelColor,
+          bg: cardColor,
+          top: _labelTop,
+        ),
+      ],
     );
   }
+}
 
-  Widget _buildPositionedValueLabel(double markerX, double totalWidth) {
-    final textStyle = TextStyle(
+class _PositionedValueLabel extends StatelessWidget {
+  final double markerX;
+  final double totalWidth;
+  final String label;
+  final Color color;
+  final Color bg;
+  final double top;
+
+  const _PositionedValueLabel({
+    required this.markerX,
+    required this.totalWidth,
+    required this.label,
+    required this.color,
+    required this.bg,
+    required this.top,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.w500,
       height: 18 / 14,
+      color: color,
     );
-
-    final textPainter = TextPainter(
-      text: TextSpan(text: currentLabel, style: textStyle),
+    final tp = TextPainter(
+      text: TextSpan(text: label, style: style),
       textDirection: TextDirection.ltr,
     )..layout();
-
-    final labelWidth = textPainter.width + 8;
-    final halfLabel = labelWidth / 2;
-
-    double left = markerX - halfLabel;
+    final width = tp.width + 8;
+    var left = markerX - width / 2;
     if (left < 0) left = 0;
-    if (left + labelWidth > totalWidth) left = totalWidth - labelWidth;
-
+    if (left + width > totalWidth) left = totalWidth - width;
     return Positioned(
       left: left,
-      top: _labelTop,
+      top: top,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        color: cardColor,
-        child: Text(
-          currentLabel,
-          style: textStyle.copyWith(color: valueLabelColor),
-        ),
+        color: bg,
+        child: Text(label, style: style),
       ),
     );
   }
+}
+
+// ── Trends bar chart ─────────────────────────────────────────────
+
+class _TrendsBarChart extends StatelessWidget {
+  final List<_DaySummary> data;
+  final List<double> values;
+  final double goal;
+  final _ChartMetric metric;
+  final _Period period;
+  final bool isDark;
+
+  const _TrendsBarChart({
+    required this.data,
+    required this.values,
+    required this.goal,
+    required this.metric,
+    required this.period,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final secondary = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+    final gridColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    final localeCode = Localizations.localeOf(context).languageCode;
+
+    final maxRaw = values.isEmpty
+        ? 0.0
+        : values.reduce((a, b) => a > b ? a : b);
+    final goalAxis = goal > 0 ? goal : maxRaw;
+    final chartMax = math.max(maxRaw, goalAxis) * 1.15;
+    final safeMax = chartMax <= 0 ? 1.0 : chartMax;
+
+    final showDayLabels = period == _Period.week || period == _Period.twoWeeks;
+
+    return LayoutBuilder(
+      builder: (ctx, constraints) {
+        const labelHeight = 14.0;
+        final yAxisWidth = 32.0;
+        final chartHeight = constraints.maxHeight - labelHeight;
+
+        return Stack(
+          children: [
+            // Horizontal grid lines
+            Positioned(
+              left: 0,
+              right: yAxisWidth,
+              top: 0,
+              height: chartHeight,
+              child: CustomPaint(
+                painter: _GridPainter(
+                  color: gridColor,
+                  divisions: 4,
+                ),
+              ),
+            ),
+            // Goal dotted line
+            if (goal > 0)
+              Positioned(
+                left: 0,
+                right: yAxisWidth,
+                top: chartHeight - (goal / safeMax * chartHeight),
+                child: CustomPaint(
+                  size: Size(constraints.maxWidth - yAxisWidth, 1),
+                  painter: _DottedLinePainter(color: AppColors.error),
+                ),
+              ),
+            // Bars
+            Positioned(
+              left: 0,
+              right: yAxisWidth,
+              top: 0,
+              height: chartHeight,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: List.generate(values.length, (i) {
+                  final v = values[i];
+                  final overGoal = goal > 0 && v > goal;
+                  final greenTarget = overGoal
+                      ? goal / safeMax * chartHeight
+                      : v / safeMax * chartHeight;
+                  final redTarget = overGoal
+                      ? (v - goal) / safeMax * chartHeight
+                      : 0.0;
+                  // Stagger each bar slightly so the chart "pours in" left-to-right
+                  // on first paint and on metric/period changes.
+                  final stagger = (i * 0.05).clamp(0.0, 0.5);
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: period == _Period.week ? 8 : 2,
+                      ),
+                      child: TweenAnimationBuilder<double>(
+                        // Tweening on the actual target re-animates whenever
+                        // the metric/period changes (current displayed value
+                        // → new target), not just on first paint.
+                        tween: Tween(begin: 0, end: greenTarget),
+                        duration: _kIntroDur,
+                        curve: Interval(stagger, 1, curve: _kCurve),
+                        builder: (context, greenH, _) =>
+                            TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: redTarget),
+                          duration: _kIntroDur,
+                          curve: Interval(stagger, 1, curve: _kCurve),
+                          builder: (context, redH, _) {
+                            final clampedGreen =
+                                greenH.clamp(0.0, chartHeight);
+                            final clampedRed =
+                                redH.clamp(0.0, chartHeight);
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                if (overGoal && clampedRed > 0.5)
+                                  Container(
+                                    height: clampedRed,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.error,
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(4),
+                                        topRight: Radius.circular(4),
+                                      ),
+                                    ),
+                                  ),
+                                Container(
+                                  height: clampedGreen,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        Color(0xFF1AAB36),
+                                        Color(0xFF26D43F),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(
+                                          overGoal ? 0 : 4),
+                                      topRight: Radius.circular(
+                                          overGoal ? 0 : 4),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+            // Day-of-week labels
+            if (showDayLabels)
+              Positioned(
+                left: 0,
+                right: yAxisWidth,
+                bottom: 0,
+                height: labelHeight,
+                child: Row(
+                  children: List.generate(values.length, (i) {
+                    final raw =
+                        DateFormat('E', localeCode).format(data[i].date);
+                    final letter = raw.length > 3 ? raw.substring(0, 3) : raw;
+                    return Expanded(
+                      child: Text(
+                        letter,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w400,
+                          height: 12 / 10,
+                          color: secondary,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            // Y-axis labels (right side)
+            Positioned(
+              right: 0,
+              top: 0,
+              width: yAxisWidth,
+              height: chartHeight,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: _YAxisLabels(
+                  max: safeMax,
+                  color: secondary,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _YAxisLabels extends StatelessWidget {
+  final double max;
+  final Color color;
+  const _YAxisLabels({required this.max, required this.color});
+
+  String _format(double v) {
+    if (v == 0) return '0';
+    final i = v.toInt();
+    if (i >= 1000) {
+      final s = i.toString();
+      final b = StringBuffer();
+      for (var k = 0; k < s.length; k++) {
+        if (k > 0 && (s.length - k) % 3 == 0) b.write('\u{00A0}');
+        b.write(s[k]);
+      }
+      return b.toString();
+    }
+    return i.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final upper = max / 1.15;
+    final mid = upper / 2;
+    final style = TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w400,
+      height: 12 / 10,
+      color: color,
+    );
+    return Stack(
+      children: [
+        Positioned(top: 0, left: 0, child: Text(_format(upper), style: style)),
+        Positioned(
+          top: 0,
+          bottom: 0,
+          left: 0,
+          child: Center(child: Text(_format(mid), style: style)),
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          child: Text('0', style: style),
+        ),
+      ],
+    );
+  }
+}
+
+class _GridPainter extends CustomPainter {
+  final Color color;
+  final int divisions;
+
+  _GridPainter({required this.color, required this.divisions});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+    for (int i = 0; i <= divisions; i++) {
+      final y = size.height * (i / divisions);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+    canvas.drawLine(
+      Offset(size.width, 0),
+      Offset(size.width, size.height),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GridPainter old) => old.color != color;
+}
+
+class _DottedLinePainter extends CustomPainter {
+  final Color color;
+  _DottedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withAlpha(180)
+      ..strokeWidth = 1;
+    const dashWidth = 4.0;
+    const dashSpace = 4.0;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + dashWidth, 0), paint);
+      x += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DottedLinePainter old) => old.color != color;
 }
 
 // ── Data model ───────────────────────────────────────────────────
@@ -900,4 +2150,15 @@ class _DaySummary {
     required this.carbs,
     required this.totalGrams,
   });
+
+  factory _DaySummary.fromLogs(DateTime date, List<FoodLog> logs) {
+    return _DaySummary(
+      date: date,
+      calories: logs.fold(0.0, (s, l) => s + l.calories),
+      protein: logs.fold(0.0, (s, l) => s + l.protein),
+      fat: logs.fold(0.0, (s, l) => s + l.fat),
+      carbs: logs.fold(0.0, (s, l) => s + l.carbs),
+      totalGrams: logs.fold(0.0, (s, l) => s + l.grams),
+    );
+  }
 }

@@ -505,5 +505,34 @@
   "freeEntriesRemaining": "{count, plural, =1{Queda 1 entrada gratuita} other{Quedan {count} entradas gratuitas}}",
   "@freeEntriesRemaining": { "placeholders": { "count": { "type": "int" } } },
   "getPro": "Obtener Pro",
-  "freeLimitReached": "Has agotado todas las entradas gratuitas"
+  "freeLimitReached": "Has agotado todas las entradas gratuitas",
+
+  "analyticsTitle": "Analítica",
+  "summarySection": "Resumen",
+  "trendsSection": "Tendencias",
+  "highlightsSection": "Destacados",
+  "dayStreak": "Racha de días",
+  "averageADay": "media al día",
+  "calDifferenceCount": "Diferencia de {count} cal",
+  "@calDifferenceCount": { "placeholders": { "count": { "type": "int" } } },
+  "percentAverage": "{count}/100% promedio",
+  "@percentAverage": { "placeholders": { "count": { "type": "int" } } },
+  "analyticsHighlightHigher": "El consumo medio de {metric} al día esta semana es mayor que la semana pasada.",
+  "@analyticsHighlightHigher": { "placeholders": { "metric": { "type": "String" } } },
+  "analyticsHighlightLower": "El consumo medio de {metric} al día esta semana es menor que la semana pasada.",
+  "@analyticsHighlightLower": { "placeholders": { "metric": { "type": "String" } } },
+  "analyticsHighlightSimilar": "El consumo medio de {metric} al día esta semana es similar al de la semana pasada.",
+  "@analyticsHighlightSimilar": { "placeholders": { "metric": { "type": "String" } } },
+
+  "analyticsPeriod1W": "1 sem",
+  "analyticsPeriod2W": "2 sem",
+  "analyticsPeriod1M": "1 m",
+  "analyticsPeriod3M": "3 m",
+  "analyticsPeriod6M": "6 m",
+  "analyticsPeriod1Y": "1 a",
+
+  "analyticsMetricCal": "Cal",
+  "analyticsMetricProtein": "Prot",
+  "analyticsMetricFat": "Gras",
+  "analyticsMetricCarbs": "Carb"
 }
