@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/login_sync_flow.dart';
+import 'package:meal_tracker/core/services/login_sync_service.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
@@ -113,10 +115,19 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   }
 
   Future<void> _saveGoals() async {
-    await _db.setSetting('calorie_goal', _calorieController.text);
-    await _db.setSetting('protein_goal', _proteinController.text);
-    await _db.setSetting('fat_goal', _fatController.text);
-    await _db.setSetting('carbs_goal', _carbsController.text);
+    final goals = {
+      'calorie_goal': _calorieController.text,
+      'protein_goal': _proteinController.text,
+      'fat_goal': _fatController.text,
+      'carbs_goal': _carbsController.text,
+    };
+    for (final entry in goals.entries) {
+      await _db.setSetting(entry.key, entry.value);
+    }
+    // No-op for signed-out (guest) users; otherwise upserts the goals
+    // on the user's cloud account so they survive re-installs and
+    // multi-device sign-in. Errors are swallowed inside `pushSettings`.
+    unawaited(LoginSyncService().pushSettings(goals));
   }
 
   Future<void> _signOut() async {

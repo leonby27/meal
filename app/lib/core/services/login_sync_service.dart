@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart' show Value;
+import 'package:flutter/foundation.dart';
 
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/auth_service.dart';
 
 /// Reconciles pre-login (anonymous) local Drift data with the user's
 /// cloud account on sign-in.
@@ -31,6 +33,22 @@ class LoginSyncService {
 
   Future<void> pullOnly() async {
     await _replaceLocalFromCloud();
+  }
+
+  /// Best-effort upsert of a partial settings map on the cloud account.
+  /// No-op if the user isn't signed in. Errors are logged but never
+  /// rethrown — the caller has already written the settings locally and
+  /// shouldn't fail because the network was flaky. Backend's POST
+  /// `/api/users/me/settings` is a partial upsert: keys not in the
+  /// payload are left untouched.
+  Future<void> pushSettings(Map<String, String> settings) async {
+    if (!AuthService().isLoggedIn) return;
+    if (settings.isEmpty) return;
+    try {
+      await _api.post('/api/users/me/settings', {'settings': settings});
+    } catch (e) {
+      debugPrint('LoginSyncService.pushSettings failed: $e');
+    }
   }
 
   Future<void> _pushLocalFoodLogs() async {

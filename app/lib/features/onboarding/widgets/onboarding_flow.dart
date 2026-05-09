@@ -9,6 +9,7 @@ import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/services/login_sync_service.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
 import 'package:meal_tracker/features/onboarding/services/tdee_calculator.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/goal_step.dart';
@@ -323,25 +324,30 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     try {
       final db = await AppDatabase.getInstance();
 
-      await db.setSetting('onboarding_completed', 'true');
-      await db.setSetting('user_goal', _data.goal!);
-      await db.setSetting('user_gender', _data.gender!);
-      await db.setSetting('user_age', '${_data.age}');
-      await db.setSetting('unit_system', _data.unitSystem);
-      await db.setSetting('user_height', '${_data.heightCm.round()}');
-      await db.setSetting('user_weight', _data.weightKg.toStringAsFixed(1));
-      await db.setSetting(
-        'user_target_weight',
-        _data.targetWeightKg.toStringAsFixed(1),
-      );
-      await db.setSetting(
-        'user_activity_level',
-        _data.activityMultiplier.toString(),
-      );
-      await db.setSetting('calorie_goal', '${_data.calorieGoal!.round()}');
-      await db.setSetting('protein_goal', '${_data.proteinGoal!.round()}');
-      await db.setSetting('fat_goal', '${_data.fatGoal!.round()}');
-      await db.setSetting('carbs_goal', '${_data.carbsGoal!.round()}');
+      // Build the map first so the same key/value pairs go to the local
+      // DB and the cloud sync push, keeping them in lock-step. The
+      // sync push is a no-op when the user is a guest; for someone
+      // who's already logged in (e.g. running onboarding again to
+      // recompute goals) it carries the new values to their account.
+      final settings = <String, String>{
+        'onboarding_completed': 'true',
+        'user_goal': _data.goal!,
+        'user_gender': _data.gender!,
+        'user_age': '${_data.age}',
+        'unit_system': _data.unitSystem,
+        'user_height': '${_data.heightCm.round()}',
+        'user_weight': _data.weightKg.toStringAsFixed(1),
+        'user_target_weight': _data.targetWeightKg.toStringAsFixed(1),
+        'user_activity_level': _data.activityMultiplier.toString(),
+        'calorie_goal': '${_data.calorieGoal!.round()}',
+        'protein_goal': '${_data.proteinGoal!.round()}',
+        'fat_goal': '${_data.fatGoal!.round()}',
+        'carbs_goal': '${_data.carbsGoal!.round()}',
+      };
+      for (final entry in settings.entries) {
+        await db.setSetting(entry.key, entry.value);
+      }
+      unawaited(LoginSyncService().pushSettings(settings));
     } catch (e) {
       debugPrint('Onboarding settings persist error: $e');
     }

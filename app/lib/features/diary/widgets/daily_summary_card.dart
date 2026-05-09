@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/login_sync_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
 class DailySummaryCard extends StatefulWidget {
@@ -290,9 +292,17 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
     if (result == null) return;
 
     final db = await AppDatabase.getInstance();
-    await db.setSetting('show_protein', result.showProtein.toString());
-    await db.setSetting('show_fat', result.showFat.toString());
-    await db.setSetting('show_carbs', result.showCarbs.toString());
+    final updated = {
+      'show_protein': result.showProtein.toString(),
+      'show_fat': result.showFat.toString(),
+      'show_carbs': result.showCarbs.toString(),
+    };
+    for (final entry in updated.entries) {
+      await db.setSetting(entry.key, entry.value);
+    }
+    // Sync the macro-visibility toggles to the user's cloud account
+    // (no-op for guests).
+    unawaited(LoginSyncService().pushSettings(updated));
 
     if (mounted) {
       setState(() {
