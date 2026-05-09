@@ -874,6 +874,54 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     _scheduleAutosave();
   }
 
+  /// Step the GRAMS for ingredient [index] by `delta * 10` (the design
+  /// uses a fixed 10-point step). Recomputes calories + macros from the
+  /// per-100g composition — i.e. the per-100g rates are the source of
+  /// truth here, the absolute values track grams. For unit-counted
+  /// ingredients (eggs etc.) we delegate to the count stepper instead so
+  /// the user always operates in the natural unit for that item.
+  void _onIngredientGramsStepped(int index, int delta) {
+    final ing = _ingredients[index];
+    if (ing.hasCounter) {
+      _onIngredientCountChanged(index, delta);
+      return;
+    }
+    if (_updatingControllers) return;
+    // Floor at 10 g — going to zero (or negative) doesn't make sense for
+    // an ingredient that's still in the list.
+    final newGrams = (ing.grams + delta * 10).clamp(10.0, double.infinity);
+    if (newGrams == ing.grams) return;
+
+    _updatingControllers = true;
+    ing.grams = newGrams;
+    final factor = ing.grams / 100;
+    ing.protein = ing.proteinPer100g * factor;
+    ing.fat = ing.fatPer100g * factor;
+    ing.carbs = ing.carbsPer100g * factor;
+    ing.calories = ing.caloriesPer100g * factor;
+    ing.caloriesCtl.text = _fmt(ing.calories);
+
+    _recalcTotalsFromIngredients();
+    _captureMacroRatio();
+    _updatingControllers = false;
+    setState(() {});
+    _scheduleAutosave();
+  }
+
+  /// Step the CALORIES for ingredient [index] by `delta * 10`. Per the
+  /// design, changing calories does NOT change grams — it just rescales
+  /// the macros to fit the new energy figure (same logic
+  /// `_onIngredientCaloriesChanged` already applies when the user types
+  /// into the calories field).
+  void _onIngredientCaloriesStepped(int index, int delta) {
+    if (_updatingControllers) return;
+    final ing = _ingredients[index];
+    final newCal = (ing.calories + delta * 10).clamp(0.0, double.infinity);
+    if (newCal == ing.calories) return;
+    ing.caloriesCtl.text = _fmt(newCal);
+    _onIngredientCaloriesChanged(index);
+  }
+
   /// User edited the calorie field for ingredient [index]. We treat the new
   /// calorie figure as the source of truth and scale this ingredient's
   /// macros proportionally so the per-100g composition stays consistent
@@ -2791,6 +2839,16 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
   }
 
+  // ── Ingredient cards (Figma node 6575:12632) ─────────────────
+  //
+  // Each ingredient is its own white card with a name + delete pill at
+  // the top, and two side-by-side bordered fields below — left is
+  // grams (or unit count for items like eggs), right is calories. Each
+  // field has a value on the left and -/+ steppers on the right that
+  // step by 10 in either direction. Changing grams scales calories
+  // proportionally; changing calories leaves grams alone (matches the
+  // user spec). Cards are stacked with an 8 px gap.
+
   Widget _buildIngredientsSection(_AiSheetColors c) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2805,191 +2863,196 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: c.cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: c.isDark ? AppColors.darkBack2 : AppColors.lightBack2,
-              width: 2,
-            ),
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: List.generate(_ingredients.length, (i) {
-              return Padding(
-                padding: EdgeInsets.only(top: i > 0 ? 12 : 0),
-                child: _buildIngredientRow(c, i),
-              );
-            }),
-          ),
-        ),
+        for (var i = 0; i < _ingredients.length; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          _buildIngredientCard(c, i),
+        ],
       ],
     );
   }
 
-  Widget _buildIngredientRow(_AiSheetColors c, int index) {
+  Widget _buildIngredientCard(_AiSheetColors c, int index) {
     final ing = _ingredients[index];
-    final secondary =
-        c.isDark ? AppColors.darkSecondaryDark : AppColors.lightSecondaryDark;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+    final l10n = context.l10n;
+    final isCounter = ing.hasCounter;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: c.cardBg,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: name + delete pill (red minus inside #EE275017 chip)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                ing.nameCtl.text,
-                style: TextStyle(
-                  color: c.onSurface,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  height: 18 / 14,
+              Expanded(
+                child: Text(
+                  ing.nameCtl.text,
+                  style: TextStyle(
+                    color: c.onSurface,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 22 / 16,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
               ),
-              Text(
-                context.l10n.gramsValue(ing.grams.round()),
-                style: TextStyle(
-                  color: secondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  height: 14 / 12,
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => _removeIngredient(index),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 36,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: _warningBg,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 12,
+                    height: 1.6,
+                    decoration: BoxDecoration(
+                      color: _warningIcon,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(width: 8),
-        if (ing.hasCounter) ...[
-          _buildStepper(c, index, ing.count),
-          const SizedBox(width: 8),
-        ],
-        _buildIngredientCaloriesField(c, ing.caloriesCtl, index),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () => _removeIngredient(index),
-          child: Container(
-            width: 28,
-            height: 34,
-            decoration: BoxDecoration(
-              color: _warningBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.close, color: _warningIcon, size: 16),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStepper(_AiSheetColors c, int index, int count) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: () => _onIngredientCountChanged(index, -1),
-          child: Container(
-            width: 28,
-            height: 34,
-            decoration: BoxDecoration(
-              color: c.stepperBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: SizedBox(
-                width: 12,
-                height: 2,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(color: c.onSurface),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildIngredientField(
+                  c: c,
+                  label: isCounter
+                      ? l10n.quantityLabel
+                      : l10n.gramsDialogLabel,
+                  value: isCounter
+                      ? ing.count.toString()
+                      : ing.grams.round().toString(),
+                  onMinus: () => _onIngredientGramsStepped(index, -1),
+                  onPlus: () => _onIngredientGramsStepped(index, 1),
                 ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildIngredientField(
+                  c: c,
+                  label: l10n.caloriesLabel,
+                  value: ing.calories.round().toString(),
+                  onMinus: () => _onIngredientCaloriesStepped(index, -1),
+                  onPlus: () => _onIngredientCaloriesStepped(index, 1),
+                ),
+              ),
+            ],
           ),
-        ),
-        SizedBox(
-          width: 24,
-          child: Text(
-            '$count',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: c.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 18 / 14,
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () => _onIngredientCountChanged(index, 1),
-          child: Container(
-            width: 28,
-            height: 34,
-            decoration: BoxDecoration(
-              color: c.stepperBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.add, color: c.onSurface, size: 16),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildIngredientCaloriesField(
-    _AiSheetColors c,
-    TextEditingController controller,
-    int index,
-  ) {
-    return Container(
-      width: 80,
-      decoration: BoxDecoration(
-        border: Border.all(color: c.borderColor),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.all(8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
-              ],
-              style: TextStyle(
-                color: c.onSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 18 / 14,
-              ),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-                isDense: true,
-                filled: false,
-              ),
-              onChanged: (_) => _onIngredientCaloriesChanged(index),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'Cal',
+  /// Bordered "label + value + minus/plus" field used by both grams and
+  /// calories sides of an ingredient card. The value is read-only here —
+  /// editing happens through the steppers (each step = ±10 per spec).
+  Widget _buildIngredientField({
+    required _AiSheetColors c,
+    required String label,
+    required String value,
+    required VoidCallback onMinus,
+    required VoidCallback onPlus,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Opacity(
+          opacity: 0.5,
+          child: Text(
+            label,
             style: TextStyle(
-              color: c.onSurface.withAlpha(128),
+              color: c.onSurface,
               fontSize: 14,
               fontWeight: FontWeight.w400,
               height: 18 / 14,
             ),
           ),
-        ],
+        ),
+        const SizedBox(height: 4),
+        Container(
+          height: 44,
+          decoration: BoxDecoration(
+            border: Border.all(color: c.borderColor),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          padding: const EdgeInsets.fromLTRB(10, 0, 4, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: c.onSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 18 / 14,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              SizedBox(
+                width: 72,
+                child: Row(
+                  children: [
+                    Expanded(child: _stepperButton(c, false, onMinus)),
+                    const SizedBox(width: 4),
+                    Expanded(child: _stepperButton(c, true, onPlus)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Square 34×34 ±-button used inside `_buildIngredientField`. Plus
+  /// shows a Material `add` glyph; minus is drawn manually so the bar
+  /// thickness matches the Figma minus icon (the Material `remove`
+  /// glyph reads slightly thinner at this size).
+  Widget _stepperButton(_AiSheetColors c, bool isPlus, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 34,
+        decoration: BoxDecoration(
+          color: c.baseSurface,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: isPlus
+            ? Icon(Icons.add, color: c.onSurface, size: 16)
+            : Container(
+                width: 12,
+                height: 1.6,
+                decoration: BoxDecoration(
+                  color: c.onSurface,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
       ),
     );
   }

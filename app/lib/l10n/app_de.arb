@@ -535,5 +535,7 @@
   "analyticsMetricCal": "Kcal",
   "analyticsMetricProtein": "Eiw",
   "analyticsMetricFat": "Fett",
-  "analyticsMetricCarbs": "Kohl"
+  "analyticsMetricCarbs": "Kohl",
+
+  "quantityLabel": "Menge"
 }

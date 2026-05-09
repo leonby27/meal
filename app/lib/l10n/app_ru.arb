@@ -559,5 +559,7 @@
   "analyticsMetricCal": "Ккал",
   "analyticsMetricProtein": "Белки",
   "analyticsMetricFat": "Жиры",
-  "analyticsMetricCarbs": "Углев"
+  "analyticsMetricCarbs": "Углев",
+
+  "quantityLabel": "Количество"
 }

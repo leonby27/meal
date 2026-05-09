@@ -536,5 +536,7 @@
   "analyticsMetricCal": "Cal",
   "analyticsMetricProtein": "Prot",
   "analyticsMetricFat": "Fats",
-  "analyticsMetricCarbs": "Carbs"
+  "analyticsMetricCarbs": "Carbs",
+
+  "quantityLabel": "Quantity"
 }

@@ -1613,4 +1613,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get analyticsMetricCarbs => 'Carb';
+
+  @override
+  String get quantityLabel => 'Quantidade';
 }

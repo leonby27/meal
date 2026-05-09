@@ -1619,4 +1619,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get analyticsMetricCarbs => 'Gluc';
+
+  @override
+  String get quantityLabel => 'Quantité';
 }

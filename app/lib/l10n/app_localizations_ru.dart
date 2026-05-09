@@ -1611,4 +1611,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get analyticsMetricCarbs => 'Углев';
+
+  @override
+  String get quantityLabel => 'Количество';
 }

@@ -2991,6 +2991,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Углев'**
   String get analyticsMetricCarbs;
+
+  /// No description provided for @quantityLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Количество'**
+  String get quantityLabel;
 }
 
 class _AppLocalizationsDelegate

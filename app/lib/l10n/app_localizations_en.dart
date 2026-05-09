@@ -1599,4 +1599,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analyticsMetricCarbs => 'Carbs';
+
+  @override
+  String get quantityLabel => 'Quantity';
 }
