@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
@@ -198,6 +199,8 @@ class _StatsScreenState extends State<StatsScreen> {
 
   void _setPeriod(_Period p) async {
     if (p == _period) return;
+    // Discrete-state haptic — same family iOS uses for picker wheels.
+    HapticFeedback.selectionClick();
     // Update the period tab UI immediately so the tap feels responsive.
     setState(() => _period = p);
     await _loadData();
@@ -688,7 +691,11 @@ class _StatsScreenState extends State<StatsScreen> {
         _SectionHeaderWithTabs(
           title: l10n.trendsSection,
           metric: _trendMetric,
-          onChanged: (m) => setState(() => _trendMetric = m),
+          onChanged: (m) {
+            if (m == _trendMetric) return;
+            HapticFeedback.selectionClick();
+            setState(() => _trendMetric = m);
+          },
           tabLabelBuilder: _metricTabLabel,
           isDark: isDark,
         ),
@@ -826,7 +833,11 @@ class _StatsScreenState extends State<StatsScreen> {
         _SectionHeaderWithTabs(
           title: l10n.highlightsSection,
           metric: _highlightMetric,
-          onChanged: (m) => setState(() => _highlightMetric = m),
+          onChanged: (m) {
+            if (m == _highlightMetric) return;
+            HapticFeedback.selectionClick();
+            setState(() => _highlightMetric = m);
+          },
           tabLabelBuilder: _metricTabLabel,
           isDark: isDark,
         ),

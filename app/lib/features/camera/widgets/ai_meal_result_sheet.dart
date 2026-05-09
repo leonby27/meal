@@ -62,6 +62,7 @@ class _SuggestionItem {
 class _IngredientEntry {
   final TextEditingController nameCtl;
   final TextEditingController caloriesCtl;
+  final FocusNode nameFocus;
   double grams;
   double proteinPer100g;
   double fatPer100g;
@@ -88,13 +89,15 @@ class _IngredientEntry {
     required this.calories,
     this.count = 0,
     this.gramsPerUnit = 0,
-  });
+    FocusNode? nameFocus,
+  }) : nameFocus = nameFocus ?? FocusNode();
 
   bool get hasCounter => count > 0;
 
   void dispose() {
     nameCtl.dispose();
     caloriesCtl.dispose();
+    nameFocus.dispose();
   }
 }
 
@@ -472,11 +475,10 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   List<_IngredientEntry> _ingredients = [];
   List<_SuggestionItem> _suggestions = const [];
   // Index of the ingredient whose name is currently in inline-edit
-  // mode. -1 = none. Tapping a name swaps the Text for a TextField; the
-  // field saves on submit / unfocus.
+  // mode. -1 = none. Each `_IngredientEntry` carries its own
+  // `FocusNode`, so we just toggle `readOnly` on a single always-
+  // rendered TextField — no widget swap, no layout jump.
   int _editingIngredientNameIndex = -1;
-  final TextEditingController _editingNameCtl = TextEditingController();
-  final FocusNode _editingNameFocus = FocusNode();
   bool _updatingControllers = false;
   bool _saving = false;
   File? _resolvedImageFile;
@@ -723,8 +725,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     _caloriesCtl.dispose();
     _refineCtl.dispose();
     _refineFocus.dispose();
-    _editingNameCtl.dispose();
-    _editingNameFocus.dispose();
     for (final ing in _ingredients) {
       ing.dispose();
     }
@@ -902,6 +902,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final newCount = (ing.count + delta).clamp(1, 99);
     if (newCount == ing.count) return;
     if (_updatingControllers) return;
+    HapticFeedback.selectionClick();
     _updatingControllers = true;
 
     ing.count = newCount;
@@ -979,12 +980,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   void _beginEditIngredientName(int index) {
     if (index < 0 || index >= _ingredients.length) return;
-    setState(() {
-      _editingIngredientNameIndex = index;
-      _editingNameCtl.text = _ingredients[index].nameCtl.text;
-    });
+    setState(() => _editingIngredientNameIndex = index);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _editingNameFocus.requestFocus();
+      if (mounted) _ingredients[index].nameFocus.requestFocus();
     });
   }
 
@@ -994,11 +992,11 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       setState(() => _editingIngredientNameIndex = -1);
       return;
     }
-    final newName = _editingNameCtl.text.trim();
-    setState(() {
-      _ingredients[i].nameCtl.text = newName;
-      _editingIngredientNameIndex = -1;
-    });
+    // Trim trailing whitespace the user may have left in the controller.
+    final ing = _ingredients[i];
+    final trimmed = ing.nameCtl.text.trim();
+    if (trimmed != ing.nameCtl.text) ing.nameCtl.text = trimmed;
+    setState(() => _editingIngredientNameIndex = -1);
     _scheduleAutosave();
   }
 
@@ -1019,6 +1017,10 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     // an ingredient that's still in the list.
     final newGrams = (ing.grams + delta * 10).clamp(10.0, double.infinity);
     if (newGrams == ing.grams) return;
+    // selectionClick is the iOS HIG haptic for "moving through a series of
+    // discrete options" — picker wheels, sliders that snap, +/- steppers.
+    // Crisp on iOS, soft tick on Android, doesn't fatigue on rapid taps.
+    HapticFeedback.selectionClick();
 
     _updatingControllers = true;
     ing.grams = newGrams;
@@ -1046,6 +1048,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final ing = _ingredients[index];
     final newCal = (ing.calories + delta * 10).clamp(0.0, double.infinity);
     if (newCal == ing.calories) return;
+    HapticFeedback.selectionClick();
     ing.caloriesCtl.text = _fmt(newCal);
     _onIngredientCaloriesChanged(index);
   }
@@ -3002,7 +3005,16 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         const SizedBox(height: 8),
         for (var i = 0; i < _ingredients.length; i++) ...[
           if (i > 0) const SizedBox(height: 8),
-          _buildIngredientCard(c, i),
+          // ValueKey on the entry's identity — Column matches by key
+          // when the list mutates, so existing cards stay mounted (no
+          // animation replay) while a freshly added entry mounts and
+          // plays its `_MountFadeSlide` once.
+          KeyedSubtree(
+            key: ObjectKey(_ingredients[i]),
+            child: _MountFadeSlide(
+              child: _buildIngredientCard(c, i),
+            ),
+          ),
         ],
       ],
     );
@@ -3029,9 +3041,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             children: [
               Expanded(child: _buildIngredientNameField(c, index, ing)),
               const SizedBox(width: 8),
-              GestureDetector(
+              _PressFeedback(
                 onTap: () => _removeIngredient(index),
-                behavior: HitTestBehavior.opaque,
                 child: Container(
                   width: 36,
                   height: 28,
@@ -3062,9 +3073,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                   label: isCounter
                       ? l10n.quantityLabel
                       : l10n.gramsDialogLabel,
-                  value: isCounter
-                      ? ing.count.toString()
-                      : ing.grams.round().toString(),
+                  numericValue: isCounter ? ing.count : ing.grams,
                   onMinus: () => _onIngredientGramsStepped(index, -1),
                   onPlus: () => _onIngredientGramsStepped(index, 1),
                 ),
@@ -3074,7 +3083,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                 child: _buildIngredientField(
                   c: c,
                   label: l10n.caloriesLabel,
-                  value: ing.calories.round().toString(),
+                  numericValue: ing.calories,
                   onMinus: () => _onIngredientCaloriesStepped(index, -1),
                   onPlus: () => _onIngredientCaloriesStepped(index, 1),
                 ),
@@ -3089,10 +3098,12 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   /// Bordered "label + value + minus/plus" field used by both grams and
   /// calories sides of an ingredient card. The value is read-only here —
   /// editing happens through the steppers (each step = ±10 per spec).
+  /// `numericValue` drives a smooth tween between consecutive integer
+  /// values so the digit roll is visible (no hard snap on tap).
   Widget _buildIngredientField({
     required _AiSheetColors c,
     required String label,
-    required String value,
+    required num numericValue,
     required VoidCallback onMinus,
     required VoidCallback onPlus,
   }) {
@@ -3123,10 +3134,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: _AnimatedNumber(
+                  value: numericValue,
                   style: TextStyle(
                     color: c.onSurface,
                     fontSize: 14,
@@ -3158,9 +3167,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   /// thickness matches the Figma minus icon (the Material `remove`
   /// glyph reads slightly thinner at this size).
   Widget _stepperButton(_AiSheetColors c, bool isPlus, VoidCallback onTap) {
-    return GestureDetector(
+    return _PressFeedback(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: Container(
         height: 34,
         decoration: BoxDecoration(
@@ -3182,10 +3190,13 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
   }
 
-  /// Ingredient card header — either a tap-to-edit Text (the name as
-  /// stored, or a localized "Untitled" placeholder when empty) or an
-  /// inline TextField when this row is the one currently being edited.
-  /// Tapping outside or pressing return on the keyboard commits.
+  /// Ingredient card header. Always a `TextField` — when not editing
+  /// it's `readOnly`, so the layout, baseline, font metrics and decoration
+  /// all stay byte-identical between the static and editing states.
+  /// Tapping flips it into edit mode (focus + keyboard); commit on
+  /// submit / unfocus. Replacing the previous Text↔TextField swap fixed
+  /// a one-frame "the text grows" wobble caused by the two widgets
+  /// computing their text-box height differently.
   Widget _buildIngredientNameField(
     _AiSheetColors c,
     int index,
@@ -3194,68 +3205,53 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final l10n = context.l10n;
     final editing = _editingIngredientNameIndex == index;
     final placeholderColor = c.onSurface.withAlpha(120);
+    final isEmpty = ing.nameCtl.text.trim().isEmpty;
 
-    // The Text and TextField below are styled to be pixel-equivalent —
-    // same font, weight, line-height, no decoration, no padding — so
-    // tapping the name swaps the widgets without shifting the row.
     const nameStyle = TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w600,
       height: 22 / 16,
     );
-    // Locking the strut to the text style stops Flutter from auto-
-    // computing extra leading on either widget, which is the usual
-    // source of the "TextField is one pixel taller than Text" jump.
     const nameStrut = StrutStyle(
       fontSize: 16,
       height: 22 / 16,
       forceStrutHeight: true,
     );
 
-    if (editing) {
-      return SizedBox(
-        height: 22,
-        child: TextField(
-          controller: _editingNameCtl,
-          focusNode: _editingNameFocus,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          style: nameStyle.copyWith(color: c.onSurface),
-          strutStyle: nameStrut,
-          cursorColor: AppColors.primary,
-          cursorWidth: 1.5,
-          decoration: InputDecoration(
-            isCollapsed: true,
-            contentPadding: EdgeInsets.zero,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            filled: false,
-            hintText: l10n.untitledIngredientName,
-            hintStyle: nameStyle.copyWith(color: placeholderColor),
-          ),
-          onSubmitted: (_) => _commitIngredientName(),
-          onTapOutside: (_) {
-            if (_editingIngredientNameIndex == index) _commitIngredientName();
-          },
-        ),
-      );
-    }
-
-    final raw = ing.nameCtl.text.trim();
-    final isEmpty = raw.isEmpty;
-    return GestureDetector(
-      onTap: () => _beginEditIngredientName(index),
-      behavior: HitTestBehavior.opaque,
-      child: Text(
-        isEmpty ? l10n.untitledIngredientName : raw,
-        style: nameStyle.copyWith(
-          color: isEmpty ? placeholderColor : c.onSurface,
-        ),
-        strutStyle: nameStrut,
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
+    return TextField(
+      controller: ing.nameCtl,
+      focusNode: ing.nameFocus,
+      readOnly: !editing,
+      enableInteractiveSelection: editing,
+      showCursor: editing,
+      textInputAction: TextInputAction.done,
+      style: nameStyle.copyWith(
+        color: isEmpty ? placeholderColor : c.onSurface,
       ),
+      strutStyle: nameStrut,
+      cursorColor: AppColors.primary,
+      cursorWidth: 1.5,
+      decoration: InputDecoration(
+        isCollapsed: true,
+        contentPadding: EdgeInsets.zero,
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        disabledBorder: InputBorder.none,
+        filled: false,
+        hintText: l10n.untitledIngredientName,
+        hintStyle: nameStyle.copyWith(color: placeholderColor),
+      ),
+      onTap: editing ? null : () => _beginEditIngredientName(index),
+      onChanged: (_) {
+        // Hint visibility flips when the controller text becomes empty;
+        // refresh so the placeholder color follows.
+        setState(() {});
+      },
+      onSubmitted: (_) => _commitIngredientName(),
+      onTapOutside: (_) {
+        if (_editingIngredientNameIndex == index) _commitIngredientName();
+      },
     );
   }
 
@@ -3705,9 +3701,8 @@ class _SuggestionChip extends StatelessWidget {
     final labelColor = c.isDark
         ? AppColors.darkPrimaryLight
         : AppColors.lightPrimaryLight;
-    return GestureDetector(
+    return _PressFeedback(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
       child: Container(
         height: 34,
         padding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
@@ -3746,6 +3741,119 @@ class _SuggestionChip extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Tactile press feedback. Scales the wrapped child down to 92 % while
+/// the user is holding their finger on it, springs back when released.
+/// Short and shallow on purpose — same `easeOutCubic` curve the rest
+/// of the app uses, ~90 ms duration, just enough to confirm the tap
+/// without a "bouncy" feel.
+class _PressFeedback extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _PressFeedback({
+    required this.child,
+    required this.onTap,
+  });
+
+  static const _pressedScale = 0.92;
+  static const _behavior = HitTestBehavior.opaque;
+
+  @override
+  State<_PressFeedback> createState() => _PressFeedbackState();
+}
+
+class _PressFeedbackState extends State<_PressFeedback> {
+  bool _pressed = false;
+
+  void _setPressed(bool v) {
+    if (_pressed != v && mounted) setState(() => _pressed = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = widget.onTap == null;
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: disabled ? null : (_) => _setPressed(true),
+      onTapUp: disabled ? null : (_) => _setPressed(false),
+      onTapCancel: disabled ? null : () => _setPressed(false),
+      behavior: _PressFeedback._behavior,
+      child: AnimatedScale(
+        scale: _pressed ? _PressFeedback._pressedScale : 1.0,
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOutCubic,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Smoothly tweens between integer values. Used for the grams /
+/// calories displays in ingredient cards so a 100 → 110 stepper tap
+/// looks like a quick count-up rather than a hard snap. Idempotent on
+/// initial mount (begin == end == value), so the existing list of
+/// recognised ingredients renders at its true value with no count-up
+/// flash.
+class _AnimatedNumber extends StatelessWidget {
+  final num value;
+  final TextStyle? style;
+
+  const _AnimatedNumber({
+    required this.value,
+    this.style,
+  });
+
+  static const _duration = Duration(milliseconds: 160);
+
+  @override
+  Widget build(BuildContext context) {
+    final v = value.toDouble();
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: v, end: v),
+      duration: _duration,
+      curve: Curves.easeOutCubic,
+      builder: (_, current, _) => Text(
+        current.round().toString(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: style,
+      ),
+    );
+  }
+}
+
+/// One-shot fade + slide-up on first mount. Used to give newly added
+/// ingredient cards (via "Add suggestion" / "Smth else") a soft entry
+/// instead of popping in. Existing cards never see this animation —
+/// once `tween.end` settles at 1.0 on the first frame after mount,
+/// rebuilds keep it there.
+class _MountFadeSlide extends StatelessWidget {
+  final Widget child;
+
+  const _MountFadeSlide({required this.child});
+
+  static const _duration = Duration(milliseconds: 250);
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: _duration,
+      curve: Curves.easeOutCubic,
+      builder: (_, t, child) {
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * 8),
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }
