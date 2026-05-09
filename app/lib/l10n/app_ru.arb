@@ -561,5 +561,9 @@
   "analyticsMetricFat": "Жиры",
   "analyticsMetricCarbs": "Углев",
 
-  "quantityLabel": "Количество"
+  "quantityLabel": "Количество",
+
+  "addSuggestionsLabel": "Добавить ингредиент",
+  "suggestionSomethingElse": "Другое",
+  "untitledIngredientName": "Без названия"
 }

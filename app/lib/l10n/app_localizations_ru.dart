@@ -1614,4 +1614,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get quantityLabel => 'Количество';
+
+  @override
+  String get addSuggestionsLabel => 'Добавить ингредиент';
+
+  @override
+  String get suggestionSomethingElse => 'Другое';
+
+  @override
+  String get untitledIngredientName => 'Без названия';
 }

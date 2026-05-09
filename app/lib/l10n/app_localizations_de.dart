@@ -1619,4 +1619,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get quantityLabel => 'Menge';
+
+  @override
+  String get addSuggestionsLabel => 'Vorschläge hinzufügen';
+
+  @override
+  String get suggestionSomethingElse => 'Sonstiges';
+
+  @override
+  String get untitledIngredientName => 'Ohne Namen';
 }

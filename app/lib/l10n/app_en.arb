@@ -538,5 +538,9 @@
   "analyticsMetricFat": "Fats",
   "analyticsMetricCarbs": "Carbs",
 
-  "quantityLabel": "Quantity"
+  "quantityLabel": "Quantity",
+
+  "addSuggestionsLabel": "Add suggestions",
+  "suggestionSomethingElse": "Smth else",
+  "untitledIngredientName": "Untitled"
 }

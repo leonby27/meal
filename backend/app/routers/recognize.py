@@ -36,6 +36,10 @@ class RecognitionResponse(BaseModel):
     name: str
     total_grams: float
     ingredients: List[Ingredient]
+    # Optional list of plausible extra ingredients the model thinks the
+    # user might have added but that aren't visible / confirmed. Pure UI
+    # hints — never folded into totals.
+    suggestions: List[Ingredient] = []
     per_100g: NutritionInfo
     total: NutritionInfo
     health_rating: int | None = None

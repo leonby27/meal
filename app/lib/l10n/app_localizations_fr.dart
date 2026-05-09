@@ -1622,4 +1622,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get quantityLabel => 'Quantité';
+
+  @override
+  String get addSuggestionsLabel => 'Ajouter des suggestions';
+
+  @override
+  String get suggestionSomethingElse => 'Autre';
+
+  @override
+  String get untitledIngredientName => 'Sans nom';
 }

@@ -2997,6 +2997,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Количество'**
   String get quantityLabel;
+
+  /// No description provided for @addSuggestionsLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить ингредиент'**
+  String get addSuggestionsLabel;
+
+  /// No description provided for @suggestionSomethingElse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другое'**
+  String get suggestionSomethingElse;
+
+  /// No description provided for @untitledIngredientName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без названия'**
+  String get untitledIngredientName;
 }
 
 class _AppLocalizationsDelegate

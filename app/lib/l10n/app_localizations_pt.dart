@@ -1616,4 +1616,13 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get quantityLabel => 'Quantidade';
+
+  @override
+  String get addSuggestionsLabel => 'Adicionar sugestões';
+
+  @override
+  String get suggestionSomethingElse => 'Outro';
+
+  @override
+  String get untitledIngredientName => 'Sem nome';
 }

@@ -1602,4 +1602,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quantityLabel => 'Quantity';
+
+  @override
+  String get addSuggestionsLabel => 'Add suggestions';
+
+  @override
+  String get suggestionSomethingElse => 'Smth else';
+
+  @override
+  String get untitledIngredientName => 'Untitled';
 }

@@ -537,5 +537,9 @@
   "analyticsMetricFat": "Fett",
   "analyticsMetricCarbs": "Kohl",
 
-  "quantityLabel": "Menge"
+  "quantityLabel": "Menge",
+
+  "addSuggestionsLabel": "Vorschläge hinzufügen",
+  "suggestionSomethingElse": "Sonstiges",
+  "untitledIngredientName": "Ohne Namen"
 }

@@ -36,6 +36,29 @@ enum _HealthProfile {
   balanced,
 }
 
+/// Pure-data record for an AI "extra ingredient" suggestion. These ride
+/// alongside the confirmed ingredients in the recognise response and are
+/// rendered as tappable chips in a separate block under the ingredient
+/// list. Tapping a chip moves the suggestion into the live `_ingredients`
+/// list (keeping the AI's grams/calories/macros) and removes the chip.
+class _SuggestionItem {
+  final String name;
+  final double grams;
+  final double protein;
+  final double fat;
+  final double carbs;
+  final double calories;
+
+  const _SuggestionItem({
+    required this.name,
+    required this.grams,
+    required this.protein,
+    required this.fat,
+    required this.carbs,
+    required this.calories,
+  });
+}
+
 class _IngredientEntry {
   final TextEditingController nameCtl;
   final TextEditingController caloriesCtl;
@@ -447,6 +470,13 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   bool _refining = false;
 
   List<_IngredientEntry> _ingredients = [];
+  List<_SuggestionItem> _suggestions = const [];
+  // Index of the ingredient whose name is currently in inline-edit
+  // mode. -1 = none. Tapping a name swaps the Text for a TextField; the
+  // field saves on submit / unfocus.
+  int _editingIngredientNameIndex = -1;
+  final TextEditingController _editingNameCtl = TextEditingController();
+  final FocusNode _editingNameFocus = FocusNode();
   bool _updatingControllers = false;
   bool _saving = false;
   File? _resolvedImageFile;
@@ -693,6 +723,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     _caloriesCtl.dispose();
     _refineCtl.dispose();
     _refineFocus.dispose();
+    _editingNameCtl.dispose();
+    _editingNameFocus.dispose();
     for (final ing in _ingredients) {
       ing.dispose();
     }
@@ -757,6 +789,21 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         gramsPerUnit: gramsPerUnit,
       );
     }).toList();
+
+    final suggestions =
+        (result['suggestions'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+    _suggestions = [
+      for (final s in suggestions)
+        if ((s['name'] as String?)?.trim().isNotEmpty ?? false)
+          _SuggestionItem(
+            name: (s['name'] as String).trim(),
+            grams: (s['grams'] as num?)?.toDouble() ?? 30,
+            protein: (s['protein'] as num?)?.toDouble() ?? 0,
+            fat: (s['fat'] as num?)?.toDouble() ?? 0,
+            carbs: (s['carbs'] as num?)?.toDouble() ?? 0,
+            calories: (s['calories'] as num?)?.toDouble() ?? 0,
+          ),
+    ];
 
     _captureMacroRatio();
   }
@@ -871,6 +918,87 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     _updatingControllers = false;
     setState(() {});
+    _scheduleAutosave();
+  }
+
+  // ── Suggestions → ingredients ─────────────────────────────────
+
+  /// Append an AI-suggested extra ingredient to the live ingredient
+  /// list, preserving the AI's grams/calories/macros, and remove the
+  /// chip so it can't be added twice.
+  void _addSuggestion(int index) {
+    if (index < 0 || index >= _suggestions.length) return;
+    final s = _suggestions[index];
+    final entry = _IngredientEntry(
+      nameCtl: TextEditingController(text: s.name),
+      caloriesCtl: TextEditingController(text: _fmt(s.calories)),
+      grams: s.grams,
+      proteinPer100g: s.grams > 0 ? s.protein / s.grams * 100 : 0,
+      fatPer100g: s.grams > 0 ? s.fat / s.grams * 100 : 0,
+      carbsPer100g: s.grams > 0 ? s.carbs / s.grams * 100 : 0,
+      caloriesPer100g: s.grams > 0 ? s.calories / s.grams * 100 : 0,
+      protein: s.protein,
+      fat: s.fat,
+      carbs: s.carbs,
+      calories: s.calories,
+    );
+    setState(() {
+      _ingredients.add(entry);
+      _suggestions = [
+        for (var i = 0; i < _suggestions.length; i++)
+          if (i != index) _suggestions[i],
+      ];
+    });
+    _recalcTotalsFromIngredients();
+    _captureMacroRatio();
+    _scheduleAutosave();
+  }
+
+  /// Append a blank "Untitled" ingredient (10 g, 0 kcal). Tapping the
+  /// name in the new card opens the inline editor so the user can name
+  /// it without leaving the sheet.
+  void _addCustomIngredient() {
+    final entry = _IngredientEntry(
+      nameCtl: TextEditingController(),
+      caloriesCtl: TextEditingController(text: '0'),
+      grams: 10,
+      proteinPer100g: 0,
+      fatPer100g: 0,
+      carbsPer100g: 0,
+      caloriesPer100g: 0,
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+      calories: 0,
+    );
+    setState(() => _ingredients.add(entry));
+    _scheduleAutosave();
+  }
+
+  // ── Inline name editor ────────────────────────────────────────
+
+  void _beginEditIngredientName(int index) {
+    if (index < 0 || index >= _ingredients.length) return;
+    setState(() {
+      _editingIngredientNameIndex = index;
+      _editingNameCtl.text = _ingredients[index].nameCtl.text;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _editingNameFocus.requestFocus();
+    });
+  }
+
+  void _commitIngredientName() {
+    final i = _editingIngredientNameIndex;
+    if (i < 0 || i >= _ingredients.length) {
+      setState(() => _editingIngredientNameIndex = -1);
+      return;
+    }
+    final newName = _editingNameCtl.text.trim();
+    setState(() {
+      _ingredients[i].nameCtl.text = newName;
+      _editingIngredientNameIndex = -1;
+    });
     _scheduleAutosave();
   }
 
@@ -1533,6 +1661,15 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           if (_ingredients.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildIngredientsSection(c),
+          ],
+          // Suggestions block: always rendered when the user could add
+          // something — i.e. either the AI suggested specific extras or
+          // we still want to expose the "Smth else" custom-input chip.
+          // Only hidden entirely if there's no ingredient list at all
+          // (recognise hasn't completed / failed).
+          if (_ingredients.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildSuggestionsBlock(c),
           ],
           const SizedBox(height: 12),
         ],
@@ -2890,19 +3027,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: Text(
-                  ing.nameCtl.text,
-                  style: TextStyle(
-                    color: c.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 22 / 16,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
+              Expanded(child: _buildIngredientNameField(c, index, ing)),
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: () => _removeIngredient(index),
@@ -3054,6 +3179,128 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                 ),
               ),
       ),
+    );
+  }
+
+  /// Ingredient card header — either a tap-to-edit Text (the name as
+  /// stored, or a localized "Untitled" placeholder when empty) or an
+  /// inline TextField when this row is the one currently being edited.
+  /// Tapping outside or pressing return on the keyboard commits.
+  Widget _buildIngredientNameField(
+    _AiSheetColors c,
+    int index,
+    _IngredientEntry ing,
+  ) {
+    final l10n = context.l10n;
+    final editing = _editingIngredientNameIndex == index;
+    final placeholderColor = c.onSurface.withAlpha(120);
+
+    // The Text and TextField below are styled to be pixel-equivalent —
+    // same font, weight, line-height, no decoration, no padding — so
+    // tapping the name swaps the widgets without shifting the row.
+    const nameStyle = TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      height: 22 / 16,
+    );
+    // Locking the strut to the text style stops Flutter from auto-
+    // computing extra leading on either widget, which is the usual
+    // source of the "TextField is one pixel taller than Text" jump.
+    const nameStrut = StrutStyle(
+      fontSize: 16,
+      height: 22 / 16,
+      forceStrutHeight: true,
+    );
+
+    if (editing) {
+      return SizedBox(
+        height: 22,
+        child: TextField(
+          controller: _editingNameCtl,
+          focusNode: _editingNameFocus,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          style: nameStyle.copyWith(color: c.onSurface),
+          strutStyle: nameStrut,
+          cursorColor: AppColors.primary,
+          cursorWidth: 1.5,
+          decoration: InputDecoration(
+            isCollapsed: true,
+            contentPadding: EdgeInsets.zero,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            filled: false,
+            hintText: l10n.untitledIngredientName,
+            hintStyle: nameStyle.copyWith(color: placeholderColor),
+          ),
+          onSubmitted: (_) => _commitIngredientName(),
+          onTapOutside: (_) {
+            if (_editingIngredientNameIndex == index) _commitIngredientName();
+          },
+        ),
+      );
+    }
+
+    final raw = ing.nameCtl.text.trim();
+    final isEmpty = raw.isEmpty;
+    return GestureDetector(
+      onTap: () => _beginEditIngredientName(index),
+      behavior: HitTestBehavior.opaque,
+      child: Text(
+        isEmpty ? l10n.untitledIngredientName : raw,
+        style: nameStyle.copyWith(
+          color: isEmpty ? placeholderColor : c.onSurface,
+        ),
+        strutStyle: nameStrut,
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+      ),
+    );
+  }
+
+  // ── Add-suggestions block (Figma node 6575:13007) ─────────────
+  //
+  // Wrap row of chips: each is a 34 px-tall pill with the suggestion
+  // name on the left and a 26×26 plus button on the right. The trailing
+  // chip is "Smth else" — tapping it appends a blank "Untitled"
+  // ingredient that the user can rename inline. Tapping any other chip
+  // moves that suggestion into the live ingredient list and removes the
+  // chip from this block.
+
+  Widget _buildSuggestionsBlock(_AiSheetColors c) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.addSuggestionsLabel,
+          style: TextStyle(
+            color: c.secondaryText,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            height: 18 / 14,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (var i = 0; i < _suggestions.length; i++)
+              _SuggestionChip(
+                c: c,
+                label: _suggestions[i].name,
+                onTap: () => _addSuggestion(i),
+              ),
+            _SuggestionChip(
+              c: c,
+              label: l10n.suggestionSomethingElse,
+              onTap: _addCustomIngredient,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -3430,6 +3677,73 @@ class _AiSheetToast extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pill chip used in the "Add suggestions" block: name + circular +
+/// button. White surface, 1 px hairline border, 34 px tall (so a 17 px
+/// border-radius gives a true pill shape). The label uses the Figma
+/// `Text or Icons/Primary Light` token (#485066) and stays the same in
+/// both light/dark themes — the chip's surface mirrors the dark/light
+/// card background.
+class _SuggestionChip extends StatelessWidget {
+  final _AiSheetColors c;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SuggestionChip({
+    required this.c,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final labelColor = c.isDark
+        ? AppColors.darkPrimaryLight
+        : AppColors.lightPrimaryLight;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        height: 34,
+        padding: const EdgeInsets.fromLTRB(12, 0, 4, 0),
+        decoration: BoxDecoration(
+          color: c.cardBg,
+          borderRadius: BorderRadius.circular(17),
+          border: Border.all(color: c.borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: labelColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 18 / 14,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: c.baseSurface,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(Icons.add, size: 16, color: c.onSurface),
+            ),
+          ],
         ),
       ),
     );

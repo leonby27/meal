@@ -24,6 +24,11 @@ _JSON_SCHEMA = """{
     {"name": "Tomatoes", "grams": 80, "protein": 0.9, "fat": 0.2, "carbs": 3.2, "calories": 18},
     {"name": "Hard cheese", "grams": 30, "protein": 7.5, "fat": 8.4, "carbs": 0.0, "calories": 105}
   ],
+  "suggestions": [
+    {"name": "Bacon", "grams": 30, "protein": 11.0, "fat": 12.0, "carbs": 0.4, "calories": 155},
+    {"name": "Sausage", "grams": 50, "protein": 6.5, "fat": 14.0, "carbs": 1.5, "calories": 155},
+    {"name": "Mushrooms", "grams": 40, "protein": 1.2, "fat": 0.1, "carbs": 1.3, "calories": 11}
+  ],
   "per_100g": {"protein": 10.5, "fat": 8.5, "carbs": 2.2, "calories": 127},
   "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278}
 }"""
@@ -112,6 +117,26 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   separately so the client can re-total when the user changes piece
   counts.
 - `total` must equal the sum across ingredients (within 1–2%).
+- `suggestions` is REQUIRED and almost always non-empty. It is a short list
+  of 3–6 plausible EXTRA ingredients that COULD have been added to this
+  dish but that you cannot see / confirm. They are pure UI hints — the
+  user picks ones they actually used. Think "what does a real cook
+  commonly add to this dish?" For an omelet that's almost always:
+  cheese, bacon, sausage, ham, mushrooms, tomato, onion, herbs, butter.
+  For pasta: parmesan, basil, garlic, olive oil, chili flakes, wine.
+  For a salad: olive oil, feta, parmesan, croutons, nuts, dressing.
+  For a sandwich: mayo, mustard, pickles, tomato, lettuce, cheese. For
+  a soup: cream, sour cream, herbs, croutons, sesame oil. Do this for
+  the textual recognition path too — even when the user only typed the
+  dish name without ingredients, suggest the common companions.
+  Return `[]` ONLY when truly nothing makes sense, e.g. a plain apple,
+  a glass of water, a single packaged candy bar with a known recipe.
+  These suggestions are NOT included in `total`, `total_grams`, or
+  `per_100g`. For each suggestion give a sensible default serving size
+  (`grams`, usually 10–60 g) and matching protein / fat / carbs /
+  calories. Use the same field names as a regular ingredient. Do NOT
+  use the "(N шт.)" piece-count marker in suggestions — keep names
+  short and bare.
 - `health_rating` is an integer 1–10 estimating how well this dish fits a
   normal balanced diet. Anchors: 1 = very unhealthy (deep-fried, sugary,
   ultra-processed); 5 = neutral everyday food; 10 = exceptionally healthy

@@ -537,5 +537,9 @@
   "analyticsMetricFat": "Lip",
   "analyticsMetricCarbs": "Gluc",
 
-  "quantityLabel": "Quantité"
+  "quantityLabel": "Quantité",
+
+  "addSuggestionsLabel": "Ajouter des suggestions",
+  "suggestionSomethingElse": "Autre",
+  "untitledIngredientName": "Sans nom"
 }
