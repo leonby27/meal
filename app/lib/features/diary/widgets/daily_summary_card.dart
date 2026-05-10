@@ -52,16 +52,16 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
 
   String _formatNumber(num value) {
     final intVal = value.toInt();
-    if (intVal >= 1000) {
-      final str = intVal.toString();
-      final buffer = StringBuffer();
-      for (var i = 0; i < str.length; i++) {
-        if (i > 0 && (str.length - i) % 3 == 0) buffer.write('\u{00A0}');
-        buffer.write(str[i]);
-      }
-      return buffer.toString();
+    final absVal = intVal.abs();
+    if (absVal < 1000) return intVal.toString();
+    final str = absVal.toString();
+    final buffer = StringBuffer();
+    if (intVal < 0) buffer.write('-');
+    for (var i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buffer.write('\u{00A0}');
+      buffer.write(str[i]);
     }
-    return intVal.toString();
+    return buffer.toString();
   }
 
   @override
@@ -94,7 +94,8 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
     final totalCarbs =
         widget.logs.fold(0.0, (sum, l) => sum + l.carbs);
 
-    final remaining = math.max(0, (_goalCalories - totalCalories).round());
+    final remaining = (_goalCalories - totalCalories).round();
+    final remainingColor = remaining < 0 ? secondary : primary;
     final caloriesProgress = _goalCalories > 0
         ? (totalCalories / _goalCalories).clamp(0.0, 1.0)
         : 0.0;
@@ -117,6 +118,7 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
                 const SizedBox(height: 22),
                 _GaugeSection(
                   remaining: remaining,
+                  remainingColor: remainingColor,
                   progress: caloriesProgress,
                   eaten: totalCalories,
                   goal: _goalCalories,
@@ -183,6 +185,7 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
 class _GaugeSection extends StatelessWidget {
   const _GaugeSection({
     required this.remaining,
+    required this.remainingColor,
     required this.progress,
     required this.eaten,
     required this.goal,
@@ -196,6 +199,7 @@ class _GaugeSection extends StatelessWidget {
   });
 
   final int remaining;
+  final Color remainingColor;
   final double progress;
   final double eaten;
   final double goal;
@@ -227,9 +231,9 @@ class _GaugeSection extends StatelessWidget {
           ),
           _SemicircleGauge(
             remaining: remaining,
+            remainingColor: remainingColor,
             progress: progress,
             remainingLabel: remainingLabel,
-            primary: primary,
             secondary: secondary,
             trackColor: lineColor,
             formatNumber: formatNumber,
@@ -314,18 +318,18 @@ class _SidePill extends StatelessWidget {
 class _SemicircleGauge extends StatelessWidget {
   const _SemicircleGauge({
     required this.remaining,
+    required this.remainingColor,
     required this.progress,
     required this.remainingLabel,
-    required this.primary,
     required this.secondary,
     required this.trackColor,
     required this.formatNumber,
   });
 
   final int remaining;
+  final Color remainingColor;
   final double progress;
   final String remainingLabel;
-  final Color primary;
   final Color secondary;
   final Color trackColor;
   final String Function(num) formatNumber;
@@ -378,7 +382,7 @@ class _SemicircleGauge extends StatelessWidget {
                   fontSize: 24,
                   fontWeight: FontWeight.w400,
                   height: 28 / 24,
-                  color: primary,
+                  color: remainingColor,
                 ),
               ),
             ),
