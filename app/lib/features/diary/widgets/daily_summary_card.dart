@@ -76,6 +76,9 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
     final secondary = isDark
         ? AppColors.darkSecondaryDark
         : AppColors.lightSecondaryDark;
+    final textSecondary = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
     final primary = cs.onSurface;
     final pillSurface =
         isDark ? AppColors.darkSurface2 : AppColors.lightScaffold;
@@ -138,6 +141,7 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
                     trackColor: lineColor,
                     primary: primary,
                     secondary: secondary,
+                    goalNumberColor: textSecondary,
                   ),
                 ),
               ],
@@ -466,6 +470,7 @@ class _MacrosRow extends StatelessWidget {
     required this.trackColor,
     required this.primary,
     required this.secondary,
+    required this.goalNumberColor,
   });
 
   final double protein;
@@ -477,6 +482,7 @@ class _MacrosRow extends StatelessWidget {
   final Color trackColor;
   final Color primary;
   final Color secondary;
+  final Color goalNumberColor;
 
   static const _proteinGradient = LinearGradient(
     begin: Alignment.centerRight,
@@ -510,6 +516,7 @@ class _MacrosRow extends StatelessWidget {
             trackColor: trackColor,
             primary: primary,
             secondary: secondary,
+            goalNumberColor: goalNumberColor,
           ),
         ),
         const SizedBox(width: 12),
@@ -523,6 +530,7 @@ class _MacrosRow extends StatelessWidget {
             trackColor: trackColor,
             primary: primary,
             secondary: secondary,
+            goalNumberColor: goalNumberColor,
           ),
         ),
         const SizedBox(width: 12),
@@ -536,6 +544,7 @@ class _MacrosRow extends StatelessWidget {
             trackColor: trackColor,
             primary: primary,
             secondary: secondary,
+            goalNumberColor: goalNumberColor,
           ),
         ),
       ],
@@ -553,6 +562,7 @@ class _MacroColumn extends StatelessWidget {
     required this.trackColor,
     required this.primary,
     required this.secondary,
+    required this.goalNumberColor,
   });
 
   final String label;
@@ -563,6 +573,7 @@ class _MacroColumn extends StatelessWidget {
   final Color trackColor;
   final Color primary;
   final Color secondary;
+  final Color goalNumberColor;
 
   @override
   Widget build(BuildContext context) {
@@ -582,7 +593,7 @@ class _MacroColumn extends StatelessWidget {
               TextSpan(text: '${current.toInt()}'),
               TextSpan(
                 text: ' / ${goal.toInt()}$goalSuffix',
-                style: TextStyle(color: secondary),
+                style: TextStyle(color: goalNumberColor),
               ),
             ],
           ),

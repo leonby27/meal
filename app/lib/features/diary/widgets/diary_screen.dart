@@ -1173,15 +1173,6 @@ class _DiaryScreenState extends State<DiaryScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         GestureDetector(
-                          onTap: () => context.push('/stats'),
-                          child: Icon(
-                            Icons.bar_chart_rounded,
-                            size: 24,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        GestureDetector(
                           onTap: () => context.push('/favorites'),
                           child: Icon(
                             Icons.favorite,
