@@ -931,6 +931,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get showLess => 'Weniger anzeigen';
 
   @override
+  String get caloriesRemaining => 'Kalorien übrig';
+
+  @override
+  String get dailyEatenLabel => 'Gegessen';
+
+  @override
+  String get dailyGoalLabel => 'Ziel';
+
+  @override
+  String get openMore => 'Mehr anzeigen';
+
+  @override
+  String get goToStatistics => 'Zur Statistik';
+
+  @override
   String get networkTimeout =>
       'Server antwortet nicht. Überprüfen Sie Ihre Internetverbindung.';
 

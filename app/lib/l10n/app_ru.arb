@@ -329,6 +329,11 @@
   "otherMetrics": "Остальные метрики",
   "showMore": "Подробнее",
   "showLess": "Скрыть",
+  "caloriesRemaining": "Осталось калорий",
+  "dailyEatenLabel": "Съедено",
+  "dailyGoalLabel": "Цель",
+  "openMore": "Развернуть",
+  "goToStatistics": "К статистике",
 
   "networkTimeout": "Сервер не отвечает. Проверьте подключение к интернету.",
   "networkSslError": "Ошибка SSL-соединения. Попробуйте позже.",

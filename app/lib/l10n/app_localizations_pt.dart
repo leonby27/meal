@@ -934,6 +934,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get showLess => 'Mostrar menos';
 
   @override
+  String get caloriesRemaining => 'Calorias restantes';
+
+  @override
+  String get dailyEatenLabel => 'Comido';
+
+  @override
+  String get dailyGoalLabel => 'Meta';
+
+  @override
+  String get openMore => 'Ver mais';
+
+  @override
+  String get goToStatistics => 'Ir para estatísticas';
+
+  @override
   String get networkTimeout =>
       'Servidor não responde. Verifique sua conexão com a internet.';
 

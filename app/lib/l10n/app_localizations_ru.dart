@@ -930,6 +930,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get showLess => 'Скрыть';
 
   @override
+  String get caloriesRemaining => 'Осталось калорий';
+
+  @override
+  String get dailyEatenLabel => 'Съедено';
+
+  @override
+  String get dailyGoalLabel => 'Цель';
+
+  @override
+  String get openMore => 'Развернуть';
+
+  @override
+  String get goToStatistics => 'К статистике';
+
+  @override
   String get networkTimeout =>
       'Сервер не отвечает. Проверьте подключение к интернету.';
 

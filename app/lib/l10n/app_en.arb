@@ -312,6 +312,11 @@
   "otherMetrics": "Other Metrics",
   "showMore": "Show more",
   "showLess": "Show less",
+  "caloriesRemaining": "Calories remaining",
+  "dailyEatenLabel": "Eaten",
+  "dailyGoalLabel": "Goal",
+  "openMore": "Open more",
+  "goToStatistics": "Go to statistics",
 
   "networkTimeout": "Server not responding. Check your internet connection.",
   "networkSslError": "SSL connection error. Try again later.",

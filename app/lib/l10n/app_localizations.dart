@@ -1810,6 +1810,36 @@ abstract class AppLocalizations {
   /// **'Скрыть'**
   String get showLess;
 
+  /// No description provided for @caloriesRemaining.
+  ///
+  /// In ru, this message translates to:
+  /// **'Осталось калорий'**
+  String get caloriesRemaining;
+
+  /// No description provided for @dailyEatenLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Съедено'**
+  String get dailyEatenLabel;
+
+  /// No description provided for @dailyGoalLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель'**
+  String get dailyGoalLabel;
+
+  /// No description provided for @openMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Развернуть'**
+  String get openMore;
+
+  /// No description provided for @goToStatistics.
+  ///
+  /// In ru, this message translates to:
+  /// **'К статистике'**
+  String get goToStatistics;
+
   /// No description provided for @networkTimeout.
   ///
   /// In ru, this message translates to:
