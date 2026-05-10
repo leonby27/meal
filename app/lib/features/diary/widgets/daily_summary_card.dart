@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/widgets/edit_goals_sheet.dart';
 
 class DailySummaryCard extends StatefulWidget {
   final List<FoodLog> logs;
@@ -47,6 +48,25 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
         _goalFat = double.tryParse(fat ?? '') ?? 70;
         _goalCarbs = double.tryParse(carbs ?? '') ?? 250;
       });
+    }
+  }
+
+  Future<void> _openGoalsSheet(BuildContext context) async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0xCC000000),
+      builder: (ctx) => EditGoalsSheet(
+        initialCalories: _goalCalories,
+        initialProtein: _goalProtein,
+        initialFat: _goalFat,
+        initialCarbs: _goalCarbs,
+      ),
+    );
+    if (saved == true && mounted) {
+      await _loadSettings();
     }
   }
 
@@ -129,6 +149,7 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
                   secondary: secondary,
                   lineColor: lineColor,
                   formatNumber: _formatNumber,
+                  onEditGoals: () => _openGoalsSheet(context),
                 ),
                 const SizedBox(height: 28),
                 Padding(
@@ -196,6 +217,7 @@ class _GaugeSection extends StatelessWidget {
     required this.secondary,
     required this.lineColor,
     required this.formatNumber,
+    required this.onEditGoals,
   });
 
   final int remaining;
@@ -210,6 +232,7 @@ class _GaugeSection extends StatelessWidget {
   final Color secondary;
   final Color lineColor;
   final String Function(num) formatNumber;
+  final VoidCallback onEditGoals;
 
   @override
   Widget build(BuildContext context) {
@@ -240,12 +263,18 @@ class _GaugeSection extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(top: 41),
-            child: _SidePill(
-              value: formatNumber(goal),
-              label: goalLabel,
-              primary: primary,
-              secondary: secondary,
-              lineColor: lineColor,
+            child: GestureDetector(
+              onTap: onEditGoals,
+              behavior: HitTestBehavior.opaque,
+              child: _SidePill(
+                value: formatNumber(goal),
+                label: goalLabel,
+                primary: primary,
+                secondary: secondary,
+                lineColor: lineColor,
+                trailingIconAsset: 'assets/icons/edit.svg',
+                trailingIconColor: secondary,
+              ),
             ),
           ),
         ],
@@ -261,6 +290,8 @@ class _SidePill extends StatelessWidget {
     required this.primary,
     required this.secondary,
     required this.lineColor,
+    this.trailingIconAsset,
+    this.trailingIconColor,
   });
 
   final String value;
@@ -268,9 +299,22 @@ class _SidePill extends StatelessWidget {
   final Color primary;
   final Color secondary;
   final Color lineColor;
+  final String? trailingIconAsset;
+  final Color? trailingIconColor;
 
   @override
   Widget build(BuildContext context) {
+    final valueText = Text(
+      value,
+      maxLines: 1,
+      style: GoogleFonts.momoTrustDisplay(
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        height: 16 / 13,
+        color: primary,
+      ),
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -285,16 +329,26 @@ class _SidePill extends StatelessWidget {
           alignment: Alignment.center,
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              maxLines: 1,
-              style: GoogleFonts.momoTrustDisplay(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                height: 16 / 13,
-                color: primary,
-              ),
-            ),
+            child: trailingIconAsset == null
+                ? valueText
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      valueText,
+                      const SizedBox(width: 4),
+                      SvgPicture.asset(
+                        trailingIconAsset!,
+                        width: 14,
+                        height: 14,
+                        colorFilter: trailingIconColor == null
+                            ? null
+                            : ColorFilter.mode(
+                                trailingIconColor!,
+                                BlendMode.srcIn,
+                              ),
+                      ),
+                    ],
+                  ),
           ),
         ),
         const SizedBox(height: 9),

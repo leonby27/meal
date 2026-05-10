@@ -1669,17 +1669,12 @@ class _DiaryScreenState extends State<DiaryScreen>
               _selectedDate.day,
             );
             if (d == sel) _syncWeekCalories(logs);
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                return _buildDayContent(
-                  context,
-                  logs,
-                  dateStr,
-                  isDark,
-                  onBack4,
-                  constraints.maxHeight,
-                );
-              },
+            return _buildDayContent(
+              context,
+              logs,
+              dateStr,
+              isDark,
+              onBack4,
             );
           },
         );
@@ -1805,7 +1800,6 @@ class _DiaryScreenState extends State<DiaryScreen>
     String dateStr,
     bool isDark,
     Color back2,
-    double viewportHeight,
   ) {
     final cs = Theme.of(context).colorScheme;
 
@@ -1820,60 +1814,59 @@ class _DiaryScreenState extends State<DiaryScreen>
     final bottomPadding =
         MediaQuery.paddingOf(context).bottom + _inputBarReservedHeight + 24;
 
-    return ListView(
-      padding: EdgeInsets.only(bottom: bottomPadding),
-      children: [
-        DailySummaryCard(logs: logs, selectedDate: date),
-        if (showBanner) _buildFreeEntriesBanner(context, auth),
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: DailySummaryCard(logs: logs, selectedDate: date),
+        ),
+        if (showBanner)
+          SliverToBoxAdapter(child: _buildFreeEntriesBanner(context, auth)),
         if (sortedLogs.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          _buildRecordsHeader(context, cs),
-          const SizedBox(height: 8),
-          _buildFoodCards(
-            context,
-            sortedLogs,
-            dateStr,
-            back2,
-            _goalCalories,
-            animationSeed: _recordsAnimationSeed,
-          ),
-        ] else ...[
-          Builder(
-            builder: (context) {
-              const fixedAbove = 220.0;
-              final emptyHeight = (viewportHeight - fixedAbove).clamp(
-                200.0,
-                viewportHeight,
-              );
-              return SizedBox(
-                height: emptyHeight,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Lottie.asset(
-                        'assets/animations/empty_plate.json',
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.contain,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        context.l10n.diaryEmptyDay,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          height: 22 / 16,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+                _buildRecordsHeader(context, cs),
+                const SizedBox(height: 8),
+                _buildFoodCards(
+                  context,
+                  sortedLogs,
+                  dateStr,
+                  back2,
+                  _goalCalories,
+                  animationSeed: _recordsAnimationSeed,
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ],
+        ] else
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Lottie.asset(
+                    'assets/animations/empty_plate.json',
+                    width: 90,
+                    height: 90,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.l10n.diaryEmptyDay,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      height: 22 / 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        SliverPadding(padding: EdgeInsets.only(bottom: bottomPadding)),
       ],
     );
   }

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -13,9 +12,9 @@ import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/login_sync_flow.dart';
-import 'package:meal_tracker/core/services/login_sync_service.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/widgets/edit_goals_sheet.dart';
 import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
 
 /// When `true`, Profile shows the app theme row again (`ThemeNotifier` + picker).
@@ -33,25 +32,14 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   bool _dbReady = false;
   bool _anyPushReminderEnabled = false;
   bool _isDeletingAccount = false;
-  final _calorieController = TextEditingController(text: '');
-  final _proteinController = TextEditingController(text: '');
-  final _fatController = TextEditingController(text: '');
-  final _carbsController = TextEditingController(text: '');
-
-  /// КБЖУ-инпуты не должны получать фокус сами при возврате на экран / смене локали.
-  void _scheduleUnfocusGoalInputs() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final route = ModalRoute.of(context);
-      if (route?.isCurrent != true) return;
-      FocusManager.instance.primaryFocus?.unfocus();
-    });
-  }
+  double _calorieGoal = 2000;
+  double _proteinGoal = 100;
+  double _fatGoal = 70;
+  double _carbsGoal = 250;
 
   @override
   void initState() {
     super.initState();
-    LocaleNotifier.instance.addListener(_scheduleUnfocusGoalInputs);
     _initDb();
   }
 
@@ -66,7 +54,6 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
 
   @override
   void didPopNext() {
-    _scheduleUnfocusGoalInputs();
     _refreshPushRemindersFromDb();
   }
 
@@ -88,46 +75,53 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
 
   @override
   void dispose() {
-    LocaleNotifier.instance.removeListener(_scheduleUnfocusGoalInputs);
     appRouteObserver.unsubscribe(this);
-    _saveGoals();
-    _calorieController.dispose();
-    _proteinController.dispose();
-    _fatController.dispose();
-    _carbsController.dispose();
     super.dispose();
   }
 
   Future<void> _initDb() async {
     _db = await AppDatabase.getInstance();
-    _calorieController.text = await _db.getSetting('calorie_goal') ?? '2000';
-    _proteinController.text = await _db.getSetting('protein_goal') ?? '';
-    _fatController.text = await _db.getSetting('fat_goal') ?? '';
-    _carbsController.text = await _db.getSetting('carbs_goal') ?? '';
+    await _loadGoals();
     final anyPushReminders = await _anyPushReminderEnabledFromDb();
     if (mounted) {
       setState(() {
         _dbReady = true;
         _anyPushReminderEnabled = anyPushReminders;
       });
-      _scheduleUnfocusGoalInputs();
     }
   }
 
-  Future<void> _saveGoals() async {
-    final goals = {
-      'calorie_goal': _calorieController.text,
-      'protein_goal': _proteinController.text,
-      'fat_goal': _fatController.text,
-      'carbs_goal': _carbsController.text,
-    };
-    for (final entry in goals.entries) {
-      await _db.setSetting(entry.key, entry.value);
+  Future<void> _loadGoals() async {
+    final cal = await _db.getSetting('calorie_goal');
+    final prot = await _db.getSetting('protein_goal');
+    final fat = await _db.getSetting('fat_goal');
+    final carbs = await _db.getSetting('carbs_goal');
+    if (!mounted) return;
+    setState(() {
+      _calorieGoal = double.tryParse(cal ?? '') ?? 2000;
+      _proteinGoal = double.tryParse(prot ?? '') ?? 100;
+      _fatGoal = double.tryParse(fat ?? '') ?? 70;
+      _carbsGoal = double.tryParse(carbs ?? '') ?? 250;
+    });
+  }
+
+  Future<void> _openGoalsSheet() async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0xCC000000),
+      builder: (ctx) => EditGoalsSheet(
+        initialCalories: _calorieGoal,
+        initialProtein: _proteinGoal,
+        initialFat: _fatGoal,
+        initialCarbs: _carbsGoal,
+      ),
+    );
+    if (saved == true && mounted) {
+      await _loadGoals();
     }
-    // No-op for signed-out (guest) users; otherwise upserts the goals
-    // on the user's cloud account so they survive re-installs and
-    // multi-device sign-in. Errors are swallowed inside `pushSettings`.
-    unawaited(LoginSyncService().pushSettings(goals));
   }
 
   Future<void> _signOut() async {
@@ -829,106 +823,118 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   // ── Goals Card ──────────────────────────────────────────────
 
   Widget _buildGoalsCard() {
+    final cs = Theme.of(context).colorScheme;
+    final secondary = _isDark
+        ? AppColors.darkSecondaryDark
+        : AppColors.lightSecondaryDark;
+    final pillBg = _isDark ? AppColors.darkSurface2 : AppColors.lightScaffold;
+    final pillText = _isDark
+        ? AppColors.darkPrimaryLight
+        : AppColors.lightPrimaryLight;
+
     return _card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
-        child: Column(
-          children: [
-            _goalRow(
-              'assets/icons/cal.svg',
-              context.l10n.goalCaloriesKcal,
-              _calorieController,
-            ),
-            const SizedBox(height: 12),
-            _goalRow(
-              'assets/icons/belok.svg',
-              context.l10n.goalProteinG,
-              _proteinController,
-            ),
-            const SizedBox(height: 12),
-            _goalRow(
-              'assets/icons/fat.svg',
-              context.l10n.goalFatG,
-              _fatController,
-            ),
-            const SizedBox(height: 12),
-            _goalRow(
-              'assets/icons/uglevod.svg',
-              context.l10n.goalCarbsG,
-              _carbsController,
-            ),
-          ],
+      child: GestureDetector(
+        onTap: _openGoalsSheet,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      context.l10n.myGoals,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 22 / 16,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: pillBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/edit.svg',
+                          width: 14,
+                          height: 14,
+                          colorFilter: ColorFilter.mode(
+                            pillText,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          context.l10n.edit,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            height: 16 / 13,
+                            color: pillText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _GoalSummaryCell(
+                      iconAsset: 'assets/icons/cal.svg',
+                      value: _calorieGoal.toInt().toString(),
+                      unit: 'kcal',
+                      primary: cs.onSurface,
+                      secondary: secondary,
+                    ),
+                  ),
+                  Expanded(
+                    child: _GoalSummaryCell(
+                      iconAsset: 'assets/icons/belok.svg',
+                      value: _proteinGoal.toInt().toString(),
+                      unit: 'g',
+                      primary: cs.onSurface,
+                      secondary: secondary,
+                    ),
+                  ),
+                  Expanded(
+                    child: _GoalSummaryCell(
+                      iconAsset: 'assets/icons/uglevod.svg',
+                      value: _carbsGoal.toInt().toString(),
+                      unit: 'g',
+                      primary: cs.onSurface,
+                      secondary: secondary,
+                    ),
+                  ),
+                  Expanded(
+                    child: _GoalSummaryCell(
+                      iconAsset: 'assets/icons/fat.svg',
+                      value: _fatGoal.toInt().toString(),
+                      unit: 'g',
+                      primary: cs.onSurface,
+                      secondary: secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _goalRow(
-    String iconAsset,
-    String label,
-    TextEditingController controller,
-  ) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 28,
-          height: 28,
-          child: SvgPicture.asset(iconAsset, width: 28, height: 28),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 18 / 14,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ),
-        Container(
-          width: 70,
-          decoration: BoxDecoration(
-            color: _isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _isDark ? AppColors.lineDT200 : AppColors.lineLight200,
-              width: 1,
-            ),
-          ),
-          child: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 18 / 14,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              filled: false,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 4,
-                vertical: 8,
-              ),
-              isDense: true,
-              hintText: '0',
-              hintStyle: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 18 / 14,
-                color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
-              ),
-            ),
-            onChanged: (_) => _saveGoals(),
-          ),
-        ),
-      ],
     );
   }
 
@@ -1143,6 +1149,58 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _GoalSummaryCell extends StatelessWidget {
+  const _GoalSummaryCell({
+    required this.iconAsset,
+    required this.value,
+    required this.unit,
+    required this.primary,
+    required this.secondary,
+  });
+
+  final String iconAsset;
+  final String value;
+  final String unit;
+  final Color primary;
+  final Color secondary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SvgPicture.asset(iconAsset, width: 28, height: 28),
+        const SizedBox(height: 6),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              height: 22 / 16,
+              color: primary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          unit,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            height: 16 / 12,
+            color: secondary,
+          ),
+        ),
+      ],
     );
   }
 }
