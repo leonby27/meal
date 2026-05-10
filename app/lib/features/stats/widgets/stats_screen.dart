@@ -1303,64 +1303,16 @@ class _PeriodTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isDark ? AppColors.darkUnderBack : AppColors.lightUnderBack;
-    final selectedBg = isDark
-        ? AppColors.darkSurface
-        : AppColors.lightSurface;
-    final selectedText = isDark
-        ? AppColors.darkOnSurface
-        : AppColors.lightOnSurface;
-    final unselectedText = isDark
-        ? AppColors.darkOnSurfaceVariant
-        : AppColors.lightOnSurfaceVariant;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: _Period.values.map((p) {
-          final selected = p == current;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(p),
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeInOut,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: selected ? selectedBg : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: selected
-                        ? [
-                            BoxShadow(
-                              color: const Color(0x1A050C26),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    p.label(context),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      height: 20 / 14,
-                      color: selected ? selectedText : unselectedText,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
+    return _SegmentedSwitch<_Period>(
+      values: _Period.values,
+      current: current,
+      onChanged: onChanged,
+      labelBuilder: (p) => p.label(context),
+      isDark: isDark,
+      height: 30,
+      fontSize: 14,
+      lineHeight: 20 / 14,
+      indicatorRadius: 6,
     );
   }
 }
@@ -1382,66 +1334,129 @@ class _MetricTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isDark ? AppColors.darkUnderBack : AppColors.lightUnderBack;
-    final selectedBg = isDark
-        ? AppColors.darkSurface
-        : AppColors.lightSurface;
-    final selectedText = isDark
-        ? AppColors.darkOnSurface
-        : AppColors.lightOnSurface;
+    return IntrinsicWidth(
+      child: _SegmentedSwitch<_ChartMetric>(
+        values: _ChartMetric.values,
+        current: current,
+        onChanged: onChanged,
+        labelBuilder: labelBuilder,
+        isDark: isDark,
+        height: 26,
+        fontSize: 13,
+        lineHeight: 16 / 13,
+        indicatorRadius: 5,
+        cellPadding: const EdgeInsets.symmetric(horizontal: 6),
+      ),
+    );
+  }
+}
+
+// Single sliding-indicator segmented control. One pill smoothly tweens
+// between cells instead of cross-fading every cell on every tap.
+class _SegmentedSwitch<T> extends StatelessWidget {
+  final List<T> values;
+  final T current;
+  final ValueChanged<T> onChanged;
+  final String Function(T) labelBuilder;
+  final bool isDark;
+  final double height;
+  final double fontSize;
+  final double lineHeight;
+  final double indicatorRadius;
+  final EdgeInsetsGeometry cellPadding;
+
+  const _SegmentedSwitch({
+    required this.values,
+    required this.current,
+    required this.onChanged,
+    required this.labelBuilder,
+    required this.isDark,
+    required this.height,
+    required this.fontSize,
+    required this.lineHeight,
+    required this.indicatorRadius,
+    this.cellPadding = EdgeInsets.zero,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor =
+        isDark ? AppColors.darkUnderBack : AppColors.lightUnderBack;
+    final selectedBg =
+        isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final selectedText =
+        isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
     final unselectedText = isDark
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
+
+    final n = values.length;
+    final idx = values.indexOf(current).clamp(0, n - 1);
+    final alignX = n <= 1 ? 0.0 : (idx * 2 / (n - 1)) - 1;
 
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: IntrinsicWidth(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: _ChartMetric.values.map((m) {
-            final selected = m == current;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged(m),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.all(3),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeInOut,
-                    height: 26,
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    decoration: BoxDecoration(
-                      color: selected ? selectedBg : Colors.transparent,
-                      borderRadius: BorderRadius.circular(5),
-                      boxShadow: selected
-                          ? [
-                              BoxShadow(
-                                color: const Color(0x1A050C26),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      labelBuilder(m),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        height: 16 / 13,
-                        color: selected ? selectedText : unselectedText,
+      padding: const EdgeInsets.all(3),
+      child: SizedBox(
+        height: height,
+        child: Stack(
+          children: [
+            AnimatedAlign(
+              alignment: Alignment(alignX, 0),
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              child: FractionallySizedBox(
+                widthFactor: 1 / n,
+                heightFactor: 1,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: selectedBg,
+                    borderRadius: BorderRadius.circular(indicatorRadius),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x1A050C26),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }).toList(),
+            ),
+            Row(
+              children: values.map((v) {
+                final selected = v == current;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => onChanged(v),
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: cellPadding,
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w500,
+                            height: lineHeight,
+                            color: selected ? selectedText : unselectedText,
+                          ),
+                          child: Text(
+                            labelBuilder(v),
+                            maxLines: 1,
+                            softWrap: false,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ),
       ),
     );
