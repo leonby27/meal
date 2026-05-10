@@ -949,6 +949,39 @@ class AppLocalizationsPt extends AppLocalizations {
   String get goToStatistics => 'Ir para estatísticas';
 
   @override
+  String get goalsParamGoal => 'Meta';
+
+  @override
+  String get goalsParamGender => 'Gênero';
+
+  @override
+  String get goalsParamAge => 'Idade';
+
+  @override
+  String get goalsParamHeight => 'Altura';
+
+  @override
+  String get goalsParamWeight => 'Peso';
+
+  @override
+  String get goalsParamTargetWeight => 'Peso alvo';
+
+  @override
+  String get goalsParamActivity => 'Atividade';
+
+  @override
+  String get goalsPlanNote => 'Baseado em seu plano';
+
+  @override
+  String get goalsCustomNote => 'Valores personalizados';
+
+  @override
+  String get goalsEditManually => 'Editar manualmente';
+
+  @override
+  String get goalsUsePlan => 'Calcular do plano';
+
+  @override
   String get networkTimeout =>
       'Servidor não responde. Verifique sua conexão com a internet.';
 

@@ -1839,34 +1839,37 @@ class _DiaryScreenState extends State<DiaryScreen>
               ],
             ),
           ),
+          SliverPadding(padding: EdgeInsets.only(bottom: bottomPadding)),
         ] else
           SliverFillRemaining(
             hasScrollBody: false,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Lottie.asset(
-                    'assets/animations/empty_plate.json',
-                    width: 90,
-                    height: 90,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    context.l10n.diaryEmptyDay,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      height: 22 / 16,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: bottomPadding),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Lottie.asset(
+                      'assets/animations/empty_plate.json',
+                      width: 90,
+                      height: 90,
+                      fit: BoxFit.contain,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      context.l10n.diaryEmptyDay,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        height: 22 / 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        SliverPadding(padding: EdgeInsets.only(bottom: bottomPadding)),
       ],
     );
   }

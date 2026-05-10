@@ -72,7 +72,18 @@ class MealTrackerApp extends StatelessWidget {
       if (focusedBounds.contains(event.position)) return;
     }
 
-    focus.unfocus();
+    // Defer past tap recognition. Tap on another input fires
+    // _handleTap → requestFocus on pointer-up, which lands AFTER an
+    // end-of-frame callback would. 80 ms is enough for a normal tap
+    // to settle. If primary focus has moved to another input by
+    // then, skip the unfocus — that keeps the soft keyboard open
+    // across input-to-input transitions instead of bouncing closed
+    // and reopening.
+    Future.delayed(const Duration(milliseconds: 80), () {
+      if (FocusManager.instance.primaryFocus == focus) {
+        focus.unfocus();
+      }
+    });
   }
 
   @override

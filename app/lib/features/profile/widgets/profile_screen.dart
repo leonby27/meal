@@ -110,6 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       barrierColor: const Color(0xCC000000),
       builder: (ctx) => EditGoalsSheet(

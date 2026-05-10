@@ -56,6 +56,7 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       barrierColor: const Color(0xCC000000),
       builder: (ctx) => EditGoalsSheet(

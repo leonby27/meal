@@ -1840,6 +1840,72 @@ abstract class AppLocalizations {
   /// **'К статистике'**
   String get goToStatistics;
 
+  /// No description provided for @goalsParamGoal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель'**
+  String get goalsParamGoal;
+
+  /// No description provided for @goalsParamGender.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол'**
+  String get goalsParamGender;
+
+  /// No description provided for @goalsParamAge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возраст'**
+  String get goalsParamAge;
+
+  /// No description provided for @goalsParamHeight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рост'**
+  String get goalsParamHeight;
+
+  /// No description provided for @goalsParamWeight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вес'**
+  String get goalsParamWeight;
+
+  /// No description provided for @goalsParamTargetWeight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Целевой вес'**
+  String get goalsParamTargetWeight;
+
+  /// No description provided for @goalsParamActivity.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активность'**
+  String get goalsParamActivity;
+
+  /// No description provided for @goalsPlanNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рассчитано по вашему плану'**
+  String get goalsPlanNote;
+
+  /// No description provided for @goalsCustomNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свои значения'**
+  String get goalsCustomNote;
+
+  /// No description provided for @goalsEditManually.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить самостоятельно'**
+  String get goalsEditManually;
+
+  /// No description provided for @goalsUsePlan.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рассчитать по плану'**
+  String get goalsUsePlan;
+
   /// No description provided for @networkTimeout.
   ///
   /// In ru, this message translates to:

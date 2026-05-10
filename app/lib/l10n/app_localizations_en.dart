@@ -944,6 +944,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goToStatistics => 'Go to statistics';
 
   @override
+  String get goalsParamGoal => 'Goal';
+
+  @override
+  String get goalsParamGender => 'Gender';
+
+  @override
+  String get goalsParamAge => 'Age';
+
+  @override
+  String get goalsParamHeight => 'Height';
+
+  @override
+  String get goalsParamWeight => 'Weight';
+
+  @override
+  String get goalsParamTargetWeight => 'Target weight';
+
+  @override
+  String get goalsParamActivity => 'Activity';
+
+  @override
+  String get goalsPlanNote => 'Based on your plan';
+
+  @override
+  String get goalsCustomNote => 'Custom values';
+
+  @override
+  String get goalsEditManually => 'Edit manually';
+
+  @override
+  String get goalsUsePlan => 'Calculate from plan';
+
+  @override
   String get networkTimeout =>
       'Server not responding. Check your internet connection.';
 

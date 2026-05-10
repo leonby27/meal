@@ -945,6 +945,39 @@ class AppLocalizationsRu extends AppLocalizations {
   String get goToStatistics => 'К статистике';
 
   @override
+  String get goalsParamGoal => 'Цель';
+
+  @override
+  String get goalsParamGender => 'Пол';
+
+  @override
+  String get goalsParamAge => 'Возраст';
+
+  @override
+  String get goalsParamHeight => 'Рост';
+
+  @override
+  String get goalsParamWeight => 'Вес';
+
+  @override
+  String get goalsParamTargetWeight => 'Целевой вес';
+
+  @override
+  String get goalsParamActivity => 'Активность';
+
+  @override
+  String get goalsPlanNote => 'Рассчитано по вашему плану';
+
+  @override
+  String get goalsCustomNote => 'Свои значения';
+
+  @override
+  String get goalsEditManually => 'Изменить самостоятельно';
+
+  @override
+  String get goalsUsePlan => 'Рассчитать по плану';
+
+  @override
   String get networkTimeout =>
       'Сервер не отвечает. Проверьте подключение к интернету.';
 
