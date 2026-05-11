@@ -120,12 +120,14 @@ class _TrialReminderStepState extends State<TrialReminderStep> {
             width: double.infinity,
             height: 60,
             child: ElevatedButton(
-              onPressed: yearly == null ? null : widget.onNext,
+              // CTA only advances to the next onboarding step (the real
+              // paywall handles purchase). Don't gate on IAP product
+              // load — Android APKs without a Play billing connection
+              // would otherwise show a permanently-disabled button.
+              onPressed: widget.onNext,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: AppColors.lightDisabledBg,
-                disabledForegroundColor: AppColors.lightDisabledContent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

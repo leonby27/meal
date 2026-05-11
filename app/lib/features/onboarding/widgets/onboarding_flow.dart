@@ -1072,6 +1072,14 @@ if (_currentPage < kinds.length - 1) {
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   elevation: 0,
+                                  // Material's default state animations
+                                  // would animate bg/fg on slightly
+                                  // different curves, briefly showing
+                                  // dark text on a blue background as
+                                  // the button flips from disabled →
+                                  // enabled. Flipping instantly keeps
+                                  // both layers in lockstep.
+                                  animationDuration: Duration.zero,
                                 ),
                                 child: _isFinishing
                                     ? const SizedBox(
