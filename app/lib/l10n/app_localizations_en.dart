@@ -2091,7 +2091,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onbTrialReminderTitle =>
-      'We would like to remind you\nthat the trial period\nwill soon end.';
+      'We\'ll send you a reminder\nthat your trial is\nending soon.';
 
   @override
   String get onbTrialReminderNoPaymentNow => 'No payment required now';

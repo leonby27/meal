@@ -269,10 +269,6 @@ class _PaywallScreenState extends State<PaywallScreen>
     final textSecondary = isDark
         ? AppColors.darkSecondaryDark
         : AppColors.lightSecondaryDark;
-    final textPrimaryLight = isDark
-        ? AppColors.darkPrimaryLight
-        : AppColors.lightPrimaryLight;
-
     return PopScope(
       canPop: canGoBack,
       child: Scaffold(
@@ -285,7 +281,9 @@ class _PaywallScreenState extends State<PaywallScreen>
                 opacity: _fadeIn,
                 child: SlideTransition(
                   position: _slideUp,
-                  child: Column(
+                  child: Stack(
+                    children: [
+                  Column(
                     children: [
                       _TopBar(
                         canGoBack: canGoBack,
@@ -307,7 +305,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                       ),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.only(bottom: 24),
+                          padding: const EdgeInsets.only(bottom: 220),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -365,39 +363,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                                 onTap: () =>
                                     setState(() => _selectedPlan = 0),
                               ),
-                              if (!isHard) ...[
-                                const SizedBox(height: 14),
-                                Visibility(
-                                  visible: _selectedPlanHasTrial,
-                                  maintainState: true,
-                                  maintainAnimation: true,
-                                  maintainSize: true,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SvgPicture.asset(
-                                        'assets/paywall/check.svg',
-                                        width: 18,
-                                        height: 18,
-                                        colorFilter: ColorFilter.mode(
-                                          textPrimaryLight,
-                                          BlendMode.srcIn,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        context.l10n.paywallNoPaymentNow,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          height: 18 / 14,
-                                          color: textPrimaryLight,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
                               const SizedBox(height: 16),
                               _FeatureCard(
                                 imageAsset: 'assets/paywall/feature_ai.png',
@@ -449,22 +414,56 @@ class _PaywallScreenState extends State<PaywallScreen>
                           ),
                         ),
                       ),
-                      _BottomCTA(
-                        bgColor: bgColor,
-                        isDark: isDark,
-                        sub: sub,
-                        canSubscribe:
-                            sub.state == SubState.ready &&
-                            _selectedProduct != null,
-                        canRetry: _productsLoadFailed(sub),
-                        isPurchasing: sub.state == SubState.purchasing,
-                        isLoading: _productsAreLoading(sub),
-                        ctaLabel: _ctaLabel(),
-                        disclaimer: isHard
-                            ? context.l10n.paywallHardDisclaimer
-                            : _selectedPlanDisclaimer(),
-                        onSubscribe: _subscribe,
-                      ),
+                    ],
+                  ),
+                  // Bottom CTA overlays the scrollable content so the page
+                  // continues underneath. A 24-pt gradient strip on top of
+                  // the panel fades that content into the panel background,
+                  // avoiding a hard divider line.
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IgnorePointer(
+                          child: Container(
+                            height: 24,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  bgColor.withAlpha(0),
+                                  bgColor,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        _BottomCTA(
+                          bgColor: bgColor,
+                          isDark: isDark,
+                          sub: sub,
+                          canSubscribe:
+                              sub.state == SubState.ready &&
+                              _selectedProduct != null,
+                          canRetry: _productsLoadFailed(sub),
+                          isPurchasing: sub.state == SubState.purchasing,
+                          isLoading: _productsAreLoading(sub),
+                          ctaLabel: _ctaLabel(),
+                          disclaimer: isHard
+                              ? context.l10n.paywallHardDisclaimer
+                              : _selectedPlanDisclaimer(),
+                          showNoPayment: !isHard,
+                          noPaymentVisible: _selectedPlanHasTrial,
+                          textPrimary: textPrimary,
+                          onSubscribe: _subscribe,
+                        ),
+                      ],
+                    ),
+                  ),
                     ],
                   ),
                 ),
@@ -1011,6 +1010,9 @@ class _BottomCTA extends StatelessWidget {
   final bool isLoading;
   final String ctaLabel;
   final String disclaimer;
+  final bool showNoPayment;
+  final bool noPaymentVisible;
+  final Color textPrimary;
   final VoidCallback onSubscribe;
 
   const _BottomCTA({
@@ -1023,14 +1025,14 @@ class _BottomCTA extends StatelessWidget {
     required this.isLoading,
     required this.ctaLabel,
     required this.disclaimer,
+    required this.showNoPayment,
+    required this.noPaymentVisible,
+    required this.textPrimary,
     required this.onSubscribe,
   });
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = isDark
-        ? AppColors.darkDividerLight
-        : AppColors.lightDividerLight;
     final disclaimerColor = isDark
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
@@ -1044,28 +1046,65 @@ class _BottomCTA extends StatelessWidget {
         : null;
 
     return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        border: Border(top: BorderSide(color: dividerColor, width: 1)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      color: bgColor,
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _PrimaryButton(
-              label: ctaLabel,
-              isLoading: isPurchasing || isLoading,
-              onPressed: handler,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              disclaimer,
-              style: TextStyle(fontSize: 11, color: disclaimerColor),
-              textAlign: TextAlign.center,
-            ),
-          ],
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          alignment: Alignment.bottomCenter,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Mirrors the trial-reminder step layout: check 22, label
+              // 16/w500, 20-pt gap to the CTA. Conditionally rendered so the
+              // panel shrinks slightly when a plan without a free trial is
+              // selected — AnimatedSize handles the height transition.
+              if (showNoPayment && noPaymentVisible) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/paywall/check.svg',
+                      width: 22,
+                      height: 22,
+                      colorFilter: ColorFilter.mode(
+                        textPrimary,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      context.l10n.paywallNoPaymentNow,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        height: 22 / 16,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+              _PrimaryButton(
+                label: ctaLabel,
+                isLoading: isPurchasing || isLoading,
+                onPressed: handler,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                disclaimer,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 18 / 14,
+                  color: disclaimerColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1098,17 +1137,6 @@ class _PrimaryButton extends StatelessWidget {
               ? AppColors.primary
               : AppColors.primary.withAlpha(120),
           borderRadius: BorderRadius.circular(20),
-          border: const Border(
-            top: BorderSide(color: Color(0xFF74A6FF), width: 1),
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0xFF153773),
-              offset: Offset(0, 4),
-              blurRadius: 0,
-              spreadRadius: 0,
-            ),
-          ],
         ),
         alignment: Alignment.center,
         child: isLoading

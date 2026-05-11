@@ -814,7 +814,7 @@
       }
     }
   },
-  "onbTrialReminderTitle": "Wir möchten dich erinnern,\ndass die Probezeit bald endet.",
+  "onbTrialReminderTitle": "Wir schicken dir eine Erinnerung,\ndass deine Probezeit\nbald endet.",
   "onbTrialReminderNoPaymentNow": "Keine Zahlung erforderlich",
   "onbTrialReminderCta": "Für {price} testen",
   "onbTrialReminderSubtitle": "Nur {yearly} pro Jahr ({monthly}/Mon.)",

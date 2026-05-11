@@ -82,11 +82,10 @@ class _TrialReminderStepState extends State<TrialReminderStep> {
             style: onboardingTitleStyle(context, height: 32 / 24),
           ),
           const Spacer(),
-          // Bell hero illustration. Source is 1240x1240 @4.0x → 310 pt
-          // square, matching the Figma rect.
+          // Bell hero illustration. Source is 1240x1240 @4.0x.
           SizedBox(
-            width: 280,
-            height: 280,
+            width: 196,
+            height: 196,
             child: Image.asset(
               'assets/onboarding/bell.jpg',
               fit: BoxFit.contain,
@@ -101,6 +100,7 @@ class _TrialReminderStepState extends State<TrialReminderStep> {
                 'assets/onboarding/icons/check.svg',
                 width: 22,
                 height: 22,
+                colorFilter: ColorFilter.mode(cs.onSurface, BlendMode.srcIn),
               ),
               const SizedBox(width: 6),
               Text(
@@ -114,7 +114,7 @@ class _TrialReminderStepState extends State<TrialReminderStep> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           // Primary CTA — full width.
           SizedBox(
             width: double.infinity,

@@ -135,8 +135,8 @@ class _ResultStepState extends State<ResultStep> {
                         // 1. Hero header.
                         //
                         // No emoji prefix — Momo Trust Display (used for
-                        // English titles) lacks emoji glyphs, so 🎉 was
-                        // rendering as a "tofu" missing-glyph box.
+                        // Latin-script titles) lacks emoji glyphs, so 🎉
+                        // was rendering as a "tofu" missing-glyph box.
                         // Confetti animation conveys the celebration.
                         Text(
                           context.l10n.resultPlanReadyTitle,

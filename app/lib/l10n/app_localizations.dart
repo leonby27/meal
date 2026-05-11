@@ -3859,7 +3859,7 @@ abstract class AppLocalizations {
   /// No description provided for @onbTrialReminderTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Напоминаем, что пробный\nпериод скоро закончится.'**
+  /// **'Мы пришлём напоминание,\nчто пробный период\nскоро закончится.'**
   String get onbTrialReminderTitle;
 
   /// No description provided for @onbTrialReminderNoPaymentNow.

@@ -990,7 +990,7 @@
       }
     }
   },
-  "onbTrialReminderTitle": "Напоминаем, что пробный\nпериод скоро закончится.",
+  "onbTrialReminderTitle": "Мы пришлём напоминание,\nчто пробный период\nскоро закончится.",
   "onbTrialReminderNoPaymentNow": "Платёж сейчас не требуется",
   "onbTrialReminderCta": "Попробовать за {price}",
   "onbTrialReminderSubtitle": "Всего {yearly} в год ({monthly} / мес)",

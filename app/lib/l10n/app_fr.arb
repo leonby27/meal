@@ -814,7 +814,7 @@
       }
     }
   },
-  "onbTrialReminderTitle": "Petit rappel : votre période\nd'essai prend bientôt fin.",
+  "onbTrialReminderTitle": "Nous t'enverrons un rappel\nquand ta période d'essai\ntouchera à sa fin.",
   "onbTrialReminderNoPaymentNow": "Aucun paiement requis maintenant",
   "onbTrialReminderCta": "Essayer pour {price}",
   "onbTrialReminderSubtitle": "Seulement {yearly} par an ({monthly}/mois)",

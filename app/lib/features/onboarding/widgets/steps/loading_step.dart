@@ -16,8 +16,8 @@ class LoadingStep extends StatefulWidget {
 
 class _LoadingStepState extends State<LoadingStep>
     with SingleTickerProviderStateMixin {
-  static const _totalDuration = Duration(seconds: 10);
-  static const _captionInterval = Duration(seconds: 2);
+  static const _totalDuration = Duration(seconds: 6);
+  static const _captionInterval = Duration(milliseconds: 1200);
 
   static const _captionsCount = 5;
 

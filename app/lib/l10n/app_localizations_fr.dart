@@ -2119,7 +2119,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onbTrialReminderTitle =>
-      'Petit rappel : votre période\nd\'essai prend bientôt fin.';
+      'Nous t\'enverrons un rappel\nquand ta période d\'essai\ntouchera à sa fin.';
 
   @override
   String get onbTrialReminderNoPaymentNow => 'Aucun paiement requis maintenant';

@@ -2105,7 +2105,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get onbTrialReminderTitle =>
-      'Напоминаем, что пробный\nпериод скоро закончится.';
+      'Мы пришлём напоминание,\nчто пробный период\nскоро закончится.';
 
   @override
   String get onbTrialReminderNoPaymentNow => 'Платёж сейчас не требуется';

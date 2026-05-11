@@ -25,7 +25,6 @@ import 'package:meal_tracker/features/onboarding/widgets/steps/keep_result_step.
 import 'package:meal_tracker/features/onboarding/widgets/steps/height_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/loading_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/obstacles_step.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/rate_prompt_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/result_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/support_step.dart';
@@ -63,7 +62,6 @@ enum _StepKind {
   loading,
   result,
   trialReminder,
-  ratePrompt,
 }
 
 class OnboardingFlow extends StatefulWidget {
@@ -146,7 +144,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _StepKind.loading,
       _StepKind.result,
       _StepKind.trialReminder,
-      _StepKind.ratePrompt,
     ];
   }
 
@@ -159,7 +156,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   int get _totalSteps => _kinds.length;
   bool get _isOnLoading => _currentKind == _StepKind.loading;
   bool get _isOnResult => _currentKind == _StepKind.result;
-  bool get _isOnRatePrompt => _currentKind == _StepKind.ratePrompt;
   bool get _isOnTrialReminder => _currentKind == _StepKind.trialReminder;
 
   String _stepName(_StepKind kind) {
@@ -208,8 +204,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         return 'result';
       case _StepKind.trialReminder:
         return 'trial_reminder';
-      case _StepKind.ratePrompt:
-        return 'rate_prompt';
     }
   }
 
@@ -319,7 +313,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       case _StepKind.activity:
         return _activitySelected;
       case _StepKind.loading:
-      case _StepKind.ratePrompt:
       case _StepKind.trialReminder:
         return false;
       case _StepKind.age:
@@ -677,25 +670,11 @@ if (_currentPage < kinds.length - 1) {
       case _StepKind.result:
         return ResultStep(key: key, data: _data);
       case _StepKind.trialReminder:
-        return TrialReminderStep(key: key, onNext: _next);
-      case _StepKind.ratePrompt:
-        return RatePromptStep(
-          key: key,
-          onCompleted: _onRatePromptCompleted,
-        );
+        return TrialReminderStep(key: key, onNext: _onTrialReminderCompleted);
     }
   }
 
-  void _onRatePromptCompleted(int? rating, bool submittedReview) {
-    unawaited(
-      AnalyticsService.instance.logEvent(
-        'onboarding_rate_prompted',
-        parameters: {
-          'rating': ?rating,
-          'submitted_review': submittedReview ? 1 : 0,
-        },
-      ),
-    );
+  void _onTrialReminderCompleted() {
     unawaited(_logStepCompleted(_currentPage));
     _finish();
   }
@@ -708,7 +687,7 @@ if (_currentPage < kinds.length - 1) {
     final cs = Theme.of(context).colorScheme;
     final topInset = MediaQuery.paddingOf(context).top;
     final isFirstStep = _currentPage == 0;
-    final canGoBack = !isFirstStep && !isLoading && !_isOnRatePrompt;
+    final canGoBack = !isFirstStep && !isLoading;
     final total = _totalSteps;
     final progressStep = (_currentPage + 1).clamp(1, total);
     final progressValue = progressStep / total;
@@ -839,7 +818,7 @@ if (_currentPage < kinds.length - 1) {
                   MediaQuery.devicePixelRatioOf(context))
               .round();
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final showCta = !isLoading && !_isOnRatePrompt && !_isOnTrialReminder;
+    final showCta = !isLoading && !_isOnTrialReminder;
 
     return DefaultTextStyle.merge(
       // Onboarding text uses tight tracking — Inter/Cyrillic at title sizes
@@ -849,7 +828,7 @@ if (_currentPage < kinds.length - 1) {
       child: PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _currentPage > 0 && !isLoading && !_isOnRatePrompt) {
+        if (!didPop && _currentPage > 0 && !isLoading) {
           _back();
         }
       },

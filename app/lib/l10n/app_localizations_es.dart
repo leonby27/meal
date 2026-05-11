@@ -2107,7 +2107,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onbTrialReminderTitle =>
-      'Te recordamos que el período\nde prueba terminará pronto.';
+      'Te enviaremos un recordatorio\ncuando tu período de prueba\nesté por terminar.';
 
   @override
   String get onbTrialReminderNoPaymentNow => 'Sin pago por ahora';

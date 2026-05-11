@@ -3,11 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// Title style for onboarding step headers.
 ///
-/// For the English locale we swap the body font for `Momo Trust Display`
-/// — it reads more like a marketing header in Latin script, which matches
-/// the conversion-tuned look of the funnel. For other locales we keep the
-/// current Inter family so Cyrillic/CJK/extended Latin glyphs render
-/// correctly (Momo Trust Display has limited script coverage).
+/// Uses `Momo Trust Display` for Latin-script locales — it reads more like
+/// a marketing header, matching the conversion-tuned look of the funnel.
+/// The font's cmap has no Cyrillic, so Russian falls back to Inter; all of
+/// en/de/es/fr/pt glyphs (incl. ÄÖÜß, áéíóúñ¿¡, àâæçœÿ«», ãõ) are covered.
 TextStyle onboardingTitleStyle(
   BuildContext context, {
   double fontSize = 24,
@@ -25,8 +24,9 @@ TextStyle onboardingTitleStyle(
     height: height,
     letterSpacing: letterSpacing,
   );
-  final isEnglish = Localizations.localeOf(context).languageCode == 'en';
-  if (!isEnglish) return base;
+  const momoSupported = {'en', 'de', 'es', 'fr', 'pt'};
+  final lang = Localizations.localeOf(context).languageCode;
+  if (!momoSupported.contains(lang)) return base;
   return GoogleFonts.momoTrustDisplay(
     fontSize: fontSize,
     fontWeight: fontWeight,

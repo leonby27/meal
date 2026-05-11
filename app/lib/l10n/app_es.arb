@@ -814,7 +814,7 @@
       }
     }
   },
-  "onbTrialReminderTitle": "Te recordamos que el período\nde prueba terminará pronto.",
+  "onbTrialReminderTitle": "Te enviaremos un recordatorio\ncuando tu período de prueba\nesté por terminar.",
   "onbTrialReminderNoPaymentNow": "Sin pago por ahora",
   "onbTrialReminderCta": "Probar por {price}",
   "onbTrialReminderSubtitle": "Solo {yearly} al año ({monthly}/mes)",
