@@ -208,33 +208,40 @@ class _RulerPickerState extends State<RulerPicker> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ListenableBuilder(
-          listenable: _controller,
-          builder: (context, _) {
-            final live = _currentLiveValue();
-            return _Readout(
-              text: _readoutText(live),
-              unit: widget.unit,
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: widget.rulerHeight,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final viewport = constraints.maxWidth;
-              final totalWidth = _stepCount * widget.tickSpacing;
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  NotificationListener<ScrollNotification>(
-                    onNotification: _onScrollNotification,
-                    child: ScrollConfiguration(
-                      behavior: const _NoGlowBehavior(),
+    const readoutBlockHeight = 60.0;
+    const gap = 16.0;
+    final totalPickerHeight = readoutBlockHeight + gap + widget.rulerHeight;
+
+    return SizedBox(
+      height: totalPickerHeight,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final viewport = constraints.maxWidth;
+          final totalWidth = _stepCount * widget.tickSpacing;
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              // Full-area horizontal scrollable: dragging anywhere in the
+              // picker (including over the big readout) moves the ruler.
+              // The painter draws ticks only in the bottom ruler band.
+              Positioned.fill(
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _onScrollNotification,
+                  child: ScrollConfiguration(
+                    behavior: const _NoGlowBehavior(),
+                    child: ShaderMask(
+                      shaderCallback: (rect) => const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black,
+                          Colors.black,
+                          Colors.transparent,
+                        ],
+                        stops: [0.0, 0.10, 0.90, 1.0],
+                      ).createShader(rect),
+                      blendMode: BlendMode.dstIn,
                       child: SingleChildScrollView(
                         controller: _controller,
                         scrollDirection: Axis.horizontal,
@@ -245,7 +252,7 @@ class _RulerPickerState extends State<RulerPicker> {
                           ),
                           child: SizedBox(
                             width: totalWidth,
-                            height: widget.rulerHeight,
+                            height: totalPickerHeight,
                             child: CustomPaint(
                               painter: _RulerPainter(
                                 stepCount: _stepCount,
@@ -254,6 +261,8 @@ class _RulerPickerState extends State<RulerPicker> {
                                 labelEvery: widget.labelEvery,
                                 min: widget.min,
                                 step: widget.step,
+                                rulerOffsetY: readoutBlockHeight + gap,
+                                rulerHeight: widget.rulerHeight,
                                 formatLabel:
                                     widget.formatLabel ?? _defaultFormat,
                                 labelColor: cs.onSurfaceVariant,
@@ -270,8 +279,40 @@ class _RulerPickerState extends State<RulerPicker> {
                       ),
                     ),
                   ),
-                  // Center indicator: vertical bar pinned in the middle.
-                  IgnorePointer(
+                ),
+              ),
+              // Readout sits in the top band, aligned to the bottom so it
+              // hugs the ruler with the same gap the Column used before.
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: readoutBlockHeight,
+                child: IgnorePointer(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ListenableBuilder(
+                      listenable: _controller,
+                      builder: (context, _) {
+                        final live = _currentLiveValue();
+                        return _Readout(
+                          text: _readoutText(live),
+                          unit: widget.unit,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              // Centre indicator — vertical bar pinned in the middle of
+              // the ruler band.
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: widget.rulerHeight,
+                child: IgnorePointer(
+                  child: Center(
                     child: Container(
                       width: 4,
                       height: widget.rulerHeight - 24,
@@ -282,12 +323,12 @@ class _RulerPickerState extends State<RulerPicker> {
                       ),
                     ),
                   ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -315,7 +356,7 @@ class _Readout extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final readoutStyle = TextStyle(
-      fontSize: 64,
+      fontSize: 52,
       height: 1.05,
       fontWeight: FontWeight.w700,
       color: cs.onSurface,
@@ -385,6 +426,8 @@ class _RulerPainter extends CustomPainter {
   final int labelEvery;
   final double min;
   final double step;
+  final double rulerOffsetY;
+  final double rulerHeight;
   final String Function(double value) formatLabel;
   final Color labelColor;
   final Color majorTickColor;
@@ -397,6 +440,8 @@ class _RulerPainter extends CustomPainter {
     required this.labelEvery,
     required this.min,
     required this.step,
+    required this.rulerOffsetY,
+    required this.rulerHeight,
     required this.formatLabel,
     required this.labelColor,
     required this.majorTickColor,
@@ -415,8 +460,8 @@ class _RulerPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     const labelAreaHeight = 24.0;
-    final tickAreaTop = labelAreaHeight;
-    final tickAreaBottom = size.height;
+    final tickAreaTop = rulerOffsetY + labelAreaHeight;
+    final tickAreaBottom = rulerOffsetY + rulerHeight;
     final tickAreaHeight = tickAreaBottom - tickAreaTop;
     final majorTickHeight = tickAreaHeight * 0.62;
     final minorTickHeight = tickAreaHeight * 0.34;
@@ -449,7 +494,7 @@ class _RulerPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(canvas, Offset(x - tp.width / 2, 4));
+      tp.paint(canvas, Offset(x - tp.width / 2, rulerOffsetY + 4));
     }
   }
 
@@ -461,6 +506,8 @@ class _RulerPainter extends CustomPainter {
       old.labelEvery != labelEvery ||
       old.min != min ||
       old.step != step ||
+      old.rulerOffsetY != rulerOffsetY ||
+      old.rulerHeight != rulerHeight ||
       old.labelColor != labelColor ||
       old.majorTickColor != majorTickColor ||
       old.minorTickColor != minorTickColor;

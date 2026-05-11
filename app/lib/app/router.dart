@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/app/route_observer.dart';
+import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/features/auth/widgets/login_screen.dart';
 import 'package:meal_tracker/features/diary/widgets/diary_screen.dart';
@@ -62,12 +63,31 @@ final router = GoRouter(
     GoRoute(
       path: '/onboarding',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const OnboardingFlow(),
+      // Onboarding is always rendered in light mode, regardless of the
+      // user's system preference, to keep the conversion-tuned visual
+      // language stable across all sessions.
+      //
+      // We also bump `onSurfaceVariant` (used by every step's
+      // secondary text — hints, captions, picker labels) to the darker
+      // `secondaryDark` so smaller copy stays comfortably legible
+      // against the off-white scaffold.
+      builder: (context, state) => Theme(
+        data: AppTheme.light.copyWith(
+          colorScheme: AppTheme.light.colorScheme.copyWith(
+            onSurfaceVariant: AppColors.lightSecondaryDark,
+          ),
+        ),
+        child: const OnboardingFlow(),
+      ),
     ),
     GoRoute(
       path: '/paywall',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const PaywallScreen(),
+      // Paywall is locked to light mode for the same reason as onboarding.
+      builder: (context, state) => Theme(
+        data: AppTheme.light,
+        child: const PaywallScreen(),
+      ),
     ),
     GoRoute(
       path: '/diary',

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/features/onboarding/widgets/common/ruler_picker.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 
 class TargetWeightStep extends StatelessWidget {
   final double targetWeight;
@@ -31,18 +33,16 @@ class TargetWeightStep extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          const NotoEmoji(name: 'bullseye', size: 40),
+          const SizedBox(height: 12),
           Text(
             context.l10n.onboardingTargetWeightTitle,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface,
-            ),
+            style: onboardingTitleStyle(context),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),

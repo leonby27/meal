@@ -12,20 +12,59 @@ import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/login_sync_service.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
 import 'package:meal_tracker/features/onboarding/services/tdee_calculator.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/goal_step.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/gender_step.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/age_step.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/units_step.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/height_step.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/weight_step.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/target_weight_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/activity_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/age_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/calorie_history_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/confident_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/eating_obstacle_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/gender_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/goal_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/hardest_challenge_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/improve_goals_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/keep_result_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/height_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/loading_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/obstacles_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/rate_prompt_step.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/result_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/support_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/target_weight_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/trial_reminder_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/units_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/welcome_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/weight_loss_speed_step.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/weight_step.dart';
 // Social-proof steps are temporarily disabled — files kept on disk for
 // when we return to polish them.
 // import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_scale_step.dart';
 // import 'package:meal_tracker/features/onboarding/widgets/steps/social_proof_accuracy_step.dart';
+
+enum _StepKind {
+  welcome,
+  confident,
+  goal,
+  obstacles,
+  gender,
+  calorieHistory,
+  keepResult,
+  improveGoals,
+  eatingObstacle,
+  hardestChallenge,
+  support,
+  age,
+  units,
+  height,
+  weight,
+  targetWeight,
+  weightLossSpeed,
+  socialProof,
+  activity,
+  loading,
+  result,
+  trialReminder,
+  ratePrompt,
+}
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});
@@ -46,28 +85,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   DateTime _stepStartedAt = DateTime.now();
   final Stopwatch _onboardingStopwatch = Stopwatch();
   final Set<int> _stepsSeen = <int>{};
-  static const _totalSteps = 10;
-  static const _progressSteps = 8;
-  static const _resultPage = 9;
-  static const _finalPage = 9;
+
   static const _stepImageAspectRatio = 1024 / 632;
   static const _stepImageHorizontalPadding = 16.0;
   static const _stepImageBottomOffset = 84.0;
   static const _stepImageContentGap = 12.0;
   static const _ctaButtonHeight = 56.0;
   static const _ctaButtonBottomMargin = 16.0;
-  static const _stepNames = [
-    'goal',
-    'gender',
-    'age',
-    'units',
-    'height',
-    'weight',
-    'target_weight',
-    'activity',
-    'loading',
-    'result',
-  ];
+
+  // Mascot illustrations are hidden in the new onboarding flow. The PNG
+  // assets are kept on disk so we can re-enable them by re-listing the
+  // matching step kinds here.
+  static const _imageOrderedKinds = <_StepKind>[];
+
   static const _darkStepImageAssets = [
     'assets/onboarding/dark/step_1.png',
     'assets/onboarding/dark/step_2.png',
@@ -89,15 +119,106 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     'assets/onboarding/light/step_8.png',
   ];
 
-  String _stepName(int page) {
-    if (page < 0 || page >= _stepNames.length) return 'unknown';
-    return _stepNames[page];
+  List<_StepKind> get _kinds {
+    return [
+      _StepKind.welcome,
+      _StepKind.confident,
+      _StepKind.goal,
+      _StepKind.obstacles,
+      _StepKind.gender,
+      _StepKind.calorieHistory,
+      _StepKind.keepResult,
+      _StepKind.improveGoals,
+      _StepKind.eatingObstacle,
+      _StepKind.hardestChallenge,
+      _StepKind.support,
+      _StepKind.age,
+      _StepKind.units,
+      _StepKind.height,
+      _StepKind.weight,
+      _StepKind.targetWeight,
+      if (_data.goal != 'maintain') _StepKind.weightLossSpeed,
+      // Social-proof copy is "people lose weight faster with support" —
+      // gate it on the lose goal so it doesn't show up for muscle-gain
+      // or maintain users where the message wouldn't fit.
+      if (_data.goal == 'lose') _StepKind.socialProof,
+      _StepKind.activity,
+      _StepKind.loading,
+      _StepKind.result,
+      _StepKind.trialReminder,
+      _StepKind.ratePrompt,
+    ];
+  }
+
+  _StepKind get _currentKind {
+    final kinds = _kinds;
+    final i = _currentPage.clamp(0, kinds.length - 1);
+    return kinds[i];
+  }
+
+  int get _totalSteps => _kinds.length;
+  bool get _isOnLoading => _currentKind == _StepKind.loading;
+  bool get _isOnResult => _currentKind == _StepKind.result;
+  bool get _isOnRatePrompt => _currentKind == _StepKind.ratePrompt;
+  bool get _isOnTrialReminder => _currentKind == _StepKind.trialReminder;
+
+  String _stepName(_StepKind kind) {
+    switch (kind) {
+      case _StepKind.welcome:
+        return 'welcome';
+      case _StepKind.confident:
+        return 'confident';
+      case _StepKind.goal:
+        return 'goal';
+      case _StepKind.obstacles:
+        return 'obstacles';
+      case _StepKind.gender:
+        return 'gender';
+      case _StepKind.calorieHistory:
+        return 'calorie_history';
+      case _StepKind.keepResult:
+        return 'keep_result';
+      case _StepKind.improveGoals:
+        return 'improve_goals';
+      case _StepKind.eatingObstacle:
+        return 'eating_obstacle';
+      case _StepKind.hardestChallenge:
+        return 'hardest_challenge';
+      case _StepKind.support:
+        return 'support';
+      case _StepKind.age:
+        return 'age';
+      case _StepKind.units:
+        return 'units';
+      case _StepKind.height:
+        return 'height';
+      case _StepKind.weight:
+        return 'weight';
+      case _StepKind.targetWeight:
+        return 'target_weight';
+      case _StepKind.weightLossSpeed:
+        return 'weight_loss_speed';
+      case _StepKind.socialProof:
+        return 'social_proof';
+      case _StepKind.activity:
+        return 'activity';
+      case _StepKind.loading:
+        return 'loading';
+      case _StepKind.result:
+        return 'result';
+      case _StepKind.trialReminder:
+        return 'trial_reminder';
+      case _StepKind.ratePrompt:
+        return 'rate_prompt';
+    }
   }
 
   Map<String, Object> _stepParams(int page, {String? direction}) {
+    final kinds = _kinds;
+    final safe = page.clamp(0, kinds.length - 1);
     final params = <String, Object>{
       'step_index': page,
-      'step_name': _stepName(page),
+      'step_name': _stepName(kinds[safe]),
       'total_steps': _totalSteps,
     };
     if (direction != null) params['direction'] = direction;
@@ -126,8 +247,11 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Mascot images are disabled — nothing to precache. The block is kept
+    // for cheap re-enable: just restore _imageOrderedKinds and uncomment.
+    if (_imageOrderedKinds.isEmpty) return;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cacheWidth =
         ((MediaQuery.sizeOf(context).width - 32) *
                 MediaQuery.devicePixelRatioOf(context))
@@ -165,30 +289,47 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   String? _stepImageAsset({required bool isDark}) {
-    if (_currentPage < 0 || _currentPage >= _progressSteps) return null;
-    return _stepImageAssetsFor(isDark: isDark)[_currentPage];
+    final idx = _imageOrderedKinds.indexOf(_currentKind);
+    if (idx < 0) return null;
+    return _stepImageAssetsFor(isDark: isDark)[idx];
   }
 
   bool get _canProceed {
-    switch (_currentPage) {
-      case 0:
+    switch (_currentKind) {
+      case _StepKind.welcome:
+      case _StepKind.confident:
+      case _StepKind.keepResult:
+      case _StepKind.support:
+      case _StepKind.socialProof:
+        return true;
+      case _StepKind.goal:
         return _data.goal != null;
-      case 1:
+      case _StepKind.obstacles:
+        return _data.obstacles.isNotEmpty;
+      case _StepKind.gender:
         return _data.gender != null;
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-        return true;
-      case 7:
+      case _StepKind.calorieHistory:
+        return _data.calorieHistory != null;
+      case _StepKind.improveGoals:
+        return _data.improveGoals.isNotEmpty;
+      case _StepKind.eatingObstacle:
+        return _data.eatingObstacle != null;
+      case _StepKind.hardestChallenge:
+        return _data.hardestChallenge != null;
+      case _StepKind.activity:
         return _activitySelected;
-      case 8:
+      case _StepKind.loading:
+      case _StepKind.ratePrompt:
+      case _StepKind.trialReminder:
         return false;
-      case 9:
+      case _StepKind.age:
+      case _StepKind.units:
+      case _StepKind.height:
+      case _StepKind.weight:
+      case _StepKind.targetWeight:
+      case _StepKind.weightLossSpeed:
+      case _StepKind.result:
         return true;
-      default:
-        return false;
     }
   }
 
@@ -206,32 +347,49 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   void _next() {
     if (_isFinishing) return;
     final page = _currentPage;
+    final kind = _currentKind;
+    final kinds = _kinds;
 
     unawaited(
       AnalyticsService.instance.logEvent(
         'onboarding_step_cta_clicked',
         parameters: {
           ..._stepParams(page),
-          'is_final_step': page == _finalPage ? 1 : 0,
+          'is_final_step': _currentPage == kinds.length - 1 ? 1 : 0,
         },
       ),
     );
 
-    if (_currentPage == 5) {
+    if (kind == _StepKind.weight) {
       _updateTargetWeightFromGoal();
     }
 
-    if (_currentPage == 7) {
+    if (kind == _StepKind.obstacles) {
+      unawaited(
+        AnalyticsService.instance.logEvent(
+          'onboarding_obstacles_selected',
+          parameters: {
+            'count': _data.obstacles.length,
+            'selected': _data.obstacles.join(','),
+          },
+        ),
+      );
+    }
+
+    if (kind == _StepKind.weightLossSpeed) {
+      unawaited(
+        AnalyticsService.instance.logEvent(
+          'onboarding_weight_loss_speed_selected',
+          parameters: {'kg_per_week': _data.weightLossKgPerWeek},
+        ),
+      );
+    }
+
+    if (kind == _StepKind.activity) {
       _calculateResults();
     }
 
-    if (_currentPage == _finalPage) {
-      unawaited(_logStepCompleted(page));
-      _finish();
-      return;
-    }
-
-    if (_currentPage < _totalSteps - 1) {
+if (_currentPage < kinds.length - 1) {
       unawaited(_logStepCompleted(page));
       _goToPage(_currentPage + 1, direction: 'forward');
     }
@@ -259,7 +417,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           'onboarding_back_clicked',
           parameters: {
             'from_step_index': page,
-            'from_step_name': _stepName(page),
+            'from_step_name': _stepName(_currentKind),
             'time_on_step_ms': _timeOnStepMs,
           },
         ),
@@ -276,6 +434,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       weightKg: _data.weightKg,
       activityMultiplier: _data.activityMultiplier,
       goal: _data.goal!,
+      weightLossKgPerWeek: _data.weightLossKgPerWeek,
     );
 
     _data.calorieGoal = results['calories'];
@@ -287,6 +446,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       currentWeight: _data.weightKg,
       targetWeight: _data.targetWeightKg,
       goal: _data.goal!,
+      weightLossKgPerWeek: _data.weightLossKgPerWeek,
     );
   }
 
@@ -343,6 +503,16 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         'protein_goal': '${_data.proteinGoal!.round()}',
         'fat_goal': '${_data.fatGoal!.round()}',
         'carbs_goal': '${_data.carbsGoal!.round()}',
+        'user_obstacles': _data.obstacles.join(','),
+        'user_weight_loss_speed': _data.weightLossKgPerWeek.toStringAsFixed(1),
+        if (_data.psychotype != null) 'user_psychotype': _data.psychotype!,
+        if (_data.calorieHistory != null)
+          'user_calorie_history': _data.calorieHistory!,
+        'user_improve_goals': _data.improveGoals.join(','),
+        if (_data.eatingObstacle != null)
+          'user_eating_obstacle': _data.eatingObstacle!,
+        if (_data.hardestChallenge != null)
+          'user_hardest_challenge': _data.hardestChallenge!,
       };
       for (final entry in settings.entries) {
         await db.setSetting(entry.key, entry.value);
@@ -355,7 +525,11 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   void _onLoadingFinished() {
     unawaited(_logStepCompleted(_currentPage));
-    _goToPage(_resultPage, direction: 'forward');
+    final kinds = _kinds;
+    final resultIdx = kinds.indexOf(_StepKind.result);
+    if (resultIdx >= 0) {
+      _goToPage(resultIdx, direction: 'forward');
+    }
   }
 
   @override
@@ -377,55 +551,119 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   Widget _buildCurrentStep() {
-    switch (_currentPage) {
-      case 0:
+    final kind = _currentKind;
+    final key = ValueKey('${_stepName(kind)}_$_currentPage');
+    switch (kind) {
+      case _StepKind.welcome:
+        return WelcomeStep(key: key);
+      case _StepKind.confident:
+        return ConfidentStep(key: key);
+      case _StepKind.goal:
         return GoalStep(
-          key: const ValueKey(0),
+          key: key,
           selected: _data.goal,
-          onChanged: (v) => setState(() => _data.goal = v),
+          onChanged: (v) => setState(() {
+            _data.goal = v;
+            // Reset the speed slider to the goal-appropriate default so
+            // the thumb starts at the visual centre of the new scale.
+            _data.weightLossKgPerWeek = v == 'gain' ? 0.3 : 0.5;
+            // Re-sync target weight with the new goal so the speed
+            // step always has a non-zero `diff` and the projected date
+            // changes with the slider. Without this, switching from
+            // 'maintain' (which sets target == current) to 'lose'
+            // would leave target stuck at current → date never moves.
+            _updateTargetWeightFromGoal();
+          }),
         );
-      case 1:
+      case _StepKind.obstacles:
+        return ObstaclesStep(
+          key: key,
+          selected: _data.obstacles,
+          onChanged: (v) => setState(() => _data.obstacles = v),
+        );
+      case _StepKind.gender:
         return GenderStep(
-          key: const ValueKey(1),
+          key: key,
           selected: _data.gender,
           onChanged: (v) => setState(() => _data.gender = v),
         );
-      case 2:
+      case _StepKind.calorieHistory:
+        return CalorieHistoryStep(
+          key: key,
+          selected: _data.calorieHistory,
+          gender: _data.gender,
+          onChanged: (v) => setState(() => _data.calorieHistory = v),
+        );
+      case _StepKind.keepResult:
+        return KeepResultStep(key: key);
+      case _StepKind.improveGoals:
+        return ImproveGoalsStep(
+          key: key,
+          selected: _data.improveGoals,
+          onChanged: (v) => setState(() => _data.improveGoals = v),
+        );
+      case _StepKind.eatingObstacle:
+        return EatingObstacleStep(
+          key: key,
+          selected: _data.eatingObstacle,
+          onChanged: (v) => setState(() => _data.eatingObstacle = v),
+        );
+      case _StepKind.hardestChallenge:
+        return HardestChallengeStep(
+          key: key,
+          selected: _data.hardestChallenge,
+          onChanged: (v) => setState(() => _data.hardestChallenge = v),
+        );
+      case _StepKind.support:
+        return SupportStep(key: key, gender: _data.gender);
+      case _StepKind.age:
         return AgeStep(
-          key: const ValueKey(2),
+          key: key,
           age: _data.age,
           onChanged: (v) => setState(() => _data.age = v),
         );
-      case 3:
+      case _StepKind.units:
         return UnitsStep(
-          key: const ValueKey(3),
+          key: key,
           selected: _data.unitSystem,
           onChanged: (v) => setState(() => _data.unitSystem = v),
         );
-      case 4:
+      case _StepKind.height:
         return HeightStep(
-          key: const ValueKey(4),
+          key: key,
           heightCm: _data.heightCm,
           isImperial: _data.isImperial,
           onChanged: (v) => setState(() => _data.heightCm = v),
         );
-      case 5:
+      case _StepKind.weight:
         return WeightStep(
-          key: const ValueKey(5),
+          key: key,
           weightKg: _data.weightKg,
           isImperial: _data.isImperial,
           onChanged: (v) => setState(() => _data.weightKg = v),
         );
-      case 6:
+      case _StepKind.targetWeight:
         return TargetWeightStep(
-          key: const ValueKey(6),
+          key: key,
           targetWeight: _data.targetWeightKg,
           isImperial: _data.isImperial,
           onChanged: (v) => setState(() => _data.targetWeightKg = v),
         );
-      case 7:
+      case _StepKind.weightLossSpeed:
+        return WeightLossSpeedStep(
+          key: key,
+          goal: _data.goal ?? 'lose',
+          currentWeightKg: _data.weightKg,
+          targetWeightKg: _data.targetWeightKg,
+          kgPerWeek: _data.weightLossKgPerWeek,
+          isImperial: _data.isImperial,
+          onChanged: (v) => setState(() => _data.weightLossKgPerWeek = v),
+        );
+      case _StepKind.socialProof:
+        return SocialProofStep(key: key);
+      case _StepKind.activity:
         return ActivityStep(
-          key: const ValueKey(7),
+          key: key,
           selected: _activitySelected ? _data.activityMultiplier : null,
           onChanged: (v) {
             setState(() {
@@ -434,16 +672,32 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             });
           },
         );
-      case 8:
-        return LoadingStep(
-          key: const ValueKey(8),
-          onFinished: _onLoadingFinished,
+      case _StepKind.loading:
+        return LoadingStep(key: key, onFinished: _onLoadingFinished);
+      case _StepKind.result:
+        return ResultStep(key: key, data: _data);
+      case _StepKind.trialReminder:
+        return TrialReminderStep(key: key, onNext: _next);
+      case _StepKind.ratePrompt:
+        return RatePromptStep(
+          key: key,
+          onCompleted: _onRatePromptCompleted,
         );
-      case 9:
-        return ResultStep(key: const ValueKey(9), data: _data);
-      default:
-        return const SizedBox.shrink();
     }
+  }
+
+  void _onRatePromptCompleted(int? rating, bool submittedReview) {
+    unawaited(
+      AnalyticsService.instance.logEvent(
+        'onboarding_rate_prompted',
+        parameters: {
+          'rating': ?rating,
+          'submitted_review': submittedReview ? 1 : 0,
+        },
+      ),
+    );
+    unawaited(_logStepCompleted(_currentPage));
+    _finish();
   }
 
   Widget _buildProgressHeader(
@@ -453,16 +707,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   ) {
     final cs = Theme.of(context).colorScheme;
     final topInset = MediaQuery.paddingOf(context).top;
-    final canGoBack = _currentPage > 0 && !isLoading;
-    final progressStep = (_currentPage + 1).clamp(1, _progressSteps);
-    final progressValue = progressStep / _progressSteps;
-    final headerBg = isDark
-        ? AppColors.darkOnBackAlpha30
-        : AppColors.lightOnBackAlpha30;
+    final isFirstStep = _currentPage == 0;
+    final canGoBack = !isFirstStep && !isLoading && !_isOnRatePrompt;
+    final total = _totalSteps;
+    final progressStep = (_currentPage + 1).clamp(1, total);
+    final progressValue = progressStep / total;
+    final headerBg = isDark ? AppColors.darkOnBack : AppColors.lightOnBack;
     final controlBg = isDark ? AppColors.darkOnBack : AppColors.lightOnBack;
-    final counterBg = isDark ? AppColors.darkOnBack : AppColors.lightOnBack;
     final borderColor = isDark ? AppColors.lineDT50 : AppColors.lineLight100;
-    final trackColor = isDark ? AppColors.lineDT300 : AppColors.lineLight300;
+    final trackColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
     return SizedBox(
       height: topInset + 64,
@@ -474,6 +727,16 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             bottomLeft: Radius.circular(24),
             bottomRight: Radius.circular(24),
           ),
+          // Soft drop shadow lifts the header off the scaffold — both
+          // surfaces are near-white, so without it the header bleeds
+          // into the content area and the back button becomes invisible.
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0D000000),
+              blurRadius: 5,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
         child: CustomPaint(
           foregroundPainter: _RoundedBottomBorderPainter(
@@ -484,99 +747,77 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             padding: EdgeInsets.fromLTRB(16, topInset + 12, 16, 16),
             child: Row(
               children: [
-                Opacity(
-                  opacity: canGoBack ? 1 : 0.2,
-                  child: IgnorePointer(
-                    ignoring: !canGoBack,
-                    child: Container(
-                      width: 48,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: controlBg,
-                        borderRadius: BorderRadius.circular(122),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: _back,
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: cs.onSurface,
-                          size: 24,
+                if (isFirstStep)
+                  const SizedBox(width: 48, height: 36)
+                else
+                  Opacity(
+                    opacity: canGoBack ? 1 : 0.2,
+                    child: IgnorePointer(
+                      ignoring: !canGoBack,
+                      child: Container(
+                        width: 48,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: controlBg,
+                          borderRadius: BorderRadius.circular(122),
+                          border: Border.all(color: borderColor),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 17),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final trackWidth = constraints.maxWidth < 230
-                          ? constraints.maxWidth
-                          : 230.0;
-
-                      return Align(
-                        alignment: Alignment.center,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(100),
-                          child: SizedBox(
-                            width: trackWidth,
-                            height: 20,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(color: trackColor),
-                              child: TweenAnimationBuilder<double>(
-                                tween: Tween(end: progressValue),
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                                builder: (context, value, _) {
-                                  return Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: FractionallySizedBox(
-                                      widthFactor: value,
-                                      heightFactor: 1,
-                                      child: const DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Color(0xFF317BFE),
-                                              Color(0xFF31AFFE),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: _back,
+                          icon: Icon(
+                            Icons.arrow_back,
+                            color: cs.onSurface,
+                            size: 24,
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
-                ),
                 const SizedBox(width: 17),
-                Container(
-                  width: 48,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: counterBg,
-                    borderRadius: BorderRadius.circular(122),
-                  ),
-                  child: Text(
-                    '$progressStep/$_progressSteps',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: cs.onSurfaceVariant,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      height: 22 / 16,
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child: SizedBox(
+                        height: 12,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(color: trackColor),
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(end: progressValue),
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            builder: (context, value, _) {
+                              return Align(
+                                alignment: Alignment.centerLeft,
+                                child: FractionallySizedBox(
+                                  widthFactor: value,
+                                  heightFactor: 1,
+                                  child: const DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Color(0xFF317BFE),
+                                          Color(0xFF31AFFE),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
+                // Phantom spacer mirroring the back-button + gap on the left,
+                // so the progress bar reads as horizontally centred even
+                // though there's no control on the right.
+                const SizedBox(width: 17),
+                const SizedBox(width: 48),
               ],
             ),
           ),
@@ -588,10 +829,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isLoading = _currentPage == 8;
-    final headerBg = isDark
-        ? AppColors.darkOnBackAlpha30
-        : AppColors.lightOnBackAlpha30;
+    final isLoading = _isOnLoading;
+    final isResult = _isOnResult;
+    final headerBg = isDark ? AppColors.darkOnBack : AppColors.lightOnBack;
     final stepImageAsset = _stepImageAsset(isDark: isDark);
     final stepImageCacheWidth = stepImageAsset == null
         ? null
@@ -599,11 +839,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   MediaQuery.devicePixelRatioOf(context))
               .round();
     final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final showCta = !isLoading && !_isOnRatePrompt && !_isOnTrialReminder;
 
-    return PopScope(
+    return DefaultTextStyle.merge(
+      // Onboarding text uses tight tracking — Inter/Cyrillic at title sizes
+      // looks loose with the Material 3 default bodyMedium letterSpacing
+      // of 0.25 cascading down to Text widgets that don't override it.
+      style: const TextStyle(letterSpacing: 0),
+      child: PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _currentPage > 0 && !isLoading) _back();
+        if (!didPop && _currentPage > 0 && !isLoading && !_isOnRatePrompt) {
+          _back();
+        }
       },
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBack3 : AppColors.lightBack3,
@@ -633,7 +881,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     final stepImageBottom = isLoading
                         ? 0.0
                         : bottomInset + _stepImageBottomOffset;
-                    final contentBottomPadding = isLoading
+                    final contentBottomPadding = isLoading || !showCta
                         ? 0.0
                         : hasStepImage
                             ? stepImageBottom +
@@ -728,7 +976,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                         Positioned.fill(
                           child: SafeArea(
                             top: false,
-                            bottom: isLoading,
+                            // Apply bottom safe-area when there's no
+                            // floating CTA — otherwise step content
+                            // could slip under the home indicator.
+                            bottom: isLoading || !showCta,
                             child: Padding(
                               padding: EdgeInsets.only(
                                 bottom: contentBottomPadding,
@@ -755,7 +1006,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                     },
                                 transitionBuilder: (child, animation) {
                                   final isIncoming =
-                                      child.key == ValueKey(_currentPage);
+                                      child.key ==
+                                      ValueKey(
+                                        '${_stepName(_currentKind)}_$_currentPage',
+                                      );
                                   final slideBegin = _isForward
                                       ? (isIncoming ? 0.25 : -0.15)
                                       : (isIncoming ? -0.25 : 0.15);
@@ -791,21 +1045,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                             ),
                           ),
                         ),
-                        if (!isLoading)
+                        if (showCta)
                           Positioned(
-                            left: 24,
-                            right: 24,
+                            left: 20,
+                            right: 20,
                             bottom: bottomInset + _ctaButtonBottomMargin,
-                            child: Container(
+                            child: SizedBox(
                               width: double.infinity,
                               height: _ctaButtonHeight,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: AppTheme.cardEdgeBorder(isDark: isDark),
-                                boxShadow: AppTheme.cardEdgeShadows(
-                                  isDark: isDark,
-                                ),
-                              ),
                               child: ElevatedButton(
                                 onPressed: _isFinishing
                                     ? () {}
@@ -836,9 +1083,11 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                         ),
                                       )
                                     : Text(
-                                        _currentPage == _finalPage
-                                            ? context.l10n.resultOpenPlan
-                                            : context.l10n.onboardingNext,
+                                        _currentKind == _StepKind.welcome
+                                            ? context.l10n.onbWelcomeCta
+                                            : isResult
+                                                ? context.l10n.resultOpenPlan
+                                                : context.l10n.onboardingNext,
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
@@ -855,6 +1104,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

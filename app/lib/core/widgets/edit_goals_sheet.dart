@@ -49,6 +49,7 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
   String _goal = 'lose';
   String _gender = 'female';
   double _activity = 1.375;
+  double _weightLossKgPerWeek = 0.5;
   late final TextEditingController _ageCtl;
   late final TextEditingController _heightCtl;
   late final TextEditingController _weightCtl;
@@ -101,6 +102,10 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
           await db.getSetting('user_activity_level') ?? '',
         ) ??
         1.375;
+    final weightLossSpeed = double.tryParse(
+          await db.getSetting('user_weight_loss_speed') ?? '',
+        ) ??
+        0.5;
 
     if (!mounted) return;
     setState(() {
@@ -108,6 +113,7 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
       _goal = goal;
       _gender = gender;
       _activity = activity;
+      _weightLossKgPerWeek = weightLossSpeed;
       _ageCtl.text = age;
       _heightCtl.text = _formatNumeric(height);
       _weightCtl.text = _formatNumeric(weight);
@@ -191,6 +197,7 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
       weightKg: weight,
       activityMultiplier: _activity,
       goal: _goal,
+      weightLossKgPerWeek: _weightLossKgPerWeek,
     );
 
     _syncing = true;
@@ -263,6 +270,7 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
         'user_weight': _weightCtl.text,
         'user_target_weight': _targetWeightCtl.text,
         'user_activity_level': _activity.toString(),
+        'user_weight_loss_speed': _weightLossKgPerWeek.toStringAsFixed(1),
       });
     }
     for (final entry in settings.entries) {

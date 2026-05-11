@@ -8,6 +8,15 @@ class OnboardingData {
   double targetWeightKg = 65.0;
   double activityMultiplier = 1.375;
 
+  Set<String> obstacles = <String>{};
+  double weightLossKgPerWeek = 0.5;
+  Map<String, int> behavioralScores = <String, int>{};
+  String? psychotype;
+  String? calorieHistory; // 'tried_quit' / 'yes_still' / 'never'
+  Set<String> improveGoals = <String>{}; // multi-select
+  String? eatingObstacle; // single-select
+  String? hardestChallenge; // single-select
+
   bool get isImperial => unitSystem == 'imperial';
 
   double? calorieGoal;

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
-import 'package:meal_tracker/features/onboarding/widgets/common/ruler_picker.dart';
+import 'package:meal_tracker/features/onboarding/widgets/common/vertical_ruler_picker.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 
 class HeightStep extends StatelessWidget {
   final double heightCm;
@@ -35,18 +37,16 @@ class HeightStep extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          const NotoEmoji(name: 'person-standing', size: 40),
+          const SizedBox(height: 12),
           Text(
             context.l10n.onboardingHeightTitle,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface,
-            ),
+            style: onboardingTitleStyle(context),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -55,25 +55,28 @@ class HeightStep extends StatelessWidget {
             style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
-          const Spacer(),
-          if (isImperial)
-            _buildImperialPicker(context)
-          else
-            _buildMetricPicker(context),
-          const Spacer(),
+          const SizedBox(height: 16),
+          // Vertical ruler grows to fill the remaining vertical space —
+          // important so the readout sits comfortably centred between
+          // the title block above and the CTA below.
+          Expanded(
+            child: isImperial
+                ? _buildImperialPicker(context)
+                : _buildMetricPicker(context),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildMetricPicker(BuildContext context) {
-    return RulerPicker(
+    return VerticalRulerPicker(
       value: heightCm,
       min: _minCm,
       max: _maxCm,
       step: 1.0,
-      tickSpacing: 12.0,
-      majorTickEvery: 5,
+      tickSpacing: 8.0,
+      majorTickEvery: 10,
       labelEvery: 10,
       unit: context.l10n.cmUnit,
       formatLabel: (v) => v.round().toString(),
@@ -87,12 +90,12 @@ class HeightStep extends StatelessWidget {
       _minIn.toInt(),
       _maxIn.toInt(),
     );
-    return RulerPicker(
+    return VerticalRulerPicker(
       value: totalIn.toDouble(),
       min: _minIn,
       max: _maxIn,
       step: 1.0,
-      tickSpacing: 18.0,
+      tickSpacing: 10.0,
       majorTickEvery: 6,
       labelEvery: 6,
       formatLabel: (v) => _formatImperial(v.round()),

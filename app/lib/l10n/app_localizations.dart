@@ -3111,6 +3111,774 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Без названия'**
   String get untitledIngredientName;
+
+  /// No description provided for @onbObstaclesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что мешало вам раньше?'**
+  String get onbObstaclesTitle;
+
+  /// No description provided for @onbObstaclesHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите всё, что относится к вам'**
+  String get onbObstaclesHint;
+
+  /// No description provided for @obstacleConsistency.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получается быть последовательным'**
+  String get obstacleConsistency;
+
+  /// No description provided for @obstacleKnowledge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не знаю, что есть'**
+  String get obstacleKnowledge;
+
+  /// No description provided for @obstacleBusy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загруженный график'**
+  String get obstacleBusy;
+
+  /// No description provided for @obstacleCravings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сильная тяга к сладкому/мучному'**
+  String get obstacleCravings;
+
+  /// No description provided for @obstacleSupport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет поддержки'**
+  String get obstacleSupport;
+
+  /// No description provided for @obstacleEatingOut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Часто ем вне дома'**
+  String get obstacleEatingOut;
+
+  /// No description provided for @obstacleMotivation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает мотивации'**
+  String get obstacleMotivation;
+
+  /// No description provided for @obstacleTracking.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сложно считать калории'**
+  String get obstacleTracking;
+
+  /// No description provided for @onbSpeedTitleLose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как быстро хотите похудеть?'**
+  String get onbSpeedTitleLose;
+
+  /// No description provided for @onbSpeedTitleGain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как быстро хотите набрать массу?'**
+  String get onbSpeedTitleGain;
+
+  /// No description provided for @onbSpeedHintKg.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рекомендуемый темп — {rate} кг/неделю'**
+  String onbSpeedHintKg(String rate);
+
+  /// No description provided for @onbSpeedHintLb.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рекомендуемый темп — {rate} фнт/неделю'**
+  String onbSpeedHintLb(String rate);
+
+  /// No description provided for @onbSpeedKgPerWeek.
+  ///
+  /// In ru, this message translates to:
+  /// **'{value} кг/неделю'**
+  String onbSpeedKgPerWeek(String value);
+
+  /// No description provided for @onbSpeedLbPerWeek.
+  ///
+  /// In ru, this message translates to:
+  /// **'{value} фнт/неделю'**
+  String onbSpeedLbPerWeek(String value);
+
+  /// No description provided for @onbSpeedBadgeGentle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мягкий темп ✅'**
+  String get onbSpeedBadgeGentle;
+
+  /// No description provided for @onbSpeedBadgeRecommended.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рекомендуемый темп ⭐'**
+  String get onbSpeedBadgeRecommended;
+
+  /// No description provided for @onbSpeedBadgeAmbitious.
+  ///
+  /// In ru, this message translates to:
+  /// **'Амбициозно 🔥'**
+  String get onbSpeedBadgeAmbitious;
+
+  /// No description provided for @onbSpeedBadgeAggressive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очень агрессивно ⚠️'**
+  String get onbSpeedBadgeAggressive;
+
+  /// No description provided for @onbSpeedTargetByPrefix.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы достигнете {weight} к'**
+  String onbSpeedTargetByPrefix(String weight);
+
+  /// No description provided for @onbQuizTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расскажите о ваших привычках'**
+  String get onbQuizTitle;
+
+  /// No description provided for @onbQuizHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это поможет персонализировать ваш план'**
+  String get onbQuizHint;
+
+  /// No description provided for @quizStressEatingLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'Часто ем от стресса'**
+  String get quizStressEatingLeft;
+
+  /// No description provided for @quizStressEatingRight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ем только для энергии'**
+  String get quizStressEatingRight;
+
+  /// No description provided for @quizSweetPreferenceLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'Люблю сладкое'**
+  String get quizSweetPreferenceLeft;
+
+  /// No description provided for @quizSweetPreferenceRight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предпочитаю солёное/острое'**
+  String get quizSweetPreferenceRight;
+
+  /// No description provided for @quizExerciseConsistencyLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренируюсь постоянно'**
+  String get quizExerciseConsistencyLeft;
+
+  /// No description provided for @quizExerciseConsistencyRight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не получается заниматься регулярно'**
+  String get quizExerciseConsistencyRight;
+
+  /// No description provided for @quizMealPlanningLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'Планирую приёмы пищи'**
+  String get quizMealPlanningLeft;
+
+  /// No description provided for @quizMealPlanningRight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ем что под рукой'**
+  String get quizMealPlanningRight;
+
+  /// No description provided for @quizMotivationTypeLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'Меня двигают результаты'**
+  String get quizMotivationTypeLeft;
+
+  /// No description provided for @quizMotivationTypeRight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Меня двигают ощущения'**
+  String get quizMotivationTypeRight;
+
+  /// No description provided for @onbRateTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нравится ваш план?'**
+  String get onbRateTitle;
+
+  /// No description provided for @onbRateSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оцените MealTracker — это поможет нам стать лучше'**
+  String get onbRateSubtitle;
+
+  /// No description provided for @onbRateButton.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оценить'**
+  String get onbRateButton;
+
+  /// No description provided for @onbRateSkip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пропустить'**
+  String get onbRateSkip;
+
+  /// No description provided for @onbRateFeedbackTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что мы можем улучшить?'**
+  String get onbRateFeedbackTitle;
+
+  /// No description provided for @onbRateFeedbackHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расскажите, что не понравилось'**
+  String get onbRateFeedbackHint;
+
+  /// No description provided for @onbRateFeedbackSubmit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить'**
+  String get onbRateFeedbackSubmit;
+
+  /// No description provided for @resultAnchorPrefix.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы достигнете {weight} к'**
+  String resultAnchorPrefix(String weight);
+
+  /// No description provided for @resultAnchorWeeksSuffix.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, =1{(через 1 неделю)} few{(через {count} недели)} many{(через {count} недель)} other{(через {count} недель)}}'**
+  String resultAnchorWeeksSuffix(int count);
+
+  /// No description provided for @resultMaintainCard.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы поможем удержать вес на {weight}'**
+  String resultMaintainCard(String weight);
+
+  /// No description provided for @resultDailyNormLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'ВАША ДНЕВНАЯ НОРМА'**
+  String get resultDailyNormLabel;
+
+  /// No description provided for @resultPsychotypeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш тип питания: {title}'**
+  String resultPsychotypeLabel(String title);
+
+  /// No description provided for @resultObstaclesHeader.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш план учитывает:'**
+  String get resultObstaclesHeader;
+
+  /// No description provided for @resultMilestonesHeader.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш прогресс по неделям:'**
+  String get resultMilestonesHeader;
+
+  /// No description provided for @resultGoalRow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель'**
+  String get resultGoalRow;
+
+  /// No description provided for @resultWeekRow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неделя {week}'**
+  String resultWeekRow(int week);
+
+  /// No description provided for @loadingMetabolism.
+  ///
+  /// In ru, this message translates to:
+  /// **'Анализируем ваш метаболизм...'**
+  String get loadingMetabolism;
+
+  /// No description provided for @loadingCalories.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рассчитываем дневную норму калорий...'**
+  String get loadingCalories;
+
+  /// No description provided for @loadingMacros.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подбираем баланс белков / жиров / углеводов...'**
+  String get loadingMacros;
+
+  /// No description provided for @loadingPsychotype.
+  ///
+  /// In ru, this message translates to:
+  /// **'Анализируем ваш психотип и привычки...'**
+  String get loadingPsychotype;
+
+  /// No description provided for @loadingPlanCreate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создаём персональный план...'**
+  String get loadingPlanCreate;
+
+  /// No description provided for @psyStressEaterTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эмоциональный едок'**
+  String get psyStressEaterTitle;
+
+  /// No description provided for @psyStressEaterDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы едите от эмоций. Мы поможем найти альтернативы.'**
+  String get psyStressEaterDesc;
+
+  /// No description provided for @psyFuelFocusedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рациональный едок'**
+  String get psyFuelFocusedTitle;
+
+  /// No description provided for @psyFuelFocusedDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы рациональны в питании. Останется только точно посчитать.'**
+  String get psyFuelFocusedDesc;
+
+  /// No description provided for @psySweetLoverTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сладкоежка'**
+  String get psySweetLoverTitle;
+
+  /// No description provided for @psySweetLoverDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы научим заменять сладкое без срывов.'**
+  String get psySweetLoverDesc;
+
+  /// No description provided for @psySavoryLoverTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любитель острого'**
+  String get psySavoryLoverTitle;
+
+  /// No description provided for @psySavoryLoverDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Острое и солёное — ваш стиль. Найдём баланс по натрию.'**
+  String get psySavoryLoverDesc;
+
+  /// No description provided for @psyConsistentAthleteTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спортивный профи'**
+  String get psyConsistentAthleteTitle;
+
+  /// No description provided for @psyConsistentAthleteDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'У вас сильная база. Точная диета умножит результат.'**
+  String get psyConsistentAthleteDesc;
+
+  /// No description provided for @psyInconsistentTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Герой рестарта'**
+  String get psyInconsistentTitle;
+
+  /// No description provided for @psyInconsistentDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Главное — начать снова. Мы упростим возврат.'**
+  String get psyInconsistentDesc;
+
+  /// No description provided for @psyPlannerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Планировщик'**
+  String get psyPlannerTitle;
+
+  /// No description provided for @psyPlannerDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы любите контроль. Дайте AI просчитать всё за вас.'**
+  String get psyPlannerDesc;
+
+  /// No description provided for @psyConvenienceEaterTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Едок на бегу'**
+  String get psyConvenienceEaterTitle;
+
+  /// No description provided for @psyConvenienceEaterDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Времени мало — поможем выбирать быстро и правильно.'**
+  String get psyConvenienceEaterDesc;
+
+  /// No description provided for @psyResultsDrivenTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Целеустремлённый'**
+  String get psyResultsDrivenTitle;
+
+  /// No description provided for @psyResultsDrivenDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вас двигают цифры. Покажем прогресс наглядно.'**
+  String get psyResultsDrivenDesc;
+
+  /// No description provided for @psyFeelingsDrivenTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Интуитивный едок'**
+  String get psyFeelingsDrivenTitle;
+
+  /// No description provided for @psyFeelingsDrivenDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы слушаете себя. Мы дополним это данными.'**
+  String get psyFeelingsDrivenDesc;
+
+  /// No description provided for @psyBalancedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбалансированный подход'**
+  String get psyBalancedTitle;
+
+  /// No description provided for @psyBalancedDesc.
+  ///
+  /// In ru, this message translates to:
+  /// **'У вас здоровый подход к питанию. Усилим его данными.'**
+  String get psyBalancedDesc;
+
+  /// No description provided for @onbWelcomeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Составим план для вашей цели'**
+  String get onbWelcomeTitle;
+
+  /// No description provided for @onbWelcomeSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Считайте калории и БЖУ быстро и точно — без ручного ввода!'**
+  String get onbWelcomeSubtitle;
+
+  /// No description provided for @onbWelcomeCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать'**
+  String get onbWelcomeCta;
+
+  /// No description provided for @onbLanguageSheetTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите язык'**
+  String get onbLanguageSheetTitle;
+
+  /// No description provided for @langShortEn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Eng'**
+  String get langShortEn;
+
+  /// No description provided for @langShortRu.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рус'**
+  String get langShortRu;
+
+  /// No description provided for @langShortDe.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нем'**
+  String get langShortDe;
+
+  /// No description provided for @langShortEs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Исп'**
+  String get langShortEs;
+
+  /// No description provided for @langShortFr.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фра'**
+  String get langShortFr;
+
+  /// No description provided for @langShortPt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пор'**
+  String get langShortPt;
+
+  /// No description provided for @onbConfidentTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спасибо, что доверяете'**
+  String get onbConfidentTitle;
+
+  /// No description provided for @onbConfidentSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы персонализируем MealTracker специально под ваши цели'**
+  String get onbConfidentSubtitle;
+
+  /// No description provided for @onbConfidentPrivacyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваша конфиденциальность важна'**
+  String get onbConfidentPrivacyTitle;
+
+  /// No description provided for @onbConfidentPrivacyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы обещаем хранить вашу личную информацию в секрете'**
+  String get onbConfidentPrivacyBody;
+
+  /// No description provided for @onbKeepResultTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'MealTracker помогает удерживать результат'**
+  String get onbKeepResultTitle;
+
+  /// No description provided for @onbKeepResultSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняйте стабильный прогресс даже через 6 месяцев!'**
+  String get onbKeepResultSubtitle;
+
+  /// No description provided for @onbCalorieHistoryTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы когда-нибудь считали калории?'**
+  String get onbCalorieHistoryTitle;
+
+  /// No description provided for @onbCalorieHistoryYes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Да, и продолжаю'**
+  String get onbCalorieHistoryYes;
+
+  /// No description provided for @onbCalorieHistoryTried.
+  ///
+  /// In ru, this message translates to:
+  /// **'{gender, select, male{Пробовал, но бросил} female{Пробовала, но бросила} other{Пробовал(а), но бросил(а)}}'**
+  String onbCalorieHistoryTried(String gender);
+
+  /// No description provided for @onbCalorieHistoryNever.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет, никогда'**
+  String get onbCalorieHistoryNever;
+
+  /// No description provided for @onbImproveTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что вы хотите улучшить?'**
+  String get onbImproveTitle;
+
+  /// No description provided for @onbImproveLookBetter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выглядеть лучше'**
+  String get onbImproveLookBetter;
+
+  /// No description provided for @onbImproveFeelConfident.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чувствовать себя увереннее'**
+  String get onbImproveFeelConfident;
+
+  /// No description provided for @onbImproveHealth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Улучшить здоровье'**
+  String get onbImproveHealth;
+
+  /// No description provided for @onbImproveMoreEnergy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Больше энергии'**
+  String get onbImproveMoreEnergy;
+
+  /// No description provided for @onbImproveLessStress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Меньше стресса'**
+  String get onbImproveLessStress;
+
+  /// No description provided for @onbImproveImmunity.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поддержать иммунитет'**
+  String get onbImproveImmunity;
+
+  /// No description provided for @onbImproveFocus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лучше фокусироваться'**
+  String get onbImproveFocus;
+
+  /// No description provided for @onbImproveSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лучше спать'**
+  String get onbImproveSleep;
+
+  /// No description provided for @onbEatingObstacleTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что мешает вам питаться полезнее?'**
+  String get onbEatingObstacleTitle;
+
+  /// No description provided for @onbEatingObstacleCravings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тяга к сладкому или вредному'**
+  String get onbEatingObstacleCravings;
+
+  /// No description provided for @onbEatingObstacleLateSnacks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поздние перекусы'**
+  String get onbEatingObstacleLateSnacks;
+
+  /// No description provided for @onbEatingObstacleBadHabits.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неполезные привычки'**
+  String get onbEatingObstacleBadHabits;
+
+  /// No description provided for @onbHardestTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что сложнее всего — не срываться и держать режим?'**
+  String get onbHardestTitle;
+
+  /// No description provided for @onbHardestBusy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Плотный график'**
+  String get onbHardestBusy;
+
+  /// No description provided for @onbHardestRestrictive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слишком много ограничений'**
+  String get onbHardestRestrictive;
+
+  /// No description provided for @onbHardestNoSupport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не хватает поддержки'**
+  String get onbHardestNoSupport;
+
+  /// No description provided for @onbSupportTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы будем рядом!'**
+  String get onbSupportTitle;
+
+  /// No description provided for @onbSupportSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Путь к цели бывает непростым, но мы будем поддерживать вас на каждом шаге.'**
+  String get onbSupportSubtitle;
+
+  /// No description provided for @onbSocialProofTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'С поддержкой люди теряют вес больше и быстрее'**
+  String get onbSocialProofTitle;
+
+  /// No description provided for @onbSocialProofSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приложение может помочь вам достичь устойчивых результатов в снижении веса.'**
+  String get onbSocialProofSubtitle;
+
+  /// No description provided for @onbSpeedSlow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Медленно'**
+  String get onbSpeedSlow;
+
+  /// No description provided for @onbSpeedBalanced.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбалансированно'**
+  String get onbSpeedBalanced;
+
+  /// No description provided for @onbSpeedFast.
+  ///
+  /// In ru, this message translates to:
+  /// **'Быстро'**
+  String get onbSpeedFast;
+
+  /// No description provided for @onbSpeedGoodTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель: {date}'**
+  String onbSpeedGoodTitle(String date);
+
+  /// No description provided for @onbSpeedGoodBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разумный план — устойчивый результат без срывов и плато.'**
+  String get onbSpeedGoodBody;
+
+  /// No description provided for @onbSpeedAlertTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слишком быстро — высок риск срыва'**
+  String get onbSpeedAlertTitle;
+
+  /// No description provided for @onbSpeedAlertBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите более устойчивый темп, чтобы дойти до цели без срывов.'**
+  String get onbSpeedAlertBody;
+
+  /// No description provided for @onbTrialReminderTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминаем, что пробный\nпериод скоро закончится.'**
+  String get onbTrialReminderTitle;
+
+  /// No description provided for @onbTrialReminderNoPaymentNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Платёж сейчас не требуется'**
+  String get onbTrialReminderNoPaymentNow;
+
+  /// No description provided for @onbTrialReminderCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Попробовать за {price}'**
+  String onbTrialReminderCta(String price);
+
+  /// No description provided for @onbTrialReminderSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Всего {yearly} в год ({monthly} / мес)'**
+  String onbTrialReminderSubtitle(String yearly, String monthly);
 }
 
 class _AppLocalizationsDelegate

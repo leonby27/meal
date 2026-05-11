@@ -16,22 +16,32 @@ class LoadingStep extends StatefulWidget {
 
 class _LoadingStepState extends State<LoadingStep>
     with SingleTickerProviderStateMixin {
+  static const _totalDuration = Duration(seconds: 10);
+  static const _captionInterval = Duration(seconds: 2);
+
+  static const _captionsCount = 5;
+
+  List<String> _captions(BuildContext context) {
+    final l10n = context.l10n;
+    return [
+      l10n.loadingMetabolism,
+      l10n.loadingCalories,
+      l10n.loadingMacros,
+      l10n.loadingPsychotype,
+      l10n.loadingPlanCreate,
+    ];
+  }
+
   late final AnimationController _controller;
   late final Timer _textTimer;
   int _textIndex = 0;
-
-  List<String> _texts(BuildContext context) => [
-    context.l10n.onboardingLoadingCalc,
-    context.l10n.onboardingLoadingNorm,
-    context.l10n.onboardingLoadingPlan,
-  ];
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3500),
+      duration: _totalDuration,
     )..forward();
 
     _controller.addStatusListener((status) {
@@ -40,9 +50,9 @@ class _LoadingStepState extends State<LoadingStep>
       }
     });
 
-    _textTimer = Timer.periodic(const Duration(milliseconds: 1200), (timer) {
+    _textTimer = Timer.periodic(_captionInterval, (timer) {
       if (!mounted) return;
-      if (_textIndex < 2) {
+      if (_textIndex < _captionsCount - 1) {
         setState(() => _textIndex++);
       } else {
         timer.cancel();
@@ -81,7 +91,9 @@ class _LoadingStepState extends State<LoadingStep>
                         value: _controller.value,
                         strokeWidth: 6,
                         backgroundColor: cs.outline.withAlpha(60),
-                        valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                        valueColor: const AlwaysStoppedAnimation(
+                          AppColors.primary,
+                        ),
                         strokeCap: StrokeCap.round,
                       ),
                     ),
@@ -101,13 +113,20 @@ class _LoadingStepState extends State<LoadingStep>
           const SizedBox(height: 32),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
-            child: Text(
-              _texts(context)[_textIndex],
+            transitionBuilder: (child, animation) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            child: Padding(
               key: ValueKey(_textIndex),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: cs.onSurfaceVariant,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                _captions(context)[_textIndex],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: cs.onSurfaceVariant,
+                ),
               ),
             ),
           ),

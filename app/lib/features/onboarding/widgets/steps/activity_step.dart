@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 
 class ActivityStep extends StatelessWidget {
   final double? selected;
@@ -13,25 +15,21 @@ class ActivityStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final options = [
-      (context.l10n.activitySedentary, 1.2),
-      (context.l10n.activityLight, 1.375),
-      (context.l10n.activityModerate, 1.55),
-      (context.l10n.activityHigh, 1.725),
+      (context.l10n.activitySedentary, 1.2, 'couch-and-lamp'),
+      (context.l10n.activityLight, 1.375, 'person-walking'),
+      (context.l10n.activityModerate, 1.55, 'person-running'),
+      (context.l10n.activityHigh, 1.725, 'fire'),
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
           Text(
             context.l10n.onboardingActivityTitle,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface,
-            ),
+            style: onboardingTitleStyle(context),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -43,14 +41,15 @@ class ActivityStep extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
-          for (final (title, value) in options) ...[
+          const SizedBox(height: 28),
+          for (final (title, value, emoji) in options) ...[
             _ActivityCard(
               title: title,
+              emoji: emoji,
               isSelected: selected == value,
               onTap: () => onChanged(value),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
         ],
       ),
@@ -60,11 +59,13 @@ class ActivityStep extends StatelessWidget {
 
 class _ActivityCard extends StatelessWidget {
   final String title;
+  final String emoji;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _ActivityCard({
     required this.title,
+    required this.emoji,
     required this.isSelected,
     required this.onTap,
   });
@@ -83,40 +84,28 @@ class _ActivityCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
         child: Container(
+          height: 64,
           decoration: BoxDecoration(
             color: isSelected ? cs.primaryContainer : cardBg,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected ? AppColors.primary : lineColor,
               width: isSelected ? 1.5 : 1,
             ),
-            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
           ),
-          foregroundDecoration: AppTheme.cardEdgeForeground(
-            isDark: isDark,
-            radius: 20,
-          ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
+            NotoEmoji(name: emoji, size: 28),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: cs.onSurface,
                 ),
-              ),
-            ),
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: isSelected ? 1.0 : 0.0,
-              child: AnimatedScale(
-                scale: isSelected ? 1.0 : 0.5,
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutBack,
-                child: Icon(Icons.check_circle, color: AppColors.primary, size: 24),
               ),
             ),
           ],

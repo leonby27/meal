@@ -1,29 +1,64 @@
 {
   "@@locale": "ru",
-
   "mealBreakfast": "Завтрак",
   "mealLunch": "Обед",
   "mealDinner": "Ужин",
   "mealSnack": "Перекус",
-
   "kcalUnit": "ккал",
   "gramsUnit": "г",
   "gramsUnitDot": "г.",
   "kgUnit": "кг",
   "cmUnit": "см",
   "yearsUnit": "год рождения",
-
   "kcalValue": "{count} ккал",
-  "@kcalValue": { "placeholders": { "count": { "type": "String" } } },
+  "@kcalValue": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "kcalValueInt": "{count} Ккал",
-  "@kcalValueInt": { "placeholders": { "count": { "type": "int" } } },
+  "@kcalValueInt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "gramsValue": "{count} г.",
-  "@gramsValue": { "placeholders": { "count": { "type": "int" } } },
+  "@gramsValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "kcalPer100g": "{count} ккал/100г",
-  "@kcalPer100g": { "placeholders": { "count": { "type": "String" } } },
+  "@kcalPer100g": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "per100gInfo": "На 100 г: {cal} ккал  Б{prot} Ж{fat} У{carbs}",
-  "@per100gInfo": { "placeholders": { "cal": { "type": "int" }, "prot": { "type": "String" }, "fat": { "type": "String" }, "carbs": { "type": "String" } } },
-
+  "@per100gInfo": {
+    "placeholders": {
+      "cal": {
+        "type": "int"
+      },
+      "prot": {
+        "type": "String"
+      },
+      "fat": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      }
+    }
+  },
   "proteinShort": "б",
   "fatShort": "ж",
   "carbsShort": "у",
@@ -37,14 +72,30 @@
   "fatGramsLabel": "Жиры, г",
   "carbsGramsLabel": "Углеводы, г",
   "caloriesKcalInputLabel": "Калории (ккал)",
-
   "proteinGoalLabel": "{count} белки",
-  "@proteinGoalLabel": { "placeholders": { "count": { "type": "int" } } },
+  "@proteinGoalLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "fatGoalLabel": "{count} жиры",
-  "@fatGoalLabel": { "placeholders": { "count": { "type": "int" } } },
+  "@fatGoalLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "carbsGoalLabel": "{count} углеводы",
-  "@carbsGoalLabel": { "placeholders": { "count": { "type": "int" } } },
-
+  "@carbsGoalLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileTitle": "Профиль",
   "myProfile": "Мой профиль",
   "subscription": "Подписка",
@@ -95,7 +146,6 @@
   "mergeLocalDataReplace": "Оставить как есть",
   "loginSyncing": "Синхронизация…",
   "loginSyncFailed": "Не удалось синхронизировать данные. Попробуйте позже.",
-
   "loginTitle": "Вход",
   "registerTitle": "Регистрация",
   "nameOptional": "Имя (необязательно)",
@@ -109,23 +159,46 @@
   "switchToLogin": "Войти в аккаунт",
   "wrongCredentials": "Неверный email или пароль",
   "signInError": "Ошибка входа: {error}",
-  "@signInError": { "placeholders": { "error": { "type": "String" } } },
+  "@signInError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "emailAlreadyRegistered": "Этот email уже зарегистрирован",
   "registerError": "Ошибка регистрации: {error}",
-  "@registerError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@registerError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "forgotPassword": "Забыли пароль?",
   "resetPasswordTitle": "Сброс пароля",
   "resetPasswordHint": "Введите email, указанный при регистрации. Мы отправим 6-значный код для сброса пароля.",
   "sendResetCode": "Отправить код",
   "enterCodeTitle": "Введите код",
   "resetCodeSentTo": "Мы отправили 6-значный код на {email}",
-  "@resetCodeSentTo": { "placeholders": { "email": { "type": "String" } } },
+  "@resetCodeSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "enterSixDigitCode": "Введите 6-значный код",
   "verifyCode": "Подтвердить",
   "resendCode": "Отправить код повторно",
   "resendCodeIn": "Повторно через {seconds} с",
-  "@resendCodeIn": { "placeholders": { "seconds": { "type": "int" } } },
+  "@resendCodeIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "resetCodeResent": "Код отправлен повторно",
   "newPasswordTitle": "Новый пароль",
   "newPasswordHint": "Придумайте новый пароль для вашего аккаунта.",
@@ -136,7 +209,6 @@
   "passwordResetSuccess": "Пароль успешно сброшен. Войдите с новым паролем.",
   "emailNotFound": "Аккаунт с таким email не найден",
   "invalidResetCode": "Неверный или просроченный код",
-
   "proTitle": "MealTracker Pro",
   "proUnlockFeatures": "Разблокируйте все возможности:",
   "proAiUnlimited": "ИИ-распознавание без лимитов",
@@ -148,12 +220,10 @@
   "planYearly": "Годовой",
   "billingLabel": "Списание:",
   "manageSubscription": "Управление подпиской",
-
   "goalCaloriesKcal": "Калории, ккал",
   "goalProteinG": "Белки, г",
   "goalFatG": "Жиры, г",
   "goalCarbsG": "Углеводы, г",
-
   "remindersTitle": "Напоминания",
   "reminderOff": "Выключено",
   "remindersDescription": "Напоминания будут приходить ежедневно в указанное время, чтобы вы не забыли записать приемы пищи.",
@@ -163,7 +233,6 @@
   "notifSnackBody": "Не забудьте записать перекус",
   "notifChannelName": "Напоминания о приемах пищи",
   "notifChannelDesc": "Напоминания записать приемы пищи",
-
   "diaryRecordsForDay": "Записи за день",
   "diaryViewLabel": "Вид",
   "diaryViewCompact": "компактный",
@@ -192,10 +261,24 @@
   "addToFavorite": "В избранное",
   "dayNotYet": "Этот день ещё не наступил!",
   "copyMealTo": "Скопировать {meal} в…",
-  "@copyMealTo": { "placeholders": { "meal": { "type": "String" } } },
+  "@copyMealTo": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
   "copiedRecords": "Скопировано {count} записей в {date}",
-  "@copiedRecords": { "placeholders": { "count": { "type": "int" }, "date": { "type": "String" } } },
-
+  "@copiedRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "dayMon": "ПН",
   "dayTue": "ВТ",
   "dayWed": "СР",
@@ -203,7 +286,6 @@
   "dayFri": "ПТ",
   "daySat": "СБ",
   "daySun": "ВС",
-
   "aiAnalyzingPhoto": "Анализируем фото...",
   "aiRecognizingIngredients": "Распознаём ингредиенты...",
   "aiCountingCalories": "Считаем калории...",
@@ -230,12 +312,30 @@
   "activityBicycle": "Велосипед",
   "activityResting": "Покой",
   "approxHours": "~ {count} ч",
-  "@approxHours": { "placeholders": { "count": { "type": "int" } } },
+  "@approxHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "approxMinutes": "~ {count} мин",
-  "@approxMinutes": { "placeholders": { "count": { "type": "int" } } },
+  "@approxMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "healthRatingLabel": "Польза",
   "healthRatingValue": "{value} / 10",
-  "@healthRatingValue": { "placeholders": { "value": { "type": "int" } } },
+  "@healthRatingValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
   "healthDescPoor": "Высокая калорийность, простые углеводы, жиры или соль — лучше как редкое удовольствие.",
   "healthDescFair": "Вкусно и сытно, но, скорее всего, много калорий, простых углеводов, жиров и соли.",
   "healthDescGood": "Сбалансированный приём пищи с разумным соотношением макроэлементов.",
@@ -259,17 +359,21 @@
   "healthAdvicePoor": "Лучше как редкое удовольствие.",
   "ofYourDailyCalories": "от дневной нормы",
   "dailyCaloriesPercent": "{percent}%",
-  "@dailyCaloriesPercent": { "placeholders": { "percent": { "type": "int" } } },
+  "@dailyCaloriesPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "recognizeDish": "Распознать блюдо",
   "photoDetailsHint": "Распишите подробнее, если хотите ...",
   "cameraLabel": "Камера",
-
   "searchTitle": "Поиск",
   "searchHint": "Поиск продуктов...",
   "nothingFound": "Ничего не найдено",
   "recognizeViaAi": "Распознать через ИИ",
   "createProduct": "Создать продукт",
-
   "newProduct": "Новый продукт",
   "basicInfo": "Основное",
   "productNameRequired": "Название *",
@@ -281,7 +385,6 @@
   "productAdded": "Продукт добавлен",
   "saveProduct": "Сохранить продукт",
   "myProductsCategory": "Мои продукты",
-
   "newRecipe": "Новый рецепт",
   "recipeNameRequired": "Название рецепта *",
   "servingsCount": "Количество порций",
@@ -291,23 +394,38 @@
   "totalForRecipe": "Итого на весь рецепт",
   "per100g": "На 100 г:",
   "perServing": "На порцию ({grams} г):",
-  "@perServing": { "placeholders": { "grams": { "type": "int" } } },
+  "@perServing": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  },
   "ingredientSearchHint": "Поиск ингредиента...",
   "startTypingName": "Начните вводить название",
   "tapAddToSelect": "Нажмите «Добавить» чтобы\nвыбрать продукты",
   "ingredientsCount": "Ингредиенты ({count})",
-  "@ingredientsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@ingredientsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "weightLabel": "Вес",
-
   "favoritesTitle": "Избранное",
   "productAddedToMeal": "{name} добавлен",
-  "@productAddedToMeal": { "placeholders": { "name": { "type": "String" } } },
-
+  "@productAddedToMeal": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "historyTitle": "История",
   "noRecords": "Нет записей",
   "today": "Сегодня",
   "yesterday": "Вчера",
-
   "statsTitle": "Статистика",
   "averageLabel": "Среднее",
   "byDays": "По дням",
@@ -315,15 +433,25 @@
   "period2Weeks": "2 недели",
   "periodMonth": "Месяц",
   "totalGrams": "Всего {count} г.",
-  "@totalGrams": { "placeholders": { "count": { "type": "int" } } },
-
+  "@totalGrams": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noOwnProducts": "Нет своих продуктов",
   "createProductWithMacros": "Создайте продукт с указанием БЖУ",
   "productLabel": "Продукт",
   "deleteConfirm": "Удалить?",
   "deleteWhat": "Удалить {what}?",
-  "@deleteWhat": { "placeholders": { "what": { "type": "String" } } },
-
+  "@deleteWhat": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
   "customizeView": "Настроить вид",
   "primaryMetric": "Главная метрика",
   "otherMetrics": "Остальные метрики",
@@ -345,17 +473,21 @@
   "goalsCustomNote": "Свои значения",
   "goalsEditManually": "Изменить самостоятельно",
   "goalsUsePlan": "Рассчитать по плану",
-
   "networkTimeout": "Сервер не отвечает. Проверьте подключение к интернету.",
   "networkSslError": "Ошибка SSL-соединения. Попробуйте позже.",
   "networkConnectionError": "Ошибка соединения: {message}",
-  "@networkConnectionError": { "placeholders": { "message": { "type": "String" } } },
+  "@networkConnectionError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "networkRetryFailed": "Не удалось связаться с сервером.",
   "networkHostLookup": "Сервер временно недоступен. Проверьте интернет или попробуйте через минуту.",
   "networkConnectionRefused": "Сервер не принимает соединения. Попробуйте позже.",
   "networkConnectionReset": "Соединение разорвано. Попробуйте ещё раз.",
   "networkGenericError": "Ошибка сети. Проверьте подключение к интернету.",
-
   "onboardingGenderTitle": "Укажите ваш пол",
   "onboardingGenderHint": "Нужен для точного расчёта нормы калорий",
   "genderMale": "Мужской",
@@ -411,22 +543,54 @@
   "weightLossGoalText": "похудения",
   "weightGainGoalText": "набора массы",
   "achievableGoal": "Достижимая цель {goalText}",
-  "@achievableGoal": { "placeholders": { "goalText": { "type": "String" } } },
+  "@achievableGoal": {
+    "placeholders": {
+      "goalText": {
+        "type": "String"
+      }
+    }
+  },
   "weeksToGoal": "{weeks} нед. до цели — к {date}",
-  "@weeksToGoal": { "placeholders": { "weeks": { "type": "int" }, "date": { "type": "String" } } },
+  "@weeksToGoal": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "maintainWeightHint": "Мы поможем вам поддерживать вес\nна уровне {weight} кг",
-  "@maintainWeightHint": { "placeholders": { "weight": { "type": "String" } } },
+  "@maintainWeightHint": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
   "weightWithUnit": "{value} кг",
-  "@weightWithUnit": { "placeholders": { "value": { "type": "String" } } },
+  "@weightWithUnit": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "onboardingNext": "Далее",
   "onboardingStart": "Начать",
-
   "resultPlanReadyTitle": "Ваш персональный план готов",
   "resultHeroSubtitle": "На основе ваших ответов",
   "resultRingAdjustLine": "Цифры можно скорректировать в любой момент",
   "resultGoalCardTitle": "Ваша цель",
   "resultGoalMaintainTitle": "Удерживать вес около {weight}",
-  "@resultGoalMaintainTitle": { "placeholders": { "weight": { "type": "String" } } },
+  "@resultGoalMaintainTitle": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
   "resultGoalMaintainSubtitle": "Без жёстких ограничений — баланс на каждый день",
   "resultBridgeTitle": "Чтобы план работал — его нужно вести каждый день",
   "resultBridgeFreeLine": "Бесплатно — 3 записи еды, чтобы попробовать",
@@ -448,7 +612,6 @@
   "methodologySourceWhoDescription": "Общие рекомендации по здоровому питанию.",
   "methodologyOpenSourceFailed": "Не удалось открыть источник.",
   "resultOpenPlan": "Открыть мой план",
-
   "socialProofScaleTitle": "Создано для серьёзного учёта",
   "socialProofScaleSubtitle": "Технология, на которой строится ваш план",
   "socialProofScaleProductsLabel": "продуктов в нашей базе",
@@ -463,7 +626,6 @@
   "socialProofScienceSubtitle": "Ваш план рассчитан по проверенной формуле",
   "socialProofScienceFormulaCaption": "Золотой стандарт нутрициологии с 1990 года",
   "socialProofScienceTrust": "Используется дипломированными диетологами и клиническими нутрициологами по всему миру.",
-
   "paywallTitle": "Попробуйте Pro\nбесплатно",
   "paywallWeeklyTitle": "Откройте Pro\nсегодня",
   "paywallWeeklyTimelineTodayTitle": "Сегодня — откройте Pro",
@@ -480,7 +642,9 @@
   "paywallTimelinePayDesc": "Списание будет {date}, если вы не отмените подписку",
   "@paywallTimelinePayDesc": {
     "placeholders": {
-      "date": {"type": "String"}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "paywallMonthly": "Еженедельно",
@@ -507,7 +671,9 @@
   "paywallTrialDisclaimerFmt": "3 дня бесплатно, затем {price}/год",
   "@paywallTrialDisclaimerFmt": {
     "placeholders": {
-      "price": {"type": "String"}
+      "price": {
+        "type": "String"
+      }
     }
   },
   "paywallRestore": "Восстановить",
@@ -530,56 +696,319 @@
   "paywallErrorPurchaseFailed": "Покупку не удалось завершить. Попробуйте ещё раз.",
   "paywallErrorRestoreFailed": "Не удалось восстановить покупки. Попробуйте ещё раз.",
   "paywallErrorPaymentPending": "Оплата обрабатывается. Мы откроем Pro сразу после подтверждения.",
-
   "restartOnboarding": "Начать заново",
   "proActive": "Активна",
   "signInToSaveData": "Войдите для сохранения данных",
   "dataStoredLocally": "Ваши данные хранятся только на этом устройстве",
-
   "barcodeScannerTitle": "Сканер штрих-кода",
   "barcodeScanHint": "Наведите камеру на штрих-код",
-
   "paywallSubscribeNow": "Оформить подписку",
   "paywallHardDisclaimer": "Автопродление. Отмена в любой момент.",
   "paywallHardTitle": "Продолжайте\nс Pro",
   "freeEntriesRemaining": "{count, plural, =1{Осталась 1 бесплатная запись} few{Осталось {count} бесплатные записи} many{Осталось {count} бесплатных записей} other{Осталось {count} бесплатных записей}}",
-  "@freeEntriesRemaining": { "placeholders": { "count": { "type": "int" } } },
+  "@freeEntriesRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "getPro": "Получить Pro",
   "freeLimitReached": "Бесплатные записи закончились",
-
   "analyticsTitle": "Аналитика",
   "summarySection": "Сводка",
   "trendsSection": "Тренды",
   "highlightsSection": "Главное",
   "dayStreak": "{count, plural, =0{Дней подряд} =1{День подряд} few{Дня подряд} many{Дней подряд} other{Дней подряд}}",
-  "@dayStreak": { "placeholders": { "count": { "type": "int" } } },
+  "@dayStreak": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "averageADay": "в среднем за день",
   "calDifferenceCount": "Разница {count} ккал",
-  "@calDifferenceCount": { "placeholders": { "count": { "type": "int" } } },
+  "@calDifferenceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "percentAverage": "{count}/100% среднего",
-  "@percentAverage": { "placeholders": { "count": { "type": "int" } } },
+  "@percentAverage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "analyticsHighlightHigher": "Среднее потребление {metric} за день на этой неделе выше, чем на прошлой.",
-  "@analyticsHighlightHigher": { "placeholders": { "metric": { "type": "String" } } },
+  "@analyticsHighlightHigher": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsHighlightLower": "Среднее потребление {metric} за день на этой неделе ниже, чем на прошлой.",
-  "@analyticsHighlightLower": { "placeholders": { "metric": { "type": "String" } } },
+  "@analyticsHighlightLower": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsHighlightSimilar": "Среднее потребление {metric} за день примерно такое же, как на прошлой неделе.",
-  "@analyticsHighlightSimilar": { "placeholders": { "metric": { "type": "String" } } },
-
+  "@analyticsHighlightSimilar": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsPeriod1W": "1 Н",
   "analyticsPeriod2W": "2 Н",
   "analyticsPeriod1M": "1 М",
   "analyticsPeriod3M": "3 М",
   "analyticsPeriod6M": "6 М",
   "analyticsPeriod1Y": "1 Г",
-
   "analyticsMetricCal": "Ккал",
   "analyticsMetricProtein": "Белки",
   "analyticsMetricFat": "Жиры",
   "analyticsMetricCarbs": "Углев",
-
   "quantityLabel": "Количество",
-
   "addSuggestionsLabel": "Добавить ингредиент",
   "suggestionSomethingElse": "Другое",
-  "untitledIngredientName": "Без названия"
+  "untitledIngredientName": "Без названия",
+  "onbObstaclesTitle": "Что мешало вам раньше?",
+  "onbObstaclesHint": "Выберите всё, что относится к вам",
+  "obstacleConsistency": "Не получается быть последовательным",
+  "obstacleKnowledge": "Не знаю, что есть",
+  "obstacleBusy": "Загруженный график",
+  "obstacleCravings": "Сильная тяга к сладкому/мучному",
+  "obstacleSupport": "Нет поддержки",
+  "obstacleEatingOut": "Часто ем вне дома",
+  "obstacleMotivation": "Не хватает мотивации",
+  "obstacleTracking": "Сложно считать калории",
+  "onbSpeedTitleLose": "Как быстро хотите похудеть?",
+  "onbSpeedTitleGain": "Как быстро хотите набрать массу?",
+  "onbSpeedHintKg": "Рекомендуемый темп — {rate} кг/неделю",
+  "onbSpeedHintLb": "Рекомендуемый темп — {rate} фнт/неделю",
+  "onbSpeedKgPerWeek": "{value} кг/неделю",
+  "@onbSpeedKgPerWeek": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "onbSpeedLbPerWeek": "{value} фнт/неделю",
+  "@onbSpeedLbPerWeek": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "onbSpeedBadgeGentle": "Мягкий темп ✅",
+  "onbSpeedBadgeRecommended": "Рекомендуемый темп ⭐",
+  "onbSpeedBadgeAmbitious": "Амбициозно 🔥",
+  "onbSpeedBadgeAggressive": "Очень агрессивно ⚠️",
+  "onbSpeedTargetByPrefix": "Вы достигнете {weight} к",
+  "@onbSpeedTargetByPrefix": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "onbQuizTitle": "Расскажите о ваших привычках",
+  "onbQuizHint": "Это поможет персонализировать ваш план",
+  "quizStressEatingLeft": "Часто ем от стресса",
+  "quizStressEatingRight": "Ем только для энергии",
+  "quizSweetPreferenceLeft": "Люблю сладкое",
+  "quizSweetPreferenceRight": "Предпочитаю солёное/острое",
+  "quizExerciseConsistencyLeft": "Тренируюсь постоянно",
+  "quizExerciseConsistencyRight": "Не получается заниматься регулярно",
+  "quizMealPlanningLeft": "Планирую приёмы пищи",
+  "quizMealPlanningRight": "Ем что под рукой",
+  "quizMotivationTypeLeft": "Меня двигают результаты",
+  "quizMotivationTypeRight": "Меня двигают ощущения",
+  "onbRateTitle": "Нравится ваш план?",
+  "onbRateSubtitle": "Оцените MealTracker — это поможет нам стать лучше",
+  "onbRateButton": "Оценить",
+  "onbRateSkip": "Пропустить",
+  "onbRateFeedbackTitle": "Что мы можем улучшить?",
+  "onbRateFeedbackHint": "Расскажите, что не понравилось",
+  "onbRateFeedbackSubmit": "Отправить",
+  "resultAnchorPrefix": "Вы достигнете {weight} к",
+  "@resultAnchorPrefix": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultAnchorWeeksSuffix": "{count, plural, =1{(через 1 неделю)} few{(через {count} недели)} many{(через {count} недель)} other{(через {count} недель)}}",
+  "@resultAnchorWeeksSuffix": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultMaintainCard": "Мы поможем удержать вес на {weight}",
+  "@resultMaintainCard": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultDailyNormLabel": "ВАША ДНЕВНАЯ НОРМА",
+  "resultPsychotypeLabel": "Ваш тип питания: {title}",
+  "@resultPsychotypeLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "resultObstaclesHeader": "Ваш план учитывает:",
+  "resultMilestonesHeader": "Ваш прогресс по неделям:",
+  "resultGoalRow": "Цель",
+  "resultWeekRow": "Неделя {week}",
+  "@resultWeekRow": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "loadingMetabolism": "Анализируем ваш метаболизм...",
+  "loadingCalories": "Рассчитываем дневную норму калорий...",
+  "loadingMacros": "Подбираем баланс белков / жиров / углеводов...",
+  "loadingPsychotype": "Анализируем ваш психотип и привычки...",
+  "loadingPlanCreate": "Создаём персональный план...",
+  "psyStressEaterTitle": "Эмоциональный едок",
+  "psyStressEaterDesc": "Вы едите от эмоций. Мы поможем найти альтернативы.",
+  "psyFuelFocusedTitle": "Рациональный едок",
+  "psyFuelFocusedDesc": "Вы рациональны в питании. Останется только точно посчитать.",
+  "psySweetLoverTitle": "Сладкоежка",
+  "psySweetLoverDesc": "Мы научим заменять сладкое без срывов.",
+  "psySavoryLoverTitle": "Любитель острого",
+  "psySavoryLoverDesc": "Острое и солёное — ваш стиль. Найдём баланс по натрию.",
+  "psyConsistentAthleteTitle": "Спортивный профи",
+  "psyConsistentAthleteDesc": "У вас сильная база. Точная диета умножит результат.",
+  "psyInconsistentTitle": "Герой рестарта",
+  "psyInconsistentDesc": "Главное — начать снова. Мы упростим возврат.",
+  "psyPlannerTitle": "Планировщик",
+  "psyPlannerDesc": "Вы любите контроль. Дайте AI просчитать всё за вас.",
+  "psyConvenienceEaterTitle": "Едок на бегу",
+  "psyConvenienceEaterDesc": "Времени мало — поможем выбирать быстро и правильно.",
+  "psyResultsDrivenTitle": "Целеустремлённый",
+  "psyResultsDrivenDesc": "Вас двигают цифры. Покажем прогресс наглядно.",
+  "psyFeelingsDrivenTitle": "Интуитивный едок",
+  "psyFeelingsDrivenDesc": "Вы слушаете себя. Мы дополним это данными.",
+  "psyBalancedTitle": "Сбалансированный подход",
+  "psyBalancedDesc": "У вас здоровый подход к питанию. Усилим его данными.",
+  "onbWelcomeTitle": "Составим план для вашей цели",
+  "onbWelcomeSubtitle": "Считайте калории и БЖУ быстро и точно — без ручного ввода!",
+  "onbWelcomeCta": "Начать",
+  "onbLanguageSheetTitle": "Выберите язык",
+  "langShortEn": "Eng",
+  "langShortRu": "Рус",
+  "langShortDe": "Нем",
+  "langShortEs": "Исп",
+  "langShortFr": "Фра",
+  "langShortPt": "Пор",
+  "onbConfidentTitle": "Спасибо, что доверяете",
+  "onbConfidentSubtitle": "Мы персонализируем MealTracker специально под ваши цели",
+  "onbConfidentPrivacyTitle": "Ваша конфиденциальность важна",
+  "onbConfidentPrivacyBody": "Мы обещаем хранить вашу личную информацию в секрете",
+  "onbKeepResultTitle": "MealTracker помогает удерживать результат",
+  "onbKeepResultSubtitle": "Сохраняйте стабильный прогресс даже через 6 месяцев!",
+  "onbCalorieHistoryTitle": "Вы когда-нибудь считали калории?",
+  "onbCalorieHistoryYes": "Да, и продолжаю",
+  "onbCalorieHistoryTried": "{gender, select, male{Пробовал, но бросил} female{Пробовала, но бросила} other{Пробовал(а), но бросил(а)}}",
+  "onbCalorieHistoryNever": "Нет, никогда",
+  "@onbCalorieHistoryTried": {
+    "placeholders": {
+      "gender": {
+        "type": "String"
+      }
+    }
+  },
+  "onbImproveTitle": "Что вы хотите улучшить?",
+  "onbImproveLookBetter": "Выглядеть лучше",
+  "onbImproveFeelConfident": "Чувствовать себя увереннее",
+  "onbImproveHealth": "Улучшить здоровье",
+  "onbImproveMoreEnergy": "Больше энергии",
+  "onbImproveLessStress": "Меньше стресса",
+  "onbImproveImmunity": "Поддержать иммунитет",
+  "onbImproveFocus": "Лучше фокусироваться",
+  "onbImproveSleep": "Лучше спать",
+  "onbEatingObstacleTitle": "Что мешает вам питаться полезнее?",
+  "onbEatingObstacleCravings": "Тяга к сладкому или вредному",
+  "onbEatingObstacleLateSnacks": "Поздние перекусы",
+  "onbEatingObstacleBadHabits": "Неполезные привычки",
+  "onbHardestTitle": "Что сложнее всего — не срываться и держать режим?",
+  "onbHardestBusy": "Плотный график",
+  "onbHardestRestrictive": "Слишком много ограничений",
+  "onbHardestNoSupport": "Не хватает поддержки",
+  "onbSupportTitle": "Мы будем рядом!",
+  "onbSupportSubtitle": "Путь к цели бывает непростым, но мы будем поддерживать вас на каждом шаге.",
+  "onbSocialProofTitle": "С поддержкой люди теряют вес больше и быстрее",
+  "onbSocialProofSubtitle": "Приложение может помочь вам достичь устойчивых результатов в снижении веса.",
+  "onbSpeedSlow": "Медленно",
+  "onbSpeedBalanced": "Сбалансированно",
+  "onbSpeedFast": "Быстро",
+  "onbSpeedGoodTitle": "Цель: {date}",
+  "onbSpeedGoodBody": "Разумный план — устойчивый результат без срывов и плато.",
+  "onbSpeedAlertTitle": "Слишком быстро — высок риск срыва",
+  "onbSpeedAlertBody": "Выберите более устойчивый темп, чтобы дойти до цели без срывов.",
+  "@onbSpeedGoodTitle": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@onbSpeedHintKg": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "@onbSpeedHintLb": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "onbTrialReminderTitle": "Напоминаем, что пробный\nпериод скоро закончится.",
+  "onbTrialReminderNoPaymentNow": "Платёж сейчас не требуется",
+  "onbTrialReminderCta": "Попробовать за {price}",
+  "onbTrialReminderSubtitle": "Всего {yearly} в год ({monthly} / мес)",
+  "@onbTrialReminderCta": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "@onbTrialReminderSubtitle": {
+    "placeholders": {
+      "yearly": {
+        "type": "String"
+      },
+      "monthly": {
+        "type": "String"
+      }
+    }
+  }
 }

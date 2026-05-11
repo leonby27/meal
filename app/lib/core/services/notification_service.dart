@@ -32,10 +32,15 @@ class NotificationService {
     tz.initializeTimeZones();
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // No request*Permission flags here: iOS would otherwise pop the
+    // permission dialog the instant the plugin initializes (which runs
+    // at app launch in main.dart). The actual request is deferred to
+    // NotificationService.requestPermissions(), called from screens that
+    // need notifications (e.g. reminders settings).
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     await _plugin.initialize(

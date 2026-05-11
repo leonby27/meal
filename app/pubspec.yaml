@@ -65,6 +65,7 @@ dependencies:
   cupertino_http: ^2.4.0
   firebase_core: ^4.7.0
   firebase_analytics: ^12.3.0
+  in_app_review: ^2.0.10
 
 dependency_overrides:
   # Local fork of mobile_scanner 7.2.0 with iOS plugin registration disabled.
@@ -113,6 +114,16 @@ flutter:
     - assets/mascot/
     - assets/onboarding/dark/
     - assets/onboarding/light/
+    - assets/onboarding/emoji/
+    - assets/onboarding/flags/
+    - assets/onboarding/icons/
+    - assets/onboarding/welcome_food.png
+    - assets/onboarding/trust_hands.jpg
+    - assets/onboarding/chart.png
+    - assets/onboarding/support_man.jpg
+    - assets/onboarding/support_woman.jpg
+    - assets/onboarding/compare.png
+    - assets/onboarding/bell.jpg
     - assets/paywall/
     - assets/paywall/dark/
     - assets/paywall/light/

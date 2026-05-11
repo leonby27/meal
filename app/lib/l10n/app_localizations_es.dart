@@ -1673,4 +1673,452 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get untitledIngredientName => 'Sin nombre';
+
+  @override
+  String get onbObstaclesTitle => '¿Qué te ha frenado antes?';
+
+  @override
+  String get onbObstaclesHint => 'Selecciona todo lo que corresponda';
+
+  @override
+  String get obstacleConsistency => 'Me cuesta ser constante';
+
+  @override
+  String get obstacleKnowledge => 'No sé qué comer';
+
+  @override
+  String get obstacleBusy => 'Agenda apretada';
+
+  @override
+  String get obstacleCravings => 'Ansias fuertes por dulces o harinas';
+
+  @override
+  String get obstacleSupport => 'Falta de apoyo';
+
+  @override
+  String get obstacleEatingOut => 'Como fuera de casa a menudo';
+
+  @override
+  String get obstacleMotivation => 'Falta de motivación';
+
+  @override
+  String get obstacleTracking => 'Difícil contar calorías';
+
+  @override
+  String get onbSpeedTitleLose => '¿A qué velocidad quieres adelgazar?';
+
+  @override
+  String get onbSpeedTitleGain => '¿A qué velocidad quieres ganar masa?';
+
+  @override
+  String onbSpeedHintKg(String rate) {
+    return 'Ritmo recomendado — $rate kg/semana';
+  }
+
+  @override
+  String onbSpeedHintLb(String rate) {
+    return 'Ritmo recomendado — $rate lb/semana';
+  }
+
+  @override
+  String onbSpeedKgPerWeek(String value) {
+    return '$value kg/semana';
+  }
+
+  @override
+  String onbSpeedLbPerWeek(String value) {
+    return '$value lb/semana';
+  }
+
+  @override
+  String get onbSpeedBadgeGentle => 'Ritmo suave ✅';
+
+  @override
+  String get onbSpeedBadgeRecommended => 'Ritmo recomendado ⭐';
+
+  @override
+  String get onbSpeedBadgeAmbitious => 'Ambicioso 🔥';
+
+  @override
+  String get onbSpeedBadgeAggressive => 'Muy agresivo ⚠️';
+
+  @override
+  String onbSpeedTargetByPrefix(String weight) {
+    return 'Alcanzarás $weight para';
+  }
+
+  @override
+  String get onbQuizTitle => 'Cuéntanos sobre tus hábitos';
+
+  @override
+  String get onbQuizHint => 'Esto nos ayuda a personalizar tu plan';
+
+  @override
+  String get quizStressEatingLeft => 'Como cuando estoy estresado';
+
+  @override
+  String get quizStressEatingRight => 'Como solo por energía';
+
+  @override
+  String get quizSweetPreferenceLeft => 'Me encantan los dulces';
+
+  @override
+  String get quizSweetPreferenceRight => 'Prefiero salado/picante';
+
+  @override
+  String get quizExerciseConsistencyLeft => 'Entreno con regularidad';
+
+  @override
+  String get quizExerciseConsistencyRight => 'No mantengo una rutina';
+
+  @override
+  String get quizMealPlanningLeft => 'Planifico mis comidas';
+
+  @override
+  String get quizMealPlanningRight => 'Como lo que hay a mano';
+
+  @override
+  String get quizMotivationTypeLeft => 'Me mueven los resultados';
+
+  @override
+  String get quizMotivationTypeRight => 'Me mueven las sensaciones';
+
+  @override
+  String get onbRateTitle => '¿Te gusta tu plan?';
+
+  @override
+  String get onbRateSubtitle => 'Valora MealTracker — nos ayudas a mejorar';
+
+  @override
+  String get onbRateButton => 'Valorar';
+
+  @override
+  String get onbRateSkip => 'Omitir';
+
+  @override
+  String get onbRateFeedbackTitle => '¿Qué podemos mejorar?';
+
+  @override
+  String get onbRateFeedbackHint => 'Cuéntanos qué no funcionó';
+
+  @override
+  String get onbRateFeedbackSubmit => 'Enviar';
+
+  @override
+  String resultAnchorPrefix(String weight) {
+    return 'Alcanzarás $weight para';
+  }
+
+  @override
+  String resultAnchorWeeksSuffix(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '(en $count semanas)',
+      one: '(en 1 semana)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String resultMaintainCard(String weight) {
+    return 'Te ayudaremos a mantener $weight';
+  }
+
+  @override
+  String get resultDailyNormLabel => 'TU OBJETIVO DIARIO';
+
+  @override
+  String resultPsychotypeLabel(String title) {
+    return 'Tu estilo alimentario: $title';
+  }
+
+  @override
+  String get resultObstaclesHeader => 'Tu plan tiene en cuenta:';
+
+  @override
+  String get resultMilestonesHeader => 'Tu progreso semanal:';
+
+  @override
+  String get resultGoalRow => 'Objetivo';
+
+  @override
+  String resultWeekRow(int week) {
+    return 'Semana $week';
+  }
+
+  @override
+  String get loadingMetabolism => 'Analizando tu metabolismo...';
+
+  @override
+  String get loadingCalories => 'Calculando tu objetivo diario de calorías...';
+
+  @override
+  String get loadingMacros =>
+      'Afinando el equilibrio proteína / grasa / carbohidratos...';
+
+  @override
+  String get loadingPsychotype =>
+      'Analizando tu estilo alimentario y hábitos...';
+
+  @override
+  String get loadingPlanCreate => 'Creando tu plan personal...';
+
+  @override
+  String get psyStressEaterTitle => 'El Comedor Emocional';
+
+  @override
+  String get psyStressEaterDesc =>
+      'Comes con las emociones. Te ayudaremos a encontrar alternativas.';
+
+  @override
+  String get psyFuelFocusedTitle => 'El Comedor Racional';
+
+  @override
+  String get psyFuelFocusedDesc =>
+      'Eres racional con la comida — solo afinaremos los números.';
+
+  @override
+  String get psySweetLoverTitle => 'El Goloso';
+
+  @override
+  String get psySweetLoverDesc =>
+      'Te enseñaremos sustitutos que calman antojos sin sabotaje.';
+
+  @override
+  String get psySavoryLoverTitle => 'El Sabroso';
+
+  @override
+  String get psySavoryLoverDesc =>
+      'Lo salado y picante es lo tuyo — cuidaremos el sodio.';
+
+  @override
+  String get psyConsistentAthleteTitle => 'El Constante';
+
+  @override
+  String get psyConsistentAthleteDesc =>
+      'Tienes una base sólida. Una dieta precisa multiplicará resultados.';
+
+  @override
+  String get psyInconsistentTitle => 'El Que Recomienza';
+
+  @override
+  String get psyInconsistentDesc =>
+      'Lo difícil es volver a empezar. Te lo pondremos fácil.';
+
+  @override
+  String get psyPlannerTitle => 'El Planificador';
+
+  @override
+  String get psyPlannerDesc =>
+      'Te encanta el control. Deja que la IA haga los cálculos.';
+
+  @override
+  String get psyConvenienceEaterTitle => 'El Práctico';
+
+  @override
+  String get psyConvenienceEaterDesc =>
+      'Poco tiempo — te ayudaremos a elegir rápido y bien.';
+
+  @override
+  String get psyResultsDrivenTitle => 'El Realizador';
+
+  @override
+  String get psyResultsDrivenDesc =>
+      'Los números te mueven — mostraremos tu progreso con claridad.';
+
+  @override
+  String get psyFeelingsDrivenTitle => 'El Intuitivo';
+
+  @override
+  String get psyFeelingsDrivenDesc =>
+      'Escuchas a tu cuerpo — añadiremos los datos.';
+
+  @override
+  String get psyBalancedTitle => 'El Equilibrado';
+
+  @override
+  String get psyBalancedDesc =>
+      'Tienes un enfoque saludable. Lo respaldaremos con datos.';
+
+  @override
+  String get onbWelcomeTitle => 'Vamos a crear un plan para tu objetivo';
+
+  @override
+  String get onbWelcomeSubtitle =>
+      'Cuenta calorías y macros de forma rápida y precisa, sin introducir datos a mano.';
+
+  @override
+  String get onbWelcomeCta => 'Empezar';
+
+  @override
+  String get onbLanguageSheetTitle => 'Elige tu idioma';
+
+  @override
+  String get langShortEn => 'Ing';
+
+  @override
+  String get langShortRu => 'Rus';
+
+  @override
+  String get langShortDe => 'Ale';
+
+  @override
+  String get langShortEs => 'Esp';
+
+  @override
+  String get langShortFr => 'Fra';
+
+  @override
+  String get langShortPt => 'Por';
+
+  @override
+  String get onbConfidentTitle => 'Gracias por tu confianza';
+
+  @override
+  String get onbConfidentSubtitle =>
+      'Personalizamos MealTracker específicamente para tus objetivos';
+
+  @override
+  String get onbConfidentPrivacyTitle => 'Tu privacidad es importante';
+
+  @override
+  String get onbConfidentPrivacyBody =>
+      'Prometemos mantener tu información personal en privado';
+
+  @override
+  String get onbKeepResultTitle =>
+      'MealTracker te ayuda a mantener los resultados';
+
+  @override
+  String get onbKeepResultSubtitle =>
+      '¡Mantén un progreso estable incluso después de 6 meses!';
+
+  @override
+  String get onbCalorieHistoryTitle => '¿Has contado calorías alguna vez?';
+
+  @override
+  String get onbCalorieHistoryYes => 'Sí, y lo sigo haciendo';
+
+  @override
+  String onbCalorieHistoryTried(String gender) {
+    String _temp0 = intl.Intl.selectLogic(gender, {
+      'male': 'Lo intenté, pero lo dejé',
+      'female': 'Lo intenté, pero lo dejé',
+      'other': 'Lo intenté, pero lo dejé',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get onbCalorieHistoryNever => 'No, nunca';
+
+  @override
+  String get onbImproveTitle => '¿Qué quieres mejorar?';
+
+  @override
+  String get onbImproveLookBetter => 'Verme mejor';
+
+  @override
+  String get onbImproveFeelConfident => 'Sentirme con más confianza';
+
+  @override
+  String get onbImproveHealth => 'Mejorar la salud';
+
+  @override
+  String get onbImproveMoreEnergy => 'Más energía';
+
+  @override
+  String get onbImproveLessStress => 'Menos estrés';
+
+  @override
+  String get onbImproveImmunity => 'Reforzar la inmunidad';
+
+  @override
+  String get onbImproveFocus => 'Mejor concentración';
+
+  @override
+  String get onbImproveSleep => 'Dormir mejor';
+
+  @override
+  String get onbEatingObstacleTitle => '¿Qué te impide comer mejor?';
+
+  @override
+  String get onbEatingObstacleCravings => 'Antojos de dulce o comida basura';
+
+  @override
+  String get onbEatingObstacleLateSnacks => 'Picar de noche';
+
+  @override
+  String get onbEatingObstacleBadHabits => 'Malos hábitos';
+
+  @override
+  String get onbHardestTitle =>
+      '¿Qué es lo más difícil — mantener la constancia?';
+
+  @override
+  String get onbHardestBusy => 'Agenda apretada';
+
+  @override
+  String get onbHardestRestrictive => 'Demasiadas restricciones';
+
+  @override
+  String get onbHardestNoSupport => 'Falta de apoyo';
+
+  @override
+  String get onbSupportTitle => '¡Estamos contigo en cada paso!';
+
+  @override
+  String get onbSupportSubtitle =>
+      'El camino a tu objetivo puede ser duro, pero te apoyaremos en cada paso.';
+
+  @override
+  String get onbSocialProofTitle =>
+      'Con apoyo, la gente pierde más peso y más rápido';
+
+  @override
+  String get onbSocialProofSubtitle =>
+      'La app te ayuda a lograr resultados duraderos al perder peso.';
+
+  @override
+  String get onbSpeedSlow => 'Lento';
+
+  @override
+  String get onbSpeedBalanced => 'Equilibrado';
+
+  @override
+  String get onbSpeedFast => 'Rápido';
+
+  @override
+  String onbSpeedGoodTitle(String date) {
+    return 'Meta: $date';
+  }
+
+  @override
+  String get onbSpeedGoodBody =>
+      'Un plan razonable — resultados estables y duraderos sin agotamiento.';
+
+  @override
+  String get onbSpeedAlertTitle => 'Demasiado rápido — riesgo de abandono';
+
+  @override
+  String get onbSpeedAlertBody =>
+      'Elige un ritmo más sostenible para mantener la constancia y evitar el agotamiento.';
+
+  @override
+  String get onbTrialReminderTitle =>
+      'Te recordamos que el período\nde prueba terminará pronto.';
+
+  @override
+  String get onbTrialReminderNoPaymentNow => 'Sin pago por ahora';
+
+  @override
+  String onbTrialReminderCta(String price) {
+    return 'Probar por $price';
+  }
+
+  @override
+  String onbTrialReminderSubtitle(String yearly, String monthly) {
+    return 'Solo $yearly al año ($monthly/mes)';
+  }
 }

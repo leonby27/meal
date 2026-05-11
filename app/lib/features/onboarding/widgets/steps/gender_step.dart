@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 
 class GenderStep extends StatelessWidget {
   final String? selected;
@@ -14,18 +15,14 @@ class GenderStep extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
           Text(
             context.l10n.onboardingGenderTitle,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface,
-            ),
+            style: onboardingTitleStyle(context),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -37,22 +34,20 @@ class GenderStep extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 28),
           Row(
             children: [
               Expanded(
                 child: _GenderCard(
                   label: context.l10n.genderMale,
-                  icon: Icons.male,
                   isSelected: selected == 'male',
                   onTap: () => onChanged('male'),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: _GenderCard(
                   label: context.l10n.genderFemale,
-                  icon: Icons.female,
                   isSelected: selected == 'female',
                   onTap: () => onChanged('female'),
                 ),
@@ -67,13 +62,11 @@ class GenderStep extends StatelessWidget {
 
 class _GenderCard extends StatelessWidget {
   final String label;
-  final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _GenderCard({
     required this.label,
-    required this.icon,
     required this.isSelected,
     required this.onTap,
   });
@@ -88,48 +81,28 @@ class _GenderCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedScale(
-        scale: isSelected ? 1.0 : 0.95,
+        scale: isSelected ? 1.0 : 0.97,
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
         child: Container(
-          height: 150,
+          height: 64,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isSelected ? cs.primaryContainer : cardBg,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected ? AppColors.primary : lineColor,
               width: isSelected ? 1.5 : 1,
             ),
-            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
           ),
-          foregroundDecoration: AppTheme.cardEdgeForeground(
-            isDark: isDark,
-            radius: 20,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurface,
+            ),
           ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedScale(
-              scale: isSelected ? 1.1 : 1.0,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutBack,
-              child: Icon(
-                icon,
-                size: 48,
-                color: isSelected ? AppColors.primary : cs.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: cs.onSurface,
-              ),
-            ),
-          ],
-        ),
         ),
       ),
     );

@@ -1,4 +1,7 @@
 class TdeeCalculator {
+  static const double _kcalPerKgFat = 7700;
+  static const double _gainSafetyFactor = 0.6;
+
   static Map<String, double> calculate({
     required String gender,
     required int age,
@@ -6,6 +9,7 @@ class TdeeCalculator {
     required double weightKg,
     required double activityMultiplier,
     required String goal,
+    required double weightLossKgPerWeek,
   }) {
     double bmr;
     if (gender == 'male') {
@@ -16,17 +20,18 @@ class TdeeCalculator {
 
     double tdee = bmr * activityMultiplier;
 
-    double calorieGoal;
+    double dailyKcalDelta;
     switch (goal) {
       case 'lose':
-        calorieGoal = tdee - 500;
+        dailyKcalDelta = -(weightLossKgPerWeek * _kcalPerKgFat / 7);
       case 'gain':
-        calorieGoal = tdee + 300;
+        dailyKcalDelta =
+            (weightLossKgPerWeek * _kcalPerKgFat / 7) * _gainSafetyFactor;
       default:
-        calorieGoal = tdee;
+        dailyKcalDelta = 0;
     }
 
-    calorieGoal = calorieGoal.clamp(1200, 5000);
+    double calorieGoal = (tdee + dailyKcalDelta).clamp(1200, 5000);
 
     return {
       'calories': calorieGoal.roundToDouble(),
@@ -40,10 +45,48 @@ class TdeeCalculator {
     required double currentWeight,
     required double targetWeight,
     required String goal,
+    required double weightLossKgPerWeek,
   }) {
-    double diff = (currentWeight - targetWeight).abs();
-    double weeklyRate = goal == 'lose' ? 0.5 : goal == 'gain' ? 0.25 : 0;
-    int weeks = weeklyRate > 0 ? (diff / weeklyRate).ceil() : 0;
+    final diff = (currentWeight - targetWeight).abs();
+    if (goal == 'maintain' || weightLossKgPerWeek <= 0) {
+      return DateTime.now();
+    }
+    final weeks = (diff / weightLossKgPerWeek).ceil();
     return DateTime.now().add(Duration(days: weeks * 7));
+  }
+
+  static List<({int week, double weight, DateTime date})> generateMilestones({
+    required double currentWeight,
+    required double targetWeight,
+    required double weightLossKgPerWeek,
+    required String goal,
+    int maxWeeks = 6,
+  }) {
+    if (goal == 'maintain' || weightLossKgPerWeek <= 0) return const [];
+
+    final direction = goal == 'lose' ? -1 : 1;
+    final totalWeeks =
+        ((currentWeight - targetWeight).abs() / weightLossKgPerWeek).ceil();
+    if (totalWeeks <= 0) return const [];
+
+    final stepsToShow =
+        totalWeeks < maxWeeks ? totalWeeks : maxWeeks - 1;
+
+    final milestones = <({int week, double weight, DateTime date})>[];
+    final now = DateTime.now();
+    for (int i = 1; i <= stepsToShow; i++) {
+      final weight = currentWeight + (direction * weightLossKgPerWeek * i);
+      final date = now.add(Duration(days: i * 7));
+      milestones.add((week: i, weight: weight, date: date));
+    }
+
+    if (totalWeeks > maxWeeks - 1) {
+      final finalDate = now.add(Duration(days: totalWeeks * 7));
+      milestones.add(
+        (week: totalWeeks, weight: targetWeight, date: finalDate),
+      );
+    }
+
+    return milestones;
   }
 }
