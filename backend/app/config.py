@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # Bundle ID of the iOS app (must match the receipt's bundle id).
     apple_bundle_id: str = "by.mealtracker.mealTracker"
+    # The app's numeric ID in App Store Connect (NOT the bundle id). Required
+    # by the App Store Server library for the Production verifier — Apple
+    # includes appAppleId in every notification and the lib cross-checks it.
+    # Find it in App Store Connect → My Apps → <app> → App Information →
+    # "Apple ID" field (10-digit number).
+    apple_app_apple_id: int = 0
     # App Store Connect API key (used for App Store Server API requests).
     apple_issuer_id: str = ""
     apple_key_id: str = ""

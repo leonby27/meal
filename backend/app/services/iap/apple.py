@@ -115,12 +115,26 @@ def _get_clients(environment: Environment) -> _AppleClients:
             raise RuntimeError("Apple private key is not configured")
 
         root_certs = _load_apple_root_certs()
-        verifier = SignedDataVerifier(
-            root_certificates=root_certs,
-            enable_online_checks=False,
-            environment=environment,
-            bundle_id=settings.apple_bundle_id,
-        )
+        # The library refuses to build a Production verifier without an
+        # explicit app_apple_id (it cross-checks against the notification
+        # payload). Sandbox doesn't enforce this; if we haven't been given
+        # an ID yet we still allow sandbox-only operation so TestFlight
+        # works without the user having to fill in App Store Connect first.
+        verifier_kwargs = {
+            "root_certificates": root_certs,
+            "enable_online_checks": False,
+            "environment": environment,
+            "bundle_id": settings.apple_bundle_id,
+        }
+        if settings.apple_app_apple_id:
+            verifier_kwargs["app_apple_id"] = settings.apple_app_apple_id
+        elif environment == Environment.PRODUCTION:
+            raise RuntimeError(
+                "APPLE_APP_APPLE_ID env var is required for production "
+                "App Store verification (find it in App Store Connect → "
+                "App Information → Apple ID, a 10-digit number)"
+            )
+        verifier = SignedDataVerifier(**verifier_kwargs)
         api = AppStoreServerAPIClient(
             signing_key=pem.encode("utf-8"),
             key_id=settings.apple_key_id,
