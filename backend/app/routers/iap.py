@@ -15,6 +15,8 @@ signature verification — they require no auth header.
 from __future__ import annotations
 
 import logging
+import traceback
+from collections import deque
 from datetime import datetime
 from typing import Optional
 
@@ -114,9 +116,28 @@ async def _current_state(
 
 
 # =============================================================================
-# Debug — return installed library versions so we can diagnose
-# mismatched-version mysteries without shell access to the container.
+# Debug — ring buffer of recent Apple webhook traffic + library versions,
+# so we can diagnose without shell access to the container.
+# Not gated; payloads aren't secret (Apple signs them, anyone with our URL
+# would see the same), and read-only access can't hurt anything.
 # =============================================================================
+_recent_apple_webhooks: deque = deque(maxlen=20)
+
+
+def _record_webhook(body: dict, status_code: int, response: dict):
+    _recent_apple_webhooks.append(
+        {
+            "at": datetime.utcnow().isoformat(),
+            "status": status_code,
+            "body_preview": str(body)[:400],
+            "response": response,
+        }
+    )
+
+
+@router.get("/debug/recent-apple-webhooks")
+async def debug_recent_apple_webhooks():
+    return {"count": len(_recent_apple_webhooks), "items": list(_recent_apple_webhooks)}
 
 
 @router.get("/debug/versions")
@@ -302,7 +323,9 @@ async def apple_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.json()
     signed = body.get("signedPayload")
     if not signed:
-        raise HTTPException(status_code=400, detail="signedPayload missing")
+        resp = {"detail": "signedPayload missing"}
+        _record_webhook(body, 400, resp)
+        raise HTTPException(status_code=400, detail=resp["detail"])
 
     try:
         notification, env = apple_iap.verify_notification(signed)
@@ -311,23 +334,31 @@ async def apple_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         # then we either have creds set or accept the data loss for a
         # handful of events in the window.
         logger.error("Apple webhook hit but IAP not configured: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Apple IAP not configured: {e}",
-        )
+        resp = {"detail": f"Apple IAP not configured: {e}"}
+        _record_webhook(body, 503, resp)
+        raise HTTPException(status_code=503, detail=resp["detail"])
     except ValueError as e:
-        logger.warning("Apple webhook verification failed: %s", e)
-        raise HTTPException(status_code=400, detail=f"Invalid notification: {e}")
+        tb = traceback.format_exc()
+        logger.warning("Apple webhook verification failed: %s\n%s", e, tb)
+        resp = {"detail": f"Invalid notification: {e}", "trace": tb.splitlines()[-12:]}
+        _record_webhook(body, 400, resp)
+        raise HTTPException(status_code=400, detail=resp)
 
     data = notification.data
     if data is None or data.signedTransactionInfo is None:
-        # Some notification types (e.g. CONSUMPTION_REQUEST) don't carry a
-        # transaction. Acknowledge and move on.
+        # Test notifications + types like CONSUMPTION_REQUEST land here:
+        # no transaction info, just acknowledge.
         logger.info(
             "Apple notification %s/%s with no transaction info",
             notification.notificationType, notification.subtype,
         )
-        return {"ok": True}
+        resp = {
+            "ok": True,
+            "notificationType": str(notification.notificationType),
+            "subtype": str(notification.subtype),
+        }
+        _record_webhook(body, 200, resp)
+        return resp
 
     # Decode the embedded transaction via the matching environment client.
     tx_payload = apple_iap.decode_signed_transaction(data.signedTransactionInfo, env)
@@ -383,7 +414,9 @@ async def apple_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         tx["product_id"],
         tx["expires_at"],
     )
-    return {"ok": True}
+    resp = {"ok": True}
+    _record_webhook(body, 200, resp)
+    return resp
 
 
 # =============================================================================
