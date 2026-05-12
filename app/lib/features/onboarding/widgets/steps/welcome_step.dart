@@ -18,49 +18,56 @@ class WelcomeStep extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final localeCode = Localizations.localeOf(context).languageCode;
 
+    // The welcome screen always fits a single viewport on supported
+    // devices, so we drop the SingleChildScrollView wrapper — it was the
+    // only source of the rubber-band overscroll the rest of the
+    // onboarding doesn't have. As a safety net for small phones, the
+    // hero illustration is capped at ~45 % of the available height so
+    // it shrinks instead of forcing an overflow.
     return LayoutBuilder(
       builder: (context, constraints) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 12),
-                  const _HeroScan(),
-                  const SizedBox(height: 32),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      context.l10n.onbWelcomeTitle,
-                      textAlign: TextAlign.center,
-                      style: onboardingTitleStyle(
-                        context,
-                        height: 32 / 24,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      context.l10n.onbWelcomeSubtitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 22 / 16,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  _LanguagePill(localeCode: localeCode),
-                  const SizedBox(height: 16),
-                ],
+        // Slightly looser cap than before — at native asset aspect the
+        // hero now lands closer to its Figma reference size; on smaller
+        // phones it still shrinks instead of overflowing.
+        final heroMaxH =
+            (constraints.maxHeight * 0.55).clamp(260.0, 460.0);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Bigger top breathing room pushes the hero + copy down
+              // off the header so the page reads as more centred.
+              const SizedBox(height: 40),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: heroMaxH),
+                child: const _HeroScan(),
               ),
-            ),
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  context.l10n.onbWelcomeTitle,
+                  textAlign: TextAlign.center,
+                  style: onboardingTitleStyle(context, height: 32 / 24),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  context.l10n.onbWelcomeSubtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 22 / 16,
+                    color: cs.onSurface,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              _LanguagePill(localeCode: localeCode),
+            ],
           ),
         );
       },

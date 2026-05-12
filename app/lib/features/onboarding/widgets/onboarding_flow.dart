@@ -103,9 +103,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   static const _resultSubtitleTopGap = 12.0;
   static const _resultSubtitleHeight = 18.0;
   static const _resultBottomSubtitleGap = 16.0;
-  // Gradient strip that fades scrollable content into the bottom CTA panel,
-  // matching the same affordance used on the hard paywall screen.
-  static const _resultCtaFadeHeight = 24.0;
+  // Gradient strip that fades scrollable content into the bottom CTA panel.
+  // A taller strip + an ease-in alpha curve makes white cards above
+  // dissolve into the panel without a perceptible seam — mirrors the
+  // hard-paywall affordance but softens the line further given the higher
+  // white-vs-scaffold contrast on this screen.
+  static const _resultCtaFadeHeight = 40.0;
 
   // Mascot illustrations are hidden in the new onboarding flow. The PNG
   // assets are kept on disk so we can re-enable them by re-listing the
@@ -796,7 +799,18 @@ if (_currentPage < kinds.length - 1) {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [bgColor.withAlpha(0), bgColor],
+                // Three-stop ease-in alpha ramp — top stays barely tinted
+                // so the underlying card holds its shape, then alpha
+                // accelerates into a fully opaque panel by the bottom.
+                // Looks closer to an opacity dissolve than a hard linear
+                // fade.
+                colors: [
+                  bgColor.withAlpha(0),
+                  bgColor.withAlpha(64),
+                  bgColor.withAlpha(180),
+                  bgColor,
+                ],
+                stops: const [0.0, 0.45, 0.78, 1.0],
               ),
             ),
           ),
@@ -1098,11 +1112,15 @@ if (_currentPage < kinds.length - 1) {
                                   stepImageHeight +
                                   _stepImageContentGap
                             : showTrialBottom
-                                // Block already accounts for the 16-pt safe
-                                // bottom gap, the 24-pt fade strip on top,
-                                // and the CTA itself; don't re-add the
-                                // default CTA margin.
-                                ? bottomInset + resultBottomBlockHeight
+                                // Reserve the panel's solid area only — the
+                                // gradient strip sits on top and intentionally
+                                // overlaps the last few pixels of scrollable
+                                // content so the fade has something to act on
+                                // (otherwise the strip just sits over the
+                                // scaffold and looks like extra padding).
+                                ? bottomInset +
+                                      resultBottomBlockHeight -
+                                      _resultCtaFadeHeight
                                 // No step image (e.g. early steps): reserve
                                 // space for the single floating CTA button.
                                 : bottomInset +
