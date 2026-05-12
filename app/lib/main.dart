@@ -10,6 +10,7 @@ import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/services/entitlement_service.dart';
 import 'package:meal_tracker/core/services/notification_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/subscription_service.dart';
@@ -40,6 +41,9 @@ void main() async {
     AppDatabase.getInstance(),
     ApiClient().init(),
     AuthService().init(),
+    // Initializes from local cache synchronously; the server refresh
+    // fires from within init() and lands a beat later.
+    EntitlementService().init(),
     NotificationService.init(),
     ThemeNotifier.init(),
     LocaleNotifier.init(),
@@ -57,8 +61,36 @@ void main() async {
   });
 }
 
-class MealTrackerApp extends StatelessWidget {
+class MealTrackerApp extends StatefulWidget {
   const MealTrackerApp({super.key});
+
+  @override
+  State<MealTrackerApp> createState() => _MealTrackerAppState();
+}
+
+class _MealTrackerAppState extends State<MealTrackerApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // The user might have managed their subscription in App Store
+      // settings while we were backgrounded. Refresh in case anything
+      // changed; the call is cheap and a no-op when nothing did.
+      EntitlementService().refresh();
+    }
+  }
 
   void _handleGlobalPointerDown(PointerDownEvent event) {
     final focus = FocusManager.instance.primaryFocus;

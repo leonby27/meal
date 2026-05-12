@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
-import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/services/device_id_service.dart';
+import 'package:meal_tracker/core/services/entitlement_service.dart';
 
 // =============================================================================
 // State (reactive, for UI like button enabled/disabled, spinner)
@@ -332,8 +334,17 @@ class SubscriptionService extends ChangeNotifier {
 
     _setState(SubState.purchasing);
     try {
+      // applicationUserName is what binds this purchase to a device on
+      // the server. iOS surfaces it inside the signed transaction as
+      // `appAccountToken`; Google as `obfuscatedExternalAccountId`. The
+      // backend uses it to attribute webhook events and to link
+      // anonymous (pre-login) purchases to a user account later.
+      final token = await DeviceIdService.getOrCreate();
       final ok = await _iap.buyNonConsumable(
-        purchaseParam: PurchaseParam(productDetails: product),
+        purchaseParam: PurchaseParam(
+          productDetails: product,
+          applicationUserName: token,
+        ),
       );
       _log('buyNonConsumable returned $ok for ${product.id}');
       if (!ok) {
@@ -408,11 +419,11 @@ class SubscriptionService extends ChangeNotifier {
         _emit(const PaymentPendingEvent());
         _setState(SubState.ready);
       case PurchaseStatus.purchased:
-        _activatePremium(purchase);
+        unawaited(_verifyOnServer(purchase));
         _emit(const PurchaseSuccessEvent());
         _setState(SubState.ready);
       case PurchaseStatus.restored:
-        _activatePremium(purchase);
+        unawaited(_verifyOnServer(purchase));
         if (_restoreInProgress) _restoreEventsSeen++;
         // Do NOT emit PurchaseSuccessEvent for silent/background restores —
         // only the user-initiated restore flow emits RestoreCompletedEvent,
@@ -434,11 +445,28 @@ class SubscriptionService extends ChangeNotifier {
     }
   }
 
-  void _activatePremium(PurchaseDetails purchase) {
-    AuthService().setPremium(
-      isPremium: true,
-      planName: purchase.productID == weeklyId ? 'weekly' : 'yearly',
+  /// Send the platform's verification data to our backend, which is the
+  /// only thing that flips premium on. The backend's response — not the
+  /// local purchase event — is the source of truth, so a cancelled-then-
+  /// expired sub naturally loses access on the next refresh.
+  Future<void> _verifyOnServer(PurchaseDetails purchase) async {
+    final store = _storeForPlatform();
+    if (store == null) {
+      _log('cannot verify: unsupported platform');
+      return;
+    }
+    final ok = await EntitlementService().verifyPurchase(
+      store: store,
+      productId: purchase.productID,
+      serverVerificationData: purchase.verificationData.serverVerificationData,
     );
+    _log('verify on server: store=$store product=${purchase.productID} ok=$ok');
+  }
+
+  String? _storeForPlatform() {
+    if (Platform.isIOS) return 'apple';
+    if (Platform.isAndroid) return 'google';
+    return null;
   }
 
   // ---------------------------------------------------------------------------

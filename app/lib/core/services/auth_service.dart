@@ -9,24 +9,34 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/build_info.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/entitlement_service.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._();
   factory AuthService() => _instance;
-  AuthService._();
+  AuthService._() {
+    // Forward EntitlementService changes so existing widgets (router,
+    // diary, paywall, ...) that listen to AuthService — which is most
+    // of them — re-render when premium state flips on the server.
+    EntitlementService().addListener(notifyListeners);
+  }
 
   static const String _userNameKey = 'user_name';
   static const String _userEmailKey = 'user_email';
   static const String _userPhotoKey = 'user_photo_url';
   static const String _isLoggedInKey = 'is_logged_in';
   static const String _onboardingCompletedKey = 'onboarding_completed';
-  static const String _isPremiumKey = 'is_premium';
-  static const String _planNameKey = 'plan_name';
-  static const String _nextBillingDateKey = 'next_billing_date';
   static const String _freeEntriesUsedKey = 'free_entries_used';
   static const String _lastSeenBuildKey = 'last_seen_build';
   static const String _authProviderKey = 'auth_provider';
   static const int freeEntryLimit = 3;
+
+  /// Legacy SharedPreferences keys kept only so we can clean them up on
+  /// init — premium state now lives in [EntitlementService], driven by
+  /// the server. These keys never get written again.
+  static const String _legacyIsPremiumKey = 'is_premium';
+  static const String _legacyPlanNameKey = 'plan_name';
+  static const String _legacyNextBillingDateKey = 'next_billing_date';
 
   /// Values stored in [_authProviderKey].
   static const String providerGoogle = 'google';
@@ -43,18 +53,23 @@ class AuthService extends ChangeNotifier {
   String? _lastSignInError;
   String? get lastSignInError => _lastSignInError;
 
-  bool _isPremium = false;
   int _freeEntriesUsed = 0;
   String? _userName;
   String? _userEmail;
   String? _userPhotoUrl;
-  String? _planName;
-  String? _nextBillingDate;
   String? _authProvider;
 
   bool get isLoggedIn => _isLoggedIn;
   bool get onboardingCompleted => _onboardingCompleted;
-  bool get isPremium => _isPremium;
+
+  // Premium state is server-driven now — these getters delegate to
+  // EntitlementService so the 25+ existing call sites that read
+  // `AuthService().isPremium` keep working unchanged.
+  bool get isPremium => EntitlementService().isActive;
+  String? get planName => EntitlementService().plan;
+  String? get nextBillingDate =>
+      EntitlementService().expiresAt?.toIso8601String();
+
   int get freeEntriesUsed => _freeEntriesUsed;
   int get freeEntriesRemaining =>
       (freeEntryLimit - _freeEntriesUsed).clamp(0, freeEntryLimit);
@@ -62,8 +77,6 @@ class AuthService extends ChangeNotifier {
   String? get userName => _userName;
   String? get userEmail => _userEmail;
   String? get userPhotoUrl => _userPhotoUrl;
-  String? get planName => _planName;
-  String? get nextBillingDate => _nextBillingDate;
   String? get authProvider => _authProvider;
 
   /// True when the user completed Google/Apple sign-in (as opposed to
@@ -75,23 +88,21 @@ class AuthService extends ChangeNotifier {
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final lastBuild = prefs.getInt(_lastSeenBuildKey) ?? 0;
-    if (lastBuild < 21) {
-      await prefs.setBool(_isPremiumKey, false);
-      await prefs.remove(_planNameKey);
-      await prefs.remove(_nextBillingDateKey);
-    }
+    // Premium state moved out of SharedPreferences and onto the server.
+    // Drop the legacy keys on every launch — keeping them around would
+    // tempt some future caller into reading stale state. EntitlementService
+    // owns this concern now, sourced from /api/iap/entitlement.
+    await prefs.remove(_legacyIsPremiumKey);
+    await prefs.remove(_legacyPlanNameKey);
+    await prefs.remove(_legacyNextBillingDateKey);
     await prefs.setInt(_lastSeenBuildKey, buildNumber);
 
     _isLoggedIn = prefs.getBool(_isLoggedInKey) ?? false;
     _onboardingCompleted = prefs.getBool(_onboardingCompletedKey) ?? false;
-    _isPremium = prefs.getBool(_isPremiumKey) ?? false;
     _freeEntriesUsed = prefs.getInt(_freeEntriesUsedKey) ?? 0;
     _userName = prefs.getString(_userNameKey);
     _userEmail = prefs.getString(_userEmailKey);
     _userPhotoUrl = prefs.getString(_userPhotoKey);
-    _planName = prefs.getString(_planNameKey);
-    _nextBillingDate = prefs.getString(_nextBillingDateKey);
     _authProvider = prefs.getString(_authProviderKey);
     notifyListeners();
   }
@@ -163,6 +174,10 @@ class AuthService extends ChangeNotifier {
       _authProvider = providerGoogle;
 
       await _persistUser();
+      // Bind any anonymous IAP purchases on this device to the now
+      // signed-in user. Fire-and-forget — the sign-in itself succeeded
+      // regardless of whether linking does.
+      EntitlementService().linkAfterLogin();
       notifyListeners();
       return true;
     } on PlatformException catch (e) {
@@ -214,6 +229,7 @@ class AuthService extends ChangeNotifier {
       _authProvider = providerApple;
 
       await _persistUser();
+      EntitlementService().linkAfterLogin();
       notifyListeners();
       return true;
     } on SignInWithAppleAuthorizationException catch (e) {
@@ -277,10 +293,7 @@ class AuthService extends ChangeNotifier {
     _userPhotoUrl = null;
     _isLoggedIn = false;
     _onboardingCompleted = false;
-    _isPremium = false;
     _freeEntriesUsed = 0;
-    _planName = null;
-    _nextBillingDate = null;
     _authProvider = null;
 
     final prefs = await SharedPreferences.getInstance();
@@ -288,12 +301,13 @@ class AuthService extends ChangeNotifier {
     await prefs.remove(_userEmailKey);
     await prefs.remove(_userPhotoKey);
     await prefs.remove(_authProviderKey);
-    await prefs.remove(_planNameKey);
-    await prefs.remove(_nextBillingDateKey);
     await prefs.setBool(_isLoggedInKey, false);
     await prefs.setBool(_onboardingCompletedKey, false);
-    await prefs.setBool(_isPremiumKey, false);
     await prefs.setInt(_freeEntriesUsedKey, 0);
+
+    // Server already cleared its own state via DELETE /api/auth/me.
+    // Drop our local entitlement cache so the next launch starts fresh.
+    await EntitlementService().clear();
 
     notifyListeners();
   }
@@ -330,16 +344,6 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> setPremium({required bool isPremium, String? planName}) async {
-    _isPremium = isPremium;
-    _planName = planName;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_isPremiumKey, isPremium);
-    if (planName != null) {
-      await prefs.setString(_planNameKey, planName);
-    }
-    notifyListeners();
-  }
 
   Future<void> skipLogin() async {
     _isLoggedIn = true;

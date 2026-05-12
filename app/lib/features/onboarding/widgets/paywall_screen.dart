@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/services/entitlement_service.dart';
 import 'package:meal_tracker/core/services/subscription_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
@@ -198,11 +199,9 @@ class _PaywallScreenState extends State<PaywallScreen>
     );
     if (code == null || !mounted) return;
 
-    const validCodes = {'8259', '2170'};
-    if (validCodes.contains(code.trim())) {
-      await AuthService().setPremium(isPremium: true, planName: 'promo_$code');
-    } else {
-      if (!mounted) return;
+    final accepted = await EntitlementService().redeemPromo(code.trim());
+    if (!mounted) return;
+    if (!accepted) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(context.l10n.promoCodeInvalid)));
