@@ -264,30 +264,27 @@ def get_subscription_statuses(original_transaction_id: str, environment: Environ
 
 
 def verify_notification(signed_payload: str) -> tuple[ResponseBodyV2DecodedPayload, Environment]:
-    """Verify an App Store Server Notifications V2 webhook payload."""
-    last_err: Optional[Exception] = None
+    """Verify an App Store Server Notifications V2 webhook payload.
+
+    Tries Production then Sandbox. The library cross-checks env, bundle,
+    and (in production) appAppleId against the payload; misconfiguration
+    on any of those produces a `VerificationException` whose `status`
+    spells out which check failed — we surface that in the error so the
+    operator can fix the env var without guessing.
+    """
+    errors: list[str] = []
     for env in (Environment.PRODUCTION, Environment.SANDBOX):
         try:
             clients = _get_clients(env)
             payload = clients.verifier.verify_and_decode_notification(signed_payload)
-            # Apple stamps the notification with its environment; cross-check
-            # against the verifier we picked so a sandbox event verified by
-            # the prod verifier (theoretically impossible — same root certs
-            # but different chains — but be defensive) is rejected here.
-            payload_env = (payload.data.environment if payload.data else None) or (
-                payload.summary.environment if payload.summary else None
-            )
-            if payload_env is not None and payload_env != env:
-                continue
             return payload, env
         except VerificationException as e:
-            last_err = e
+            errors.append(f"{env.value}: {getattr(e, 'status', e)}")
         except Exception as e:
-            # Same rationale as in _verify_jws: a malformed payload can
-            # raise any number of underlying errors; bucket them all as
-            # "unusable input" so the caller can return a clean 400.
-            last_err = e
-    raise ValueError(f"Could not verify notification: {last_err}")
+            errors.append(f"{env.value}: {type(e).__name__}: {e}")
+    msg = "; ".join(errors) or "no environments tried"
+    logger.warning("Apple notification verification failed: %s", msg)
+    raise ValueError(f"Could not verify notification ({msg})")
 
 
 # -----------------------------------------------------------------------------
