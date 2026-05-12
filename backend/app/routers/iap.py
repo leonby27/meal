@@ -165,7 +165,26 @@ async def debug_versions():
     out["apple_app_apple_id"] = settings.apple_app_apple_id
     out["apple_issuer_id_set"] = str(bool(settings.apple_issuer_id))
     out["apple_key_id_set"] = str(bool(settings.apple_key_id))
-    out["apple_private_key_set"] = str(bool(get_apple_private_key_pem()))
+
+    # Private key diagnostics — we never expose the secret middle, only
+    # framing (which is identical across all PEM-encoded EC keys) and
+    # whether the cryptography lib can actually parse it. The body of a
+    # malformed PEM is the giveaway: missing newlines, missing header,
+    # double-encoded base64.
+    pem = get_apple_private_key_pem()
+    out["apple_private_key_set"] = str(bool(pem))
+    if pem:
+        out["apple_private_key_length"] = len(pem)
+        out["apple_private_key_starts_with"] = pem[:40].replace("\n", "\\n")
+        out["apple_private_key_ends_with"] = pem[-40:].replace("\n", "\\n")
+        out["apple_private_key_newline_count"] = pem.count("\n")
+        try:
+            from cryptography.hazmat.primitives import serialization
+            serialization.load_pem_private_key(pem.encode("utf-8"), password=None)
+            out["apple_private_key_parses"] = True
+        except Exception as e:
+            out["apple_private_key_parses"] = False
+            out["apple_private_key_parse_error"] = f"{type(e).__name__}: {e}"
     return out
 
 
