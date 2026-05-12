@@ -11,7 +11,6 @@ import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
-import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/login_sync_service.dart';
 import 'package:meal_tracker/core/services/subscription_service.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
@@ -1004,18 +1003,11 @@ if (_currentPage < kinds.length - 1) {
                     ),
                   ),
                 ),
-                // On the result step we surface a debug-only language
-                // switcher in the symmetric slot opposite the back arrow;
-                // every other step keeps a phantom spacer so the progress
-                // bar still reads as centred.
+                // Phantom spacer mirroring the back-button + gap on the
+                // left, so the progress bar reads as horizontally centred
+                // even though there's no control on the right.
                 const SizedBox(width: 17),
-                if (_isOnResult)
-                  _LanguagePickerButton(
-                    bg: controlBg,
-                    borderColor: borderColor,
-                  )
-                else
-                  const SizedBox(width: 48, height: 36),
+                const SizedBox(width: 48, height: 36),
               ],
             ),
           ),
@@ -1216,12 +1208,29 @@ if (_currentPage < kinds.length - 1) {
                                 switchOutCurve: Curves.easeInCubic,
                                 layoutBuilder:
                                     (currentChild, previousChildren) {
+                                      // KEY EACH Positioned.fill BY THE
+                                      // INCOMING CHILD'S KEY. Without it,
+                                      // when the outgoing step drops out
+                                      // of the list, the incoming child
+                                      // moves from index 1 to index 0 and
+                                      // Flutter — matching unkeyed
+                                      // Positioned widgets by position —
+                                      // rebuilds a fresh element at that
+                                      // slot. Every Stateful step
+                                      // (loading spinner, result-step
+                                      // entry animation, confetti) would
+                                      // re-run initState() and visibly
+                                      // restart its animation mid-flight.
                                       return Stack(
                                         children: [
                                           for (final child in previousChildren)
-                                            Positioned.fill(child: child),
+                                            Positioned.fill(
+                                              key: child.key,
+                                              child: child,
+                                            ),
                                           if (currentChild != null)
                                             Positioned.fill(
+                                              key: currentChild.key,
                                               child: currentChild,
                                             ),
                                         ],
@@ -1337,66 +1346,5 @@ class _RoundedBottomBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _RoundedBottomBorderPainter oldDelegate) {
     return oldDelegate.color != color || oldDelegate.radius != radius;
-  }
-}
-
-/// Debug-only language picker for the result step. Mirrors the back-button
-/// chip on the left so the header stays visually balanced.
-class _LanguagePickerButton extends StatelessWidget {
-  final Color bg;
-  final Color borderColor;
-
-  const _LanguagePickerButton({required this.bg, required this.borderColor});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final current = LocaleNotifier.instance.value.languageCode;
-    return Container(
-      width: 48,
-      height: 36,
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(122),
-        border: Border.all(color: borderColor),
-      ),
-      child: PopupMenuButton<Locale>(
-        tooltip: 'Language',
-        padding: EdgeInsets.zero,
-        position: PopupMenuPosition.under,
-        offset: const Offset(0, 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        onSelected: (locale) => LocaleNotifier.instance.setLocale(locale),
-        itemBuilder: (context) => [
-          for (final locale in LocaleNotifier.supportedLocales)
-            PopupMenuItem<Locale>(
-              value: locale,
-              child: Row(
-                children: [
-                  if (locale.languageCode == current)
-                    Icon(Icons.check, size: 16, color: cs.onSurface)
-                  else
-                    const SizedBox(width: 16),
-                  const SizedBox(width: 8),
-                  Text(LocaleNotifier.localeName(locale)),
-                ],
-              ),
-            ),
-        ],
-        child: Center(
-          child: Text(
-            current.toUpperCase(),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface,
-              height: 1,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

@@ -65,7 +65,7 @@ class _ResultStepState extends State<ResultStep>
 
     _entryController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 1350),
     );
     // Defer one frame so the AnimatedSwitcher slide-in finishes before
     // the donut starts sweeping — keeps both motions readable.
@@ -512,14 +512,17 @@ class _DonutWithMacros extends StatelessWidget {
 
     final order = MacroOrder.of(context);
 
-    // 0..1, easeOutCubic. Drives the donut sweep, the centre calorie
-    // counter, and the pastel pills' gram counters. AnimatedBuilder keeps
-    // the rebuilds scoped to the donut block — the rest of the screen
-    // doesn't redraw on every frame.
+    // Master controller is 0..1 linear; we split it into two phases so
+    // the donut resolves first (centre number stops counting) and the
+    // pastel pills then "land" one by one slightly after. Sub-curves are
+    // computed per-element below.
     return AnimatedBuilder(
       animation: entryAnimation,
       builder: (context, _) {
-        final t = Curves.easeOutCubic.transform(entryAnimation.value);
+        final tRaw = entryAnimation.value;
+        // Phase 1 — donut + centre calorie text: 0 → ~65 % of timeline.
+        final t =
+            Curves.easeOutCubic.transform((tRaw / 0.65).clamp(0.0, 1.0));
         return Column(
           children: [
             SizedBox(
@@ -581,39 +584,42 @@ class _DonutWithMacros extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // Pastel macro pills appear in unison with the donut sweep —
-            // they fade + scale up slightly so the eye sees the macro
-            // chart resolving as one motion. Order follows the active
-            // locale's macro convention (БЖУ on ru, Carbs-first elsewhere).
-            Opacity(
-              opacity: t,
-              child: Transform.translate(
-                offset: Offset(0, (1 - t) * 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (int i = 0; i < order.length; i++) ...[
-                      if (i > 0) const SizedBox(width: 10),
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: i == 1 ? 16 : 0),
-                          child: _pillFor(
-                            order[i],
-                            t: t,
-                            proteinG: proteinG,
-                            fatG: fatG,
-                            carbsG: carbsG,
-                            gramsUnit: gramsUnit,
-                            proteinLabel: proteinLabel,
-                            fatLabel: fatLabel,
-                            carbsLabel: carbsLabel,
-                          ),
+            // Phase 2 — each pastel pill drops in from above, decelerates
+            // and "lands" with a tiny back-overshoot. Pills are
+            // staggered ~80 ms apart so the trio settles into formation
+            // rather than slamming down in unison. Order follows the
+            // active locale (БЖУ on ru, Carbs-first elsewhere).
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int i = 0; i < order.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 10),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: i == 1 ? 16 : 0),
+                      child: _LandingPill(
+                        tRaw: tRaw,
+                        index: i,
+                        // Gram counter syncs with the donut sweep so the
+                        // numbers stop climbing as the centre value
+                        // freezes; the pill keeps descending after.
+                        countT: t,
+                        child: _pillFor(
+                          order[i],
+                          t: t,
+                          proteinG: proteinG,
+                          fatG: fatG,
+                          carbsG: carbsG,
+                          gramsUnit: gramsUnit,
+                          proteinLabel: proteinLabel,
+                          fatLabel: fatLabel,
+                          carbsLabel: carbsLabel,
                         ),
                       ),
-                    ],
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         );
@@ -643,13 +649,16 @@ class _DonutWithMacros extends StatelessWidget {
           iconAsset: _ResultStepState._fatIcon,
           label: fatLabel,
           value: '${(fatG * t).round()} $gramsUnit',
-          bgColor: const Color(0xFFC9F5F4),
+          // Pastel matches the yellow Fat arc in the donut and the
+          // shared BJU palette used across stats / AI meal sheet.
+          bgColor: const Color(0xFFFFF5BB),
         ),
       Macro.carbs => _PastelMacroPill(
           iconAsset: _ResultStepState._carbsIcon,
           label: carbsLabel,
           value: '${(carbsG * t).round()} $gramsUnit',
-          bgColor: const Color(0xFFFFF5BB),
+          // Pastel matches the cyan Carbs arc in the donut.
+          bgColor: const Color(0xFFC9F5F4),
         ),
     };
   }
@@ -710,6 +719,71 @@ class _PastelMacroPill extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Wraps a pastel macro pill in a staggered "spacecraft landing" entry:
+/// each pill descends from above, decelerates with a tiny back-overshoot,
+/// and settles into its target slot. The earlier the [index], the earlier
+/// the pill begins its approach — staggers feel like a formation
+/// touchdown instead of three pills slamming down in unison.
+class _LandingPill extends StatelessWidget {
+  final double tRaw;
+  final int index;
+  final double countT;
+  final Widget child;
+
+  const _LandingPill({
+    required this.tRaw,
+    required this.index,
+    required this.countT,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Pills begin their descent shortly after the donut has started
+    // sweeping — at 0.18 of the master timeline, with a ~60 ms stagger
+    // between siblings so they don't all touch down at the same instant.
+    final subStart = 0.18 + 0.05 * index;
+    final subT =
+        ((tRaw - subStart) / (1 - subStart)).clamp(0.0, 1.0);
+
+    // Position: smooth deceleration — no overshoot here so the pill
+    // doesn't visibly bounce up at the end.
+    final posT = Curves.easeOutCubic.transform(subT);
+    // Scale: easeOutBack gives the small touch-down springiness on
+    // arrival without affecting where the pill actually lands.
+    final scaleT = Curves.easeOutBack.transform(subT);
+    // Opacity catches up faster than position so the pill is fully
+    // visible halfway through its descent.
+    final opacity = Curves.easeOut.transform(subT.clamp(0.0, 1.0));
+
+    // Outer pills drift in from slightly outside, middle pill drops
+    // straight down — together they read as a formation closing on
+    // the donut.
+    final xOrigin = switch (index) {
+      0 => -14.0,
+      2 => 14.0,
+      _ => 0.0,
+    };
+    final yOffset = (1 - posT) * -36;
+    final xOffset = (1 - posT) * xOrigin;
+    final scale = 0.86 + scaleT * 0.14;
+
+    return Opacity(
+      opacity: opacity,
+      child: Transform.translate(
+        offset: Offset(xOffset, yOffset),
+        child: Transform.scale(
+          scale: scale,
+          alignment: Alignment.center,
+          // [countT] is only forwarded to keep the pill's number ticker
+          // synced with the donut (handled by the parent caller).
+          child: child,
+        ),
       ),
     );
   }
