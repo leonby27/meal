@@ -125,11 +125,14 @@ _recent_apple_webhooks: deque = deque(maxlen=20)
 
 
 def _record_webhook(body: dict, status_code: int, response: dict):
+    # Keep the whole signedPayload so we can reproduce locally — it's not
+    # secret (Apple's signed envelope, public over the wire) and the
+    # buffer is capped at 20 entries.
     _recent_apple_webhooks.append(
         {
             "at": datetime.utcnow().isoformat(),
             "status": status_code,
-            "body_preview": str(body)[:400],
+            "body": body,
             "response": response,
         }
     )
