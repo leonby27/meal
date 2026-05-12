@@ -49,6 +49,13 @@ class Settings(BaseSettings):
     # hard-coded list on the client). Comma-separated.
     promo_codes: str = "8259,2170"
 
+    # Optional admin token gating /api/iap/debug/* — set this in production
+    # so the recent-webhook ring buffer (which contains real users' signed
+    # transaction info) isn't readable by anyone with the URL. Callers
+    # must send `X-Admin-Token: <value>` as a header. If unset, the
+    # endpoints are open (intended for local development only).
+    iap_admin_token: str = ""
+
     # -------------------------------------------------------------------------
     # In-App Purchases — Google Play (placeholder; wired in a later release)
     # -------------------------------------------------------------------------

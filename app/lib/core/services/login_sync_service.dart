@@ -8,10 +8,12 @@ import 'package:meal_tracker/core/services/auth_service.dart';
 /// Reconciles pre-login (anonymous) local Drift data with the user's
 /// cloud account on sign-in.
 ///
-/// Subscription state (`is_premium`, `plan_name`, `free_entries_used`) is
-/// intentionally NOT touched — it is bound to the platform account
-/// (Apple ID / Google Play) via in_app_purchase's restore mechanism, not
-/// to the app account.
+/// Subscription state is intentionally NOT touched here — it is owned
+/// by [EntitlementService] (server-driven, sourced from /api/iap/*)
+/// and bound to the device via the install UUID rather than the data
+/// sync flow. Sign-in does call `/api/iap/link` separately from
+/// [AuthService.signInWith*] to attach any anonymous entitlements to
+/// the freshly-authenticated user.
 class LoginSyncService {
   LoginSyncService();
 

@@ -118,16 +118,16 @@ async def _current_state(
 # =============================================================================
 # Debug — ring buffer of recent Apple webhook traffic + library versions,
 # so we can diagnose without shell access to the container.
-# Not gated; payloads aren't secret (Apple signs them, anyone with our URL
-# would see the same), and read-only access can't hurt anything.
+#
+# Gated on `IAP_ADMIN_TOKEN` env var: if set, requests must carry the
+# header `X-Admin-Token: <same value>`; if unset, the endpoints are open
+# (intended for local development only). Webhook bodies contain
+# real users' signed transaction details, so this gate matters in prod.
 # =============================================================================
 _recent_apple_webhooks: deque = deque(maxlen=20)
 
 
 def _record_webhook(body: dict, status_code: int, response: dict):
-    # Keep the whole signedPayload so we can reproduce locally — it's not
-    # secret (Apple's signed envelope, public over the wire) and the
-    # buffer is capped at 20 entries.
     _recent_apple_webhooks.append(
         {
             "at": datetime.utcnow().isoformat(),
@@ -138,13 +138,29 @@ def _record_webhook(body: dict, status_code: int, response: dict):
     )
 
 
+def _require_admin(request: Request) -> None:
+    expected = settings.iap_admin_token
+    if not expected:
+        return  # dev mode: gate disabled
+    provided = request.headers.get("x-admin-token") or request.headers.get(
+        "X-Admin-Token"
+    )
+    if provided != expected:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="IAP debug endpoint requires X-Admin-Token header",
+        )
+
+
 @router.get("/debug/recent-apple-webhooks")
-async def debug_recent_apple_webhooks():
+async def debug_recent_apple_webhooks(request: Request):
+    _require_admin(request)
     return {"count": len(_recent_apple_webhooks), "items": list(_recent_apple_webhooks)}
 
 
 @router.get("/debug/versions")
-async def debug_versions():
+async def debug_versions(request: Request):
+    _require_admin(request)
     out: dict[str, str] = {}
     for pkg in (
         "app-store-server-library",
@@ -422,7 +438,9 @@ async def apple_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             "Apple notification has no appAccountToken and no existing row: %s",
             tx["original_transaction_id"],
         )
-        return {"ok": True, "warning": "orphan_notification"}
+        resp = {"ok": True, "warning": "orphan_notification"}
+        _record_webhook(body, 200, resp)
+        return resp
 
     user_id = existing.user_id if existing else None
 
