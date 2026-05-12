@@ -421,6 +421,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get planLifetime => 'Lebenslang';
 
   @override
+  String get planPromo => 'Promo';
+
+  @override
   String get billingLabel => 'Nächste Abrechnung:';
 
   @override

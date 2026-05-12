@@ -421,6 +421,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get planLifetime => 'Бессрочный';
 
   @override
+  String get planPromo => 'Промо';
+
+  @override
   String get billingLabel => 'Списание:';
 
   @override

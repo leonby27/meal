@@ -38,10 +38,9 @@ final router = GoRouter(
       return '/onboarding';
     }
 
-    // 2. Не premium + лимит исчерпан → hard paywall
+    // 2. Не premium → paywall (no free-entry grace any more)
     if (auth.onboardingCompleted &&
         !auth.isPremium &&
-        auth.freeTrialExhausted &&
         !isPaywallRoute) {
       return '/paywall';
     }

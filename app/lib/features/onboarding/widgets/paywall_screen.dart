@@ -58,7 +58,7 @@ class _PaywallScreenState extends State<PaywallScreen>
     unawaited(
       AnalyticsService.instance.logEvent(
         'paywall_viewed',
-        parameters: {'is_hard_paywall': _isHardPaywall ? 1 : 0},
+        parameters: {'is_hard_paywall': 1},
       ),
     );
 
@@ -150,17 +150,6 @@ class _PaywallScreenState extends State<PaywallScreen>
     return '${p.price} / ${context.l10n.paywallPerYear}';
   }
 
-  String _trialDisclaimer() {
-    final p = _yearlyProduct;
-    if (p == null) return context.l10n.paywallTrialDisclaimer;
-    return context.l10n.paywallTrialDisclaimerFmt(p.price);
-  }
-
-  String _selectedPlanDisclaimer() {
-    if (_selectedPlanHasTrial) return _trialDisclaimer();
-    return context.l10n.paywallWeeklyDisclaimer;
-  }
-
   Future<void> _subscribe() async {
     final sub = SubscriptionService();
     if (sub.products.isEmpty) return;
@@ -180,12 +169,6 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   void _restore() {
     SubscriptionService().restore();
-  }
-
-  bool get _isHardPaywall => AuthService().freeTrialExhausted;
-
-  void _skip() {
-    context.go('/diary');
   }
 
   Future<void> _redeemCode() async {
@@ -267,8 +250,10 @@ class _PaywallScreenState extends State<PaywallScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isHard = _isHardPaywall;
-    final canGoBack = !isHard && Navigator.of(context).canPop();
+    // The free-trial path has been removed — paywall is always the
+    // single gate between non-premium users and the app. No back, no
+    // skip; the only ways out are buy, redeem a promo, or quit.
+    const canGoBack = false;
     final sub = SubscriptionService();
 
     final bgColor = isDark ? AppColors.darkBack3 : AppColors.lightBack3;
@@ -296,7 +281,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                     children: [
                       _TopBar(
                         canGoBack: canGoBack,
-                        canSkip: !isHard,
+                        canSkip: false,
                         isDark: isDark,
                         onBack: () => Navigator.of(context).pop(),
                         onRestore: _restore,
@@ -309,7 +294,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                           mode: LaunchMode.externalApplication,
                         ),
                         onCode: _redeemCode,
-                        onSkip: _skip,
+                        onSkip: () {},
                         onRestart: () => AuthService().resetOnboarding(),
                       ),
                       Expanded(
@@ -343,9 +328,16 @@ class _PaywallScreenState extends State<PaywallScreen>
                                 price: _yearlyPriceLabel(sub),
                                 discountBadge:
                                     context.l10n.paywallYearlyDiscount,
-                                trialBadge: !isHard
-                                    ? context.l10n.paywallTrialBadge
-                                    : null,
+                                // The "Free trial included" badge used
+                                // to be hidden on the soft-paywall path
+                                // to avoid layering the trial language
+                                // on top of free-entries language. With
+                                // free entries gone there's no soft
+                                // path, but we still skip the badge so
+                                // the offer copy stays clean — Apple
+                                // offers the intro trial via the App
+                                // Store sheet at purchase time anyway.
+                                trialBadge: null,
                                 isSelected: _selectedPlan == 1,
                                 isLoading:
                                     _yearlyProduct == null &&
@@ -462,10 +454,8 @@ class _PaywallScreenState extends State<PaywallScreen>
                           isPurchasing: sub.state == SubState.purchasing,
                           isLoading: _productsAreLoading(sub),
                           ctaLabel: _ctaLabel(),
-                          disclaimer: isHard
-                              ? context.l10n.paywallHardDisclaimer
-                              : _selectedPlanDisclaimer(),
-                          showNoPayment: !isHard,
+                          disclaimer: context.l10n.paywallHardDisclaimer,
+                          showNoPayment: false,
                           noPaymentVisible: _selectedPlanHasTrial,
                           textPrimary: textPrimary,
                           onSubscribe: _subscribe,
@@ -492,7 +482,8 @@ class _PaywallScreenState extends State<PaywallScreen>
   String _ctaLabel() {
     final l = context.l10n;
     if (_productsLoadFailed(SubscriptionService())) return l.paywallTryAgain;
-    if (_isHardPaywall) return l.paywallSubscribeNow;
+    // Always-hard now: every entry is the "subscribe to continue" CTA.
+    // Trial-eligible plans still get the trial wording when offered.
     return _selectedPlanHasTrial ? l.paywallStartTrial : l.paywallSubscribeNow;
   }
 }

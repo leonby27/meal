@@ -167,7 +167,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     }
 
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       if (mounted) context.go('/paywall');
       return;
     }
@@ -193,10 +193,6 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         imageUrl: drift.Value(product.imageUrl),
       ),
     );
-
-    if (!auth.isPremium) {
-      await auth.incrementFreeEntry();
-    }
 
     if (mounted) context.pop();
   }

@@ -420,6 +420,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planLifetime => 'Lifetime';
 
   @override
+  String get planPromo => 'Promo';
+
+  @override
   String get billingLabel => 'Next billing:';
 
   @override

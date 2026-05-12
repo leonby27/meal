@@ -44,7 +44,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Future<void> _addToMeal(Product product) async {
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       if (mounted) context.go('/paywall');
       return;
     }
@@ -79,10 +79,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         imageUrl: drift.Value(product.imageUrl),
       ),
     );
-
-    if (!auth.isPremium) {
-      await auth.incrementFreeEntry();
-    }
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

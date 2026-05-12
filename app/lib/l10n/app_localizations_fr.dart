@@ -423,6 +423,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get planLifetime => 'À vie';
 
   @override
+  String get planPromo => 'Promo';
+
+  @override
   String get billingLabel => 'Prochaine facturation :';
 
   @override

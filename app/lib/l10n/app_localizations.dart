@@ -862,6 +862,12 @@ abstract class AppLocalizations {
   /// **'Бессрочный'**
   String get planLifetime;
 
+  /// No description provided for @planPromo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Промо'**
+  String get planPromo;
+
   /// No description provided for @billingLabel.
   ///
   /// In ru, this message translates to:

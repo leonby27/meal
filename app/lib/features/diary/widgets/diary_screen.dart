@@ -347,7 +347,7 @@ class _DiaryScreenState extends State<DiaryScreen>
 
   bool _checkFreeLimit() {
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       context.go('/paywall');
       return true;
     }
@@ -408,7 +408,7 @@ class _DiaryScreenState extends State<DiaryScreen>
 
   Future<void> _addFromLog(FoodLog log, String dateStr) async {
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       if (mounted) context.go('/paywall');
       return;
     }
@@ -496,9 +496,6 @@ class _DiaryScreenState extends State<DiaryScreen>
       _deactivateSearch(syncCalendarToToday: dateStr == _todayDateStr);
     }
 
-    if (!auth.isPremium) {
-      await auth.incrementFreeEntry();
-    }
   }
 
   Future<void> _addRecentLogFromMenu(FoodLog log, String dateStr) async {
@@ -527,7 +524,7 @@ class _DiaryScreenState extends State<DiaryScreen>
 
   Future<void> _addProductFromSearch(Product product, String dateStr) async {
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       if (mounted) context.go('/paywall');
       return;
     }
@@ -558,9 +555,6 @@ class _DiaryScreenState extends State<DiaryScreen>
       _deactivateSearch(syncCalendarToToday: dateStr == _todayDateStr);
     }
 
-    if (!auth.isPremium) {
-      await auth.incrementFreeEntry();
-    }
   }
 
   Future<double?> _showGramsDialog(Product product) {
@@ -1682,118 +1676,6 @@ class _DiaryScreenState extends State<DiaryScreen>
     );
   }
 
-  Widget _buildFreeEntriesBanner(BuildContext context, AuthService auth) {
-    final remaining = auth.freeEntriesRemaining;
-    final isUrgent = remaining <= 2;
-
-    final gradientColors = isUrgent
-        ? const [Color(0xFFFF5A6E), Color(0xFFFF7A3D)]
-        : const [Color(0xFF317BFF), Color(0xFF7631FF)];
-    final glowColor = isUrgent
-        ? const Color(0xFFFF5A6E)
-        : const Color(0xFF5A47FF);
-    final ctaTextColor = isUrgent
-        ? const Color(0xFFD13848)
-        : const Color(0xFF4F2BD9);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
-            onTap: () => context.push('/paywall'),
-            borderRadius: BorderRadius.circular(16),
-            child: Ink(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: gradientColors,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: glowColor.withValues(alpha: 0.32),
-                    blurRadius: 22,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.20),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.workspace_premium_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        context.l10n.freeEntriesRemaining(remaining),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          height: 18 / 14,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            context.l10n.getPro,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              height: 16 / 13,
-                              color: ctaTextColor,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 14,
-                            color: ctaTextColor,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildDayContent(
     BuildContext context,
     List<FoodLog> logs,
@@ -1805,11 +1687,6 @@ class _DiaryScreenState extends State<DiaryScreen>
 
     final sortedLogs = _sortLogsForDisplay(logs);
     final date = DateFormat('yyyy-MM-dd').parse(dateStr);
-    final auth = AuthService();
-    final showBanner =
-        !auth.isPremium &&
-        auth.freeEntriesUsed >= 2 &&
-        !auth.freeTrialExhausted;
 
     final bottomPadding =
         MediaQuery.paddingOf(context).bottom + _inputBarReservedHeight + 24;
@@ -1819,8 +1696,6 @@ class _DiaryScreenState extends State<DiaryScreen>
         SliverToBoxAdapter(
           child: DailySummaryCard(logs: logs, selectedDate: date),
         ),
-        if (showBanner)
-          SliverToBoxAdapter(child: _buildFreeEntriesBanner(context, auth)),
         if (sortedLogs.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Column(

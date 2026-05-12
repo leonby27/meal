@@ -359,12 +359,16 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
           const SizedBox(height: 8),
           _buildUserCard(auth),
           const SizedBox(height: 24),
-          _sectionLabel(context.l10n.subscription),
-          const SizedBox(height: 8),
-          auth.isPremium
-              ? _buildPremiumSubscriptionCard(auth)
-              : _buildFreeSubscriptionCard(),
-          const SizedBox(height: 24),
+          // The subscription section only renders when the user actually
+          // has premium. Without it the router has already redirected
+          // them to the paywall, so a "free / get pro" card here would
+          // never be seen anyway.
+          if (auth.isPremium) ...[
+            _sectionLabel(context.l10n.subscription),
+            const SizedBox(height: 8),
+            _buildPremiumSubscriptionCard(auth),
+            const SizedBox(height: 24),
+          ],
           _sectionLabel(context.l10n.myGoals),
           const SizedBox(height: 8),
           _buildGoalsCard(),
@@ -633,7 +637,11 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
         return context.l10n.planYearly;
       case 'weekly':
         return context.l10n.planWeekly;
+      case 'promo':
+        return context.l10n.planPromo;
       case 'promo_lifetime':
+        // Kept for any legacy rows still in the DB from when promo
+        // grants were lifetime; not produced by the current backend.
         return context.l10n.planLifetime;
       default:
         return '—';
@@ -647,85 +655,6 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   }
 
   // ── Subscription Cards ──────────────────────────────────────
-
-  Widget _buildFreeSubscriptionCard() {
-    final auth = AuthService();
-    final remaining = auth.freeEntriesRemaining;
-
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: _isDark
-              ? [const Color(0xFF1A2340), const Color(0xFF162035)]
-              : [const Color(0xFFEEF4FF), const Color(0xFFE0ECFF)],
-        ),
-        border: AppTheme.cardEdgeBorder(isDark: _isDark),
-        boxShadow: AppTheme.cardElevatedShadows(isDark: _isDark),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text('⭐', style: TextStyle(fontSize: 20)),
-                const SizedBox(width: 8),
-                Text(
-                  context.l10n.proTitle,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    height: 22 / 17,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              auth.freeTrialExhausted
-                  ? context.l10n.freeLimitReached
-                  : context.l10n.freeEntriesRemaining(remaining),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 18 / 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () => context.push('/paywall'),
-              child: Container(
-                width: double.infinity,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Center(
-                  child: Text(
-                    context.l10n.getPro,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 18 / 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildPremiumSubscriptionCard(AuthService auth) {
     return _card(

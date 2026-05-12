@@ -26,11 +26,13 @@ class AuthService extends ChangeNotifier {
   static const String _userPhotoKey = 'user_photo_url';
   static const String _isLoggedInKey = 'is_logged_in';
   static const String _onboardingCompletedKey = 'onboarding_completed';
-  static const String _freeEntriesUsedKey = 'free_entries_used';
   static const String _lastSeenBuildKey = 'last_seen_build';
   static const String _authProviderKey = 'auth_provider';
-  static const int freeEntryLimit = 3;
 
+  /// Legacy key — the "3 free entries" trial has been removed entirely.
+  /// We still clean this out of prefs on init so reinstalls/upgrades
+  /// don't leave dangling state, but nothing reads it any more.
+  static const String _legacyFreeEntriesUsedKey = 'free_entries_used';
 
   /// Values stored in [_authProviderKey].
   static const String providerGoogle = 'google';
@@ -47,7 +49,6 @@ class AuthService extends ChangeNotifier {
   String? _lastSignInError;
   String? get lastSignInError => _lastSignInError;
 
-  int _freeEntriesUsed = 0;
   String? _userName;
   String? _userEmail;
   String? _userPhotoUrl;
@@ -56,17 +57,13 @@ class AuthService extends ChangeNotifier {
   bool get isLoggedIn => _isLoggedIn;
   bool get onboardingCompleted => _onboardingCompleted;
 
-  // Premium state is server-driven now — these getters delegate to
-  // EntitlementService so the 25+ existing call sites that read
-  // `AuthService().isPremium` keep working unchanged.
+  // Premium state is server-driven — these getters delegate to
+  // EntitlementService so existing call sites reading
+  // `AuthService().isPremium` etc. keep working unchanged.
   bool get isPremium => EntitlementService().isActive;
   String? get planName => EntitlementService().plan;
   DateTime? get expiresAt => EntitlementService().expiresAt;
 
-  int get freeEntriesUsed => _freeEntriesUsed;
-  int get freeEntriesRemaining =>
-      (freeEntryLimit - _freeEntriesUsed).clamp(0, freeEntryLimit);
-  bool get freeTrialExhausted => _freeEntriesUsed >= freeEntryLimit;
   String? get userName => _userName;
   String? get userEmail => _userEmail;
   String? get userPhotoUrl => _userPhotoUrl;
@@ -87,9 +84,12 @@ class AuthService extends ChangeNotifier {
     // it can re-redeem an old promo before wiping the trace.
     await prefs.setInt(_lastSeenBuildKey, buildNumber);
 
+    // Three-free-entries trial was removed — wipe the counter so it
+    // can't leak back into any future logic by accident.
+    await prefs.remove(_legacyFreeEntriesUsedKey);
+
     _isLoggedIn = prefs.getBool(_isLoggedInKey) ?? false;
     _onboardingCompleted = prefs.getBool(_onboardingCompletedKey) ?? false;
-    _freeEntriesUsed = prefs.getInt(_freeEntriesUsedKey) ?? 0;
     _userName = prefs.getString(_userNameKey);
     _userEmail = prefs.getString(_userEmailKey);
     _userPhotoUrl = prefs.getString(_userPhotoKey);
@@ -106,10 +106,8 @@ class AuthService extends ChangeNotifier {
 
   Future<void> resetOnboarding() async {
     _onboardingCompleted = false;
-    _freeEntriesUsed = 0;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_onboardingCompletedKey, false);
-    await prefs.setInt(_freeEntriesUsedKey, 0);
     notifyListeners();
   }
 
@@ -283,7 +281,6 @@ class AuthService extends ChangeNotifier {
     _userPhotoUrl = null;
     _isLoggedIn = false;
     _onboardingCompleted = false;
-    _freeEntriesUsed = 0;
     _authProvider = null;
 
     final prefs = await SharedPreferences.getInstance();
@@ -293,19 +290,12 @@ class AuthService extends ChangeNotifier {
     await prefs.remove(_authProviderKey);
     await prefs.setBool(_isLoggedInKey, false);
     await prefs.setBool(_onboardingCompletedKey, false);
-    await prefs.setInt(_freeEntriesUsedKey, 0);
+    await prefs.remove(_legacyFreeEntriesUsedKey);
 
     // Server already cleared its own state via DELETE /api/auth/me.
     // Drop our local entitlement cache so the next launch starts fresh.
     await EntitlementService().clear();
 
-    notifyListeners();
-  }
-
-  Future<void> incrementFreeEntry() async {
-    _freeEntriesUsed++;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_freeEntriesUsedKey, _freeEntriesUsed);
     notifyListeners();
   }
 

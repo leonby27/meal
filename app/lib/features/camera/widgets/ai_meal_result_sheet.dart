@@ -1183,7 +1183,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     if (!_isEditing) {
       final auth = AuthService();
-      if (!auth.isPremium && auth.freeTrialExhausted) {
+      if (!auth.isPremium) {
         if (mounted) {
           Navigator.of(context).pop();
           GoRouter.of(context).go('/paywall');
@@ -1239,10 +1239,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         healthComment: drift.Value(_persistedHealthComment),
       ));
 
-      final auth = AuthService();
-      if (!auth.isPremium) {
-        await auth.incrementFreeEntry();
-      }
     }
 
     if (mounted) context.pop(true);

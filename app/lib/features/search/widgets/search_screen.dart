@@ -119,7 +119,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _recognizeEmptyStateWithCamera() async {
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       if (mounted) context.go('/paywall');
       return;
     }
@@ -170,7 +170,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _addFromLog(FoodLog log) async {
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       if (mounted) context.go('/paywall');
       return;
     }
@@ -248,14 +248,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (mounted) context.pop();
 
-    if (!auth.isPremium) {
-      await auth.incrementFreeEntry();
-    }
   }
 
   Future<void> _addProduct(Product product) async {
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       if (mounted) context.go('/paywall');
       return;
     }
@@ -284,9 +281,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (mounted) context.pop();
 
-    if (!auth.isPremium) {
-      await auth.incrementFreeEntry();
-    }
   }
 
   Future<double?> _showGramsDialog(Product product) {
@@ -623,7 +617,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _addFavoriteToMeal(Product product) async {
     final auth = AuthService();
-    if (!auth.isPremium && auth.freeTrialExhausted) {
+    if (!auth.isPremium) {
       if (mounted) context.go('/paywall');
       return;
     }
@@ -660,9 +654,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (mounted) context.pop();
 
-    if (!auth.isPremium) {
-      await auth.incrementFreeEntry();
-    }
   }
 
   Future<void> _addServerProduct(Map<String, dynamic> json) async {
