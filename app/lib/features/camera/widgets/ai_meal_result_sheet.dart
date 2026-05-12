@@ -496,7 +496,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   bool _isLoading = false;
   String? _loadingError;
-  late final AnimationController _spinController;
 
   /// Three-stage progress for the AI loading screen. Each stage runs in
   /// sequence: "analyzing" → "recognizing" → "counting calories". Each fills
@@ -528,10 +527,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   void initState() {
     super.initState();
 
-    _spinController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1700),
-    );
     _stage1Ctl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -565,7 +560,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     if (widget.pendingResult != null) {
       _isLoading = true;
-      _spinController.repeat();
       _stage1Ctl.forward();
       _awaitResult();
     } else if (widget.result != null) {
@@ -657,7 +651,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     Future<void>.delayed(_postCompleteHold, () {
       if (!mounted || !_isLoading) return;
 
-      _spinController.stop();
       if (_pendingErrorMessage != null) {
         setState(() {
           _isLoading = false;
@@ -710,7 +703,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   @override
   void dispose() {
     _flushAutosave();
-    _spinController.dispose();
     _stage1Ctl.dispose();
     _stage2Ctl.dispose();
     _stage3Ctl.dispose();
@@ -1689,15 +1681,15 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         : AppColors.lineLight200;
 
     // Outer scroll padding contributes 8px on each side, so 28px here lands
-    // the progress bars at exactly 36px from the screen edges.
+    // the progress bars at exactly 36px from the screen edges. The extra
+    // top padding replaces the breathing room the cabbage mascot used to
+    // occupy.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+      padding: const EdgeInsets.fromLTRB(28, 56, 28, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(child: _MeditatingMascot(float: _spinController)),
-          const SizedBox(height: 4),
           AnimatedBuilder(
             animation: Listenable.merge([
               _stage1Anim,
@@ -3470,52 +3462,6 @@ class _RingSegment {
   const _RingSegment(this.share, this.colors);
   final double share;
   final List<Color> colors;
-}
-
-/// Cabbage mascot that breathes up-and-down while the AI is recognising the
-/// dish. A blurred radial ellipse beneath it doubles as a contact shadow —
-/// it widens and darkens slightly as the mascot dips, sells the float.
-class _MeditatingMascot extends StatelessWidget {
-  const _MeditatingMascot({required this.float});
-
-  /// 0..1 looping animation that drives one breath cycle.
-  final Animation<double> float;
-
-  static const double _mascotSize = 120;
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: SizedBox(
-        width: _mascotSize,
-        height: _mascotSize + 6,
-        child: AnimatedBuilder(
-          animation: float,
-          builder: (context, child) {
-            // Sin wave: -1 (top of breath) → 0 → 1 (bottom of breath).
-            final phase = math.sin(float.value * 2 * math.pi);
-            final lift = -phase * 5 - 1; // gentle bob
-            // Subtle scale pulse layered on top of the bob makes the breath
-            // read as inhale/exhale rather than a flat hover.
-            final scale = 1 + 0.02 * phase;
-            return Transform.translate(
-              offset: Offset(0, lift),
-              child: Transform.scale(scale: scale, child: child),
-            );
-          },
-          child: Center(
-            child: Image.asset(
-              'assets/mascot/meditate.png',
-              width: _mascotSize,
-              height: _mascotSize,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.medium,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _LoadingProgressRow extends StatelessWidget {
