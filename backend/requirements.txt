@@ -14,3 +14,5 @@ requests>=2.31.0
 pydantic[email]>=2.10.0
 pydantic-settings>=2.7.0
 Pillow>=10.0.0
+app-store-server-library>=1.5.0
+google-api-python-client>=2.150.0

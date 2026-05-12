@@ -16,9 +16,58 @@ class Settings(BaseSettings):
 
     max_recognitions_per_day: int = 20
 
+    # -------------------------------------------------------------------------
+    # In-App Purchases — Apple
+    # -------------------------------------------------------------------------
+    # Bundle ID of the iOS app (must match the receipt's bundle id).
+    apple_bundle_id: str = "by.mealtracker.mealTracker"
+    # App Store Connect API key (used for App Store Server API requests).
+    apple_issuer_id: str = ""
+    apple_key_id: str = ""
+    # ES256 private key, in PEM. Either paste the file contents directly
+    # (multi-line is fine in Docker / Timeweb env editors), or set
+    # `apple_private_key_path` to a mounted file. Never commit either.
+    apple_private_key_pem: str = ""
+    apple_private_key_path: str = ""
+    # When true, all App Store calls go to the sandbox endpoint. Production
+    # builds set this to false; TestFlight purchases still resolve as
+    # `environment=Sandbox` in the verified payload so the server picks the
+    # right endpoint automatically — this flag is only a forced override.
+    apple_force_sandbox: bool = False
+    # Promo codes that immediately grant lifetime access (matches the legacy
+    # hard-coded list on the client). Comma-separated.
+    promo_codes: str = "8259,2170"
+
+    # -------------------------------------------------------------------------
+    # In-App Purchases — Google Play (placeholder; wired in a later release)
+    # -------------------------------------------------------------------------
+    google_play_package_name: str = "by.mealtracker.calories"
+    google_play_service_account_json: str = ""
+    google_play_service_account_path: str = ""
+
+    # Treat entitlements as still active for this many hours after the last
+    # known `expires_at` to absorb webhook delays and brief outages. Apple's
+    # own grace period is signaled by `is_in_grace_period` on the renewal
+    # info; this is a small extra cushion on top.
+    entitlement_grace_hours: int = 24
+
     class Config:
         env_file = ".env"
         extra = "ignore"
 
 
 settings = Settings()
+
+
+def get_apple_private_key_pem() -> str:
+    """Resolve the Apple ES256 private key from env or a mounted file."""
+    if settings.apple_private_key_pem:
+        return settings.apple_private_key_pem
+    if settings.apple_private_key_path:
+        with open(settings.apple_private_key_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return ""
+
+
+def get_promo_codes() -> set[str]:
+    return {code.strip() for code in settings.promo_codes.split(",") if code.strip()}

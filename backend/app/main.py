@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.database import engine, Base, async_session
-from app.routers import auth, recognize, products, sync, users
+from app.routers import auth, iap, recognize, products, sync, users
+from app.services.iap import reconciler as iap_reconciler
 
 # Without explicit configuration the root logger only emits WARNING+, so
 # every `logger.info(...)` in app.* services/routers (recognition timing,
@@ -81,8 +82,10 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error("DB init failed (app will still start): %s", e)
     ping_task = asyncio.create_task(_keep_alive())
+    reconcile_task = asyncio.create_task(iap_reconciler.run_loop())
     yield
     ping_task.cancel()
+    reconcile_task.cancel()
     await engine.dispose()
 
 
@@ -106,6 +109,7 @@ app.include_router(recognize.router)
 app.include_router(products.router)
 app.include_router(sync.router)
 app.include_router(users.router)
+app.include_router(iap.router)
 
 
 @app.get("/")
