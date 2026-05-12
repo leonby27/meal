@@ -8,6 +8,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:meal_tracker/app/theme.dart';
+import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/entitlement_service.dart';
@@ -199,13 +200,22 @@ class _PaywallScreenState extends State<PaywallScreen>
     );
     if (code == null || !mounted) return;
 
-    final accepted = await EntitlementService().redeemPromo(code.trim());
-    if (!mounted) return;
-    if (!accepted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.promoCodeInvalid)));
+    String? errorText;
+    try {
+      await EntitlementService().redeemPromo(code.trim());
+    } on ApiException catch (e) {
+      // 404 from /api/iap/promo/redeem = code not in the allow-list.
+      // Anything else (5xx, timeout) is a server problem, not the user's.
+      errorText = e.statusCode == 404
+          ? context.l10n.promoCodeInvalid
+          : context.l10n.networkGenericError;
+    } catch (_) {
+      errorText = context.l10n.networkGenericError;
     }
+    if (!mounted || errorText == null) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(errorText)));
   }
 
   Future<void> _showErrorDialog(

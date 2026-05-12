@@ -418,6 +418,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get planYearly => 'Jährlich';
 
   @override
+  String get planLifetime => 'Lebenslang';
+
+  @override
   String get billingLabel => 'Nächste Abrechnung:';
 
   @override

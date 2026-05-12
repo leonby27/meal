@@ -419,6 +419,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get planYearly => 'Anual';
 
   @override
+  String get planLifetime => 'Vitalícia';
+
+  @override
   String get billingLabel => 'Próxima cobrança:';
 
   @override

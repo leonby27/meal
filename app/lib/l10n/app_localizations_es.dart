@@ -418,6 +418,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get planYearly => 'Anual';
 
   @override
+  String get planLifetime => 'De por vida';
+
+  @override
   String get billingLabel => 'Próxima facturación:';
 
   @override

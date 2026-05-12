@@ -139,6 +139,7 @@
   "planLabel": "Plan:",
   "planWeekly": "Weekly",
   "planYearly": "Yearly",
+  "planLifetime": "Lifetime",
   "billingLabel": "Next billing:",
   "manageSubscription": "Manage Subscription",
   "goalCaloriesKcal": "Calories, kcal",

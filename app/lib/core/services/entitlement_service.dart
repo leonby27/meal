@@ -33,6 +33,13 @@ class EntitlementService extends ChangeNotifier {
   static const String _prefsCacheKey = 'entitlement_cache_v1';
   static const String _prefsSyncedAtKey = 'entitlement_synced_at_v1';
 
+  // Legacy SharedPreferences keys from the pre-server era. We read them
+  // exactly once on init to migrate stale promo grants forward, then
+  // delete them so no future caller is tempted to trust them.
+  static const String _legacyIsPremiumKey = 'is_premium';
+  static const String _legacyPlanNameKey = 'plan_name';
+  static const String _legacyNextBillingDateKey = 'next_billing_date';
+
   /// Trust the cache (don't fall back to "no premium" before server
   /// answers) for this long after the last successful sync. A week is
   /// generous but matches Apple's grace window for billing retries.
@@ -76,6 +83,50 @@ class EntitlementService extends ChangeNotifier {
     // Fire-and-forget refresh from the server. UI can render immediately
     // from cache; the server answer arrives a beat later.
     unawaited(refresh());
+    // One-shot legacy migration: re-redeem old promo grants and StoreKit
+    // restore picks up the rest. Always wipes legacy keys at the end.
+    unawaited(_migrateLegacyPrefs());
+  }
+
+  /// Old builds stored a boolean `is_premium` flag locally that never
+  /// expired — the original bug we're fixing. Pre-migration users may
+  /// have:
+  ///   * `is_premium=true` from a promo redemption with a `plan_name`
+  ///     like `promo_8259` (no Apple/Play receipt to restore from).
+  ///   * `is_premium=true` from an Apple/Play subscription — silent
+  ///     restorePurchases() in [SubscriptionService.init] will re-deliver
+  ///     it and trigger /verify, no migration needed here.
+  /// Only the first case needs explicit migration: extract the code,
+  /// re-redeem on the server, then delete the legacy keys.
+  Future<void> _migrateLegacyPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final wasPremium = prefs.getBool(_legacyIsPremiumKey) ?? false;
+    final legacyPlan = prefs.getString(_legacyPlanNameKey);
+
+    if (wasPremium &&
+        legacyPlan != null &&
+        legacyPlan.startsWith('promo_')) {
+      final code = legacyPlan.substring('promo_'.length);
+      if (code.isNotEmpty) {
+        try {
+          await redeemPromo(code);
+        } on ApiException catch (e) {
+          // 404 means the server no longer accepts this code (admin
+          // pruned it from PROMO_CODES). Nothing to retry; drop keys.
+          if (e.statusCode != 404) {
+            debugPrint('Legacy promo migration transient error: $e');
+            return; // keep keys, retry on next launch
+          }
+        } catch (e) {
+          debugPrint('Legacy promo migration network error: $e');
+          return; // keep keys, retry on next launch
+        }
+      }
+    }
+
+    await prefs.remove(_legacyIsPremiumKey);
+    await prefs.remove(_legacyPlanNameKey);
+    await prefs.remove(_legacyNextBillingDateKey);
   }
 
   Future<void> _loadFromCache() async {
@@ -200,23 +251,19 @@ class EntitlementService extends ChangeNotifier {
   }
 
   /// Server-side promo redemption (replaces the hard-coded `8259` /
-  /// `2170` list that used to live in the paywall screen). Returns true
-  /// if the code was accepted and premium is now active.
+  /// `2170` list that used to live in the paywall screen). Throws
+  /// [ApiException] on failure so the caller can distinguish "code
+  /// rejected" (status 404) from a network / server problem.
   Future<bool> redeemPromo(String code) async {
-    try {
-      final token = await DeviceIdService.getOrCreate();
-      final response = await ApiClient().post('/api/iap/promo/redeem', {
-        'code': code,
-        'app_account_token': token,
-      });
-      _applyServerState(response);
-      await _writeCache(response);
-      notifyListeners();
-      return _isActive;
-    } catch (e) {
-      debugPrint('EntitlementService.redeemPromo failed: $e');
-      return false;
-    }
+    final token = await DeviceIdService.getOrCreate();
+    final response = await ApiClient().post('/api/iap/promo/redeem', {
+      'code': code,
+      'app_account_token': token,
+    });
+    _applyServerState(response);
+    await _writeCache(response);
+    notifyListeners();
+    return _isActive;
   }
 
   // ---------------------------------------------------------------------------

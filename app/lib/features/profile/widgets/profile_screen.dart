@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -630,9 +631,19 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
     switch (planName) {
       case 'yearly':
         return context.l10n.planYearly;
-      default:
+      case 'weekly':
         return context.l10n.planWeekly;
+      case 'promo_lifetime':
+        return context.l10n.planLifetime;
+      default:
+        return '—';
     }
+  }
+
+  String _displayNextBilling(DateTime? expiresAt) {
+    if (expiresAt == null) return '—';
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return DateFormat.yMMMd(locale).format(expiresAt.toLocal());
   }
 
   // ── Subscription Cards ──────────────────────────────────────
@@ -794,7 +805,7 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                 ),
                 const Spacer(),
                 Text(
-                  auth.nextBillingDate ?? '—',
+                  _displayNextBilling(auth.expiresAt),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w400,

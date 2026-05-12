@@ -218,6 +218,7 @@
   "planLabel": "План:",
   "planWeekly": "Еженедельный",
   "planYearly": "Годовой",
+  "planLifetime": "Бессрочный",
   "billingLabel": "Списание:",
   "manageSubscription": "Управление подпиской",
   "goalCaloriesKcal": "Калории, ккал",

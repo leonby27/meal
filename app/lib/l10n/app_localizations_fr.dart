@@ -420,6 +420,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get planYearly => 'Annuel';
 
   @override
+  String get planLifetime => 'À vie';
+
+  @override
   String get billingLabel => 'Prochaine facturation :';
 
   @override

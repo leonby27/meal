@@ -31,12 +31,6 @@ class AuthService extends ChangeNotifier {
   static const String _authProviderKey = 'auth_provider';
   static const int freeEntryLimit = 3;
 
-  /// Legacy SharedPreferences keys kept only so we can clean them up on
-  /// init — premium state now lives in [EntitlementService], driven by
-  /// the server. These keys never get written again.
-  static const String _legacyIsPremiumKey = 'is_premium';
-  static const String _legacyPlanNameKey = 'plan_name';
-  static const String _legacyNextBillingDateKey = 'next_billing_date';
 
   /// Values stored in [_authProviderKey].
   static const String providerGoogle = 'google';
@@ -67,8 +61,7 @@ class AuthService extends ChangeNotifier {
   // `AuthService().isPremium` keep working unchanged.
   bool get isPremium => EntitlementService().isActive;
   String? get planName => EntitlementService().plan;
-  String? get nextBillingDate =>
-      EntitlementService().expiresAt?.toIso8601String();
+  DateTime? get expiresAt => EntitlementService().expiresAt;
 
   int get freeEntriesUsed => _freeEntriesUsed;
   int get freeEntriesRemaining =>
@@ -89,12 +82,9 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
 
     // Premium state moved out of SharedPreferences and onto the server.
-    // Drop the legacy keys on every launch — keeping them around would
-    // tempt some future caller into reading stale state. EntitlementService
-    // owns this concern now, sourced from /api/iap/entitlement.
-    await prefs.remove(_legacyIsPremiumKey);
-    await prefs.remove(_legacyPlanNameKey);
-    await prefs.remove(_legacyNextBillingDateKey);
+    // EntitlementService.init() owns the migration (and the cleanup of
+    // legacy `is_premium` / `plan_name` / `next_billing_date` keys) so
+    // it can re-redeem an old promo before wiping the trace.
     await prefs.setInt(_lastSeenBuildKey, buildNumber);
 
     _isLoggedIn = prefs.getBool(_isLoggedInKey) ?? false;
