@@ -30,10 +30,15 @@ class Settings(BaseSettings):
     # App Store Connect API key (used for App Store Server API requests).
     apple_issuer_id: str = ""
     apple_key_id: str = ""
-    # ES256 private key, in PEM. Either paste the file contents directly
-    # (multi-line is fine in Docker / Timeweb env editors), or set
-    # `apple_private_key_path` to a mounted file. Never commit either.
+    # ES256 private key, in PEM. Three ways to pass it, pick whatever
+    # the env var editor handles best (never commit any of them):
+    #   - `apple_private_key_pem` — multi-line PEM, including
+    #     `-----BEGIN/END PRIVATE KEY-----` framing.
+    #   - `apple_private_key_pem_b64` — single-line base64 of the full
+    #     PEM. Use when the env editor strips newlines.
+    #   - `apple_private_key_path` — path to a mounted .p8 file.
     apple_private_key_pem: str = ""
+    apple_private_key_pem_b64: str = ""
     apple_private_key_path: str = ""
     # When true, all App Store calls go to the sandbox endpoint. Production
     # builds set this to false; TestFlight purchases still resolve as
@@ -66,9 +71,25 @@ settings = Settings()
 
 
 def get_apple_private_key_pem() -> str:
-    """Resolve the Apple ES256 private key from env or a mounted file."""
+    """Resolve the Apple ES256 private key from env or a mounted file.
+
+    Order of precedence:
+      1. `apple_private_key_pem` — preferred when the editor preserves
+         newlines (paste the .p8 file contents verbatim).
+      2. `apple_private_key_pem_b64` — single-line base64 of the .p8
+         file. Convenience for env editors that strip/escape newlines.
+      3. `apple_private_key_path` — mounted secret file.
+    """
     if settings.apple_private_key_pem:
-        return settings.apple_private_key_pem
+        # Some editors collapse all newlines to literal "\n" two-char
+        # sequences. Restore them so cryptography can parse the PEM.
+        pem = settings.apple_private_key_pem
+        if "\n" not in pem and "\\n" in pem:
+            pem = pem.replace("\\n", "\n")
+        return pem
+    if settings.apple_private_key_pem_b64:
+        import base64
+        return base64.b64decode(settings.apple_private_key_pem_b64).decode("utf-8")
     if settings.apple_private_key_path:
         with open(settings.apple_private_key_path, "r", encoding="utf-8") as f:
             return f.read()
