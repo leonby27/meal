@@ -421,7 +421,7 @@
   "resultBridgeTitle": "Para o plano funcionar, você precisa registrar todos os dias",
   "resultBridgeFreeLine": "Grátis — 3 registros de refeição para experimentar",
   "resultBridgePremiumLine": "Com Premium — sem limites, até alcançar sua meta",
-  "resultDisclaimerShort": "Recomendações não substituem aconselhamento médico",
+  "resultDisclaimerShort": "Não substitui aconselhamento médico.",
   "resultDisclaimerExpand": "Saiba mais",
   "resultSourcesTitle": "Fontes",
   "resultSourceCaloriesLabel": "Meta de calorias",
@@ -713,6 +713,42 @@
       }
     }
   },
+  "resultGoalReachLine": "Você alcançará {weight}",
+  "@resultGoalReachLine": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalByDateLine": "até {date}",
+  "@resultGoalByDateLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalInWeeks": "{count, plural, =1{em 1 semana} other{em {count} semanas}}",
+  "@resultGoalInWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultBenefit5MinDay": "Apenas 5 minutos por dia",
+  "resultBenefitSmartTracking": "Acompanhamento inteligente, sem esforço",
+  "resultBenefitTailored": "Plano alimentar feito para sua rotina",
+  "resultBenefitSustainable": "Resultados duradouros, sem soluções rápidas",
+  "resultFaqHeader": "FAQ",
+  "resultFaqCancelQ": "Como cancelar minha assinatura?",
+  "resultFaqCancelAIos": "Abra Ajustes → seu nome → Assinaturas no iPhone, encontre o MealTracker e toque em Cancelar assinatura.",
+  "resultFaqCancelAAndroid": "Abra a Google Play → seu perfil → Pagamentos e assinaturas → Assinaturas, encontre o MealTracker e toque em Cancelar.",
+  "resultFaqSecurityQ": "Meus dados pessoais estão seguros?",
+  "resultFaqSecurityA": "Seus dados são criptografados em trânsito e em repouso. Não os vendemos a anunciantes, e você pode excluir sua conta a qualquer momento nas configurações.",
+  "resultFaqTrialQ": "Existe um período de avaliação gratuito?",
+  "resultFaqTrialA": "Sim — o plano anual inclui um período gratuito. Não cobramos nada até ele terminar e pode cancelar antes para não pagar.",
   "loadingMetabolism": "Analisando seu metabolismo...",
   "loadingCalories": "Calculando sua meta diária de calorias...",
   "loadingMacros": "Ajustando o equilíbrio proteína / gordura / carboidratos...",

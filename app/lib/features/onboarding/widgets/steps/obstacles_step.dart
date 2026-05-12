@@ -39,6 +39,16 @@ class ObstaclesStep extends StatelessWidget {
     return _labelFor(l10n, key);
   }
 
+  /// Emoji asset name that matches the obstacle key — used by ResultStep
+  /// to render the same icon the user saw when selecting the obstacle.
+  /// Falls back to a generic icon if the key is unknown.
+  static String emojiFor(String key) {
+    for (final option in _options) {
+      if (option.value == key) return option.emoji;
+    }
+    return 'bullseye';
+  }
+
   static String _labelFor(AppLocalizations l10n, String key) {
     switch (key) {
       case 'consistency':

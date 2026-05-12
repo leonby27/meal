@@ -597,7 +597,7 @@
   "resultBridgeTitle": "Чтобы план работал — его нужно вести каждый день",
   "resultBridgeFreeLine": "Бесплатно — 3 записи еды, чтобы попробовать",
   "resultBridgePremiumLine": "С Premium — без лимита, до самой цели",
-  "resultDisclaimerShort": "Рекомендации не заменяют консультацию врача",
+  "resultDisclaimerShort": "Не заменяет консультацию врача.",
   "resultDisclaimerExpand": "Подробнее",
   "resultSourcesTitle": "Источники",
   "resultSourceCaloriesLabel": "Норма калорий",
@@ -889,6 +889,42 @@
       }
     }
   },
+  "resultGoalReachLine": "Вы достигнете {weight}",
+  "@resultGoalReachLine": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalByDateLine": "к {date}",
+  "@resultGoalByDateLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalInWeeks": "{count, plural, =1{через 1 неделю} few{через {count} недели} many{через {count} недель} other{через {count} недель}}",
+  "@resultGoalInWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultBenefit5MinDay": "Занимает 5 минут в день",
+  "resultBenefitSmartTracking": "Умный трекинг без усилий",
+  "resultBenefitTailored": "Меню под ваш образ жизни",
+  "resultBenefitSustainable": "Устойчивый результат, а не диета",
+  "resultFaqHeader": "FAQ",
+  "resultFaqCancelQ": "Как отменить подписку?",
+  "resultFaqCancelAIos": "Откройте Настройки → ваше имя → Подписки на iPhone, найдите MealTracker и нажмите «Отменить подписку».",
+  "resultFaqCancelAAndroid": "Откройте Google Play → профиль → Платежи и подписки → Подписки, найдите MealTracker и нажмите «Отменить».",
+  "resultFaqSecurityQ": "Безопасны ли мои данные?",
+  "resultFaqSecurityA": "Данные шифруются при передаче и хранении. Мы не передаём их рекламодателям, а аккаунт можно удалить в настройках в любой момент.",
+  "resultFaqTrialQ": "Есть ли бесплатный пробный период?",
+  "resultFaqTrialA": "Да — пробный период доступен в годовом тарифе. Деньги не списываются до его окончания, отменить можно в любой момент до этого.",
   "loadingMetabolism": "Анализируем ваш метаболизм...",
   "loadingCalories": "Рассчитываем дневную норму калорий...",
   "loadingMacros": "Подбираем баланс белков / жиров / углеводов...",

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/macro_order.dart';
 
 class MyProductsScreen extends StatefulWidget {
   const MyProductsScreen({super.key});
@@ -107,9 +108,17 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             subtitle: Text(
               '${context.l10n.kcalPer100g('${p.caloriesPer100g?.toInt() ?? "-"}')}  •  '
-              '${context.l10n.proteinShort}${p.proteinPer100g?.toStringAsFixed(1) ?? "-"} '
-              '${context.l10n.fatShort}${p.fatPer100g?.toStringAsFixed(1) ?? "-"} '
-              '${context.l10n.carbsShort}${p.carbsPer100g?.toStringAsFixed(1) ?? "-"}',
+              '${[
+                for (final m in MacroOrder.of(context))
+                  switch (m) {
+                    Macro.protein =>
+                      '${context.l10n.proteinShort}${p.proteinPer100g?.toStringAsFixed(1) ?? "-"}',
+                    Macro.fat =>
+                      '${context.l10n.fatShort}${p.fatPer100g?.toStringAsFixed(1) ?? "-"}',
+                    Macro.carbs =>
+                      '${context.l10n.carbsShort}${p.carbsPer100g?.toStringAsFixed(1) ?? "-"}',
+                  },
+              ].join(' ')}',
             ),
             trailing: p.brand != null
                 ? Chip(label: Text(p.brand!, style: Theme.of(context).textTheme.bodySmall))

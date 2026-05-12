@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/macro_order.dart';
 
 class _Ingredient {
   final Product product;
@@ -237,9 +238,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         title: Text(ing.product.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                         subtitle: Text(
                           '${ing.grams.toInt()} ${context.l10n.gramsUnit}  •  '
-                          '${context.l10n.proteinShort} ${ing.protein.toStringAsFixed(1)} '
-                          '${context.l10n.fatShort} ${ing.fat.toStringAsFixed(1)} '
-                          '${context.l10n.carbsShort} ${ing.carbs.toStringAsFixed(1)}  •  '
+                          '${[
+                            for (final m in MacroOrder.of(context))
+                              switch (m) {
+                                Macro.protein =>
+                                  '${context.l10n.proteinShort} ${ing.protein.toStringAsFixed(1)}',
+                                Macro.fat =>
+                                  '${context.l10n.fatShort} ${ing.fat.toStringAsFixed(1)}',
+                                Macro.carbs =>
+                                  '${context.l10n.carbsShort} ${ing.carbs.toStringAsFixed(1)}',
+                              },
+                          ].join(' ')}  •  '
                           '${context.l10n.kcalValue(ing.calories.toInt().toString())}',
                         ),
                         trailing: SizedBox(

@@ -6,6 +6,7 @@ import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/login_sync_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/features/onboarding/services/tdee_calculator.dart';
 
 /// Bottom sheet that edits the daily KBJU goals in two modes:
@@ -517,33 +518,24 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
                     secondary: secondary,
                   ),
                 ),
-                Expanded(
-                  child: _GoalSummaryCell(
-                    iconAsset: 'assets/icons/belok.svg',
-                    value: _protCtl.text,
-                    unit: 'g',
-                    primary: cs.onSurface,
-                    secondary: secondary,
+                for (final m in MacroOrder.of(context))
+                  Expanded(
+                    child: _GoalSummaryCell(
+                      iconAsset: switch (m) {
+                        Macro.protein => 'assets/icons/belok.svg',
+                        Macro.fat => 'assets/icons/fat.svg',
+                        Macro.carbs => 'assets/icons/uglevod.svg',
+                      },
+                      value: switch (m) {
+                        Macro.protein => _protCtl.text,
+                        Macro.fat => _fatCtl.text,
+                        Macro.carbs => _carbsCtl.text,
+                      },
+                      unit: 'g',
+                      primary: cs.onSurface,
+                      secondary: secondary,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _GoalSummaryCell(
-                    iconAsset: 'assets/icons/uglevod.svg',
-                    value: _carbsCtl.text,
-                    unit: 'g',
-                    primary: cs.onSurface,
-                    secondary: secondary,
-                  ),
-                ),
-                Expanded(
-                  child: _GoalSummaryCell(
-                    iconAsset: 'assets/icons/fat.svg',
-                    value: _fatCtl.text,
-                    unit: 'g',
-                    primary: cs.onSurface,
-                    secondary: secondary,
-                  ),
-                ),
               ],
             ),
           ),
@@ -633,30 +625,28 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
                   isDark: isDark,
                   primary: cs.onSurface,
                 ),
-                const SizedBox(height: 12),
-                _GoalEditRow(
-                  iconAsset: 'assets/icons/belok.svg',
-                  label: l10n.goalProteinG,
-                  controller: _protCtl,
-                  isDark: isDark,
-                  primary: cs.onSurface,
-                ),
-                const SizedBox(height: 12),
-                _GoalEditRow(
-                  iconAsset: 'assets/icons/fat.svg',
-                  label: l10n.goalFatG,
-                  controller: _fatCtl,
-                  isDark: isDark,
-                  primary: cs.onSurface,
-                ),
-                const SizedBox(height: 12),
-                _GoalEditRow(
-                  iconAsset: 'assets/icons/uglevod.svg',
-                  label: l10n.goalCarbsG,
-                  controller: _carbsCtl,
-                  isDark: isDark,
-                  primary: cs.onSurface,
-                ),
+                for (final m in MacroOrder.of(context)) ...[
+                  const SizedBox(height: 12),
+                  _GoalEditRow(
+                    iconAsset: switch (m) {
+                      Macro.protein => 'assets/icons/belok.svg',
+                      Macro.fat => 'assets/icons/fat.svg',
+                      Macro.carbs => 'assets/icons/uglevod.svg',
+                    },
+                    label: switch (m) {
+                      Macro.protein => l10n.goalProteinG,
+                      Macro.fat => l10n.goalFatG,
+                      Macro.carbs => l10n.goalCarbsG,
+                    },
+                    controller: switch (m) {
+                      Macro.protein => _protCtl,
+                      Macro.fat => _fatCtl,
+                      Macro.carbs => _carbsCtl,
+                    },
+                    isDark: isDark,
+                    primary: cs.onSurface,
+                  ),
+                ],
               ],
             ),
           ),

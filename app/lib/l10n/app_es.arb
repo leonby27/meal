@@ -421,7 +421,7 @@
   "resultBridgeTitle": "Para que el plan funcione, hay que registrar cada día",
   "resultBridgeFreeLine": "Gratis — 3 registros de comida para probarlo",
   "resultBridgePremiumLine": "Con Premium — sin límites, hasta alcanzar tu objetivo",
-  "resultDisclaimerShort": "Las recomendaciones no sustituyen el consejo médico",
+  "resultDisclaimerShort": "No sustituye el consejo médico.",
   "resultDisclaimerExpand": "Más información",
   "resultSourcesTitle": "Fuentes",
   "resultSourceCaloriesLabel": "Objetivo de calorías",
@@ -713,6 +713,42 @@
       }
     }
   },
+  "resultGoalReachLine": "Alcanzarás {weight}",
+  "@resultGoalReachLine": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalByDateLine": "para el {date}",
+  "@resultGoalByDateLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalInWeeks": "{count, plural, =1{en 1 semana} other{en {count} semanas}}",
+  "@resultGoalInWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultBenefit5MinDay": "Solo 5 minutos al día",
+  "resultBenefitSmartTracking": "Seguimiento inteligente sin esfuerzo",
+  "resultBenefitTailored": "Plan a la medida de tu vida",
+  "resultBenefitSustainable": "Resultados duraderos, no soluciones rápidas",
+  "resultFaqHeader": "FAQ",
+  "resultFaqCancelQ": "¿Cómo cancelo mi suscripción?",
+  "resultFaqCancelAIos": "Abre Ajustes → tu nombre → Suscripciones en iPhone, busca MealTracker y toca Cancelar suscripción.",
+  "resultFaqCancelAAndroid": "Abre Google Play → tu perfil → Pagos y suscripciones → Suscripciones, busca MealTracker y toca Cancelar.",
+  "resultFaqSecurityQ": "¿Mis datos personales están seguros?",
+  "resultFaqSecurityA": "Tus datos se cifran en tránsito y en reposo. No los vendemos a anunciantes, y puedes eliminar tu cuenta cuando quieras desde Ajustes.",
+  "resultFaqTrialQ": "¿Hay un período de prueba gratuito?",
+  "resultFaqTrialA": "Sí — el plan anual incluye una prueba gratuita. No cobramos nada hasta que termine y puedes cancelar antes para no pagar.",
   "loadingMetabolism": "Analizando tu metabolismo...",
   "loadingCalories": "Calculando tu objetivo diario de calorías...",
   "loadingMacros": "Afinando el equilibrio proteína / grasa / carbohidratos...",

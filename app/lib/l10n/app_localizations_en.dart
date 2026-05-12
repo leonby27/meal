@@ -1238,8 +1238,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'With Premium — no limits, all the way to your goal';
 
   @override
-  String get resultDisclaimerShort =>
-      'Recommendations do not replace medical advice';
+  String get resultDisclaimerShort => 'Not a substitute for medical advice.';
 
   @override
   String get resultDisclaimerExpand => 'Learn more';
@@ -1838,6 +1837,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String resultWeekRow(int week) {
     return 'Week $week';
   }
+
+  @override
+  String resultGoalReachLine(String weight) {
+    return 'You\'ll reach $weight';
+  }
+
+  @override
+  String resultGoalByDateLine(String date) {
+    return 'by $date';
+  }
+
+  @override
+  String resultGoalInWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'in $count weeks',
+      one: 'in 1 week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get resultBenefit5MinDay => 'Takes just 5 minutes a day';
+
+  @override
+  String get resultBenefitSmartTracking => 'Smart tracking without efforts';
+
+  @override
+  String get resultBenefitTailored => 'Tailored meal plan that fits your life';
+
+  @override
+  String get resultBenefitSustainable => 'Sustainable results, not quick fixes';
+
+  @override
+  String get resultFaqHeader => 'FAQ';
+
+  @override
+  String get resultFaqCancelQ => 'How to cancel my subscription?';
+
+  @override
+  String get resultFaqCancelAIos =>
+      'Open Settings → your name → Subscriptions on iPhone, find MealTracker and tap Cancel Subscription.';
+
+  @override
+  String get resultFaqCancelAAndroid =>
+      'Open the Google Play Store → tap your profile → Payments & subscriptions → Subscriptions, find MealTracker and tap Cancel.';
+
+  @override
+  String get resultFaqSecurityQ => 'Is my personal information secure?';
+
+  @override
+  String get resultFaqSecurityA =>
+      'Your data is encrypted in transit and at rest. We never sell it to advertisers, and you can delete your account anytime from Settings.';
+
+  @override
+  String get resultFaqTrialQ => 'Is there a free trial period?';
+
+  @override
+  String get resultFaqTrialA =>
+      'Yes — the yearly plan starts with a free trial. We don\'t charge anything until it ends, and you can cancel anytime before that.';
 
   @override
   String get loadingMetabolism => 'Analyzing your metabolism...';

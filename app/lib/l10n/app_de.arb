@@ -421,7 +421,7 @@
   "resultBridgeTitle": "Damit der Plan funktioniert, müssen Sie täglich tracken",
   "resultBridgeFreeLine": "Kostenlos — 3 Mahlzeiten-Einträge zum Ausprobieren",
   "resultBridgePremiumLine": "Mit Premium — ohne Limits, bis zu Ihrem Ziel",
-  "resultDisclaimerShort": "Empfehlungen ersetzen keinen ärztlichen Rat",
+  "resultDisclaimerShort": "Ersetzt keinen ärztlichen Rat.",
   "resultDisclaimerExpand": "Mehr erfahren",
   "resultSourcesTitle": "Quellen",
   "resultSourceCaloriesLabel": "Kalorienziel",
@@ -713,6 +713,42 @@
       }
     }
   },
+  "resultGoalReachLine": "Sie erreichen {weight}",
+  "@resultGoalReachLine": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalByDateLine": "bis {date}",
+  "@resultGoalByDateLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalInWeeks": "{count, plural, =1{in 1 Woche} other{in {count} Wochen}}",
+  "@resultGoalInWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultBenefit5MinDay": "Nur 5 Minuten am Tag",
+  "resultBenefitSmartTracking": "Smartes Tracking ohne Aufwand",
+  "resultBenefitTailored": "Ernährungsplan passend zu Ihrem Leben",
+  "resultBenefitSustainable": "Nachhaltige Ergebnisse statt schneller Diäten",
+  "resultFaqHeader": "FAQ",
+  "resultFaqCancelQ": "Wie kündige ich mein Abo?",
+  "resultFaqCancelAIos": "Öffnen Sie Einstellungen → Ihr Name → Abos auf dem iPhone, suchen Sie MealTracker und tippen auf Abo kündigen.",
+  "resultFaqCancelAAndroid": "Öffnen Sie den Google Play Store → Profilbild → Zahlungen und Abos → Abos, wählen Sie MealTracker und tippen auf Kündigen.",
+  "resultFaqSecurityQ": "Sind meine Daten sicher?",
+  "resultFaqSecurityA": "Ihre Daten werden bei Übertragung und Speicherung verschlüsselt. Wir geben sie nicht an Werbenetzwerke weiter — Ihr Konto lässt sich jederzeit in den Einstellungen löschen.",
+  "resultFaqTrialQ": "Gibt es eine kostenlose Testphase?",
+  "resultFaqTrialA": "Ja — der Jahres-Tarif startet mit einer kostenlosen Testphase. Wir berechnen nichts bis sie endet, und Sie können jederzeit vorher kündigen.",
   "loadingMetabolism": "Wir analysieren Ihren Stoffwechsel ...",
   "loadingCalories": "Wir berechnen Ihr Tageskalorienziel ...",
   "loadingMacros": "Wir stimmen Eiweiß / Fett / Kohlenhydrate ab ...",

@@ -421,7 +421,7 @@
   "resultBridgeTitle": "For the plan to work, you need to track every day",
   "resultBridgeFreeLine": "Free — 3 meal entries to try it out",
   "resultBridgePremiumLine": "With Premium — no limits, all the way to your goal",
-  "resultDisclaimerShort": "Recommendations do not replace medical advice",
+  "resultDisclaimerShort": "Not a substitute for medical advice.",
   "resultDisclaimerExpand": "Learn more",
   "resultSourcesTitle": "Sources",
   "resultSourceCaloriesLabel": "Calorie target",
@@ -713,6 +713,42 @@
       }
     }
   },
+  "resultGoalReachLine": "You'll reach {weight}",
+  "@resultGoalReachLine": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalByDateLine": "by {date}",
+  "@resultGoalByDateLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalInWeeks": "{count, plural, =1{in 1 week} other{in {count} weeks}}",
+  "@resultGoalInWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultBenefit5MinDay": "Takes just 5 minutes a day",
+  "resultBenefitSmartTracking": "Smart tracking without efforts",
+  "resultBenefitTailored": "Tailored meal plan that fits your life",
+  "resultBenefitSustainable": "Sustainable results, not quick fixes",
+  "resultFaqHeader": "FAQ",
+  "resultFaqCancelQ": "How to cancel my subscription?",
+  "resultFaqCancelAIos": "Open Settings → your name → Subscriptions on iPhone, find MealTracker and tap Cancel Subscription.",
+  "resultFaqCancelAAndroid": "Open the Google Play Store → tap your profile → Payments & subscriptions → Subscriptions, find MealTracker and tap Cancel.",
+  "resultFaqSecurityQ": "Is my personal information secure?",
+  "resultFaqSecurityA": "Your data is encrypted in transit and at rest. We never sell it to advertisers, and you can delete your account anytime from Settings.",
+  "resultFaqTrialQ": "Is there a free trial period?",
+  "resultFaqTrialA": "Yes — the yearly plan starts with a free trial. We don't charge anything until it ends, and you can cancel anytime before that.",
   "loadingMetabolism": "Analyzing your metabolism...",
   "loadingCalories": "Calculating your daily calorie target...",
   "loadingMacros": "Tuning protein / fat / carb balance...",

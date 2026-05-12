@@ -1,13 +1,16 @@
+import 'dart:math' as math;
+
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
-import 'package:meal_tracker/features/onboarding/services/psychotype.dart';
-import 'package:meal_tracker/features/onboarding/services/tdee_calculator.dart';
+import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/obstacles_step.dart';
 
@@ -20,21 +23,37 @@ class ResultStep extends StatefulWidget {
   State<ResultStep> createState() => _ResultStepState();
 }
 
-class _ResultStepState extends State<ResultStep> {
-  static const String _planImageLight = 'assets/onboarding/light/plan.png';
-  static const String _planImageDark = 'assets/onboarding/dark/plan.png';
-  static const double _planImageAspectRatio = 1572 / 808;
-  // No overlap between the hero illustration and the content below —
-  // the title now sits cleanly under the image.
-  static const double _planCardOverlap = -16;
-
-  // Conversion factor used to format weights for users on imperial units.
-  // The internal data model is always kg; we only convert for display.
+class _ResultStepState extends State<ResultStep>
+    with TickerProviderStateMixin {
   static const double _kgToLb = 2.20462;
   static const double _hPad = 16;
-  static const double _cardRadius = 20;
+
+  // Macro arc palette — matches the AI meal-analysis donut so the user sees
+  // the same color for each macro throughout the app. Source of truth:
+  // _RingSegment colors in [ai_meal_result_sheet.dart].
+  static const Color _proteinColor = Color(0xFFE4431C);
+  static const Color _fatColor = Color(0xFFEFD400);
+  static const Color _carbsColor = Color(0xFF17ACCC);
+
+  static const String _proteinIcon = 'assets/icons/belok.svg';
+  static const String _fatIcon = 'assets/icons/fat.svg';
+  static const String _carbsIcon = 'assets/icons/uglevod.svg';
+
+  static const String _laurelAsset = 'assets/onboarding/icons/laurel.svg';
 
   late final ConfettiController _confettiController;
+
+  // Drives the donut sweep + macro count-up + goal weight count-up on
+  // mount. A single controller keeps every animated element on the same
+  // visual beat instead of N independent TweenAnimationBuilders drifting
+  // out of sync by frame.
+  late final AnimationController _entryController;
+
+  // The weekly-progress bars wait for the user to scroll their card into
+  // view before filling. We watch the scroll position and flip this once.
+  final GlobalKey _milestonesKey = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
+  bool _milestonesAnimated = false;
 
   @override
   void initState() {
@@ -43,11 +62,45 @@ class _ResultStepState extends State<ResultStep> {
       duration: const Duration(milliseconds: 600),
     );
     _confettiController.play();
+
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
+    // Defer one frame so the AnimatedSwitcher slide-in finishes before
+    // the donut starts sweeping — keeps both motions readable.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _entryController.forward();
+      _maybeTriggerMilestones();
+    });
+    _scrollController.addListener(_maybeTriggerMilestones);
+  }
+
+  /// Fires the milestone bar fill animation the first time the weekly
+  /// progress card enters the viewport (or immediately on mount if it
+  /// already does on small screens).
+  void _maybeTriggerMilestones() {
+    if (_milestonesAnimated) return;
+    final ctx = _milestonesKey.currentContext;
+    if (ctx == null) return;
+    final box = ctx.findRenderObject();
+    if (box is! RenderBox || !box.attached) return;
+    final position = box.localToGlobal(Offset.zero);
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Treat the card as visible once its top edge crosses ~85% of the
+    // viewport height — gives the bars a chance to start filling just as
+    // the user is bringing them into focus.
+    if (position.dy < screenHeight * 0.85) {
+      setState(() => _milestonesAnimated = true);
+    }
   }
 
   @override
   void dispose() {
     _confettiController.dispose();
+    _entryController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -58,13 +111,32 @@ class _ResultStepState extends State<ResultStep> {
     return '${kg.round()} ${context.l10n.kgUnit}';
   }
 
+  /// Signed weight change from the starting weight. Metric users always see
+  /// kilograms — whole numbers when exact, otherwise one decimal place (so
+  /// 0.5 reads as "0,5 kg" / "0.5 kg" per locale). Imperial users see
+  /// pounds with one decimal. Uses unicode minus for sign-width parity.
+  String _formatDelta(double currentKg, double startKg) {
+    final delta = currentKg - startKg;
+    if (delta.abs() < 0.05) return '0';
+    final sign = delta > 0 ? '+' : '−';
+    final localeCode = Localizations.localeOf(context).toLanguageTag();
+    if (widget.data.isImperial) {
+      final lb = delta.abs() * _kgToLb;
+      final formatter = NumberFormat('0.0', localeCode);
+      return '$sign${formatter.format(lb)} lb';
+    }
+    final kg = delta.abs();
+    final isWhole = (kg - kg.roundToDouble()).abs() < 0.05;
+    final formatter = NumberFormat(isWhole ? '0' : '0.0', localeCode);
+    return '$sign${formatter.format(kg)} ${context.l10n.kgUnit}';
+  }
+
   String _formatCalories(int cal) {
     if (cal >= 1000) {
       final whole = cal ~/ 1000;
       final rest = cal % 1000;
-      // Non-breaking space so the thousand-separator never wraps.
-      if (rest == 0) return '$whole 000';
-      return '$whole ${rest.toString().padLeft(3, '0')}';
+      if (rest == 0) return '$whole 000';
+      return '$whole ${rest.toString().padLeft(3, '0')}';
     }
     return '$cal';
   }
@@ -77,7 +149,6 @@ class _ResultStepState extends State<ResultStep> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
 
     final data = widget.data;
@@ -90,153 +161,189 @@ class _ResultStepState extends State<ResultStep> {
     final carbs = data.carbsGoal?.round() ?? 0;
 
     final targetDate = data.targetDate ?? DateTime.now();
-    final weeksToGoal = ((targetDate.difference(DateTime.now()).inHours) / (24 * 7))
+    final weeksToGoal = ((targetDate.difference(DateTime.now()).inHours) /
+            (24 * 7))
         .ceil()
-        .clamp(0, 9999);
+        .clamp(1, 9999);
 
-    final planImage = isDark ? _planImageDark : _planImageLight;
     final l10n = context.l10n;
-    final psychotype = Psychotype.infoFor(l10n, data.psychotype);
-    final obstacleLabels = data.obstacles
-        .map((k) => ObstaclesStep.labelFor(l10n, k))
-        .whereType<String>()
+    final obstacleEntries = data.obstacles
+        .map<({String label, String emoji})?>((k) {
+          final label = ObstaclesStep.labelFor(l10n, k);
+          final emoji = ObstaclesStep.emojiFor(k);
+          if (label == null) return null;
+          return (label: label, emoji: emoji);
+        })
+        .whereType<({String label, String emoji})>()
         .toList(growable: false);
 
-    final milestones = TdeeCalculator.generateMilestones(
-      currentWeight: data.weightKg,
-      targetWeight: data.targetWeightKg,
-      weightLossKgPerWeek: data.weightLossKgPerWeek,
-      goal: goal ?? 'maintain',
-    );
+    // Custom milestone selection — fixed checkpoints (week 1, 3, 6) plus the
+    // final goal week. Skip any checkpoint that lands on/after the goal so
+    // the goal row is always the last bar and never duplicated.
+    final milestones = <({int week, double weight, bool isGoal})>[];
+    if (!isMaintain && data.weightLossKgPerWeek > 0) {
+      final totalWeeks = ((data.weightKg - data.targetWeightKg).abs() /
+              data.weightLossKgPerWeek)
+          .ceil()
+          .clamp(1, 9999);
+      final direction = goal == 'lose' ? -1 : 1;
+      for (final w in const [1, 3, 6]) {
+        if (w >= totalWeeks) break;
+        final wt = data.weightKg + direction * data.weightLossKgPerWeek * w;
+        milestones.add((week: w, weight: wt, isGoal: false));
+      }
+      milestones.add((
+        week: totalWeeks,
+        weight: data.targetWeightKg,
+        isGoal: true,
+      ));
+    }
 
     return Stack(
       children: [
         SingleChildScrollView(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final imageHeight = constraints.maxWidth / _planImageAspectRatio;
-              return Stack(
-                children: [
-                  Image.asset(
-                    planImage,
-                    width: double.infinity,
-                    fit: BoxFit.fitWidth,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      _hPad,
-                      imageHeight - _planCardOverlap,
-                      _hPad,
-                      8,
+          controller: _scrollController,
+          padding: const EdgeInsets.fromLTRB(_hPad, 8, _hPad, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _PlanSummaryCard(
+                title: l10n.resultPlanReadyTitle,
+                calories: calories,
+                calorieUnit: l10n.kcalPerDay,
+                proteinG: protein,
+                fatG: fat,
+                carbsG: carbs,
+                gramsUnit: l10n.gramsUnit,
+                proteinLabel: l10n.proteinLabel,
+                fatLabel: l10n.fatLabel,
+                carbsLabel: l10n.carbsLabel,
+                footer: l10n.resultCanChange,
+                cardBg: cardBg,
+                isDark: isDark,
+                entryAnimation: _entryController,
+                formatCalories: _formatCalories,
+              ),
+              const SizedBox(height: 12),
+
+              _FadeSlideIn(
+                delayMs: 120,
+                child: isMaintain
+                    ? _GoalMaintainCard(
+                        text: l10n.resultMaintainCard(
+                          _formatWeight(data.weightKg),
+                        ),
+                        cardBg: cardBg,
+                      )
+                    : _GoalCard(
+                        reachLine: l10n.resultGoalReachLine(
+                          _formatWeight(data.targetWeightKg),
+                        ),
+                        weightAccent: _formatWeight(data.targetWeightKg),
+                        byDateLine: l10n.resultGoalByDateLine(
+                          _formatDate(context, targetDate),
+                        ),
+                        inWeeksLine: l10n.resultGoalInWeeks(weeksToGoal),
+                        cardBg: cardBg,
+                      ),
+              ),
+              const SizedBox(height: 12),
+
+              _FadeSlideIn(
+                delayMs: 160,
+                child: _BenefitsCard(
+                  items: [
+                    (
+                      emoji: 'alarm-clock',
+                      label: l10n.resultBenefit5MinDay,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // 1. Hero header.
-                        //
-                        // No emoji prefix — Momo Trust Display (used for
-                        // Latin-script titles) lacks emoji glyphs, so 🎉
-                        // was rendering as a "tofu" missing-glyph box.
-                        // Confetti animation conveys the celebration.
-                        Text(
-                          context.l10n.resultPlanReadyTitle,
-                          textAlign: TextAlign.center,
-                          style: onboardingTitleStyle(
-                            context,
-                            height: 1.25,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // 2. Anchor date / maintain card
-                        if (isMaintain)
-                          _MaintainCard(
-                            text: l10n.resultMaintainCard(
-                              _formatWeight(data.weightKg),
-                            ),
-                            cardBg: cardBg,
-                            lineColor: lineColor,
-                            isDark: isDark,
-                          )
-                        else
-                          _AnchorDateCard(
-                            label: l10n.resultAnchorPrefix(
-                              _formatWeight(data.targetWeightKg),
-                            ),
-                            dateText: _formatDate(context, targetDate),
-                            weeksSuffix:
-                                l10n.resultAnchorWeeksSuffix(weeksToGoal),
-                            isDark: isDark,
-                          ),
-                        const SizedBox(height: 24),
-
-                        // 3. Daily calorie norm
-                        _CaloriesBlock(
-                          value: _formatCalories(calories),
-                          unitLabel: l10n.resultDailyNormLabel,
-                          unitTrailing: l10n.kcalPerDay,
-                        ),
-                        const SizedBox(height: 24),
-
-                        // 4. Macros
-                        _MacrosRow(
-                          proteinG: protein,
-                          fatG: fat,
-                          carbsG: carbs,
-                          gramsUnit: context.l10n.gramsUnit,
-                          proteinLabel: context.l10n.proteinLabel,
-                          fatLabel: context.l10n.fatLabel,
-                          carbsLabel: context.l10n.carbsLabel,
-                        ),
-                        const SizedBox(height: 24),
-
-                        // 5. Psychotype card
-                        _PsychotypeCard(
-                          title: psychotype.title,
-                          description: psychotype.description,
-                          isDark: isDark,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // 6. Obstacles ("your plan takes into account")
-                        if (obstacleLabels.isNotEmpty) ...[
-                          _ObstaclesBlock(labels: obstacleLabels),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // 7. Milestone preview (lose/gain only)
-                        if (!isMaintain && milestones.isNotEmpty) ...[
-                          _MilestonesCard(
-                            milestones: milestones,
-                            startWeight: data.weightKg,
-                            targetWeight: data.targetWeightKg,
-                            formatWeight: _formatWeight,
-                            cardBg: cardBg,
-                            lineColor: lineColor,
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Methodology block — App Store 1.4.1 compliance.
-                        _MethodologyBlock(
-                          disclaimerLabel: context.l10n.resultDisclaimerShort,
-                          disclaimerText: context.l10n.resultDisclaimer,
-                          sourcesLabel: context.l10n.resultSourcesCta,
-                          onSourcesTap: () =>
-                              showMethodologySourcesSheet(context),
-                        ),
-                      ],
+                    (
+                      emoji: 'brain',
+                      label: l10n.resultBenefitSmartTracking,
                     ),
+                    (
+                      emoji: 'fork-and-knife-with-plate',
+                      label: l10n.resultBenefitTailored,
+                    ),
+                    (
+                      emoji: 'four-leaf-clover',
+                      label: l10n.resultBenefitSustainable,
+                    ),
+                  ],
+                  cardBg: cardBg,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              if (!isMaintain && milestones.isNotEmpty) ...[
+                _FadeSlideIn(
+                  delayMs: 200,
+                  child: _MilestonesCard(
+                    key: _milestonesKey,
+                    header: l10n.resultMilestonesHeader,
+                    milestones: milestones,
+                    startWeight: data.weightKg,
+                    formatDelta: (w) => _formatDelta(w, data.weightKg),
+                    goalLabel: l10n.resultGoalRow,
+                    weekLabelFor: (w) => l10n.resultWeekRow(w),
+                    cardBg: cardBg,
+                    animate: _milestonesAnimated,
                   ),
-                ],
-              );
-            },
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              if (obstacleEntries.isNotEmpty) ...[
+                _FadeSlideIn(
+                  delayMs: 240,
+                  child: _ObstaclesCard(
+                    header: l10n.resultObstaclesHeader,
+                    entries: obstacleEntries,
+                    cardBg: cardBg,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // One-line disclaimer + inline "Sources" link, sitting right
+              // above the FAQ card. Compliance footnote without taking up
+              // a full card's worth of space.
+              _DisclaimerLine(
+                disclaimer: l10n.resultDisclaimerShort,
+                sourcesLabel: l10n.resultSourcesTitle,
+                onSourcesTap: () => showMethodologySourcesSheet(context),
+              ),
+              const SizedBox(height: 8),
+
+              _FadeSlideIn(
+                delayMs: 320,
+                child: _FaqCard(
+                  header: l10n.resultFaqHeader,
+                  items: [
+                    (
+                      question: l10n.resultFaqCancelQ,
+                      // Cancellation steps differ between the App Store
+                      // and Play Store, so route to a platform-specific
+                      // copy.
+                      answer:
+                          Theme.of(context).platform == TargetPlatform.iOS
+                              ? l10n.resultFaqCancelAIos
+                              : l10n.resultFaqCancelAAndroid,
+                    ),
+                    (
+                      question: l10n.resultFaqSecurityQ,
+                      answer: l10n.resultFaqSecurityA,
+                    ),
+                    (
+                      question: l10n.resultFaqTrialQ,
+                      answer: l10n.resultFaqTrialA,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-
-        // Confetti at peak excitement.
         Positioned(
           top: -40,
           left: 0,
@@ -272,86 +379,41 @@ class _ResultStepState extends State<ResultStep> {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Anchor date — the single most important visual element on the screen.
+// Plan summary — title + donut chart + macro pills + footer line.
 // ---------------------------------------------------------------------------
-class _AnchorDateCard extends StatelessWidget {
-  final String label;
-  final String dateText;
-  final String weeksSuffix;
-  final bool isDark;
-
-  const _AnchorDateCard({
-    required this.label,
-    required this.dateText,
-    required this.weeksSuffix,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: cs.primaryContainer,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: cs.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              dateText,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary,
-                height: 1.1,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            weeksSuffix,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              color: cs.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MaintainCard extends StatelessWidget {
-  final String text;
+class _PlanSummaryCard extends StatelessWidget {
+  final String title;
+  final int calories;
+  final String calorieUnit;
+  final int proteinG;
+  final int fatG;
+  final int carbsG;
+  final String gramsUnit;
+  final String proteinLabel;
+  final String fatLabel;
+  final String carbsLabel;
+  final String footer;
   final Color cardBg;
-  final Color lineColor;
   final bool isDark;
+  final Animation<double> entryAnimation;
+  final String Function(int) formatCalories;
 
-  const _MaintainCard({
-    required this.text,
+  const _PlanSummaryCard({
+    required this.title,
+    required this.calories,
+    required this.calorieUnit,
+    required this.proteinG,
+    required this.fatG,
+    required this.carbsG,
+    required this.gramsUnit,
+    required this.proteinLabel,
+    required this.fatLabel,
+    required this.carbsLabel,
+    required this.footer,
     required this.cardBg,
-    required this.lineColor,
     required this.isDark,
+    required this.entryAnimation,
+    required this.formatCalories,
   });
 
   @override
@@ -362,8 +424,488 @@ class _MaintainCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(_ResultStepState._cardRadius),
-        border: Border.all(color: lineColor),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+      child: Column(
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: onboardingTitleStyle(
+              context,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              height: 24 / 18,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _DonutWithMacros(
+            calories: calories,
+            calorieUnit: calorieUnit,
+            proteinG: proteinG,
+            fatG: fatG,
+            carbsG: carbsG,
+            gramsUnit: gramsUnit,
+            proteinLabel: proteinLabel,
+            fatLabel: fatLabel,
+            carbsLabel: carbsLabel,
+            entryAnimation: entryAnimation,
+            formatCalories: formatCalories,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            footer,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: cs.onSurfaceVariant,
+              height: 18 / 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DonutWithMacros extends StatelessWidget {
+  final int calories;
+  final String calorieUnit;
+  final int proteinG;
+  final int fatG;
+  final int carbsG;
+  final String gramsUnit;
+  final String proteinLabel;
+  final String fatLabel;
+  final String carbsLabel;
+  final Animation<double> entryAnimation;
+  final String Function(int) formatCalories;
+
+  const _DonutWithMacros({
+    required this.calories,
+    required this.calorieUnit,
+    required this.proteinG,
+    required this.fatG,
+    required this.carbsG,
+    required this.gramsUnit,
+    required this.proteinLabel,
+    required this.fatLabel,
+    required this.carbsLabel,
+    required this.entryAnimation,
+    required this.formatCalories,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Proportions reflect caloric contribution (4/9/4) — the same logic the
+    // stats screen uses, so the macro mix here visually matches the rest of
+    // the app once the user reaches the main flow.
+    final pKcal = proteinG * 4;
+    final fKcal = fatG * 9;
+    final cKcal = carbsG * 4;
+    final total = (pKcal + fKcal + cKcal).clamp(1, 1 << 30);
+
+    final pFrac = pKcal / total;
+    final fFrac = fKcal / total;
+    final cFrac = cKcal / total;
+
+    final order = MacroOrder.of(context);
+
+    // 0..1, easeOutCubic. Drives the donut sweep, the centre calorie
+    // counter, and the pastel pills' gram counters. AnimatedBuilder keeps
+    // the rebuilds scoped to the donut block — the rest of the screen
+    // doesn't redraw on every frame.
+    return AnimatedBuilder(
+      animation: entryAnimation,
+      builder: (context, _) {
+        final t = Curves.easeOutCubic.transform(entryAnimation.value);
+        return Column(
+          children: [
+            SizedBox(
+              width: 152,
+              height: 152,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(
+                    size: const Size(152, 152),
+                    painter: _MacroDonutPainter(
+                      fractions: {
+                        Macro.protein: pFrac * t,
+                        Macro.fat: fFrac * t,
+                        Macro.carbs: cFrac * t,
+                      },
+                      colors: const {
+                        Macro.protein: _ResultStepState._proteinColor,
+                        Macro.fat: _ResultStepState._fatColor,
+                        Macro.carbs: _ResultStepState._carbsColor,
+                      },
+                      order: order,
+                    ),
+                  ),
+                  // Fade the centre label in slightly behind the sweep so
+                  // the donut visually leads.
+                  Opacity(
+                    opacity: t,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            formatCalories((calories * t).round()),
+                            style: onboardingTitleStyle(
+                              context,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w700,
+                              height: 32 / 30,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          calorieUnit,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 16 / 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Pastel macro pills appear in unison with the donut sweep —
+            // they fade + scale up slightly so the eye sees the macro
+            // chart resolving as one motion. Order follows the active
+            // locale's macro convention (БЖУ on ru, Carbs-first elsewhere).
+            Opacity(
+              opacity: t,
+              child: Transform.translate(
+                offset: Offset(0, (1 - t) * 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (int i = 0; i < order.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 10),
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: i == 1 ? 16 : 0),
+                          child: _pillFor(
+                            order[i],
+                            t: t,
+                            proteinG: proteinG,
+                            fatG: fatG,
+                            carbsG: carbsG,
+                            gramsUnit: gramsUnit,
+                            proteinLabel: proteinLabel,
+                            fatLabel: fatLabel,
+                            carbsLabel: carbsLabel,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _pillFor(
+    Macro m, {
+    required double t,
+    required int proteinG,
+    required int fatG,
+    required int carbsG,
+    required String gramsUnit,
+    required String proteinLabel,
+    required String fatLabel,
+    required String carbsLabel,
+  }) {
+    return switch (m) {
+      Macro.protein => _PastelMacroPill(
+          iconAsset: _ResultStepState._proteinIcon,
+          label: proteinLabel,
+          value: '${(proteinG * t).round()} $gramsUnit',
+          bgColor: const Color(0xFFFFDFD5),
+        ),
+      Macro.fat => _PastelMacroPill(
+          iconAsset: _ResultStepState._fatIcon,
+          label: fatLabel,
+          value: '${(fatG * t).round()} $gramsUnit',
+          bgColor: const Color(0xFFC9F5F4),
+        ),
+      Macro.carbs => _PastelMacroPill(
+          iconAsset: _ResultStepState._carbsIcon,
+          label: carbsLabel,
+          value: '${(carbsG * t).round()} $gramsUnit',
+          bgColor: const Color(0xFFFFF5BB),
+        ),
+    };
+  }
+}
+
+class _PastelMacroPill extends StatelessWidget {
+  final String iconAsset;
+  final String label;
+  final String value;
+  final Color bgColor;
+
+  const _PastelMacroPill({
+    required this.iconAsset,
+    required this.label,
+    required this.value,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const textColor = Color(0xFF0A1B39);
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.all(6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SvgPicture.asset(iconAsset, width: 20, height: 20),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: textColor,
+                    height: 16 / 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+              height: 22 / 17,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MacroDonutPainter extends CustomPainter {
+  /// Macro → arc fraction of the ring (0..1).
+  final Map<Macro, double> fractions;
+
+  /// Macro → arc color.
+  final Map<Macro, Color> colors;
+
+  /// Clockwise order to draw the arcs in, starting from 12 o'clock.
+  final List<Macro> order;
+
+  _MacroDonutPainter({
+    required this.fractions,
+    required this.colors,
+    required this.order,
+  });
+
+  static const double _gapPx = 4;
+  static const double _strokeWidth = 20;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = math.min(size.width, size.height) / 2 - _strokeWidth / 2;
+    final center = Offset(size.width / 2, size.height / 2);
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final fullCircle = 2 * math.pi;
+    // Convert the requested gap in pixels into an angle at the current
+    // radius so the visual gap stays exactly _gapPx wide regardless of
+    // ring size.
+    final gapRadians = _gapPx / radius;
+    final totalGap = gapRadians * 3;
+    final usable = fullCircle - totalGap;
+
+    double start = -math.pi / 2 + gapRadians / 2;
+    for (final m in order) {
+      final sweep =
+          (usable * (fractions[m] ?? 0)).clamp(0.0, fullCircle);
+      final paint = Paint()
+        ..color = colors[m] ?? const Color(0xFF000000)
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.butt
+        ..strokeWidth = _strokeWidth;
+      canvas.drawArc(rect, start, sweep, false, paint);
+      start += sweep + gapRadians;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MacroDonutPainter old) {
+    if (old.order.length != order.length) return true;
+    for (int i = 0; i < order.length; i++) {
+      if (old.order[i] != order[i]) return true;
+    }
+    for (final m in order) {
+      if (old.fractions[m] != fractions[m]) return true;
+      if (old.colors[m] != colors[m]) return true;
+    }
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Goal card — "You'll reach 65 kg / by <date> / in N weeks" with two laurels.
+// ---------------------------------------------------------------------------
+class _GoalCard extends StatelessWidget {
+  final String reachLine;
+  final String weightAccent;
+  final String byDateLine;
+  final String inWeeksLine;
+  final Color cardBg;
+
+  const _GoalCard({
+    required this.reachLine,
+    required this.weightAccent,
+    required this.byDateLine,
+    required this.inWeeksLine,
+    required this.cardBg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final accentColor = AppColors.green;
+
+    // Split the reach line on the weight so we can render the weight in the
+    // accent colour while keeping the rest of the sentence in the surface
+    // colour. Falls back to a single span if the placeholder is missing.
+    final accentIndex = reachLine.indexOf(weightAccent);
+    final hasAccent = accentIndex >= 0;
+    final beforeAccent =
+        hasAccent ? reachLine.substring(0, accentIndex) : reachLine;
+    final afterAccent = hasAccent
+        ? reachLine.substring(accentIndex + weightAccent.length)
+        : '';
+
+    final reachStyle = onboardingTitleStyle(
+      context,
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+      height: 28 / 22,
+    );
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 4,
+            top: 4,
+            bottom: 4,
+            child: SvgPicture.asset(
+              _ResultStepState._laurelAsset,
+              width: 22,
+              height: 50,
+            ),
+          ),
+          Positioned(
+            right: 4,
+            top: 4,
+            bottom: 4,
+            child: Transform.flip(
+              flipX: true,
+              child: SvgPicture.asset(
+                _ResultStepState._laurelAsset,
+                width: 22,
+                height: 50,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 36),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    style: reachStyle,
+                    children: [
+                      TextSpan(text: beforeAccent),
+                      TextSpan(
+                        text: weightAccent,
+                        style: reachStyle.copyWith(color: accentColor),
+                      ),
+                      if (afterAccent.isNotEmpty) TextSpan(text: afterAccent),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  byDateLine,
+                  textAlign: TextAlign.center,
+                  style: reachStyle,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  inWeeksLine,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: cs.onSurfaceVariant,
+                    height: 20 / 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GoalMaintainCard extends StatelessWidget {
+  final String text;
+  final Color cardBg;
+
+  const _GoalMaintainCard({required this.text, required this.cardBg});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
@@ -377,7 +919,7 @@ class _MaintainCard extends StatelessWidget {
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: cs.onSurface,
-                height: 1.3,
+                height: 22 / 16,
               ),
             ),
           ),
@@ -388,229 +930,47 @@ class _MaintainCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Daily calorie norm.
+// Plan benefits — emoji bullets list.
 // ---------------------------------------------------------------------------
-class _CaloriesBlock extends StatelessWidget {
-  final String value;
-  final String unitLabel;
-  final String unitTrailing;
+class _BenefitsCard extends StatelessWidget {
+  final List<({String emoji, String label})> items;
+  final Color cardBg;
 
-  const _CaloriesBlock({
-    required this.value,
-    required this.unitLabel,
-    required this.unitTrailing,
-  });
+  const _BenefitsCard({required this.items, required this.cardBg});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          unitLabel,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: cs.onSurfaceVariant,
-            letterSpacing: 1.5,
-            height: 1.3,
-          ),
-        ),
-        const SizedBox(height: 6),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary,
-              height: 1.0,
-              letterSpacing: -1.5,
-            ),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          unitTrailing,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: cs.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 4. Macros — 3 columns: icon + value + g + label.
-// ---------------------------------------------------------------------------
-class _MacrosRow extends StatelessWidget {
-  final int proteinG;
-  final int fatG;
-  final int carbsG;
-  final String gramsUnit;
-  final String proteinLabel;
-  final String fatLabel;
-  final String carbsLabel;
-
-  const _MacrosRow({
-    required this.proteinG,
-    required this.fatG,
-    required this.carbsG,
-    required this.gramsUnit,
-    required this.proteinLabel,
-    required this.fatLabel,
-    required this.carbsLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _MacroColumn(
-          icon: Icons.fitness_center,
-          color: AppColors.blue,
-          grams: proteinG,
-          gramsUnit: gramsUnit,
-          label: proteinLabel,
-        ),
-        _MacroColumn(
-          icon: Icons.opacity,
-          color: AppColors.orange,
-          grams: fatG,
-          gramsUnit: gramsUnit,
-          label: fatLabel,
-        ),
-        _MacroColumn(
-          icon: Icons.grain,
-          color: AppColors.green,
-          grams: carbsG,
-          gramsUnit: gramsUnit,
-          label: carbsLabel,
-        ),
-      ],
-    );
-  }
-}
-
-class _MacroColumn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final int grams;
-  final String gramsUnit;
-  final String label;
-
-  const _MacroColumn({
-    required this.icon,
-    required this.color,
-    required this.grams,
-    required this.gramsUnit,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              '$grams',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface,
-                height: 1.1,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Text(
-              gramsUnit,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: cs.onSurface,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: cs.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 5. Psychotype card.
-// ---------------------------------------------------------------------------
-class _PsychotypeCard extends StatelessWidget {
-  final String title;
-  final String description;
-  final bool isDark;
-
-  const _PsychotypeCard({
-    required this.title,
-    required this.description,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final bg = isDark
-        ? AppColors.darkSurface2
-        : AppColors.lightSurface2;
-
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: bg,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            context.l10n.resultPsychotypeLabel(title),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: cs.onSurface,
-              height: 1.3,
+          for (int i = 0; i < items.length; i++) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                NotoEmoji(name: items[i].emoji, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    items[i].label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: cs.onSurface,
+                      height: 20 / 14,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 13,
-              color: cs.onSurfaceVariant,
-              height: 18 / 13,
-            ),
-          ),
+            if (i != items.length - 1) const SizedBox(height: 10),
+          ],
         ],
       ),
     );
@@ -618,117 +978,79 @@ class _PsychotypeCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// 6. "Your plan takes into account" — obstacles list.
-// ---------------------------------------------------------------------------
-class _ObstaclesBlock extends StatelessWidget {
-  final List<String> labels;
-
-  const _ObstaclesBlock({required this.labels});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          context.l10n.resultObstaclesHeader,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: cs.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        for (final label in labels) ...[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: Icon(Icons.check, color: AppColors.primary, size: 16),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: cs.onSurface,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-        ],
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 7. Milestone preview — week-by-week progress bars (lose/gain only).
+// Weekly progress — bars fill up as the user moves toward the goal (goal
+// row is the fullest). Trailing column shows the signed weight delta from
+// the starting weight rather than the absolute weight at that week.
 // ---------------------------------------------------------------------------
 class _MilestonesCard extends StatelessWidget {
-  final List<({int week, double weight, DateTime date})> milestones;
+  final String header;
+  final List<({int week, double weight, bool isGoal})> milestones;
   final double startWeight;
-  final double targetWeight;
-  final String Function(double) formatWeight;
+  final String Function(double) formatDelta;
+  final String goalLabel;
+  final String Function(int) weekLabelFor;
   final Color cardBg;
-  final Color lineColor;
-  final bool isDark;
+  /// Flipped to true once the card first enters the viewport — bars stay
+  /// at zero width until then so the fill animation plays in front of the
+  /// user instead of off-screen.
+  final bool animate;
 
   const _MilestonesCard({
+    super.key,
+    required this.header,
     required this.milestones,
     required this.startWeight,
-    required this.targetWeight,
-    required this.formatWeight,
+    required this.formatDelta,
+    required this.goalLabel,
+    required this.weekLabelFor,
     required this.cardBg,
-    required this.lineColor,
-    required this.isDark,
+    required this.animate,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    // Bar lengths are proportional to remaining distance from the target.
-    final span = (startWeight - targetWeight).abs();
+    // Progress is measured against the goal week so the goal row always
+    // fills the full bar regardless of how many intermediate checkpoints
+    // exist before it.
+    final goalWeek = milestones.last.week;
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(_ResultStepState._cardRadius),
-        border: Border.all(color: lineColor),
+        borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            context.l10n.resultMilestonesHeader,
-            style: TextStyle(
-              fontSize: 14,
+            header,
+            style: onboardingTitleStyle(
+              context,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: cs.onSurface,
+              height: 24 / 18,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           for (int i = 0; i < milestones.length; i++) ...[
             _MilestoneRow(
-              week: milestones[i].week,
+              label: milestones[i].isGoal
+                  ? goalLabel
+                  : weekLabelFor(milestones[i].week),
               weight: milestones[i].weight,
-              startWeight: startWeight,
-              targetWeight: targetWeight,
-              span: span,
-              isFinal: i == milestones.length - 1 &&
-                  milestones[i].weight == targetWeight,
-              formatWeight: formatWeight,
+              isFinal: milestones[i].isGoal,
+              progress: goalWeek == 0
+                  ? 1.0
+                  : (milestones[i].week / goalWeek).clamp(0.0, 1.0),
+              deltaText: formatDelta(milestones[i].weight),
+              barTrackColor: cs.surfaceContainerHighest.withAlpha(80),
+              animate: animate,
+              rowIndex: i,
             ),
-            if (i != milestones.length - 1) const SizedBox(height: 8),
+            if (i != milestones.length - 1) const SizedBox(height: 12),
           ],
         ],
       ),
@@ -737,90 +1059,110 @@ class _MilestonesCard extends StatelessWidget {
 }
 
 class _MilestoneRow extends StatelessWidget {
-  final int week;
+  final String label;
   final double weight;
-  final double startWeight;
-  final double targetWeight;
-  final double span;
   final bool isFinal;
-  final String Function(double) formatWeight;
+  final double progress;
+  final String deltaText;
+  final Color barTrackColor;
+  final bool animate;
+  final int rowIndex;
 
   const _MilestoneRow({
-    required this.week,
+    required this.label,
     required this.weight,
-    required this.startWeight,
-    required this.targetWeight,
-    required this.span,
     required this.isFinal,
-    required this.formatWeight,
+    required this.progress,
+    required this.deltaText,
+    required this.barTrackColor,
+    required this.animate,
+    required this.rowIndex,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final progress = span > 0
-        ? ((startWeight - weight).abs() / span).clamp(0.0, 1.0)
-        : 0.0;
-    // Bar shortens as the user approaches the target (visual countdown).
-    final widthFactor = (1 - progress).clamp(0.08, 1.0);
-    final barColor = isFinal ? AppColors.green : AppColors.primary;
-    final labelText = isFinal
-        ? context.l10n.resultGoalRow
-        : context.l10n.resultWeekRow(week);
+    final targetWidth = progress.clamp(0.07, 1.0);
+    // 150 ms cascade — each row starts filling ~150 ms after the one
+    // above it. Total card animation lands inside ~1.1 s.
+    final staggerMs = 150 * rowIndex;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 72,
-          child: Text(
-            labelText,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isFinal ? FontWeight.w700 : FontWeight.w500,
-              color: cs.onSurfaceVariant,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isFinal ? FontWeight.w600 : FontWeight.w400,
+                  color: isFinal ? cs.onSurface : cs.onSurfaceVariant,
+                  height: 18 / 14,
+                ),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Stack(
-                children: [
-                  Container(
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerHighest.withAlpha(50),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                  FractionallySizedBox(
-                    widthFactor: widthFactor,
-                    child: Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: barColor,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 10),
-        SizedBox(
-          width: 64,
-          child: Text(
-            formatWeight(weight),
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: cs.onSurface,
+            // Delta count-up — uses the same easing as the bar so the
+            // number lands exactly when the bar stops.
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 150),
+              child: Text(
+                animate ? deltaText : '',
+                key: ValueKey(animate ? deltaText : '__pending'),
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                  height: 18 / 14,
+                ),
+              ),
             ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
+            children: [
+              Container(
+                height: 12,
+                color: barTrackColor,
+              ),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: animate ? targetWidth : 0.0),
+                duration: Duration(milliseconds: 800 + staggerMs),
+                curve: Interval(
+                  // Cascade: rows below the first wait their stagger out
+                  // before starting to grow.
+                  staggerMs / (800 + staggerMs),
+                  1.0,
+                  curve: Curves.easeOutCubic,
+                ),
+                builder: (context, value, _) {
+                  return FractionallySizedBox(
+                    widthFactor: value,
+                    child: isFinal
+                        ? Container(
+                            height: 12,
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0xFF22D33A),
+                                  Color(0xFF1EBF92),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Container(
+                            height: 12,
+                            color: const Color(0xFF317BFF),
+                          ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ],
@@ -829,18 +1171,214 @@ class _MilestoneRow extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Methodology block — kept for App Store guideline 1.4.1 (citations for
-// in-app health/medical calculations).
+// "Your plan accounts for" — the user's chosen obstacles, prefixed with the
+// same emoji shown back on the obstacles step.
 // ---------------------------------------------------------------------------
-class _MethodologyBlock extends StatelessWidget {
-  final String disclaimerLabel;
-  final String disclaimerText;
+class _ObstaclesCard extends StatelessWidget {
+  final String header;
+  final List<({String label, String emoji})> entries;
+  final Color cardBg;
+
+  const _ObstaclesCard({
+    required this.header,
+    required this.entries,
+    required this.cardBg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            header,
+            style: onboardingTitleStyle(
+              context,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              height: 24 / 18,
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (int i = 0; i < entries.length; i++) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                NotoEmoji(name: entries[i].emoji, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    entries[i].label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: cs.onSurface,
+                      height: 20 / 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (i != entries.length - 1) const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// FAQ — collapsible Q&A list. Distinctive lavender background per Figma so
+// it doesn't read as another stat card.
+// ---------------------------------------------------------------------------
+class _FaqCard extends StatefulWidget {
+  final String header;
+  final List<({String question, String answer})> items;
+
+  const _FaqCard({required this.header, required this.items});
+
+  @override
+  State<_FaqCard> createState() => _FaqCardState();
+}
+
+class _FaqCardState extends State<_FaqCard> {
+  // Tracks which row is currently open. Null = all collapsed. Only one row
+  // open at a time keeps the card compact and avoids long vertical jumps.
+  int? _expanded;
+
+  static const Color _bg = Color(0xFFE2E2F0);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.header,
+            style: onboardingTitleStyle(
+              context,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              height: 24 / 18,
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (int i = 0; i < widget.items.length; i++) ...[
+            _FaqRow(
+              question: widget.items[i].question,
+              answer: widget.items[i].answer,
+              expanded: _expanded == i,
+              onTap: () => setState(
+                () => _expanded = _expanded == i ? null : i,
+              ),
+            ),
+            if (i != widget.items.length - 1) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FaqRow extends StatelessWidget {
+  final String question;
+  final String answer;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  const _FaqRow({
+    required this.question,
+    required this.answer,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  question,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: cs.onSurface,
+                    height: 20 / 15,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              AnimatedRotation(
+                turns: expanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 20,
+                  color: cs.onSurface,
+                ),
+              ),
+            ],
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 6, right: 28),
+                    child: Text(
+                      answer,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurface,
+                        height: 20 / 14,
+                      ),
+                    ),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Minimal compliance line — one row, single line: a short "not medical
+// advice" notice followed by a "Sources" tap target. Sits just above the
+// FAQ. App Store 1.4.1 still satisfied because tapping "Sources" opens the
+// full methodology sheet with the long-form citations.
+// ---------------------------------------------------------------------------
+class _DisclaimerLine extends StatelessWidget {
+  final String disclaimer;
   final String sourcesLabel;
   final VoidCallback onSourcesTap;
 
-  const _MethodologyBlock({
-    required this.disclaimerLabel,
-    required this.disclaimerText,
+  const _DisclaimerLine({
+    required this.disclaimer,
     required this.sourcesLabel,
     required this.onSourcesTap,
   });
@@ -848,72 +1386,96 @@ class _MethodologyBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final labelStyle = TextStyle(
-      fontSize: 10,
-      fontWeight: FontWeight.w600,
-      color: cs.onSurfaceVariant.withAlpha(145),
-      height: 1.28,
-    );
-    final bodyStyle = TextStyle(
-      fontSize: 10,
-      color: cs.onSurfaceVariant.withAlpha(135),
-      height: 1.26,
-    );
+    final baseColor = cs.onSurfaceVariant;
+    final linkColor = cs.onSurface;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(text: '$disclaimerLabel — ', style: labelStyle),
-              TextSpan(text: disclaimerText, style: bodyStyle),
-            ],
+    // Single line, auto-shrinks on extra-long locales rather than wrapping
+    // to two rows — keeps the row consistently slim.
+    return SizedBox(
+      width: double.infinity,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onSourcesTap,
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$disclaimer ',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: baseColor,
+                    height: 16 / 12,
+                  ),
+                ),
+                TextSpan(
+                  text: sourcesLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: linkColor,
+                    height: 16 / 12,
+                  ),
+                ),
+              ],
+            ),
+            maxLines: 1,
           ),
         ),
-        const SizedBox(height: 6),
-        _SourcesLink(label: sourcesLabel, onTap: onSourcesTap),
-      ],
+      ),
     );
   }
 }
 
-class _SourcesLink extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
+// ---------------------------------------------------------------------------
+// Subtle entrance — fades a card in and lifts it up by a few pixels after a
+// small delay. Used to cascade the secondary cards (goal, benefits,
+// milestones, obstacles, FAQ) so the page lands in waves instead of all at
+// once.
+// ---------------------------------------------------------------------------
+class _FadeSlideIn extends StatefulWidget {
+  final Widget child;
+  final int delayMs;
+  final int durationMs;
 
-  const _SourcesLink({required this.label, required this.onTap});
+  const _FadeSlideIn({
+    required this.child,
+    this.delayMs = 0,
+  }) : durationMs = 420;
+
+  @override
+  State<_FadeSlideIn> createState() => _FadeSlideInState();
+}
+
+class _FadeSlideInState extends State<_FadeSlideIn> {
+  // Starts at false so the very first build paints the offset/transparent
+  // state. We flip it inside a post-frame callback, which schedules the
+  // implicit-animation rebuild and lets [AnimatedOpacity] /
+  // [AnimatedSlide] interpolate to the resting pose.
+  bool _shown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(milliseconds: widget.delayMs), () {
+      if (!mounted) return;
+      setState(() => _shown = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final linkColor = isDark
-        ? AppColors.darkSecondaryDark
-        : AppColors.lightSecondaryDark;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.menu_book_outlined, size: 13, color: linkColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: linkColor,
-                height: 1.2,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(Icons.chevron_right, size: 13, color: linkColor),
-          ],
-        ),
+    return AnimatedSlide(
+      duration: Duration(milliseconds: widget.durationMs),
+      curve: Curves.easeOutCubic,
+      offset: _shown ? Offset.zero : const Offset(0, 0.04),
+      child: AnimatedOpacity(
+        duration: Duration(milliseconds: widget.durationMs),
+        curve: Curves.easeOut,
+        opacity: _shown ? 1.0 : 0.0,
+        child: widget.child,
       ),
     );
   }

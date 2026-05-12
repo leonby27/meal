@@ -15,6 +15,7 @@ import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/login_sync_flow.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/core/widgets/edit_goals_sheet.dart';
 import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
 
@@ -843,33 +844,25 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                       secondary: secondary,
                     ),
                   ),
-                  Expanded(
-                    child: _GoalSummaryCell(
-                      iconAsset: 'assets/icons/belok.svg',
-                      value: _proteinGoal.toInt().toString(),
-                      unit: 'g',
-                      primary: cs.onSurface,
-                      secondary: secondary,
+                  for (final m in MacroOrder.of(context))
+                    Expanded(
+                      child: _GoalSummaryCell(
+                        iconAsset: switch (m) {
+                          Macro.protein => 'assets/icons/belok.svg',
+                          Macro.fat => 'assets/icons/fat.svg',
+                          Macro.carbs => 'assets/icons/uglevod.svg',
+                        },
+                        value: switch (m) {
+                          Macro.protein =>
+                            _proteinGoal.toInt().toString(),
+                          Macro.fat => _fatGoal.toInt().toString(),
+                          Macro.carbs => _carbsGoal.toInt().toString(),
+                        },
+                        unit: 'g',
+                        primary: cs.onSurface,
+                        secondary: secondary,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: _GoalSummaryCell(
-                      iconAsset: 'assets/icons/uglevod.svg',
-                      value: _carbsGoal.toInt().toString(),
-                      unit: 'g',
-                      primary: cs.onSurface,
-                      secondary: secondary,
-                    ),
-                  ),
-                  Expanded(
-                    child: _GoalSummaryCell(
-                      iconAsset: 'assets/icons/fat.svg',
-                      value: _fatGoal.toInt().toString(),
-                      unit: 'g',
-                      primary: cs.onSurface,
-                      secondary: secondary,
-                    ),
-                  ),
                 ],
               ),
             ],

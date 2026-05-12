@@ -2,14 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/login_sync_service.dart';
+import 'package:meal_tracker/core/services/subscription_service.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
 import 'package:meal_tracker/features/onboarding/services/tdee_calculator.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/activity_step.dart';
@@ -90,6 +94,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   static const _stepImageContentGap = 12.0;
   static const _ctaButtonHeight = 56.0;
   static const _ctaButtonBottomMargin = 16.0;
+
+  // Result-step bottom block (trial-style paywall CTA). Spacing mirrors
+  // [TrialReminderStep] so users moving between the two screens don't see
+  // the button height or label gaps shift by a few pixels.
+  static const _resultCheckRowHeight = 22.0;
+  static const _resultCheckBottomGap = 20.0;
+  static const _resultCtaHeight = 60.0;
+  static const _resultSubtitleTopGap = 12.0;
+  static const _resultSubtitleHeight = 18.0;
+  static const _resultBottomSubtitleGap = 16.0;
+  // Gradient strip that fades scrollable content into the bottom CTA panel,
+  // matching the same affordance used on the hard paywall screen.
+  static const _resultCtaFadeHeight = 24.0;
 
   // Mascot illustrations are hidden in the new onboarding flow. The PNG
   // assets are kept on disk so we can re-enable them by re-listing the
@@ -236,6 +253,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       ),
     );
     unawaited(_logStepViewed(_currentPage, direction: 'initial'));
+
+    // The result step shows a price-aware bottom block (trial-style CTA +
+    // yearly/monthly subtitle). Subscribe so labels update once products
+    // finish loading from the store.
+    SubscriptionService().addListener(_onSubChanged);
+  }
+
+  void _onSubChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -527,6 +553,7 @@ if (_currentPage < kinds.length - 1) {
 
   @override
   void dispose() {
+    SubscriptionService().removeListener(_onSubChanged);
     if (!_onboardingCompleted) {
       unawaited(
         AnalyticsService.instance.logEvent(
@@ -670,13 +697,198 @@ if (_currentPage < kinds.length - 1) {
       case _StepKind.result:
         return ResultStep(key: key, data: _data);
       case _StepKind.trialReminder:
-        return TrialReminderStep(key: key, onNext: _onTrialReminderCompleted);
+        return TrialReminderStep(key: key);
     }
   }
 
   void _onTrialReminderCompleted() {
     unawaited(_logStepCompleted(_currentPage));
     _finish();
+  }
+
+  /// Default flow CTA — a single primary button. Used on every step that
+  /// isn't the result step.
+  Widget _buildDefaultCta(BuildContext context, bool isDark, bool isResult) {
+    return SizedBox(
+      width: double.infinity,
+      height: _ctaButtonHeight,
+      child: ElevatedButton(
+        onPressed: _isFinishing ? () {} : (_canProceed ? _next : null),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _canProceed || _isFinishing
+              ? AppColors.primary
+              : (isDark
+                    ? AppColors.darkDisabledBg
+                    : AppColors.lightDisabledBg),
+          foregroundColor: _canProceed || _isFinishing
+              ? Colors.white
+              : (isDark
+                    ? AppColors.darkDisabledContent
+                    : AppColors.lightDisabledContent),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          // Material's default state animations would animate bg/fg on
+          // slightly different curves, briefly showing dark text on a
+          // blue background as the button flips from disabled → enabled.
+          // Flipping instantly keeps both layers in lockstep.
+          animationDuration: Duration.zero,
+        ),
+        child: _isFinishing
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                _currentKind == _StepKind.welcome
+                    ? context.l10n.onbWelcomeCta
+                    : isResult
+                          ? context.l10n.resultOpenPlan
+                          : context.l10n.onboardingNext,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+      ),
+    );
+  }
+
+  /// Result-step bottom panel: a 24-pt fade strip on top + the
+  /// trial-reminder-style block (check line, CTA, yearly/monthly
+  /// subtitle). Spacing matches [TrialReminderStep] verbatim so the
+  /// step-to-step transition doesn't reflow the controls, and the fade
+  /// strip mirrors the hard-paywall pattern that masks the scrollable
+  /// plan content sliding under the CTA.
+  Widget _buildResultBottomPanel(
+    BuildContext context,
+    bool isDark,
+    double bottomInset,
+  ) {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    final bgColor = isDark ? AppColors.darkScaffold : AppColors.lightScaffold;
+    final yearly = SubscriptionService().productById(
+      SubscriptionService.yearlyId,
+    );
+    final localeCode = Localizations.localeOf(context).toLanguageTag();
+    final fmt = NumberFormat.simpleCurrency(
+      locale: localeCode,
+      name: yearly?.currencyCode ?? 'USD',
+    );
+    final trialPriceStr = fmt.format(0);
+    final yearlyStr = yearly?.price ?? '—';
+    final monthlyStr = yearly == null
+        ? '—'
+        : fmt.format(yearly.rawPrice / 12);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IgnorePointer(
+          child: Container(
+            height: _resultCtaFadeHeight,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [bgColor.withAlpha(0), bgColor],
+              ),
+            ),
+          ),
+        ),
+        Container(
+          color: bgColor,
+          padding: EdgeInsets.fromLTRB(
+            20,
+            0,
+            20,
+            bottomInset + _resultBottomSubtitleGap,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SvgPicture.asset(
+                    'assets/onboarding/icons/check.svg',
+                    width: 22,
+                    height: 22,
+                    colorFilter:
+                        ColorFilter.mode(cs.onSurface, BlendMode.srcIn),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    l10n.onbTrialReminderNoPaymentNow,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      height: 22 / 16,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: _resultCheckBottomGap),
+              SizedBox(
+                height: _resultCtaHeight,
+                child: ElevatedButton(
+                  // Last step ends the onboarding flow; everywhere else
+                  // we advance one page. Both share the same visual CTA.
+                  onPressed: _isFinishing
+                      ? () {}
+                      : (_isOnTrialReminder
+                            ? _onTrialReminderCompleted
+                            : _next),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 0,
+                    animationDuration: Duration.zero,
+                  ),
+                  child: _isFinishing
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          l10n.onbTrialReminderCta(trialPriceStr),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: _resultSubtitleTopGap),
+              Text(
+                l10n.onbTrialReminderSubtitle(yearlyStr, monthlyStr),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: _resultSubtitleHeight / 14,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildProgressHeader(
@@ -792,11 +1004,18 @@ if (_currentPage < kinds.length - 1) {
                     ),
                   ),
                 ),
-                // Phantom spacer mirroring the back-button + gap on the left,
-                // so the progress bar reads as horizontally centred even
-                // though there's no control on the right.
+                // On the result step we surface a debug-only language
+                // switcher in the symmetric slot opposite the back arrow;
+                // every other step keeps a phantom spacer so the progress
+                // bar still reads as centred.
                 const SizedBox(width: 17),
-                const SizedBox(width: 48),
+                if (_isOnResult)
+                  _LanguagePickerButton(
+                    bg: controlBg,
+                    borderColor: borderColor,
+                  )
+                else
+                  const SizedBox(width: 48, height: 36),
               ],
             ),
           ),
@@ -818,7 +1037,14 @@ if (_currentPage < kinds.length - 1) {
                   MediaQuery.devicePixelRatioOf(context))
               .round();
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final showCta = !isLoading && !_isOnTrialReminder;
+    final showCta = !isLoading;
+    // Result and trial-reminder share the same trial-style bottom panel,
+    // rendered by the parent Stack so it stays mounted across the
+    // result → trial-reminder transition. Without this, the result's CTA
+    // would unmount the instant we step forward and reappear via the
+    // step's AnimatedSwitcher slide, producing a ~150ms gap where no
+    // button is on screen.
+    final showTrialBottom = isResult || _isOnTrialReminder;
 
     return DefaultTextStyle.merge(
       // Onboarding text uses tight tracking — Inter/Cyrillic at title sizes
@@ -860,19 +1086,37 @@ if (_currentPage < kinds.length - 1) {
                     final stepImageBottom = isLoading
                         ? 0.0
                         : bottomInset + _stepImageBottomOffset;
+                    // The result step shows a richer bottom block (check
+                    // line + button + price subtitle) — reserve a deeper
+                    // padding so the scrollable plan content can't hide
+                    // behind it. Includes the 24-pt fade strip that sits
+                    // on top of the block to mask scrolled content.
+                    final resultBottomBlockHeight =
+                        _resultCheckRowHeight +
+                        _resultCheckBottomGap +
+                        _resultCtaHeight +
+                        _resultSubtitleTopGap +
+                        _resultSubtitleHeight +
+                        _resultBottomSubtitleGap +
+                        _resultCtaFadeHeight;
                     final contentBottomPadding = isLoading || !showCta
                         ? 0.0
                         : hasStepImage
                             ? stepImageBottom +
                                   stepImageHeight +
                                   _stepImageContentGap
-                            // No step image (e.g. result step): reserve space
-                            // for the floating CTA button so scrollable content
-                            // doesn't get hidden behind it at the bottom.
-                            : bottomInset +
-                                  _ctaButtonBottomMargin +
-                                  _ctaButtonHeight +
-                                  _stepImageContentGap;
+                            : showTrialBottom
+                                // Block already accounts for the 16-pt safe
+                                // bottom gap, the 24-pt fade strip on top,
+                                // and the CTA itself; don't re-add the
+                                // default CTA margin.
+                                ? bottomInset + resultBottomBlockHeight
+                                // No step image (e.g. early steps): reserve
+                                // space for the single floating CTA button.
+                                : bottomInset +
+                                      _ctaButtonBottomMargin +
+                                      _ctaButtonHeight +
+                                      _stepImageContentGap;
 
                     return Stack(
                       children: [
@@ -1024,63 +1268,26 @@ if (_currentPage < kinds.length - 1) {
                             ),
                           ),
                         ),
-                        if (showCta)
+                        if (showTrialBottom)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: _buildResultBottomPanel(
+                              context,
+                              isDark,
+                              bottomInset,
+                            ),
+                          )
+                        else if (showCta)
                           Positioned(
                             left: 20,
                             right: 20,
                             bottom: bottomInset + _ctaButtonBottomMargin,
-                            child: SizedBox(
-                              width: double.infinity,
-                              height: _ctaButtonHeight,
-                              child: ElevatedButton(
-                                onPressed: _isFinishing
-                                    ? () {}
-                                    : (_canProceed ? _next : null),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _canProceed || _isFinishing
-                                      ? AppColors.primary
-                                      : (isDark
-                                            ? AppColors.darkDisabledBg
-                                            : AppColors.lightDisabledBg),
-                                  foregroundColor: _canProceed || _isFinishing
-                                      ? Colors.white
-                                      : (isDark
-                                            ? AppColors.darkDisabledContent
-                                            : AppColors.lightDisabledContent),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  elevation: 0,
-                                  // Material's default state animations
-                                  // would animate bg/fg on slightly
-                                  // different curves, briefly showing
-                                  // dark text on a blue background as
-                                  // the button flips from disabled →
-                                  // enabled. Flipping instantly keeps
-                                  // both layers in lockstep.
-                                  animationDuration: Duration.zero,
-                                ),
-                                child: _isFinishing
-                                    ? const SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(
-                                        _currentKind == _StepKind.welcome
-                                            ? context.l10n.onbWelcomeCta
-                                            : isResult
-                                                ? context.l10n.resultOpenPlan
-                                                : context.l10n.onboardingNext,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                              ),
+                            child: _buildDefaultCta(
+                              context,
+                              isDark,
+                              isResult,
                             ),
                           ),
                       ],
@@ -1130,5 +1337,66 @@ class _RoundedBottomBorderPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _RoundedBottomBorderPainter oldDelegate) {
     return oldDelegate.color != color || oldDelegate.radius != radius;
+  }
+}
+
+/// Debug-only language picker for the result step. Mirrors the back-button
+/// chip on the left so the header stays visually balanced.
+class _LanguagePickerButton extends StatelessWidget {
+  final Color bg;
+  final Color borderColor;
+
+  const _LanguagePickerButton({required this.bg, required this.borderColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final current = LocaleNotifier.instance.value.languageCode;
+    return Container(
+      width: 48,
+      height: 36,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(122),
+        border: Border.all(color: borderColor),
+      ),
+      child: PopupMenuButton<Locale>(
+        tooltip: 'Language',
+        padding: EdgeInsets.zero,
+        position: PopupMenuPosition.under,
+        offset: const Offset(0, 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        onSelected: (locale) => LocaleNotifier.instance.setLocale(locale),
+        itemBuilder: (context) => [
+          for (final locale in LocaleNotifier.supportedLocales)
+            PopupMenuItem<Locale>(
+              value: locale,
+              child: Row(
+                children: [
+                  if (locale.languageCode == current)
+                    Icon(Icons.check, size: 16, color: cs.onSurface)
+                  else
+                    const SizedBox(width: 16),
+                  const SizedBox(width: 8),
+                  Text(LocaleNotifier.localeName(locale)),
+                ],
+              ),
+            ),
+        ],
+        child: Center(
+          child: Text(
+            current.toUpperCase(),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: cs.onSurface,
+              height: 1,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

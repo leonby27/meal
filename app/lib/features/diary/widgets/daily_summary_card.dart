@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/core/widgets/edit_goals_sheet.dart';
 
 class DailySummaryCard extends StatefulWidget {
@@ -562,50 +563,42 @@ class _MacrosRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final order = MacroOrder.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _MacroColumn(
-            label: l10n.proteinLabel,
-            current: protein,
-            goal: goalProtein,
-            goalSuffix: 'g',
-            gradient: _proteinGradient,
-            trackColor: trackColor,
-            primary: primary,
-            secondary: secondary,
-            goalNumberColor: goalNumberColor,
+        for (int i = 0; i < order.length; i++) ...[
+          if (i > 0) const SizedBox(width: 12),
+          Expanded(
+            child: _MacroColumn(
+              label: switch (order[i]) {
+                Macro.protein => l10n.proteinLabel,
+                Macro.fat => l10n.fatLabel,
+                Macro.carbs => l10n.carbsLabel,
+              },
+              current: switch (order[i]) {
+                Macro.protein => protein,
+                Macro.fat => fat,
+                Macro.carbs => carbs,
+              },
+              goal: switch (order[i]) {
+                Macro.protein => goalProtein,
+                Macro.fat => goalFat,
+                Macro.carbs => goalCarbs,
+              },
+              goalSuffix: 'g',
+              gradient: switch (order[i]) {
+                Macro.protein => _proteinGradient,
+                Macro.fat => _fatGradient,
+                Macro.carbs => _carbsGradient,
+              },
+              trackColor: trackColor,
+              primary: primary,
+              secondary: secondary,
+              goalNumberColor: goalNumberColor,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _MacroColumn(
-            label: l10n.carbsLabel,
-            current: carbs,
-            goal: goalCarbs,
-            goalSuffix: 'g',
-            gradient: _carbsGradient,
-            trackColor: trackColor,
-            primary: primary,
-            secondary: secondary,
-            goalNumberColor: goalNumberColor,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _MacroColumn(
-            label: l10n.fatLabel,
-            current: fat,
-            goal: goalFat,
-            goalSuffix: 'g',
-            gradient: _fatGradient,
-            trackColor: trackColor,
-            primary: primary,
-            secondary: secondary,
-            goalNumberColor: goalNumberColor,
-          ),
-        ),
+        ],
       ],
     );
   }

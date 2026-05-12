@@ -20,6 +20,7 @@ import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/l10n/app_localizations.dart';
 
 /// Coarse profile of a dish derived from its macro distribution and
@@ -2036,47 +2037,46 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           // Macro pills
           Row(
             children: [
-              Expanded(
-                child: _buildMacroPill(
-                  c,
-                  iconAsset: 'assets/icons/belok.svg',
-                  letter: l10n.proteinShort,
-                  grams: protein * progress,
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerRight,
-                    end: Alignment.centerLeft,
-                    colors: [Color(0x26F0681B), Color(0x26D91D1D)],
+              for (int i = 0; i < MacroOrder.of(context).length; i++) ...[
+                if (i > 0) const SizedBox(width: 8),
+                Expanded(
+                  child: _buildMacroPill(
+                    c,
+                    iconAsset: switch (MacroOrder.of(context)[i]) {
+                      Macro.protein => 'assets/icons/belok.svg',
+                      Macro.fat => 'assets/icons/fat.svg',
+                      Macro.carbs => 'assets/icons/uglevod.svg',
+                    },
+                    letter: switch (MacroOrder.of(context)[i]) {
+                      Macro.protein => l10n.proteinShort,
+                      Macro.fat => l10n.fatShort,
+                      Macro.carbs => l10n.carbsShort,
+                    },
+                    grams: switch (MacroOrder.of(context)[i]) {
+                      Macro.protein => protein * progress,
+                      Macro.fat => fat * progress,
+                      Macro.carbs => carbs * progress,
+                    },
+                    gradient: switch (MacroOrder.of(context)[i]) {
+                      Macro.protein => const LinearGradient(
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                          colors: [Color(0x26F0681B), Color(0x26D91D1D)],
+                        ),
+                      Macro.fat => const LinearGradient(
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                          colors: [Color(0x26FFBB00), Color(0x26D0FF00)],
+                        ),
+                      Macro.carbs => const LinearGradient(
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                          colors: [Color(0x261787D1), Color(0x2617D1C7)],
+                        ),
+                    },
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildMacroPill(
-                  c,
-                  iconAsset: 'assets/icons/fat.svg',
-                  letter: l10n.fatShort,
-                  grams: fat * progress,
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerRight,
-                    end: Alignment.centerLeft,
-                    colors: [Color(0x26FFBB00), Color(0x26D0FF00)],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildMacroPill(
-                  c,
-                  iconAsset: 'assets/icons/uglevod.svg',
-                  letter: l10n.carbsShort,
-                  grams: carbs * progress,
-                  gradient: const LinearGradient(
-                    begin: Alignment.centerRight,
-                    end: Alignment.centerLeft,
-                    colors: [Color(0x261787D1), Color(0x2617D1C7)],
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 16),
@@ -2181,6 +2181,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
               fatShare: fShare,
               carbsShare: cShare,
               trackColor: c.barTrack,
+              order: MacroOrder.of(context),
             ),
           ),
           Column(
@@ -2727,30 +2728,28 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           controller: _caloriesCtl,
           onChanged: (_) => _recalcFromCalories(),
         ),
-        const SizedBox(height: 12),
-        _buildParamRow(
-          c,
-          iconAsset: 'assets/icons/belok.svg',
-          label: l10n.proteinGramsLabel,
-          controller: _proteinCtl,
-          onChanged: (_) => _recalcFromMacros(),
-        ),
-        const SizedBox(height: 12),
-        _buildParamRow(
-          c,
-          iconAsset: 'assets/icons/fat.svg',
-          label: l10n.fatGramsLabel,
-          controller: _fatCtl,
-          onChanged: (_) => _recalcFromMacros(),
-        ),
-        const SizedBox(height: 12),
-        _buildParamRow(
-          c,
-          iconAsset: 'assets/icons/uglevod.svg',
-          label: l10n.carbsGramsLabel,
-          controller: _carbsCtl,
-          onChanged: (_) => _recalcFromMacros(),
-        ),
+        for (final m in MacroOrder.of(context)) ...[
+          const SizedBox(height: 12),
+          _buildParamRow(
+            c,
+            iconAsset: switch (m) {
+              Macro.protein => 'assets/icons/belok.svg',
+              Macro.fat => 'assets/icons/fat.svg',
+              Macro.carbs => 'assets/icons/uglevod.svg',
+            },
+            label: switch (m) {
+              Macro.protein => l10n.proteinGramsLabel,
+              Macro.fat => l10n.fatGramsLabel,
+              Macro.carbs => l10n.carbsGramsLabel,
+            },
+            controller: switch (m) {
+              Macro.protein => _proteinCtl,
+              Macro.fat => _fatCtl,
+              Macro.carbs => _carbsCtl,
+            },
+            onChanged: (_) => _recalcFromMacros(),
+          ),
+        ],
         const SizedBox(height: 12),
         _buildRefineField(c),
         const SizedBox(height: 12),
@@ -3354,12 +3353,15 @@ class _CalorieRingPainter extends CustomPainter {
     required this.fatShare,
     required this.carbsShare,
     required this.trackColor,
+    required this.order,
   });
 
   final double proteinShare;
   final double fatShare;
   final double carbsShare;
   final Color trackColor;
+  /// Locale-driven macro clockwise order, starting at 12 o'clock.
+  final List<Macro> order;
 
   static const double _strokeWidth = 9;
   static const double _gapPx = 2;
@@ -3381,15 +3383,23 @@ class _CalorieRingPainter extends CustomPainter {
     // Solid colors per macro — using a sweep gradient on a long segment
     // makes the gradient stretch so far that the segment reads as two
     // separate colors. A single saturated tone keeps each macro recognisable
-    // regardless of arc length. Order clockwise from top: protein → fat → carbs.
-    final raw = <_RingSegment>[
-      if (proteinShare > 0)
-        _RingSegment(proteinShare, const [Color(0xFFE4431C)]),
-      if (fatShare > 0)
-        _RingSegment(fatShare, const [Color(0xFFEFD400)]),
-      if (carbsShare > 0)
-        _RingSegment(carbsShare, const [Color(0xFF17ACCC)]),
-    ];
+    // regardless of arc length. The clockwise order follows the active
+    // locale's macro convention (БЖУ for ru, Carbs-first elsewhere).
+    final raw = <_RingSegment>[];
+    for (final m in order) {
+      final share = switch (m) {
+        Macro.protein => proteinShare,
+        Macro.fat => fatShare,
+        Macro.carbs => carbsShare,
+      };
+      if (share <= 0) continue;
+      final color = switch (m) {
+        Macro.protein => const Color(0xFFE4431C),
+        Macro.fat => const Color(0xFFEFD400),
+        Macro.carbs => const Color(0xFF17ACCC),
+      };
+      raw.add(_RingSegment(share, [color]));
+    }
     if (raw.isEmpty) return;
 
     // Drop slivers smaller than the gap — drawing them produces an isolated
@@ -3442,10 +3452,17 @@ class _CalorieRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CalorieRingPainter old) {
-    return old.proteinShare != proteinShare ||
+    if (old.proteinShare != proteinShare ||
         old.fatShare != fatShare ||
         old.carbsShare != carbsShare ||
-        old.trackColor != trackColor;
+        old.trackColor != trackColor ||
+        old.order.length != order.length) {
+      return true;
+    }
+    for (int i = 0; i < order.length; i++) {
+      if (old.order[i] != order[i]) return true;
+    }
+    return false;
   }
 }
 

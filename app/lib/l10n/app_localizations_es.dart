@@ -1247,8 +1247,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Con Premium — sin límites, hasta alcanzar tu objetivo';
 
   @override
-  String get resultDisclaimerShort =>
-      'Las recomendaciones no sustituyen el consejo médico';
+  String get resultDisclaimerShort => 'No sustituye el consejo médico.';
 
   @override
   String get resultDisclaimerExpand => 'Más información';
@@ -1852,6 +1851,69 @@ class AppLocalizationsEs extends AppLocalizations {
   String resultWeekRow(int week) {
     return 'Semana $week';
   }
+
+  @override
+  String resultGoalReachLine(String weight) {
+    return 'Alcanzarás $weight';
+  }
+
+  @override
+  String resultGoalByDateLine(String date) {
+    return 'para el $date';
+  }
+
+  @override
+  String resultGoalInWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'en $count semanas',
+      one: 'en 1 semana',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get resultBenefit5MinDay => 'Solo 5 minutos al día';
+
+  @override
+  String get resultBenefitSmartTracking =>
+      'Seguimiento inteligente sin esfuerzo';
+
+  @override
+  String get resultBenefitTailored => 'Plan a la medida de tu vida';
+
+  @override
+  String get resultBenefitSustainable =>
+      'Resultados duraderos, no soluciones rápidas';
+
+  @override
+  String get resultFaqHeader => 'FAQ';
+
+  @override
+  String get resultFaqCancelQ => '¿Cómo cancelo mi suscripción?';
+
+  @override
+  String get resultFaqCancelAIos =>
+      'Abre Ajustes → tu nombre → Suscripciones en iPhone, busca MealTracker y toca Cancelar suscripción.';
+
+  @override
+  String get resultFaqCancelAAndroid =>
+      'Abre Google Play → tu perfil → Pagos y suscripciones → Suscripciones, busca MealTracker y toca Cancelar.';
+
+  @override
+  String get resultFaqSecurityQ => '¿Mis datos personales están seguros?';
+
+  @override
+  String get resultFaqSecurityA =>
+      'Tus datos se cifran en tránsito y en reposo. No los vendemos a anunciantes, y puedes eliminar tu cuenta cuando quieras desde Ajustes.';
+
+  @override
+  String get resultFaqTrialQ => '¿Hay un período de prueba gratuito?';
+
+  @override
+  String get resultFaqTrialA =>
+      'Sí — el plan anual incluye una prueba gratuita. No cobramos nada hasta que termine y puedes cancelar antes para no pagar.';
 
   @override
   String get loadingMetabolism => 'Analizando tu metabolismo...';

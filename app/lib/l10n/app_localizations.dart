@@ -2383,7 +2383,7 @@ abstract class AppLocalizations {
   /// No description provided for @resultDisclaimerShort.
   ///
   /// In ru, this message translates to:
-  /// **'Рекомендации не заменяют консультацию врача'**
+  /// **'Не заменяет консультацию врача.'**
   String get resultDisclaimerShort;
 
   /// No description provided for @resultDisclaimerExpand.
@@ -3417,6 +3417,96 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Неделя {week}'**
   String resultWeekRow(int week);
+
+  /// No description provided for @resultGoalReachLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы достигнете {weight}'**
+  String resultGoalReachLine(String weight);
+
+  /// No description provided for @resultGoalByDateLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'к {date}'**
+  String resultGoalByDateLine(String date);
+
+  /// No description provided for @resultGoalInWeeks.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, =1{через 1 неделю} few{через {count} недели} many{через {count} недель} other{через {count} недель}}'**
+  String resultGoalInWeeks(int count);
+
+  /// No description provided for @resultBenefit5MinDay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Занимает 5 минут в день'**
+  String get resultBenefit5MinDay;
+
+  /// No description provided for @resultBenefitSmartTracking.
+  ///
+  /// In ru, this message translates to:
+  /// **'Умный трекинг без усилий'**
+  String get resultBenefitSmartTracking;
+
+  /// No description provided for @resultBenefitTailored.
+  ///
+  /// In ru, this message translates to:
+  /// **'Меню под ваш образ жизни'**
+  String get resultBenefitTailored;
+
+  /// No description provided for @resultBenefitSustainable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Устойчивый результат, а не диета'**
+  String get resultBenefitSustainable;
+
+  /// No description provided for @resultFaqHeader.
+  ///
+  /// In ru, this message translates to:
+  /// **'FAQ'**
+  String get resultFaqHeader;
+
+  /// No description provided for @resultFaqCancelQ.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как отменить подписку?'**
+  String get resultFaqCancelQ;
+
+  /// No description provided for @resultFaqCancelAIos.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откройте Настройки → ваше имя → Подписки на iPhone, найдите MealTracker и нажмите «Отменить подписку».'**
+  String get resultFaqCancelAIos;
+
+  /// No description provided for @resultFaqCancelAAndroid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откройте Google Play → профиль → Платежи и подписки → Подписки, найдите MealTracker и нажмите «Отменить».'**
+  String get resultFaqCancelAAndroid;
+
+  /// No description provided for @resultFaqSecurityQ.
+  ///
+  /// In ru, this message translates to:
+  /// **'Безопасны ли мои данные?'**
+  String get resultFaqSecurityQ;
+
+  /// No description provided for @resultFaqSecurityA.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные шифруются при передаче и хранении. Мы не передаём их рекламодателям, а аккаунт можно удалить в настройках в любой момент.'**
+  String get resultFaqSecurityA;
+
+  /// No description provided for @resultFaqTrialQ.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть ли бесплатный пробный период?'**
+  String get resultFaqTrialQ;
+
+  /// No description provided for @resultFaqTrialA.
+  ///
+  /// In ru, this message translates to:
+  /// **'Да — пробный период доступен в годовом тарифе. Деньги не списываются до его окончания, отменить можно в любой момент до этого.'**
+  String get resultFaqTrialA;
 
   /// No description provided for @loadingMetabolism.
   ///

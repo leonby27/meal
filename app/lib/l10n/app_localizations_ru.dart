@@ -1241,8 +1241,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resultBridgePremiumLine => 'С Premium — без лимита, до самой цели';
 
   @override
-  String get resultDisclaimerShort =>
-      'Рекомендации не заменяют консультацию врача';
+  String get resultDisclaimerShort => 'Не заменяет консультацию врача.';
 
   @override
   String get resultDisclaimerExpand => 'Подробнее';
@@ -1854,6 +1853,69 @@ class AppLocalizationsRu extends AppLocalizations {
   String resultWeekRow(int week) {
     return 'Неделя $week';
   }
+
+  @override
+  String resultGoalReachLine(String weight) {
+    return 'Вы достигнете $weight';
+  }
+
+  @override
+  String resultGoalByDateLine(String date) {
+    return 'к $date';
+  }
+
+  @override
+  String resultGoalInWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'через $count недель',
+      many: 'через $count недель',
+      few: 'через $count недели',
+      one: 'через 1 неделю',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get resultBenefit5MinDay => 'Занимает 5 минут в день';
+
+  @override
+  String get resultBenefitSmartTracking => 'Умный трекинг без усилий';
+
+  @override
+  String get resultBenefitTailored => 'Меню под ваш образ жизни';
+
+  @override
+  String get resultBenefitSustainable => 'Устойчивый результат, а не диета';
+
+  @override
+  String get resultFaqHeader => 'FAQ';
+
+  @override
+  String get resultFaqCancelQ => 'Как отменить подписку?';
+
+  @override
+  String get resultFaqCancelAIos =>
+      'Откройте Настройки → ваше имя → Подписки на iPhone, найдите MealTracker и нажмите «Отменить подписку».';
+
+  @override
+  String get resultFaqCancelAAndroid =>
+      'Откройте Google Play → профиль → Платежи и подписки → Подписки, найдите MealTracker и нажмите «Отменить».';
+
+  @override
+  String get resultFaqSecurityQ => 'Безопасны ли мои данные?';
+
+  @override
+  String get resultFaqSecurityA =>
+      'Данные шифруются при передаче и хранении. Мы не передаём их рекламодателям, а аккаунт можно удалить в настройках в любой момент.';
+
+  @override
+  String get resultFaqTrialQ => 'Есть ли бесплатный пробный период?';
+
+  @override
+  String get resultFaqTrialA =>
+      'Да — пробный период доступен в годовом тарифе. Деньги не списываются до его окончания, отменить можно в любой момент до этого.';
 
   @override
   String get loadingMetabolism => 'Анализируем ваш метаболизм...';

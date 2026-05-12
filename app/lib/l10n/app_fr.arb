@@ -421,7 +421,7 @@
   "resultBridgeTitle": "Pour que le plan fonctionne, vous devez enregistrer chaque jour",
   "resultBridgeFreeLine": "Gratuit — 3 enregistrements de repas pour essayer",
   "resultBridgePremiumLine": "Avec Premium — sans limites, jusqu'à votre objectif",
-  "resultDisclaimerShort": "Les recommandations ne remplacent pas un avis médical",
+  "resultDisclaimerShort": "Ne remplace pas un avis médical.",
   "resultDisclaimerExpand": "En savoir plus",
   "resultSourcesTitle": "Sources",
   "resultSourceCaloriesLabel": "Objectif calorique",
@@ -713,6 +713,42 @@
       }
     }
   },
+  "resultGoalReachLine": "Vous atteindrez {weight}",
+  "@resultGoalReachLine": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalByDateLine": "d’ici le {date}",
+  "@resultGoalByDateLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalInWeeks": "{count, plural, =1{dans 1 semaine} other{dans {count} semaines}}",
+  "@resultGoalInWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultBenefit5MinDay": "Seulement 5 minutes par jour",
+  "resultBenefitSmartTracking": "Suivi intelligent sans effort",
+  "resultBenefitTailored": "Plan repas adapté à votre vie",
+  "resultBenefitSustainable": "Des résultats durables, pas une cure éclair",
+  "resultFaqHeader": "FAQ",
+  "resultFaqCancelQ": "Comment annuler mon abonnement ?",
+  "resultFaqCancelAIos": "Ouvrez Réglages → votre nom → Abonnements sur iPhone, trouvez MealTracker et appuyez sur Annuler l'abonnement.",
+  "resultFaqCancelAAndroid": "Ouvrez Google Play → votre profil → Paiements et abonnements → Abonnements, trouvez MealTracker et appuyez sur Annuler.",
+  "resultFaqSecurityQ": "Mes données personnelles sont-elles sécurisées ?",
+  "resultFaqSecurityA": "Vos données sont chiffrées lors du transfert et du stockage. Nous ne les vendons pas aux annonceurs et vous pouvez supprimer votre compte à tout moment dans les Réglages.",
+  "resultFaqTrialQ": "Y a-t-il une période d'essai gratuite ?",
+  "resultFaqTrialA": "Oui — la formule annuelle inclut un essai gratuit. Aucun débit avant la fin, et vous pouvez annuler à tout moment avant.",
   "loadingMetabolism": "Analyse de votre métabolisme...",
   "loadingCalories": "Calcul de votre objectif calorique quotidien...",
   "loadingMacros": "Réglage de l’équilibre protéines / lipides / glucides...",

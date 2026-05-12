@@ -1250,8 +1250,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Mit Premium — ohne Limits, bis zu Ihrem Ziel';
 
   @override
-  String get resultDisclaimerShort =>
-      'Empfehlungen ersetzen keinen ärztlichen Rat';
+  String get resultDisclaimerShort => 'Ersetzt keinen ärztlichen Rat.';
 
   @override
   String get resultDisclaimerExpand => 'Mehr erfahren';
@@ -1856,6 +1855,68 @@ class AppLocalizationsDe extends AppLocalizations {
   String resultWeekRow(int week) {
     return 'Woche $week';
   }
+
+  @override
+  String resultGoalReachLine(String weight) {
+    return 'Sie erreichen $weight';
+  }
+
+  @override
+  String resultGoalByDateLine(String date) {
+    return 'bis $date';
+  }
+
+  @override
+  String resultGoalInWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'in $count Wochen',
+      one: 'in 1 Woche',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get resultBenefit5MinDay => 'Nur 5 Minuten am Tag';
+
+  @override
+  String get resultBenefitSmartTracking => 'Smartes Tracking ohne Aufwand';
+
+  @override
+  String get resultBenefitTailored => 'Ernährungsplan passend zu Ihrem Leben';
+
+  @override
+  String get resultBenefitSustainable =>
+      'Nachhaltige Ergebnisse statt schneller Diäten';
+
+  @override
+  String get resultFaqHeader => 'FAQ';
+
+  @override
+  String get resultFaqCancelQ => 'Wie kündige ich mein Abo?';
+
+  @override
+  String get resultFaqCancelAIos =>
+      'Öffnen Sie Einstellungen → Ihr Name → Abos auf dem iPhone, suchen Sie MealTracker und tippen auf Abo kündigen.';
+
+  @override
+  String get resultFaqCancelAAndroid =>
+      'Öffnen Sie den Google Play Store → Profilbild → Zahlungen und Abos → Abos, wählen Sie MealTracker und tippen auf Kündigen.';
+
+  @override
+  String get resultFaqSecurityQ => 'Sind meine Daten sicher?';
+
+  @override
+  String get resultFaqSecurityA =>
+      'Ihre Daten werden bei Übertragung und Speicherung verschlüsselt. Wir geben sie nicht an Werbenetzwerke weiter — Ihr Konto lässt sich jederzeit in den Einstellungen löschen.';
+
+  @override
+  String get resultFaqTrialQ => 'Gibt es eine kostenlose Testphase?';
+
+  @override
+  String get resultFaqTrialA =>
+      'Ja — der Jahres-Tarif startet mit einer kostenlosen Testphase. Wir berechnen nichts bis sie endet, und Sie können jederzeit vorher kündigen.';
 
   @override
   String get loadingMetabolism => 'Wir analysieren Ihren Stoffwechsel ...';

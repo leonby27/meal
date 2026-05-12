@@ -1251,8 +1251,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Avec Premium — sans limites, jusqu\'à votre objectif';
 
   @override
-  String get resultDisclaimerShort =>
-      'Les recommandations ne remplacent pas un avis médical';
+  String get resultDisclaimerShort => 'Ne remplace pas un avis médical.';
 
   @override
   String get resultDisclaimerExpand => 'En savoir plus';
@@ -1862,6 +1861,69 @@ class AppLocalizationsFr extends AppLocalizations {
   String resultWeekRow(int week) {
     return 'Semaine $week';
   }
+
+  @override
+  String resultGoalReachLine(String weight) {
+    return 'Vous atteindrez $weight';
+  }
+
+  @override
+  String resultGoalByDateLine(String date) {
+    return 'd’ici le $date';
+  }
+
+  @override
+  String resultGoalInWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'dans $count semaines',
+      one: 'dans 1 semaine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get resultBenefit5MinDay => 'Seulement 5 minutes par jour';
+
+  @override
+  String get resultBenefitSmartTracking => 'Suivi intelligent sans effort';
+
+  @override
+  String get resultBenefitTailored => 'Plan repas adapté à votre vie';
+
+  @override
+  String get resultBenefitSustainable =>
+      'Des résultats durables, pas une cure éclair';
+
+  @override
+  String get resultFaqHeader => 'FAQ';
+
+  @override
+  String get resultFaqCancelQ => 'Comment annuler mon abonnement ?';
+
+  @override
+  String get resultFaqCancelAIos =>
+      'Ouvrez Réglages → votre nom → Abonnements sur iPhone, trouvez MealTracker et appuyez sur Annuler l\'abonnement.';
+
+  @override
+  String get resultFaqCancelAAndroid =>
+      'Ouvrez Google Play → votre profil → Paiements et abonnements → Abonnements, trouvez MealTracker et appuyez sur Annuler.';
+
+  @override
+  String get resultFaqSecurityQ =>
+      'Mes données personnelles sont-elles sécurisées ?';
+
+  @override
+  String get resultFaqSecurityA =>
+      'Vos données sont chiffrées lors du transfert et du stockage. Nous ne les vendons pas aux annonceurs et vous pouvez supprimer votre compte à tout moment dans les Réglages.';
+
+  @override
+  String get resultFaqTrialQ => 'Y a-t-il une période d\'essai gratuite ?';
+
+  @override
+  String get resultFaqTrialA =>
+      'Oui — la formule annuelle inclut un essai gratuit. Aucun débit avant la fin, et vous pouvez annuler à tout moment avant.';
 
   @override
   String get loadingMetabolism => 'Analyse de votre métabolisme...';

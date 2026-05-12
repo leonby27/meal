@@ -8,6 +8,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
+import 'package:meal_tracker/core/utils/macro_order.dart';
 
 // ── Animation conventions (mirrors `_CalorieRingPainter` /
 //   `_overviewIntro` patterns in `ai_meal_result_sheet.dart`) ────────
@@ -434,61 +435,58 @@ class _StatsScreenState extends State<StatsScreen> {
     final avgCarbs = _data.fold(0.0, (s, d) => s + d.carbs) / divisor;
 
     final rows = <Widget>[];
-    if (_showProtein) {
-      rows.add(
-        _MacroProgressRow(
-          iconAsset: 'assets/icons/belok.svg',
-          current: avgProt,
-          goal: _goalProtein,
-          currentLabel: '${avgProt.toInt()} ${l10n.proteinShort}',
-          goalLabel: l10n.proteinGoalLabel(_goalProtein.toInt()),
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Color(0xFFD91D1D), Color(0xFFF0681B)],
-          ),
-          trackColor: trackColor,
-          labelColor: secondary,
-          valueLabelColor: primary,
-          cardColor: cardBg,
-        ),
-      );
-    }
-    if (_showFat) {
+    for (final m in MacroOrder.of(context)) {
+      final include = switch (m) {
+        Macro.protein => _showProtein,
+        Macro.fat => _showFat,
+        Macro.carbs => _showCarbs,
+      };
+      if (!include) continue;
       if (rows.isNotEmpty) rows.add(const SizedBox(height: 20));
       rows.add(
         _MacroProgressRow(
-          iconAsset: 'assets/icons/fat.svg',
-          current: avgFat,
-          goal: _goalFat,
-          currentLabel: '${avgFat.toInt()} ${l10n.fatShort}',
-          goalLabel: l10n.fatGoalLabel(_goalFat.toInt()),
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Color(0xFFFFBB00), Color(0xFFD0FF00)],
-          ),
-          trackColor: trackColor,
-          labelColor: secondary,
-          valueLabelColor: primary,
-          cardColor: cardBg,
-        ),
-      );
-    }
-    if (_showCarbs) {
-      if (rows.isNotEmpty) rows.add(const SizedBox(height: 20));
-      rows.add(
-        _MacroProgressRow(
-          iconAsset: 'assets/icons/uglevod.svg',
-          current: avgCarbs,
-          goal: _goalCarbs,
-          currentLabel: '${avgCarbs.toInt()} ${l10n.carbsShort}',
-          goalLabel: l10n.carbsGoalLabel(_goalCarbs.toInt()),
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Color(0xFF17D1C7), Color(0xFF1787D1)],
-          ),
+          iconAsset: switch (m) {
+            Macro.protein => 'assets/icons/belok.svg',
+            Macro.fat => 'assets/icons/fat.svg',
+            Macro.carbs => 'assets/icons/uglevod.svg',
+          },
+          current: switch (m) {
+            Macro.protein => avgProt,
+            Macro.fat => avgFat,
+            Macro.carbs => avgCarbs,
+          },
+          goal: switch (m) {
+            Macro.protein => _goalProtein,
+            Macro.fat => _goalFat,
+            Macro.carbs => _goalCarbs,
+          },
+          currentLabel: switch (m) {
+            Macro.protein => '${avgProt.toInt()} ${l10n.proteinShort}',
+            Macro.fat => '${avgFat.toInt()} ${l10n.fatShort}',
+            Macro.carbs => '${avgCarbs.toInt()} ${l10n.carbsShort}',
+          },
+          goalLabel: switch (m) {
+            Macro.protein => l10n.proteinGoalLabel(_goalProtein.toInt()),
+            Macro.fat => l10n.fatGoalLabel(_goalFat.toInt()),
+            Macro.carbs => l10n.carbsGoalLabel(_goalCarbs.toInt()),
+          },
+          gradient: switch (m) {
+            Macro.protein => const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Color(0xFFD91D1D), Color(0xFFF0681B)],
+              ),
+            Macro.fat => const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Color(0xFFFFBB00), Color(0xFFD0FF00)],
+              ),
+            Macro.carbs => const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Color(0xFF17D1C7), Color(0xFF1787D1)],
+              ),
+          },
           trackColor: trackColor,
           labelColor: secondary,
           valueLabelColor: primary,
@@ -1206,7 +1204,17 @@ class _StatsScreenState extends State<StatsScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${l10n.proteinShort}${day.protein.toInt()} ${l10n.fatShort}${day.fat.toInt()} ${l10n.carbsShort}${day.carbs.toInt()}',
+                              [
+                                for (final m in MacroOrder.of(context))
+                                  switch (m) {
+                                    Macro.protein =>
+                                      '${l10n.proteinShort}${day.protein.toInt()}',
+                                    Macro.fat =>
+                                      '${l10n.fatShort}${day.fat.toInt()}',
+                                    Macro.carbs =>
+                                      '${l10n.carbsShort}${day.carbs.toInt()}',
+                                  },
+                              ].join(' '),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
@@ -2056,6 +2064,7 @@ class _AnimatedDonutState extends State<_AnimatedDonut>
             fatFraction: fat,
             trackColor: widget.trackColor,
             isEmpty: total <= 0,
+            order: MacroOrder.of(context),
           ),
           child: Center(
             child: Column(
@@ -2094,6 +2103,8 @@ class _DonutPainter extends CustomPainter {
   final double fatFraction;
   final Color trackColor;
   final bool isEmpty;
+  /// Locale-driven clockwise order, starting at 12 o'clock.
+  final List<Macro> order;
 
   static const _strokeWidth = 12.0;
   // Gap between segments measured along the arc, in logical px.
@@ -2111,6 +2122,7 @@ class _DonutPainter extends CustomPainter {
     required this.fatFraction,
     required this.trackColor,
     required this.isEmpty,
+    required this.order,
   });
 
   @override
@@ -2130,9 +2142,12 @@ class _DonutPainter extends CustomPainter {
     if (isEmpty) return;
 
     final segments = <(double fraction, Color color)>[
-      (proteinFraction, _proteinColor),
-      (carbsFraction, _carbsColor),
-      (fatFraction, _fatColor),
+      for (final m in order)
+        switch (m) {
+          Macro.protein => (proteinFraction, _proteinColor),
+          Macro.fat => (fatFraction, _fatColor),
+          Macro.carbs => (carbsFraction, _carbsColor),
+        },
     ];
 
     // Convert 2px arc-length gap into radians for this radius.
@@ -2157,12 +2172,20 @@ class _DonutPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DonutPainter old) =>
-      old.proteinFraction != proteinFraction ||
-      old.carbsFraction != carbsFraction ||
-      old.fatFraction != fatFraction ||
-      old.isEmpty != isEmpty ||
-      old.trackColor != trackColor;
+  bool shouldRepaint(covariant _DonutPainter old) {
+    if (old.proteinFraction != proteinFraction ||
+        old.carbsFraction != carbsFraction ||
+        old.fatFraction != fatFraction ||
+        old.isEmpty != isEmpty ||
+        old.trackColor != trackColor ||
+        old.order.length != order.length) {
+      return true;
+    }
+    for (int i = 0; i < order.length; i++) {
+      if (old.order[i] != order[i]) return true;
+    }
+    return false;
+  }
 }
 
 // ── Macro progress row ───────────────────────────────────────────
