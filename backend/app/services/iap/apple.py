@@ -47,13 +47,16 @@ logger = logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
 # Apple root certificates — needed to verify JWS cert chains. Downloaded once
-# per process at first use; Apple's CA URLs are heavily cached at the edge and
-# do not change. We keep both the current G3 and the legacy Inc root because
-# different historical transactions sign against different roots.
+# per process at first use. App Store Server Notifications V2 sign against
+# G3; the others give us backward compatibility for older transactions.
+# We tolerate per-URL failures — if even one loads, the verifier still works
+# for the matching cert chain, and the others would only matter for ancient
+# transactions that aren't realistic in this app.
 # -----------------------------------------------------------------------------
 _APPLE_ROOT_CERT_URLS = [
     "https://www.apple.com/certificateauthority/AppleRootCA-G3.cer",
-    "https://www.apple.com/certificateauthority/AppleIncRootCertificate.cer",
+    "https://www.apple.com/certificateauthority/AppleRootCA-G2.cer",
+    "https://www.apple.com/appleca/AppleIncRootCertificate.cer",
 ]
 _apple_root_certs: Optional[list[bytes]] = None
 _root_lock = Lock()
@@ -67,11 +70,22 @@ def _load_apple_root_certs() -> list[bytes]:
         certs: list[bytes] = []
         with httpx.Client(timeout=10) as client:
             for url in _APPLE_ROOT_CERT_URLS:
-                resp = client.get(url)
-                resp.raise_for_status()
-                certs.append(resp.content)
+                try:
+                    resp = client.get(url)
+                    resp.raise_for_status()
+                    certs.append(resp.content)
+                except Exception as e:
+                    logger.warning("Could not fetch Apple root %s: %s", url, e)
+        if not certs:
+            raise RuntimeError(
+                "Could not download any Apple root certificates; "
+                "App Store JWS verification cannot proceed"
+            )
         _apple_root_certs = certs
-        logger.info("Loaded %d Apple root certificates", len(certs))
+        logger.info(
+            "Loaded %d/%d Apple root certificates",
+            len(certs), len(_APPLE_ROOT_CERT_URLS),
+        )
         return certs
 
 
