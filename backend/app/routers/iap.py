@@ -130,6 +130,14 @@ async def verify(
                 req.server_verification_data,
                 environment_hint=req.environment_hint,
             )
+        except RuntimeError as e:
+            # Creds missing on this deployment — surface as 503 so the
+            # client can retry later (and so we don't masquerade as 500).
+            logger.error("Apple IAP not configured: %s", e)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Apple IAP not configured: {e}",
+            )
         except ValueError as e:
             logger.warning("Apple verification rejected: %s", e)
             raise HTTPException(
@@ -272,6 +280,15 @@ async def apple_webhook(request: Request, db: AsyncSession = Depends(get_db)):
 
     try:
         notification, env = apple_iap.verify_notification(signed)
+    except RuntimeError as e:
+        # Creds missing — return 503 so Apple retries (up to 3 days). By
+        # then we either have creds set or accept the data loss for a
+        # handful of events in the window.
+        logger.error("Apple webhook hit but IAP not configured: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Apple IAP not configured: {e}",
+        )
     except ValueError as e:
         logger.warning("Apple webhook verification failed: %s", e)
         raise HTTPException(status_code=400, detail=f"Invalid notification: {e}")
