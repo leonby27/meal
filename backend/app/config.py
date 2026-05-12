@@ -73,23 +73,38 @@ settings = Settings()
 def get_apple_private_key_pem() -> str:
     """Resolve the Apple ES256 private key from env or a mounted file.
 
-    Order of precedence:
-      1. `apple_private_key_pem` — preferred when the editor preserves
-         newlines (paste the .p8 file contents verbatim).
-      2. `apple_private_key_pem_b64` — single-line base64 of the .p8
-         file. Convenience for env editors that strip/escape newlines.
-      3. `apple_private_key_path` — mounted secret file.
+    Three input shapes are accepted on every variable, in this order:
+      - raw multi-line PEM (starts with `-----BEGIN`),
+      - escaped-newline PEM (the editor turned `\\n` into the two
+        literal characters `\\n` — we expand them back),
+      - base64 of the PEM file (no `-----BEGIN`, decodes to a PEM).
+    Lookup order:
+      1. `apple_private_key_pem`     — first, with auto-detect above.
+      2. `apple_private_key_pem_b64` — explicit base64.
+      3. `apple_private_key_path`    — mounted secret file.
     """
+    import base64
+
+    def _normalize(blob: str) -> str:
+        blob = blob.strip()
+        if blob.startswith("-----BEGIN"):
+            return blob
+        if "\\n" in blob and "-----BEGIN" in blob.replace("\\n", "\n"):
+            return blob.replace("\\n", "\n")
+        # Last resort: maybe the editor collapsed everything and we got
+        # base64. Try decode; if it yields a PEM, use it.
+        try:
+            decoded = base64.b64decode(blob, validate=False).decode("utf-8").strip()
+            if decoded.startswith("-----BEGIN"):
+                return decoded
+        except Exception:
+            pass
+        return blob  # Let the caller fail loudly with a clear PEM error.
+
     if settings.apple_private_key_pem:
-        # Some editors collapse all newlines to literal "\n" two-char
-        # sequences. Restore them so cryptography can parse the PEM.
-        pem = settings.apple_private_key_pem
-        if "\n" not in pem and "\\n" in pem:
-            pem = pem.replace("\\n", "\n")
-        return pem
+        return _normalize(settings.apple_private_key_pem)
     if settings.apple_private_key_pem_b64:
-        import base64
-        return base64.b64decode(settings.apple_private_key_pem_b64).decode("utf-8")
+        return _normalize(settings.apple_private_key_pem_b64)
     if settings.apple_private_key_path:
         with open(settings.apple_private_key_path, "r", encoding="utf-8") as f:
             return f.read()
