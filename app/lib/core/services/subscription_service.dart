@@ -109,6 +109,15 @@ class SubscriptionService extends ChangeNotifier {
   /// `restorePurchases()` returns, so we need to wait briefly.
   static const Duration _restoreSettleWindow = Duration(milliseconds: 1500);
 
+  /// Safety net for stuck [SubState.purchasing]. StoreKit occasionally
+  /// fails to deliver a `.canceled` event when the user dismisses the
+  /// payment sheet (swipe-down on iOS, or a quick open→close→open cycle
+  /// in sandbox/TestFlight). When that happens the CTA is locked into a
+  /// spinner forever and the user can't retry. If no purchase update
+  /// arrives within this window, we revert to [SubState.ready] without
+  /// emitting any event — the user may simply have closed the sheet.
+  static const Duration _purchasingTimeout = Duration(seconds: 60);
+
   // ---------------------------------------------------------------------------
   // State (ChangeNotifier)
   // ---------------------------------------------------------------------------
@@ -135,6 +144,8 @@ class SubscriptionService extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   bool _restoreInProgress = false;
   int _restoreEventsSeen = 0;
+
+  Timer? _purchasingWatchdog;
 
   // ---------------------------------------------------------------------------
   // Diagnostics log (used by debug menu)
@@ -484,11 +495,28 @@ class SubscriptionService extends ChangeNotifier {
     if (_state == next) return;
     _state = next;
     _log('state → $next');
+
+    _purchasingWatchdog?.cancel();
+    _purchasingWatchdog = null;
+    if (next == SubState.purchasing) {
+      _purchasingWatchdog = Timer(_purchasingTimeout, _onPurchasingTimeout);
+    }
+
     notifyListeners();
+  }
+
+  void _onPurchasingTimeout() {
+    if (_state != SubState.purchasing) return;
+    _log(
+      'purchasing watchdog fired — no StoreKit update in '
+      '${_purchasingTimeout.inSeconds}s, reverting to ready',
+    );
+    _setState(SubState.ready);
   }
 
   @override
   void dispose() {
+    _purchasingWatchdog?.cancel();
     _subscription?.cancel();
     _eventsController.close();
     super.dispose();
