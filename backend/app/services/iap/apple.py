@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import traceback
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from threading import Lock
@@ -281,8 +282,17 @@ def verify_notification(signed_payload: str) -> tuple[ResponseBodyV2DecodedPaylo
         except VerificationException as e:
             errors.append(f"{env.value}: {getattr(e, 'status', e)}")
         except Exception as e:
-            errors.append(f"{env.value}: {type(e).__name__}: {e}")
-    msg = "; ".join(errors) or "no environments tried"
+            # Capture the inner traceback — the lib sometimes throws a
+            # ValueError from cryptography deep in the call stack that
+            # gets swallowed by the outer error message, making it hard
+            # to tell whether the cause is cert chain, key load, or
+            # something else.
+            inner = traceback.format_exc().splitlines()[-15:]
+            errors.append(
+                f"{env.value}: {type(e).__name__}: {e}\n"
+                + "\n".join(inner)
+            )
+    msg = "\n--- next env ---\n".join(errors) or "no environments tried"
     logger.warning("Apple notification verification failed: %s", msg)
     raise ValueError(f"Could not verify notification ({msg})")
 
