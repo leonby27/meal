@@ -114,6 +114,32 @@ async def _current_state(
 
 
 # =============================================================================
+# Debug — return installed library versions so we can diagnose
+# mismatched-version mysteries without shell access to the container.
+# =============================================================================
+
+
+@router.get("/debug/versions")
+async def debug_versions():
+    out: dict[str, str] = {}
+    for pkg in (
+        "app-store-server-library",
+        "google-api-python-client",
+        "cryptography",
+        "pyjwt",
+        "pyopenssl",
+    ):
+        try:
+            from importlib.metadata import version as _v
+            out[pkg] = _v(pkg)
+        except Exception as e:
+            out[pkg] = f"err: {e}"
+    out["apple_app_apple_id_set"] = str(bool(settings.apple_app_apple_id))
+    out["apple_bundle_id"] = settings.apple_bundle_id
+    return out
+
+
+# =============================================================================
 # Verify — called after purchase or restore
 # =============================================================================
 
