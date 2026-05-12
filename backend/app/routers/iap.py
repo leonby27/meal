@@ -25,7 +25,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import get_promo_codes, settings
+from app.config import get_apple_private_key_pem, get_promo_codes, settings
 from app.database import get_db
 from app.models.entitlement import Entitlement
 from app.routers.deps import get_current_user_id, get_optional_user_id
@@ -158,8 +158,14 @@ async def debug_versions():
             out[pkg] = _v(pkg)
         except Exception as e:
             out[pkg] = f"err: {e}"
-    out["apple_app_apple_id_set"] = str(bool(settings.apple_app_apple_id))
+    # These values are public — bundle id is in the Info.plist, appAppleId
+    # is in every App Store URL — so no risk in exposing them. Helps
+    # confirm env vars were typed correctly without shell access.
     out["apple_bundle_id"] = settings.apple_bundle_id
+    out["apple_app_apple_id"] = settings.apple_app_apple_id
+    out["apple_issuer_id_set"] = str(bool(settings.apple_issuer_id))
+    out["apple_key_id_set"] = str(bool(settings.apple_key_id))
+    out["apple_private_key_set"] = str(bool(get_apple_private_key_pem()))
     return out
 
 
