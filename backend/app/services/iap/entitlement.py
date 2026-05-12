@@ -196,11 +196,21 @@ async def upsert_promo(
     app_account_token: str,
     code: str,
 ) -> Entitlement:
-    """Promo codes grant lifetime access (expires_at=NULL).
+    """Promo redemption: grants 7 days of premium, stackable.
 
-    The unique constraint is (store, original_transaction_id) — so for promo
-    we use `code:token` as the synthetic id, letting the same code be
-    redeemed on many devices but only once per device.
+    Each call adds a week to whichever is later — the current expiry or
+    "now" — so re-entering a code mid-week doesn't waste remaining time
+    and re-entering after expiry simply starts a fresh week. There's no
+    cap on how many times the same code can be redeemed; the codes
+    themselves are the access control (we trust [config.get_promo_codes]
+    to be small and curated).
+
+    The unique constraint (store, original_transaction_id) is satisfied
+    by a synthetic `code:token` id so the same code can live on
+    different devices without colliding.
+
+    Legacy rows with `expires_at=NULL` (older lifetime-promo behavior)
+    are preserved as-is — we don't downgrade an existing lifetime grant.
     """
     synthetic_id = f"{code}:{app_account_token}"
     stmt = select(Entitlement).where(
@@ -208,11 +218,20 @@ async def upsert_promo(
         Entitlement.original_transaction_id == synthetic_id,
     )
     row = (await db.execute(stmt)).scalar_one_or_none()
+
+    now = datetime.utcnow()
+    week = timedelta(days=7)
+
     if row is not None:
+        # Don't downgrade a legacy lifetime grant (expires_at IS NULL).
+        if row.expires_at is not None:
+            base = row.expires_at if row.expires_at > now else now
+            row.expires_at = base + week
         if user_id and not row.user_id:
             row.user_id = user_id
-            await db.commit()
-            await db.refresh(row)
+        row.last_event_at = now
+        await db.commit()
+        await db.refresh(row)
         return row
 
     row = Entitlement(
@@ -220,21 +239,24 @@ async def upsert_promo(
         app_account_token=app_account_token,
         store="promo",
         product_id=f"promo_{code}",
-        plan="promo_lifetime",
+        plan="promo",
         original_transaction_id=synthetic_id,
-        expires_at=None,
+        expires_at=now + week,
         is_in_trial=False,
         is_in_grace_period=False,
         auto_renew_enabled=False,
         environment="production",
-        last_event_at=datetime.utcnow(),
+        last_event_at=now,
     )
     db.add(row)
     try:
         await db.commit()
         await db.refresh(row)
     except IntegrityError:
-        # Concurrent redemption by the same device — return the existing row.
+        # Concurrent redemption by the same device — refetch the winner.
+        # We don't try to add yet another week here: the concurrent caller
+        # already added one and a single user double-clicking shouldn't
+        # double-stack.
         await db.rollback()
         row = (await db.execute(stmt)).scalar_one()
     return row
