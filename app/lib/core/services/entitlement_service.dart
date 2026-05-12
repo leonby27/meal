@@ -140,7 +140,7 @@ class EntitlementService extends ChangeNotifier {
     if (raw == null) return;
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
-      _applyServerState(map, persist: false);
+      _applyServerState(map);
     } catch (_) {
       // Stale / corrupt cache — ignore.
     }
@@ -269,16 +269,26 @@ class EntitlementService extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Internal
   // ---------------------------------------------------------------------------
-  void _applyServerState(Map<String, dynamic> state, {bool persist = true}) {
+  void _applyServerState(Map<String, dynamic> state) {
     _isActive = state['is_active'] == true;
     _plan = state['plan'] as String?;
     _store = state['store'] as String?;
     _productId = state['product_id'] as String?;
-    final expiresStr = state['expires_at'] as String?;
-    _expiresAt = expiresStr != null ? DateTime.tryParse(expiresStr) : null;
+    _expiresAt = _parseServerDate(state['expires_at'] as String?);
     _autoRenewEnabled = state['auto_renew_enabled'] as bool?;
     _isInTrial = state['is_in_trial'] as bool?;
     _isInGracePeriod = state['is_in_grace_period'] as bool?;
     _environment = state['environment'] as String?;
+  }
+
+  /// The backend stores expiry as naive UTC and FastAPI serializes it
+  /// without a 'Z' suffix. Dart's `DateTime.tryParse` then treats it as
+  /// local time, which shifts the displayed date by hours for users
+  /// outside UTC. Append 'Z' so we always interpret it as UTC and let
+  /// the UI explicitly call `toLocal()` when it needs to render.
+  static DateTime? _parseServerDate(String? raw) {
+    if (raw == null) return null;
+    final hasTz = raw.endsWith('Z') || raw.contains('+') || raw.lastIndexOf('-') > 10;
+    return DateTime.tryParse(hasTz ? raw : '${raw}Z');
   }
 }
