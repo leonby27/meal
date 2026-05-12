@@ -158,6 +158,11 @@ def _env_order(hint: Optional[str]) -> tuple[Environment, Environment]:
 def _verify_jws(
     jws: str, first: Environment, second: Environment
 ) -> tuple[JWSTransactionDecodedPayload, Environment]:
+    """The library raises VerificationException for signed-data issues but
+    other failure modes (malformed JWS base64, missing header fields)
+    surface as binascii / KeyError / TypeError. From a caller's perspective
+    they all mean "this blob is unusable" — we treat them as one bucket and
+    let the caller return 400."""
     last_err: Optional[Exception] = None
     for env in (first, second):
         try:
@@ -166,7 +171,8 @@ def _verify_jws(
             return payload, env
         except VerificationException as e:
             last_err = e
-            continue
+        except Exception as e:
+            last_err = e
     raise ValueError(f"Failed to verify signed transaction: {last_err}")
 
 
@@ -203,13 +209,10 @@ def lookup_transaction(
                 raise ValueError("Empty signedTransactionInfo from Apple")
             payload = clients.verifier.verify_and_decode_signed_transaction(signed)
             return payload, env
-        except APIException as e:
+        except (APIException, VerificationException) as e:
             last_err = e
-            # 404 etc. — try the other environment.
-            continue
-        except VerificationException as e:
+        except Exception as e:
             last_err = e
-            continue
     raise ValueError(f"Could not look up transaction {transaction_id}: {last_err}")
 
 
@@ -251,7 +254,11 @@ def verify_notification(signed_payload: str) -> tuple[ResponseBodyV2DecodedPaylo
             return payload, env
         except VerificationException as e:
             last_err = e
-            continue
+        except Exception as e:
+            # Same rationale as in _verify_jws: a malformed payload can
+            # raise any number of underlying errors; bucket them all as
+            # "unusable input" so the caller can return a clean 400.
+            last_err = e
     raise ValueError(f"Could not verify notification: {last_err}")
 
 
