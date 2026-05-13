@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io' show Platform;
 
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/device_id_service.dart';
 import 'package:meal_tracker/core/services/entitlement_service.dart';
 
@@ -146,6 +148,13 @@ class SubscriptionService extends ChangeNotifier {
   int _restoreEventsSeen = 0;
 
   Timer? _purchasingWatchdog;
+
+  /// Transaction IDs we've already reported to Firebase as a `purchase`
+  /// event. Apple/Google replay `.purchased` transactions on app start
+  /// until [InAppPurchase.completePurchase] is acknowledged on their
+  /// side — without this gate we'd double-count revenue on every cold
+  /// start until completion settles.
+  final Set<String> _reportedTransactionIds = <String>{};
 
   // ---------------------------------------------------------------------------
   // Diagnostics log (used by debug menu)
@@ -431,6 +440,7 @@ class SubscriptionService extends ChangeNotifier {
         _setState(SubState.ready);
       case PurchaseStatus.purchased:
         unawaited(_verifyOnServer(purchase));
+        unawaited(_reportPurchaseToAnalytics(purchase));
         _emit(const PurchaseSuccessEvent());
         _setState(SubState.ready);
       case PurchaseStatus.restored:
@@ -478,6 +488,65 @@ class SubscriptionService extends ChangeNotifier {
     if (Platform.isIOS) return 'apple';
     if (Platform.isAndroid) return 'google';
     return null;
+  }
+
+  /// Fires the standard Firebase `purchase` event (which feeds Revenue /
+  /// LTV / Google Ads attribution dashboards) plus a `start_trial` event
+  /// for the trial-bearing yearly plan. Idempotent per transaction ID:
+  /// StoreKit replays `.purchased` transactions on cold start until they
+  /// are acknowledged, so a guard prevents double-counted revenue.
+  Future<void> _reportPurchaseToAnalytics(PurchaseDetails purchase) async {
+    final txId = purchase.purchaseID;
+    if (txId == null || txId.isEmpty) {
+      _log('analytics: skip purchase report — no transaction id');
+      return;
+    }
+    if (!_reportedTransactionIds.add(txId)) {
+      _log('analytics: skip purchase report — already reported $txId');
+      return;
+    }
+
+    final product = productById(purchase.productID);
+    if (product == null) {
+      _log(
+        'analytics: skip purchase report — product '
+        '${purchase.productID} not in loaded list',
+      );
+      return;
+    }
+
+    final item = AnalyticsEventItem(
+      itemId: product.id,
+      itemName: product.title.isNotEmpty ? product.title : product.id,
+      itemCategory: 'subscription',
+      itemVariant: product.id == yearlyId ? 'yearly' : 'weekly',
+      price: product.rawPrice,
+      currency: product.currencyCode,
+      quantity: 1,
+    );
+
+    await AnalyticsService.instance.logPurchase(
+      transactionId: txId,
+      value: product.rawPrice,
+      currency: product.currencyCode,
+      items: [item],
+    );
+
+    // Yearly is sold with a free intro trial; weekly is not. Fire
+    // `start_trial` (a Firebase-recommended event) so trial-start
+    // funnels and Google Ads trial-conversion events have a signal
+    // independent of the paid `purchase` event.
+    if (product.id == yearlyId) {
+      await AnalyticsService.instance.logEvent(
+        'start_trial',
+        parameters: {
+          'currency': product.currencyCode,
+          'price': product.rawPrice,
+          'product_id': product.id,
+          'transaction_id': txId,
+        },
+      );
+    }
   }
 
   // ---------------------------------------------------------------------------

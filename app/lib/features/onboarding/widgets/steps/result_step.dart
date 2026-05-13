@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:confetti/confetti.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import 'package:meal_tracker/app/theme.dart';
+import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
@@ -311,7 +313,14 @@ class _ResultStepState extends State<ResultStep>
               _DisclaimerLine(
                 disclaimer: l10n.resultDisclaimerShort,
                 sourcesLabel: l10n.resultSourcesTitle,
-                onSourcesTap: () => showMethodologySourcesSheet(context),
+                onSourcesTap: () {
+                  unawaited(
+                    AnalyticsService.instance.logEvent(
+                      'onboarding_result_methodology_opened',
+                    ),
+                  );
+                  showMethodologySourcesSheet(context);
+                },
               ),
               const SizedBox(height: 8),
 

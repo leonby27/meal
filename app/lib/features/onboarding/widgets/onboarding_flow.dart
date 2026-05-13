@@ -300,9 +300,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   Future<void> _logStepCompleted(int page) {
+    final kinds = _kinds;
+    final isFinal = page >= kinds.length - 1;
     return AnalyticsService.instance.logEvent(
       'onboarding_step_completed',
-      parameters: {..._stepParams(page), 'time_on_step_ms': _timeOnStepMs},
+      parameters: {
+        ..._stepParams(page),
+        'time_on_step_ms': _timeOnStepMs,
+        'is_final_step': isFinal ? 1 : 0,
+      },
     );
   }
 
@@ -371,15 +377,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     final kind = _currentKind;
     final kinds = _kinds;
 
-    unawaited(
-      AnalyticsService.instance.logEvent(
-        'onboarding_step_cta_clicked',
-        parameters: {
-          ..._stepParams(page),
-          'is_final_step': _currentPage == kinds.length - 1 ? 1 : 0,
-        },
-      ),
-    );
+    // iOS App Tracking Transparency: fire on the first real user-driven
+    // action (Welcome's "Get Started" tap), not at app launch. By this
+    // point the user has seen the brand/value proposition, so allow
+    // rates run ~2× higher than a cold-start prompt. The call is a
+    // no-op on Android and on installs that have already resolved ATT.
+    if (kind == _StepKind.welcome) {
+      unawaited(AnalyticsService.instance.requestAttPermissionIfNeeded());
+    }
 
     if (kind == _StepKind.weight) {
       _updateTargetWeightFromGoal();
@@ -410,8 +415,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _calculateResults();
     }
 
-if (_currentPage < kinds.length - 1) {
-      unawaited(_logStepCompleted(page));
+    // Always log the step completion — even on the final step where we
+    // don't advance — so funnel reports get a clean «done with step N»
+    // signal regardless of whether a next page exists.
+    unawaited(_logStepCompleted(page));
+
+    if (_currentPage < kinds.length - 1) {
       _goToPage(_currentPage + 1, direction: 'forward');
     }
   }
@@ -539,18 +548,66 @@ if (_currentPage < kinds.length - 1) {
         await db.setSetting(entry.key, entry.value);
       }
       unawaited(LoginSyncService().pushSettings(settings));
+      unawaited(_pushOnboardingUserProperties());
     } catch (e) {
       debugPrint('Onboarding settings persist error: $e');
     }
   }
 
+  /// Mirrors the onboarding answers to Firebase as user properties so
+  /// every subsequent event (paywall views, purchases, app usage) can
+  /// be sliced by goal/gender/etc. in Firebase reports.
+  Future<void> _pushOnboardingUserProperties() async {
+    return AnalyticsService.instance.setUserProperties({
+      'goal': _data.goal,
+      'gender': _data.gender,
+      'unit_system': _data.unitSystem,
+      'obstacles_count': _data.obstacles.length.toString(),
+      'weight_loss_speed_bucket': _data.goal == 'maintain'
+          ? 'maintain'
+          : _weightLossSpeedBucket(_data.weightLossKgPerWeek),
+    });
+  }
+
+  /// Bucketing matches the live-feedback badge on
+  /// [WeightLossSpeedStep] so dashboards and the in-app coaching share
+  /// the same vocabulary (`gentle`/`recommended`/`ambitious`/`aggressive`).
+  static String _weightLossSpeedBucket(double kgPerWeek) {
+    if (kgPerWeek <= 0.4) return 'gentle';
+    if (kgPerWeek <= 0.7) return 'recommended';
+    if (kgPerWeek <= 1.0) return 'ambitious';
+    return 'aggressive';
+  }
+
   void _onLoadingFinished() {
     unawaited(_logStepCompleted(_currentPage));
     final kinds = _kinds;
+    unawaited(_logPlanRevealed());
     final resultIdx = kinds.indexOf(_StepKind.result);
     if (resultIdx >= 0) {
       _goToPage(resultIdx, direction: 'forward');
     }
+  }
+
+  /// One of the two highest-signal funnel events (alongside the paywall
+  /// purchase). Fires exactly once per onboarding pass when the loading
+  /// animation finishes and we transition into the result step — i.e.
+  /// the moment the user first sees their computed plan.
+  Future<void> _logPlanRevealed() {
+    final now = DateTime.now();
+    final targetDate = _data.targetDate;
+    final weeks = (targetDate == null || _data.goal == 'maintain')
+        ? null
+        : targetDate.difference(now).inDays ~/ 7;
+    return AnalyticsService.instance.logEvent(
+      'onboarding_plan_revealed',
+      parameters: {
+        if (_data.calorieGoal != null)
+          'calorie_goal': _data.calorieGoal!.round(),
+        if (weeks != null && weeks >= 0) 'target_date_weeks': weeks,
+        'goal': _data.goal ?? 'unknown',
+      },
+    );
   }
 
   @override

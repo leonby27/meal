@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -35,6 +36,16 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   StreamSubscription<SubEvent>? _eventsSub;
 
+  // Funnel telemetry state.
+  // - `_loggedViewItemList`: standard `view_item_list` must fire exactly
+  //   once per paywall mount, but the products that feed it usually
+  //   aren't loaded yet at initState (SubscriptionService boots lazily).
+  //   We wait for the first ready state and gate via this flag.
+  // - `_purchaseSucceededOnScreen`: distinguishes a successful close
+  //   ("purchased") from a backgrounded close ("abandoned") in dispose().
+  bool _loggedViewItemList = false;
+  bool _purchaseSucceededOnScreen = false;
+
   @override
   void initState() {
     super.initState();
@@ -58,11 +69,55 @@ class _PaywallScreenState extends State<PaywallScreen>
     unawaited(
       AnalyticsService.instance.logEvent(
         'paywall_viewed',
-        parameters: {'is_hard_paywall': 1},
+        parameters: {'plan': _planIdForIndex(_selectedPlan)},
       ),
     );
 
+    // If products are already cached from a previous mount we can fire
+    // the standard `view_item_list` immediately; otherwise [_onStateChanged]
+    // will catch the transition into ready and fire it then.
+    _maybeLogViewItemList();
+
     sub.ensureProductsLoaded();
+  }
+
+  String _planIdForIndex(int idx) =>
+      idx == 1 ? SubscriptionService.yearlyId : SubscriptionService.weeklyId;
+
+  /// Builds an [AnalyticsEventItem] for one of our subscription products.
+  /// Returning `null` when the product hasn't loaded keeps callers free of
+  /// scattered null-checks.
+  AnalyticsEventItem? _itemFor(ProductDetails? p) {
+    if (p == null) return null;
+    return AnalyticsEventItem(
+      itemId: p.id,
+      itemName: p.title.isNotEmpty ? p.title : p.id,
+      itemCategory: 'subscription',
+      itemVariant: p.id == SubscriptionService.yearlyId ? 'yearly' : 'weekly',
+      price: p.rawPrice,
+      currency: p.currencyCode,
+      quantity: 1,
+    );
+  }
+
+  /// Fires `view_item_list` the first time both products are loaded. The
+  /// standard ecommerce event drives Firebase's product-list funnel and
+  /// Google Ads conversion attribution for paywall impressions.
+  void _maybeLogViewItemList() {
+    if (_loggedViewItemList) return;
+    final items = [
+      _itemFor(_yearlyProduct),
+      _itemFor(_weeklyProduct),
+    ].whereType<AnalyticsEventItem>().toList();
+    if (items.isEmpty) return;
+    _loggedViewItemList = true;
+    unawaited(
+      AnalyticsService.instance.logViewItemList(
+        items: items,
+        itemListId: 'paywall',
+        itemListName: 'Onboarding Paywall',
+      ),
+    );
   }
 
   void _onAuthChanged() {
@@ -73,28 +128,95 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   void _onStateChanged() {
     if (mounted) setState(() {});
+    // Products often finish loading after initState — re-check on every
+    // state change until we've sent the impression once.
+    _maybeLogViewItemList();
   }
 
   void _onSubEvent(SubEvent event) {
     if (!mounted) return;
     final l = context.l10n;
 
+    final selectedPlanId = _planIdForIndex(_selectedPlan);
+
     switch (event) {
       case StoreUnavailableEvent():
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_purchase_failed',
+            parameters: {
+              'plan': selectedPlanId,
+              'reason': 'store_unavailable',
+            },
+          ),
+        );
         _showErrorDialog(l.paywallErrorStoreUnavailable);
       case ProductsEmptyEvent():
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_purchase_failed',
+            parameters: {
+              'plan': selectedPlanId,
+              'reason': 'products_empty',
+            },
+          ),
+        );
         _showErrorDialog(l.paywallErrorProductsEmpty);
       case ProductsLoadFailedEvent(details: final d):
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_purchase_failed',
+            parameters: {
+              'plan': selectedPlanId,
+              'reason': 'products_load_failed',
+            },
+          ),
+        );
         _showErrorDialog(l.paywallErrorQueryFailed, debugDetails: d);
       case PurchaseFailedEvent(details: final d):
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_purchase_failed',
+            parameters: {
+              'plan': selectedPlanId,
+              'reason': 'purchase_failed',
+            },
+          ),
+        );
         _showErrorDialog(l.paywallErrorPurchaseFailed, debugDetails: d);
       case PaymentPendingEvent():
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_purchase_pending',
+            parameters: {'plan': selectedPlanId},
+          ),
+        );
         _showErrorDialog(l.paywallErrorPaymentPending, showRetry: false);
       case PurchaseCanceledEvent():
-        break;
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_purchase_canceled',
+            parameters: {'plan': selectedPlanId},
+          ),
+        );
       case PurchaseSuccessEvent():
-        break;
+        _purchaseSucceededOnScreen = true;
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_purchase_success',
+            parameters: {
+              'plan': selectedPlanId,
+              'has_trial': _selectedPlanHasTrial ? 1 : 0,
+            },
+          ),
+        );
       case RestoreCompletedEvent(foundActive: final found):
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_restore_completed',
+            parameters: {'found_active': found ? 1 : 0},
+          ),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -103,17 +225,63 @@ class _PaywallScreenState extends State<PaywallScreen>
           ),
         );
       case RestoreFailedEvent(details: final d):
+        unawaited(
+          AnalyticsService.instance.logEvent(
+            'paywall_restore_failed',
+          ),
+        );
         _showErrorDialog(l.paywallErrorRestoreFailed, debugDetails: d);
     }
   }
 
   @override
   void dispose() {
+    // The paywall is the last step of the onboarding funnel — knowing
+    // whether the screen was left because the user converted, restored
+    // a prior purchase, or simply backgrounded the app is essential for
+    // the abandonment rate. AuthService.isPremium covers the silent
+    // restore case (premium flipped without us seeing PurchaseSuccess).
+    final purchased = _purchaseSucceededOnScreen || AuthService().isPremium;
+    unawaited(
+      AnalyticsService.instance.logEvent(
+        'paywall_exited',
+        parameters: {
+          'reason': purchased ? 'purchased' : 'abandoned',
+          'plan': _planIdForIndex(_selectedPlan),
+        },
+      ),
+    );
+
     AuthService().removeListener(_onAuthChanged);
     SubscriptionService().removeListener(_onStateChanged);
     _eventsSub?.cancel();
     _enterController.dispose();
     super.dispose();
+  }
+
+  void _selectPlan(int index) {
+    if (_selectedPlan == index) return;
+    setState(() => _selectedPlan = index);
+    final productId = _planIdForIndex(index);
+    final item = _itemFor(SubscriptionService().productById(productId));
+    if (item != null) {
+      unawaited(
+        AnalyticsService.instance.logSelectItem(
+          items: [item],
+          itemListId: 'paywall',
+          itemListName: 'Onboarding Paywall',
+        ),
+      );
+    }
+    unawaited(
+      AnalyticsService.instance.logEvent(
+        'paywall_plan_selected',
+        parameters: {
+          'plan': productId,
+          'has_trial': productId == SubscriptionService.yearlyId ? 1 : 0,
+        },
+      ),
+    );
   }
 
   ProductDetails? get _weeklyProduct =>
@@ -160,19 +328,58 @@ class _PaywallScreenState extends State<PaywallScreen>
 
     final product = sub.productById(productId);
     if (product == null) {
+      unawaited(
+        AnalyticsService.instance.logEvent(
+          'paywall_purchase_failed',
+          parameters: {
+            'plan': productId,
+            'reason': 'selected_product_unavailable',
+          },
+        ),
+      );
       _showErrorDialog(context.l10n.paywallErrorSelectedProductUnavailable);
       return;
+    }
+
+    // Custom CTA-click event captures the funnel even if the user backs
+    // out of the platform purchase sheet before any StoreKit/Play event
+    // fires.
+    unawaited(
+      AnalyticsService.instance.logEvent(
+        'paywall_cta_clicked',
+        parameters: {
+          'plan': productId,
+          'has_trial': _selectedPlanHasTrial ? 1 : 0,
+        },
+      ),
+    );
+
+    // Standard ecommerce event — feeds Firebase's Begin-Checkout funnel
+    // and Google Ads conversion events.
+    final item = _itemFor(product);
+    if (item != null) {
+      unawaited(
+        AnalyticsService.instance.logBeginCheckout(
+          value: product.rawPrice,
+          currency: product.currencyCode,
+          items: [item],
+        ),
+      );
     }
 
     await sub.buy(product);
   }
 
   void _restore() {
+    unawaited(
+      AnalyticsService.instance.logEvent('paywall_restore_clicked'),
+    );
     SubscriptionService().restore();
   }
 
   Future<void> _redeemCode() async {
     if (!mounted) return;
+    unawaited(AnalyticsService.instance.logEvent('paywall_promo_opened'));
     final code = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -181,19 +388,50 @@ class _PaywallScreenState extends State<PaywallScreen>
       ),
       builder: (_) => const _PromoCodeSheet(),
     );
-    if (code == null || !mounted) return;
+    if (code == null || !mounted) {
+      unawaited(
+        AnalyticsService.instance.logEvent('paywall_promo_dismissed'),
+      );
+      return;
+    }
+
+    unawaited(AnalyticsService.instance.logEvent('paywall_promo_submitted'));
+
+    // Snapshot localized strings before the await so we can read them
+    // safely in the catch blocks without crossing the async gap.
+    final invalidCopy = context.l10n.promoCodeInvalid;
+    final networkCopy = context.l10n.networkGenericError;
 
     String? errorText;
+    String? failureReason;
     try {
       await EntitlementService().redeemPromo(code.trim());
     } on ApiException catch (e) {
       // 404 from /api/iap/promo/redeem = code not in the allow-list.
       // Anything else (5xx, timeout) is a server problem, not the user's.
-      errorText = e.statusCode == 404
-          ? context.l10n.promoCodeInvalid
-          : context.l10n.networkGenericError;
+      if (e.statusCode == 404) {
+        errorText = invalidCopy;
+        failureReason = 'invalid';
+      } else {
+        errorText = networkCopy;
+        failureReason = 'network';
+      }
     } catch (_) {
-      errorText = context.l10n.networkGenericError;
+      errorText = networkCopy;
+      failureReason = 'network';
+    }
+    if (errorText == null) {
+      _purchaseSucceededOnScreen = true;
+      unawaited(
+        AnalyticsService.instance.logEvent('paywall_promo_succeeded'),
+      );
+    } else {
+      unawaited(
+        AnalyticsService.instance.logEvent(
+          'paywall_promo_failed',
+          parameters: {'reason': failureReason ?? 'unknown'},
+        ),
+      );
     }
     if (!mounted || errorText == null) return;
     ScaffoldMessenger.of(
@@ -285,14 +523,28 @@ class _PaywallScreenState extends State<PaywallScreen>
                         isDark: isDark,
                         onBack: () => Navigator.of(context).pop(),
                         onRestore: _restore,
-                        onTerms: () => launchUrl(
-                          Uri.parse(_termsUrl),
-                          mode: LaunchMode.externalApplication,
-                        ),
-                        onPrivacy: () => launchUrl(
-                          Uri.parse(_privacyUrl),
-                          mode: LaunchMode.externalApplication,
-                        ),
+                        onTerms: () {
+                          unawaited(
+                            AnalyticsService.instance.logEvent(
+                              'paywall_terms_opened',
+                            ),
+                          );
+                          launchUrl(
+                            Uri.parse(_termsUrl),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
+                        onPrivacy: () {
+                          unawaited(
+                            AnalyticsService.instance.logEvent(
+                              'paywall_privacy_opened',
+                            ),
+                          );
+                          launchUrl(
+                            Uri.parse(_privacyUrl),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
                         onCode: _redeemCode,
                         onSkip: () {},
                         onRestart: () => AuthService().resetOnboarding(),
@@ -342,8 +594,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                                 isDark: isDark,
                                 textPrimary: textPrimary,
                                 textSecondary: textSecondary,
-                                onTap: () =>
-                                    setState(() => _selectedPlan = 1),
+                                onTap: () => _selectPlan(1),
                               ),
                               const SizedBox(height: 6),
                               _PlanRow(
@@ -358,8 +609,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                                 isDark: isDark,
                                 textPrimary: textPrimary,
                                 textSecondary: textSecondary,
-                                onTap: () =>
-                                    setState(() => _selectedPlan = 0),
+                                onTap: () => _selectPlan(0),
                               ),
                               const SizedBox(height: 16),
                               _FeatureCard(

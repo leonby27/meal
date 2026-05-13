@@ -10,6 +10,7 @@ import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/services/device_id_service.dart';
 import 'package:meal_tracker/core/services/entitlement_service.dart';
 import 'package:meal_tracker/core/services/notification_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
@@ -53,12 +54,57 @@ void main() async {
     await AuthService().skipLogin();
   }
 
+  await _wireAnalyticsUserState();
+
   runApp(const MealTrackerApp());
 
   WidgetsBinding.instance.addPostFrameCallback((_) {
     SubscriptionService().init();
     NotificationService.restoreReminders();
   });
+}
+
+/// Pushes the stable device id as Firebase's userId and wires listeners
+/// on entitlement / locale state so user properties stay in sync for the
+/// app's lifetime.
+///
+/// userId source: [DeviceIdService] (per-install UUID, persisted to
+/// SharedPreferences). It is the same identifier we already pass to the
+/// backend as `app_account_token` for IAP verification, so server logs,
+/// Firebase user-id, and StoreKit `appAccountToken` line up — joining
+/// data across systems by hand becomes trivial.
+Future<void> _wireAnalyticsUserState() async {
+  try {
+    final deviceId = await DeviceIdService.getOrCreate();
+    await AnalyticsService.instance.setUserId(deviceId);
+  } catch (e) {
+    debugPrint('Analytics: setUserId failed: $e');
+  }
+
+  // Push current entitlement + locale snapshot, then subscribe so any
+  // change after launch (server refresh, fresh purchase, locale toggle)
+  // updates Firebase too.
+  _pushEntitlementProperties();
+  EntitlementService().addListener(_pushEntitlementProperties);
+
+  _pushLocaleProperty();
+  LocaleNotifier.instance.addListener(_pushLocaleProperty);
+}
+
+void _pushEntitlementProperties() {
+  final e = EntitlementService();
+  AnalyticsService.instance.setUserProperties({
+    'is_premium': e.isActive ? 'true' : 'false',
+    'subscription_plan': e.plan,
+    'is_in_trial': e.isInTrial == null
+        ? null
+        : (e.isInTrial! ? 'true' : 'false'),
+  });
+}
+
+void _pushLocaleProperty() {
+  final locale = LocaleNotifier.instance.value;
+  AnalyticsService.instance.setUserProperty('locale', locale.toLanguageTag());
 }
 
 class MealTrackerApp extends StatefulWidget {
@@ -127,7 +173,7 @@ class _MealTrackerAppState extends State<MealTrackerApp>
           valueListenable: ThemeNotifier.instance,
           builder: (context, themeMode, _) {
             return MaterialApp.router(
-              title: 'MealTracker',
+              title: 'Body Meal',
               debugShowCheckedModeBanner: false,
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
