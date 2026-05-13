@@ -1,3 +1,3 @@
-"CFBundleDisplayName" = "Meal Tracker";
+"CFBundleDisplayName" = "Body Meal";
 "NSCameraUsageDescription" = "Grant camera access to recognize food from photos.";
 "NSPhotoLibraryUsageDescription" = "Grant photo library access to pick food images.";

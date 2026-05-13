@@ -391,7 +391,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get invalidResetCode => 'Неверный или просроченный код';
 
   @override
-  String get proTitle => 'MealTracker Pro';
+  String get proTitle => 'Body Meal Pro';
 
   @override
   String get proUnlockFeatures => 'Разблокируйте все возможности:';
@@ -1795,7 +1795,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get onbRateSubtitle =>
-      'Оцените MealTracker — это поможет нам стать лучше';
+      'Оцените Body Meal — это поможет нам стать лучше';
 
   @override
   String get onbRateButton => 'Оценить';
@@ -1900,11 +1900,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resultFaqCancelAIos =>
-      'Откройте Настройки → ваше имя → Подписки на iPhone, найдите MealTracker и нажмите «Отменить подписку».';
+      'Откройте Настройки → ваше имя → Подписки на iPhone, найдите Body Meal и нажмите «Отменить подписку».';
 
   @override
   String get resultFaqCancelAAndroid =>
-      'Откройте Google Play → профиль → Платежи и подписки → Подписки, найдите MealTracker и нажмите «Отменить».';
+      'Откройте Google Play → профиль → Платежи и подписки → Подписки, найдите Body Meal и нажмите «Отменить».';
 
   @override
   String get resultFaqSecurityQ => 'Безопасны ли мои данные?';
@@ -2047,7 +2047,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get onbConfidentSubtitle =>
-      'Мы персонализируем MealTracker специально под ваши цели';
+      'Мы персонализируем Body Meal специально под ваши цели';
 
   @override
   String get onbConfidentPrivacyTitle => 'Ваша конфиденциальность важна';
@@ -2057,7 +2057,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Мы обещаем хранить вашу личную информацию в секрете';
 
   @override
-  String get onbKeepResultTitle => 'MealTracker помогает удерживать результат';
+  String get onbKeepResultTitle => 'Body Meal помогает удерживать результат';
 
   @override
   String get onbKeepResultSubtitle =>

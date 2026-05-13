@@ -391,7 +391,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get invalidResetCode => 'Código inválido o expirado';
 
   @override
-  String get proTitle => 'MealTracker Pro';
+  String get proTitle => 'Body Meal Pro';
 
   @override
   String get proUnlockFeatures => 'Desbloquea todas las funciones:';
@@ -1795,7 +1795,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onbRateTitle => '¿Te gusta tu plan?';
 
   @override
-  String get onbRateSubtitle => 'Valora MealTracker — nos ayudas a mejorar';
+  String get onbRateSubtitle => 'Valora Body Meal — nos ayudas a mejorar';
 
   @override
   String get onbRateButton => 'Valorar';
@@ -1898,11 +1898,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get resultFaqCancelAIos =>
-      'Abre Ajustes → tu nombre → Suscripciones en iPhone, busca MealTracker y toca Cancelar suscripción.';
+      'Abre Ajustes → tu nombre → Suscripciones en iPhone, busca Body Meal y toca Cancelar suscripción.';
 
   @override
   String get resultFaqCancelAAndroid =>
-      'Abre Google Play → tu perfil → Pagos y suscripciones → Suscripciones, busca MealTracker y toca Cancelar.';
+      'Abre Google Play → tu perfil → Pagos y suscripciones → Suscripciones, busca Body Meal y toca Cancelar.';
 
   @override
   String get resultFaqSecurityQ => '¿Mis datos personales están seguros?';
@@ -2048,7 +2048,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onbConfidentSubtitle =>
-      'Personalizamos MealTracker específicamente para tus objetivos';
+      'Personalizamos Body Meal específicamente para tus objetivos';
 
   @override
   String get onbConfidentPrivacyTitle => 'Tu privacidad es importante';
@@ -2059,7 +2059,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onbKeepResultTitle =>
-      'MealTracker te ayuda a mantener los resultados';
+      'Body Meal te ayuda a mantener los resultados';
 
   @override
   String get onbKeepResultSubtitle =>

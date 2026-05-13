@@ -390,7 +390,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidResetCode => 'Invalid or expired code';
 
   @override
-  String get proTitle => 'MealTracker Pro';
+  String get proTitle => 'Body Meal Pro';
 
   @override
   String get proUnlockFeatures => 'Unlock all features:';
@@ -1781,7 +1781,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onbRateTitle => 'Like your plan?';
 
   @override
-  String get onbRateSubtitle => 'Rate MealTracker — it helps us improve';
+  String get onbRateSubtitle => 'Rate Body Meal — it helps us improve';
 
   @override
   String get onbRateButton => 'Rate';
@@ -1882,11 +1882,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resultFaqCancelAIos =>
-      'Open Settings → your name → Subscriptions on iPhone, find MealTracker and tap Cancel Subscription.';
+      'Open Settings → your name → Subscriptions on iPhone, find Body Meal and tap Cancel Subscription.';
 
   @override
   String get resultFaqCancelAAndroid =>
-      'Open the Google Play Store → tap your profile → Payments & subscriptions → Subscriptions, find MealTracker and tap Cancel.';
+      'Open the Google Play Store → tap your profile → Payments & subscriptions → Subscriptions, find Body Meal and tap Cancel.';
 
   @override
   String get resultFaqSecurityQ => 'Is my personal information secure?';
@@ -2030,7 +2030,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onbConfidentSubtitle =>
-      'We tailor MealTracker specifically to your goals';
+      'We tailor Body Meal specifically to your goals';
 
   @override
   String get onbConfidentPrivacyTitle => 'Your privacy matters to us';
@@ -2040,7 +2040,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'We promise to keep your personal data confidential';
 
   @override
-  String get onbKeepResultTitle => 'MealTracker helps you keep results';
+  String get onbKeepResultTitle => 'Body Meal helps you keep results';
 
   @override
   String get onbKeepResultSubtitle =>

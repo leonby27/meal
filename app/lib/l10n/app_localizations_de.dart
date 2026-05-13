@@ -391,7 +391,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get invalidResetCode => 'Ungültiger oder abgelaufener Code';
 
   @override
-  String get proTitle => 'MealTracker Pro';
+  String get proTitle => 'Body Meal Pro';
 
   @override
   String get proUnlockFeatures => 'Alle Funktionen freischalten:';
@@ -1799,7 +1799,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onbRateSubtitle =>
-      'Bewerten Sie MealTracker — Sie helfen uns, besser zu werden';
+      'Bewerten Sie Body Meal — Sie helfen uns, besser zu werden';
 
   @override
   String get onbRateButton => 'Bewerten';
@@ -1901,11 +1901,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get resultFaqCancelAIos =>
-      'Öffnen Sie Einstellungen → Ihr Name → Abos auf dem iPhone, suchen Sie MealTracker und tippen auf Abo kündigen.';
+      'Öffnen Sie Einstellungen → Ihr Name → Abos auf dem iPhone, suchen Sie Body Meal und tippen auf Abo kündigen.';
 
   @override
   String get resultFaqCancelAAndroid =>
-      'Öffnen Sie den Google Play Store → Profilbild → Zahlungen und Abos → Abos, wählen Sie MealTracker und tippen auf Kündigen.';
+      'Öffnen Sie den Google Play Store → Profilbild → Zahlungen und Abos → Abos, wählen Sie Body Meal und tippen auf Kündigen.';
 
   @override
   String get resultFaqSecurityQ => 'Sind meine Daten sicher?';
@@ -2051,7 +2051,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onbConfidentSubtitle =>
-      'Wir passen MealTracker individuell an Ihre Ziele an';
+      'Wir passen Body Meal individuell an Ihre Ziele an';
 
   @override
   String get onbConfidentPrivacyTitle => 'Ihre Privatsphäre ist uns wichtig';
@@ -2061,7 +2061,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wir versprechen, Ihre persönlichen Daten vertraulich zu behandeln';
 
   @override
-  String get onbKeepResultTitle => 'MealTracker hilft, Ergebnisse zu halten';
+  String get onbKeepResultTitle => 'Body Meal hilft, Ergebnisse zu halten';
 
   @override
   String get onbKeepResultSubtitle =>

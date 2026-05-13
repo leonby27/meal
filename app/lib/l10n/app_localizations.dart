@@ -805,7 +805,7 @@ abstract class AppLocalizations {
   /// No description provided for @proTitle.
   ///
   /// In ru, this message translates to:
-  /// **'MealTracker Pro'**
+  /// **'Body Meal Pro'**
   String get proTitle;
 
   /// No description provided for @proUnlockFeatures.
@@ -3337,7 +3337,7 @@ abstract class AppLocalizations {
   /// No description provided for @onbRateSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Оцените MealTracker — это поможет нам стать лучше'**
+  /// **'Оцените Body Meal — это поможет нам стать лучше'**
   String get onbRateSubtitle;
 
   /// No description provided for @onbRateButton.
@@ -3481,13 +3481,13 @@ abstract class AppLocalizations {
   /// No description provided for @resultFaqCancelAIos.
   ///
   /// In ru, this message translates to:
-  /// **'Откройте Настройки → ваше имя → Подписки на iPhone, найдите MealTracker и нажмите «Отменить подписку».'**
+  /// **'Откройте Настройки → ваше имя → Подписки на iPhone, найдите Body Meal и нажмите «Отменить подписку».'**
   String get resultFaqCancelAIos;
 
   /// No description provided for @resultFaqCancelAAndroid.
   ///
   /// In ru, this message translates to:
-  /// **'Откройте Google Play → профиль → Платежи и подписки → Подписки, найдите MealTracker и нажмите «Отменить».'**
+  /// **'Откройте Google Play → профиль → Платежи и подписки → Подписки, найдите Body Meal и нажмите «Отменить».'**
   String get resultFaqCancelAAndroid;
 
   /// No description provided for @resultFaqSecurityQ.
@@ -3745,7 +3745,7 @@ abstract class AppLocalizations {
   /// No description provided for @onbConfidentSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Мы персонализируем MealTracker специально под ваши цели'**
+  /// **'Мы персонализируем Body Meal специально под ваши цели'**
   String get onbConfidentSubtitle;
 
   /// No description provided for @onbConfidentPrivacyTitle.
@@ -3763,7 +3763,7 @@ abstract class AppLocalizations {
   /// No description provided for @onbKeepResultTitle.
   ///
   /// In ru, this message translates to:
-  /// **'MealTracker помогает удерживать результат'**
+  /// **'Body Meal помогает удерживать результат'**
   String get onbKeepResultTitle;
 
   /// No description provided for @onbKeepResultSubtitle.
