@@ -328,16 +328,13 @@ class _PaywallScreenState extends State<PaywallScreen>
                                 price: _yearlyPriceLabel(sub),
                                 discountBadge:
                                     context.l10n.paywallYearlyDiscount,
-                                // The "Free trial included" badge used
-                                // to be hidden on the soft-paywall path
-                                // to avoid layering the trial language
-                                // on top of free-entries language. With
-                                // free entries gone there's no soft
-                                // path, but we still skip the badge so
-                                // the offer copy stays clean — Apple
-                                // offers the intro trial via the App
-                                // Store sheet at purchase time anyway.
-                                trialBadge: null,
+                                // Free-trial pill on the yearly card —
+                                // the intro is configured on Apple's
+                                // side, but surfacing the duration here
+                                // converts better than letting users
+                                // discover it only on the App Store
+                                // purchase sheet.
+                                trialBadge: context.l10n.paywallTrialBadge,
                                 isSelected: _selectedPlan == 1,
                                 isLoading:
                                     _yearlyProduct == null &&
@@ -455,7 +452,14 @@ class _PaywallScreenState extends State<PaywallScreen>
                           isLoading: _productsAreLoading(sub),
                           ctaLabel: _ctaLabel(),
                           disclaimer: context.l10n.paywallHardDisclaimer,
-                          showNoPayment: false,
+                          // Yearly ships with a free trial — surface the
+                          // same reassurance line that the onboarding
+                          // result / trial-reminder steps show above
+                          // their CTA. _BottomCTA already mirrors that
+                          // layout (check 22, label 16/w500, 20-pt gap
+                          // to button), so flipping the flag is enough
+                          // to match those screens verbatim.
+                          showNoPayment: true,
                           noPaymentVisible: _selectedPlanHasTrial,
                           textPrimary: textPrimary,
                           onSubscribe: _subscribe,
@@ -482,9 +486,11 @@ class _PaywallScreenState extends State<PaywallScreen>
   String _ctaLabel() {
     final l = context.l10n;
     if (_productsLoadFailed(SubscriptionService())) return l.paywallTryAgain;
-    // Always-hard now: every entry is the "subscribe to continue" CTA.
-    // Trial-eligible plans still get the trial wording when offered.
-    return _selectedPlanHasTrial ? l.paywallStartTrial : l.paywallSubscribeNow;
+    // Yearly plan ships with a free trial — show the trial-flavoured CTA.
+    // Weekly plan has no trial; the casual "Let's go" reads as a softer
+    // commitment than the formal "Subscribe" label.
+    if (_selectedPlanHasTrial) return l.paywallStartTrial;
+    return l.paywallGo;
   }
 }
 

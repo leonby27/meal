@@ -2944,6 +2944,12 @@ abstract class AppLocalizations {
   /// **'Оформить подписку'**
   String get paywallSubscribeNow;
 
+  /// No description provided for @paywallGo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начать'**
+  String get paywallGo;
+
   /// No description provided for @paywallHardDisclaimer.
   ///
   /// In ru, this message translates to:

@@ -529,6 +529,7 @@
   "barcodeScannerTitle": "Barcode-Scanner",
   "barcodeScanHint": "Richten Sie die Kamera auf einen Barcode",
   "paywallSubscribeNow": "Abonnieren",
+  "paywallGo": "Loslegen",
   "paywallHardDisclaimer": "Automatische Verlängerung. Jederzeit kündbar.",
   "paywallHardTitle": "Weiter\nmit Pro",
   "freeEntriesRemaining": "{count, plural, =1{1 kostenloser Eintrag übrig} other{{count} kostenlose Einträge übrig}}",

@@ -1557,6 +1557,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get paywallSubscribeNow => 'Оформить подписку';
 
   @override
+  String get paywallGo => 'Начать';
+
+  @override
   String get paywallHardDisclaimer => 'Автопродление. Отмена в любой момент.';
 
   @override

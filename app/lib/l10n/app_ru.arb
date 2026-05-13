@@ -705,6 +705,7 @@
   "barcodeScannerTitle": "Сканер штрих-кода",
   "barcodeScanHint": "Наведите камеру на штрих-код",
   "paywallSubscribeNow": "Оформить подписку",
+  "paywallGo": "Начать",
   "paywallHardDisclaimer": "Автопродление. Отмена в любой момент.",
   "paywallHardTitle": "Продолжайте\nс Pro",
   "freeEntriesRemaining": "{count, plural, =1{Осталась 1 бесплатная запись} few{Осталось {count} бесплатные записи} many{Осталось {count} бесплатных записей} other{Осталось {count} бесплатных записей}}",

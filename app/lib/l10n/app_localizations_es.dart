@@ -1563,6 +1563,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get paywallSubscribeNow => 'Suscribirse';
 
   @override
+  String get paywallGo => 'Empezar';
+
+  @override
   String get paywallHardDisclaimer =>
       'Renovación automática. Cancela en cualquier momento.';
 
