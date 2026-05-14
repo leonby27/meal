@@ -377,12 +377,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     final kind = _currentKind;
     final kinds = _kinds;
 
-    // iOS App Tracking Transparency: fire on the first real user-driven
-    // action (Welcome's "Get Started" tap), not at app launch. By this
-    // point the user has seen the brand/value proposition, so allow
-    // rates run ~2× higher than a cold-start prompt. The call is a
-    // no-op on Android and on installs that have already resolved ATT.
-    if (kind == _StepKind.welcome) {
+    // iOS App Tracking Transparency: fire right after the user commits
+    // to their personal plan (CTA tap on the result step). By this point
+    // they have invested time in the onboarding questionnaire, watched
+    // the 6-second loading animation, read their computed plan, and
+    // chosen to proceed — peak commitment, highest allow rate. Lifting
+    // the prompt from welcome to here roughly doubles authorized
+    // shares in Cal AI / Yazio-style flows. No-op on Android and on
+    // installs that have already resolved ATT.
+    if (kind == _StepKind.result) {
       unawaited(AnalyticsService.instance.requestAttPermissionIfNeeded());
     }
 
