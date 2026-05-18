@@ -61,8 +61,18 @@ rm -rf build/ios/archive
 
 # ---- 3. Build ---------------------------------------------------------------
 
+# Forward app/.env into the build as --dart-define flags so SDK keys land in
+# the binary at compile time. Same parsing as run.sh; skip blanks/comments.
+DART_DEFINES=()
+if [[ -f .env ]]; then
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    DART_DEFINES+=(--dart-define="$line")
+  done < .env
+fi
+
 info "running flutter build ipa --release ..."
-flutter build ipa --release
+flutter build ipa --release "${DART_DEFINES[@]}"
 
 # ---- 4. Verify the produced IPA --------------------------------------------
 

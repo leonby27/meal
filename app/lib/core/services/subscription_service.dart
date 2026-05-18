@@ -534,17 +534,15 @@ class SubscriptionService extends ChangeNotifier {
 
     // Yearly is sold with a free intro trial; weekly is not. Fire
     // `start_trial` (a Firebase-recommended event) so trial-start
-    // funnels and Google Ads trial-conversion events have a signal
-    // independent of the paid `purchase` event.
+    // funnels and Google Ads / TikTok trial-conversion events have a signal
+    // independent of the paid `purchase` event. AnalyticsService also fans
+    // this out to AppsFlyer (`af_start_trial`).
     if (product.id == yearlyId) {
-      await AnalyticsService.instance.logEvent(
-        'start_trial',
-        parameters: {
-          'currency': product.currencyCode,
-          'price': product.rawPrice,
-          'product_id': product.id,
-          'transaction_id': txId,
-        },
+      await AnalyticsService.instance.logStartTrial(
+        transactionId: txId,
+        price: product.rawPrice,
+        currency: product.currencyCode,
+        productId: product.id,
       );
     }
   }

@@ -73,6 +73,72 @@
 	<string>Grant photo library access to pick food images.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This allows Body Meal to measure ad performance so we can keep improving your personalized plan.</string>
+	<!--
+	  SKAdNetworkItems: the ad networks this app accepts SKAN install attribution
+	  from. Without these, even paid ads from TikTok won't show up as attributed
+	  installs for users who declined ATT (~70% of iOS). TikTok IDs are the only
+	  ones strictly required for the current campaign; the rest are pre-listed
+	  so adding Meta / Google / Snap / etc. later does not require a new App
+	  Store submission. Apple ignores IDs from networks we don't actually use.
+	-->
+	<key>SKAdNetworkItems</key>
+	<array>
+		<!-- TikTok / ByteDance / Pangle -->
+		<dict><key>SKAdNetworkIdentifier</key><string>238da6jt44.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>22mmun2rn5.skadnetwork</string></dict>
+		<!-- Meta (Facebook / Instagram Audience Network) -->
+		<dict><key>SKAdNetworkIdentifier</key><string>v9wttpbfk9.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>n38lu8286q.skadnetwork</string></dict>
+		<!-- Google (AdMob / Universal App Campaigns) -->
+		<dict><key>SKAdNetworkIdentifier</key><string>cstr6suwn9.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>4fzdc2evr5.skadnetwork</string></dict>
+		<!-- Snapchat -->
+		<dict><key>SKAdNetworkIdentifier</key><string>424m5254lk.skadnetwork</string></dict>
+		<!-- Twitter / X -->
+		<dict><key>SKAdNetworkIdentifier</key><string>4pfyvq9l8r.skadnetwork</string></dict>
+		<!-- Reddit -->
+		<dict><key>SKAdNetworkIdentifier</key><string>v72qych5uu.skadnetwork</string></dict>
+		<!-- Apple Search Ads -->
+		<dict><key>SKAdNetworkIdentifier</key><string>mlmmfzh3r3.skadnetwork</string></dict>
+		<!-- Unity Ads -->
+		<dict><key>SKAdNetworkIdentifier</key><string>4dzt52r2t5.skadnetwork</string></dict>
+		<!-- AppLovin -->
+		<dict><key>SKAdNetworkIdentifier</key><string>ludvb6z3bs.skadnetwork</string></dict>
+		<!-- ironSource -->
+		<dict><key>SKAdNetworkIdentifier</key><string>su67r6k2v3.skadnetwork</string></dict>
+		<!-- Vungle / Liftoff Monetize -->
+		<dict><key>SKAdNetworkIdentifier</key><string>gta9lk7p23.skadnetwork</string></dict>
+		<!-- Mintegral -->
+		<dict><key>SKAdNetworkIdentifier</key><string>kbd757ywx3.skadnetwork</string></dict>
+		<!-- Chartboost -->
+		<dict><key>SKAdNetworkIdentifier</key><string>f38h382jlk.skadnetwork</string></dict>
+		<!-- Tapjoy -->
+		<dict><key>SKAdNetworkIdentifier</key><string>ecpz2srf59.skadnetwork</string></dict>
+		<!-- AdColony -->
+		<dict><key>SKAdNetworkIdentifier</key><string>4468km3ulz.skadnetwork</string></dict>
+		<!-- InMobi -->
+		<dict><key>SKAdNetworkIdentifier</key><string>y45688jllp.skadnetwork</string></dict>
+		<!-- Moloco -->
+		<dict><key>SKAdNetworkIdentifier</key><string>47vhws6wlr.skadnetwork</string></dict>
+		<!-- Liftoff -->
+		<dict><key>SKAdNetworkIdentifier</key><string>7ug5zh24hu.skadnetwork</string></dict>
+		<!-- Smaato -->
+		<dict><key>SKAdNetworkIdentifier</key><string>prcb7njmu6.skadnetwork</string></dict>
+		<!-- Fyber -->
+		<dict><key>SKAdNetworkIdentifier</key><string>8s468mfl3y.skadnetwork</string></dict>
+		<!-- Verve -->
+		<dict><key>SKAdNetworkIdentifier</key><string>v4nxqhlyqp.skadnetwork</string></dict>
+		<!-- Bigo Ads -->
+		<dict><key>SKAdNetworkIdentifier</key><string>24t9a8vw3c.skadnetwork</string></dict>
+	</array>
+	<!--
+	  Lets iOS forward SKAN postbacks to AppsFlyer's endpoint (AppsFlyer then
+	  fans them out to TikTok and any other partners). Without this, Apple
+	  sends postbacks only to the ad network that won the auction — AppsFlyer
+	  never sees them, and the AppsFlyer dashboard / TikTok reports stay empty.
+	-->
+	<key>NSAdvertisingAttributionReportEndpoint</key>
+	<string>https://appsflyer-skadnetwork.com</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

@@ -2,9 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.CAMERA"/>
-    <!-- We don't use advertising ID; remove the permission auto-added by Play Services -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"
-        tools:node="remove"/>
+    <!-- AppsFlyer (MMP) reads GAID on Android 13+ for install attribution.
+         Without this permission GAID becomes null and TikTok / other ad
+         networks lose deterministic install matching, falling back to
+         probabilistic only. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
     <application
         android:label="Body Meal"
         android:usesCleartextTraffic="true"

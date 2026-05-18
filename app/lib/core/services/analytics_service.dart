@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:meal_tracker/core/services/appsflyer_service.dart';
 
 class AnalyticsService {
   AnalyticsService._();
@@ -99,17 +100,26 @@ class AnalyticsService {
       if (kDebugMode) {
         debugPrint('Analytics skipped: begin_checkout value=$value $currency');
       }
-      return;
+    } else {
+      try {
+        await analytics.logBeginCheckout(
+          value: value,
+          currency: currency,
+          items: items,
+          coupon: coupon,
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('Analytics logBeginCheckout failed: $e');
+      }
     }
-    try {
-      await analytics.logBeginCheckout(
+
+    final firstItem = items.isNotEmpty ? items.first : null;
+    if (firstItem != null) {
+      await AppsFlyerService.instance.logBeginCheckout(
         value: value,
         currency: currency,
-        items: items,
-        coupon: coupon,
+        productId: firstItem.itemId ?? '',
       );
-    } catch (e) {
-      if (kDebugMode) debugPrint('Analytics logBeginCheckout failed: $e');
     }
   }
 
@@ -127,19 +137,67 @@ class AnalyticsService {
           'Analytics skipped: purchase tx=$transactionId value=$value $currency',
         );
       }
-      return;
+    } else {
+      try {
+        await analytics.logPurchase(
+          transactionId: transactionId,
+          value: value,
+          currency: currency,
+          items: items,
+          coupon: coupon,
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('Analytics logPurchase failed: $e');
+      }
     }
-    try {
-      await analytics.logPurchase(
+
+    final firstItem = items.isNotEmpty ? items.first : null;
+    if (firstItem != null) {
+      await AppsFlyerService.instance.logPurchase(
         transactionId: transactionId,
         value: value,
         currency: currency,
-        items: items,
-        coupon: coupon,
+        productId: firstItem.itemId ?? '',
       );
-    } catch (e) {
-      if (kDebugMode) debugPrint('Analytics logPurchase failed: $e');
     }
+  }
+
+  /// Paywall impression. Feeds Firebase as a custom event AND AppsFlyer's
+  /// `af_content_view` so TikTok/other networks can optimise toward
+  /// paywall-reach (a higher-frequency upper-funnel signal than purchase).
+  Future<void> logPaywallView({String? planId}) async {
+    await logEvent(
+      'paywall_viewed',
+      parameters: planId == null ? null : {'plan': planId},
+    );
+    await AppsFlyerService.instance.logPaywallView(source: planId);
+  }
+
+  /// Trial start (yearly plan only — weekly has no intro trial). Fires the
+  /// Firebase-recommended `start_trial` event AND AppsFlyer's `af_start_trial`
+  /// so trial-conversion campaigns can optimise independently from paid
+  /// purchases.
+  Future<void> logStartTrial({
+    required String transactionId,
+    required double price,
+    required String currency,
+    required String productId,
+  }) async {
+    await logEvent(
+      'start_trial',
+      parameters: {
+        'currency': currency,
+        'price': price,
+        'product_id': productId,
+        'transaction_id': transactionId,
+      },
+    );
+    await AppsFlyerService.instance.logTrialStart(
+      transactionId: transactionId,
+      value: price,
+      currency: currency,
+      productId: productId,
+    );
   }
 
   // ---------------------------------------------------------------------------

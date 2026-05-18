@@ -67,9 +67,8 @@ class _PaywallScreenState extends State<PaywallScreen>
     _eventsSub = sub.events.listen(_onSubEvent);
 
     unawaited(
-      AnalyticsService.instance.logEvent(
-        'paywall_viewed',
-        parameters: {'plan': _planIdForIndex(_selectedPlan)},
+      AnalyticsService.instance.logPaywallView(
+        planId: _planIdForIndex(_selectedPlan),
       ),
     );
 

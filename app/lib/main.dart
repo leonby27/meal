@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,6 +11,7 @@ import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/api/api_client.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/analytics_service.dart';
+import 'package:meal_tracker/core/services/appsflyer_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/device_id_service.dart';
 import 'package:meal_tracker/core/services/entitlement_service.dart';
@@ -31,6 +34,12 @@ void main() async {
       debugPrint('Firebase initialization failed: $e');
     }
   }
+
+  // AppsFlyer fans installs/purchases out to TikTok For Business (and any
+  // other ad networks we wire later). Init runs in parallel with Firebase
+  // user-state plumbing below — the SDK queues events until startup
+  // completes, so order between AppsFlyer init and runApp() doesn't matter.
+  unawaited(AppsFlyerService.instance.init());
 
   await Future.wait([
     initializeDateFormatting('ru', null),
@@ -77,6 +86,7 @@ Future<void> _wireAnalyticsUserState() async {
   try {
     final deviceId = await DeviceIdService.getOrCreate();
     await AnalyticsService.instance.setUserId(deviceId);
+    AppsFlyerService.instance.setUserId(deviceId);
   } catch (e) {
     debugPrint('Analytics: setUserId failed: $e');
   }
