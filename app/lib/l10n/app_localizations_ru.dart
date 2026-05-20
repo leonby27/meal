@@ -2385,4 +2385,40 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get macroSalt => 'Соль';
+
+  @override
+  String get burnSectionTitle => 'Как сжечь калории?';
+
+  @override
+  String get burnWalking => 'Ходьба';
+
+  @override
+  String get burnRunning => 'Бег';
+
+  @override
+  String get burnGym => 'Тренировка';
+
+  @override
+  String get burnCycling => 'Велосипед';
+
+  @override
+  String get burnResting => 'Покой';
+
+  @override
+  String get burnOr => 'или';
+
+  @override
+  String burnApproxSteps(String count) {
+    return '~ $count шагов';
+  }
+
+  @override
+  String burnApproxKm(String count) {
+    return '~ $count км';
+  }
+
+  @override
+  String burnApproxHoursMinutes(int hours, int minutes) {
+    return '~ $hours ч $minutes мин';
+  }
 }

@@ -1114,5 +1114,39 @@
   "macroStatusAverage": "Средне",
   "macroStatusGood": "Хорошо",
   "dishWeightLabel": "Вес блюда",
-  "macroSalt": "Соль"
+  "macroSalt": "Соль",
+  "burnSectionTitle": "Как сжечь калории?",
+  "burnWalking": "Ходьба",
+  "burnRunning": "Бег",
+  "burnGym": "Тренировка",
+  "burnCycling": "Велосипед",
+  "burnResting": "Покой",
+  "burnOr": "или",
+  "burnApproxSteps": "~ {count} шагов",
+  "@burnApproxSteps": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxKm": "~ {count} км",
+  "@burnApproxKm": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxHoursMinutes": "~ {hours} ч {minutes} мин",
+  "@burnApproxHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  }
 }

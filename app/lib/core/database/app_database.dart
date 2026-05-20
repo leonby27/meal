@@ -63,6 +63,20 @@ class FoodLogs extends Table {
       integer().nullable().named('health_rating')();
   TextColumn get healthComment =>
       text().nullable().named('health_comment')();
+  // Short witty caption shown over the dish photo in the AI recognition
+  // sheet. Persisted so reopening a saved meal keeps the same line.
+  TextColumn get mealQuote =>
+      text().nullable().named('meal_quote')();
+  // Full `complete_macro` JSON blob (sugar/fiber/sat_fat/cholesterol/
+  // trans_fat/sodium/glycemic_load/caloric_density/processing_level).
+  // Stored verbatim so the section re-renders identically on reopen
+  // without re-asking the AI.
+  TextColumn get completeMacroJson =>
+      text().nullable().named('complete_macro_json')();
+  // Full `goal_fit` JSON blob ({"positive":[...],"negative":[...]}).
+  // Same persistence rationale as completeMacroJson.
+  TextColumn get goalFitJson =>
+      text().nullable().named('goal_fit_json')();
   DateTimeColumn get createdAt =>
       dateTime().withDefault(currentDateAndTime).named('created_at')();
   DateTimeColumn get updatedAt =>
@@ -121,7 +135,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -144,6 +158,11 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await m.addColumn(foodLogs, foodLogs.healthRating);
         await m.addColumn(foodLogs, foodLogs.healthComment);
+      }
+      if (from < 6) {
+        await m.addColumn(foodLogs, foodLogs.mealQuote);
+        await m.addColumn(foodLogs, foodLogs.completeMacroJson);
+        await m.addColumn(foodLogs, foodLogs.goalFitJson);
       }
     },
   );

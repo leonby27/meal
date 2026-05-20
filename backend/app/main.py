@@ -40,6 +40,11 @@ async def _run_migrations():
         ("products", "source", "VARCHAR(50)"),
         ("food_logs", "image_url", "VARCHAR(2000)"),
         ("food_logs", "ingredients_json", "TEXT"),
+        ("food_logs", "health_rating", "INTEGER"),
+        ("food_logs", "health_comment", "TEXT"),
+        ("food_logs", "meal_quote", "TEXT"),
+        ("food_logs", "complete_macro_json", "TEXT"),
+        ("food_logs", "goal_fit_json", "TEXT"),
     ]
     async with engine.begin() as conn:
         for table, column, col_type in migrations:

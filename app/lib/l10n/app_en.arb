@@ -938,5 +938,39 @@
   "macroStatusAverage": "Average",
   "macroStatusGood": "Good",
   "dishWeightLabel": "Dish weight",
-  "macroSalt": "Salt"
+  "macroSalt": "Salt",
+  "burnSectionTitle": "How to burn calories?",
+  "burnWalking": "Walking",
+  "burnRunning": "Running",
+  "burnGym": "Gym workout",
+  "burnCycling": "Cycling",
+  "burnResting": "Body at rest",
+  "burnOr": "or",
+  "burnApproxSteps": "~ {count} steps",
+  "@burnApproxSteps": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxKm": "~ {count} km",
+  "@burnApproxKm": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxHoursMinutes": "~ {hours} h {minutes} min",
+  "@burnApproxHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -26,6 +26,13 @@ class FoodLogEntry(BaseModel):
     calories: float
     image_url: Optional[str] = None
     ingredients_json: Optional[str] = None
+    # AI-supplied analytics fields — all optional so older clients that
+    # don't send them still push successfully.
+    health_rating: Optional[int] = None
+    health_comment: Optional[str] = None
+    meal_quote: Optional[str] = None
+    complete_macro_json: Optional[str] = None
+    goal_fit_json: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -66,6 +73,11 @@ async def sync_push(
             log.calories = entry.calories
             log.image_url = entry.image_url
             log.ingredients_json = entry.ingredients_json
+            log.health_rating = entry.health_rating
+            log.health_comment = entry.health_comment
+            log.meal_quote = entry.meal_quote
+            log.complete_macro_json = entry.complete_macro_json
+            log.goal_fit_json = entry.goal_fit_json
         else:
             log = FoodLog(
                 id=entry.id,
@@ -81,6 +93,11 @@ async def sync_push(
                 calories=entry.calories,
                 image_url=entry.image_url,
                 ingredients_json=entry.ingredients_json,
+                health_rating=entry.health_rating,
+                health_comment=entry.health_comment,
+                meal_quote=entry.meal_quote,
+                complete_macro_json=entry.complete_macro_json,
+                goal_fit_json=entry.goal_fit_json,
             )
             db.add(log)
         synced += 1
@@ -116,6 +133,11 @@ async def sync_pull(
         calories=log.calories,
         image_url=log.image_url,
         ingredients_json=log.ingredients_json,
+        health_rating=log.health_rating,
+        health_comment=log.health_comment,
+        meal_quote=log.meal_quote,
+        complete_macro_json=log.complete_macro_json,
+        goal_fit_json=log.goal_fit_json,
         created_at=log.created_at,
         updated_at=log.updated_at,
     ) for log in logs]

@@ -938,5 +938,39 @@
   "macroStatusAverage": "Promedio",
   "macroStatusGood": "Bueno",
   "dishWeightLabel": "Peso del plato",
-  "macroSalt": "Sal"
+  "macroSalt": "Sal",
+  "burnSectionTitle": "¿Cómo quemar calorías?",
+  "burnWalking": "Caminar",
+  "burnRunning": "Correr",
+  "burnGym": "Entrenamiento",
+  "burnCycling": "Bicicleta",
+  "burnResting": "En reposo",
+  "burnOr": "o",
+  "burnApproxSteps": "~ {count} pasos",
+  "@burnApproxSteps": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxKm": "~ {count} km",
+  "@burnApproxKm": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxHoursMinutes": "~ {hours} h {minutes} min",
+  "@burnApproxHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  }
 }

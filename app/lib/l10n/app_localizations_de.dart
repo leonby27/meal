@@ -2389,4 +2389,40 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get macroSalt => 'Salz';
+
+  @override
+  String get burnSectionTitle => 'Kalorien verbrennen?';
+
+  @override
+  String get burnWalking => 'Gehen';
+
+  @override
+  String get burnRunning => 'Laufen';
+
+  @override
+  String get burnGym => 'Krafttraining';
+
+  @override
+  String get burnCycling => 'Radfahren';
+
+  @override
+  String get burnResting => 'In Ruhe';
+
+  @override
+  String get burnOr => 'oder';
+
+  @override
+  String burnApproxSteps(String count) {
+    return '~ $count Schritte';
+  }
+
+  @override
+  String burnApproxKm(String count) {
+    return '~ $count km';
+  }
+
+  @override
+  String burnApproxHoursMinutes(int hours, int minutes) {
+    return '~ $hours Std. $minutes Min.';
+  }
 }

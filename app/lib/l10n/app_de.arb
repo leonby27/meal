@@ -938,5 +938,39 @@
   "macroStatusAverage": "Durchschnittlich",
   "macroStatusGood": "Gut",
   "dishWeightLabel": "Gerichtgewicht",
-  "macroSalt": "Salz"
+  "macroSalt": "Salz",
+  "burnSectionTitle": "Kalorien verbrennen?",
+  "burnWalking": "Gehen",
+  "burnRunning": "Laufen",
+  "burnGym": "Krafttraining",
+  "burnCycling": "Radfahren",
+  "burnResting": "In Ruhe",
+  "burnOr": "oder",
+  "burnApproxSteps": "~ {count} Schritte",
+  "@burnApproxSteps": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxKm": "~ {count} km",
+  "@burnApproxKm": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxHoursMinutes": "~ {hours} Std. {minutes} Min.",
+  "@burnApproxHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -119,6 +119,55 @@ String _goalLabel(AppLocalizations l10n, String? goal) {
   }
 }
 
+/// Activity-equivalent burn estimates for the "How to burn calories?"
+/// section. Derived from the standard MET formula
+///   kcal/min = MET × weight_kg × 3.5 / 200
+/// — the same one the WHO and ACSM physical-activity guidelines use —
+/// with conservative MET values for the typical recreational pace of
+/// each activity. We round generously so the numbers stay readable;
+/// these are "ballpark how-long-would-it-take" hints, not training-
+/// log precision.
+class _BurnEquivalent {
+  final int walkSteps;
+  final double walkHours;
+  final double runKm;
+  final double runMinutes;
+  final double gymMinutes;
+  final double cyclingKm;
+  final double cyclingHours;
+  final double restHours;
+
+  const _BurnEquivalent({
+    required this.walkSteps,
+    required this.walkHours,
+    required this.runKm,
+    required this.runMinutes,
+    required this.gymMinutes,
+    required this.cyclingKm,
+    required this.cyclingHours,
+    required this.restHours,
+  });
+
+  factory _BurnEquivalent.forCalories(double kcal, double weightKg) {
+    double kcalPerMin(double met) => met * weightKg * 3.5 / 200;
+    final walkMin = kcal / kcalPerMin(3.5);     // walking ~5 km/h
+    final runMin = kcal / kcalPerMin(9.0);      // running ~10 km/h
+    final gymMin = kcal / kcalPerMin(5.0);      // mixed strength
+    final cyclingMin = kcal / kcalPerMin(6.0);  // cycling ~15 km/h
+    final restMin = kcal / kcalPerMin(1.0);     // very light rest
+    return _BurnEquivalent(
+      walkSteps: (walkMin * 100).round(),       // ~100 steps/min
+      walkHours: walkMin / 60,
+      runKm: runMin * (10 / 60),                // 10 km/h
+      runMinutes: runMin,
+      gymMinutes: gymMin,
+      cyclingKm: cyclingMin * (15 / 60),        // 15 km/h
+      cyclingHours: cyclingMin / 60,
+      restHours: restMin / 60,
+    );
+  }
+}
+
 /// Bucket for Complete-macro rows. The visual treatment (background tint
 /// and trailing icon) is purely a function of this status, so the
 /// per-field threshold helpers below all return one of these three.
@@ -614,6 +663,12 @@ class AiMealResultSheet extends StatefulWidget {
       'ingredients': ingredients,
       if (log.healthRating != null) 'health_rating': log.healthRating,
       if (log.healthComment != null) 'health_comment': log.healthComment,
+      if (log.mealQuote != null && log.mealQuote!.isNotEmpty)
+        'meal_quote': log.mealQuote,
+      if (log.completeMacroJson != null)
+        'complete_macro': _decodeMacroJson(log.completeMacroJson!),
+      if (log.goalFitJson != null)
+        'goal_fit': _decodeGoalFitJson(log.goalFitJson!),
     };
 
     await showModalBottomSheet<void>(
@@ -654,6 +709,12 @@ class AiMealResultSheet extends StatefulWidget {
       'ingredients': ingredients,
       if (log.healthRating != null) 'health_rating': log.healthRating,
       if (log.healthComment != null) 'health_comment': log.healthComment,
+      if (log.mealQuote != null && log.mealQuote!.isNotEmpty)
+        'meal_quote': log.mealQuote,
+      if (log.completeMacroJson != null)
+        'complete_macro': _decodeMacroJson(log.completeMacroJson!),
+      if (log.goalFitJson != null)
+        'goal_fit': _decodeGoalFitJson(log.goalFitJson!),
     };
 
     final saved = await showModalBottomSheet<bool>(
@@ -691,6 +752,32 @@ class AiMealResultSheet extends StatefulWidget {
     } catch (_) {
       return <Map<String, dynamic>>[];
     }
+  }
+
+  /// Decodes the persisted `complete_macro` JSON blob back into the same
+  /// map shape the AI returned originally so [_initResultControllers]
+  /// rehydrates it through its existing parsing path. Returns an empty
+  /// map (not null) on malformed JSON — keeps the section quietly
+  /// absent rather than crashing the sheet.
+  static Map<String, dynamic> _decodeMacroJson(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        return decoded.map((k, v) => MapEntry('$k', v));
+      }
+    } catch (_) {}
+    return const <String, dynamic>{};
+  }
+
+  /// Same idea as [_decodeMacroJson] for `goal_fit`.
+  static Map<String, dynamic> _decodeGoalFitJson(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        return decoded.map((k, v) => MapEntry('$k', v));
+      }
+    } catch (_) {}
+    return const <String, dynamic>{};
   }
 
   static String _nameForLog(
@@ -763,6 +850,12 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   /// Daily calorie target loaded from settings. Used for the "X% of your
   /// daily calories" indicator. 0 means goal not loaded yet — hide percent.
   double _dailyCalorieGoal = 0;
+
+  /// User weight in kg, loaded from settings. Used by the
+  /// "How to burn calories" section to scale MET-based estimates.
+  /// Defaults to 70 kg if not set — close enough to the global average
+  /// that pre-onboarding users still see sensible numbers.
+  double _userWeightKg = 70;
 
   bool _isLoading = false;
   String? _loadingError;
@@ -839,6 +932,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     _resolveImagePath();
     _loadDailyCalorieGoal();
     _loadUserGoalFromSettings();
+    _loadUserWeightFromSettings();
   }
 
   Future<void> _loadUserGoalFromSettings() async {
@@ -846,6 +940,19 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     if (!mounted) return;
     if (goal == null) return;
     setState(() => _userGoal = goal);
+  }
+
+  Future<void> _loadUserWeightFromSettings() async {
+    try {
+      final db = await AppDatabase.getInstance();
+      final raw = await db.getSetting('user_weight');
+      final parsed = double.tryParse(raw ?? '');
+      if (parsed == null || parsed <= 0) return;
+      if (!mounted) return;
+      setState(() => _userWeightKg = parsed);
+    } catch (_) {
+      // Defaults to 70 kg — left untouched on failure.
+    }
   }
 
   Future<void> _loadDailyCalorieGoal() async {
@@ -1127,6 +1234,38 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         };
       }).toList(),
     );
+  }
+
+  /// Serializes the current `_completeMacro` for persistence. Mirrors the
+  /// JSON shape the AI returns so the same `_initResultControllers` path
+  /// can rehydrate it on reopen without a special case. Returns null when
+  /// no field was populated — keeps the column nullable and avoids
+  /// writing empty `{}` rows.
+  String? _completeMacroJson() {
+    if (_completeMacro.isEmpty) return null;
+    final m = _completeMacro;
+    return jsonEncode(<String, dynamic>{
+      if (m.sugarG != null) 'sugar_g': m.sugarG,
+      if (m.addedSugarG != null) 'added_sugar_g': m.addedSugarG,
+      if (m.fiberG != null) 'fiber_g': m.fiberG,
+      if (m.saturatedFatG != null) 'saturated_fat_g': m.saturatedFatG,
+      if (m.cholesterolMg != null) 'cholesterol_mg': m.cholesterolMg,
+      if (m.transFatG != null) 'trans_fat_g': m.transFatG,
+      if (m.sodiumMg != null) 'sodium_mg': m.sodiumMg,
+      if (m.glycemicLoad != null) 'glycemic_load': m.glycemicLoad,
+      if (m.caloricDensity != null) 'caloric_density': m.caloricDensity,
+      if (m.processingLevel != null) 'processing_level': m.processingLevel,
+    });
+  }
+
+  /// Serializes `_goalFit` to the same `{positive: [...], negative: [...]}`
+  /// shape the AI returns, so the rehydrate path is uniform.
+  String? _goalFitJson() {
+    if (_goalFit.isEmpty) return null;
+    return jsonEncode(<String, dynamic>{
+      'positive': _goalFit.positive,
+      'negative': _goalFit.negative,
+    });
   }
 
   /// Cached macro split (each macro's share of total calories) from the last
@@ -1513,6 +1652,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         ingredientsJson: drift.Value(ingredientsJson),
         healthRating: drift.Value(_persistedHealthRating),
         healthComment: drift.Value(_persistedHealthComment),
+        mealQuote: drift.Value(_mealQuote),
+        completeMacroJson: drift.Value(_completeMacroJson()),
+        goalFitJson: drift.Value(_goalFitJson()),
         updatedAt: drift.Value(DateTime.now()),
         synced: const drift.Value(false),
       );
@@ -1535,6 +1677,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         ingredientsJson: drift.Value(ingredientsJson),
         healthRating: drift.Value(_persistedHealthRating),
         healthComment: drift.Value(_persistedHealthComment),
+        mealQuote: drift.Value(_mealQuote),
+        completeMacroJson: drift.Value(_completeMacroJson()),
+        goalFitJson: drift.Value(_goalFitJson()),
       ));
 
     }
@@ -1581,6 +1726,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         ingredientsJson: drift.Value(_ingredientsJson()),
         healthRating: drift.Value(_persistedHealthRating),
         healthComment: drift.Value(_persistedHealthComment),
+        mealQuote: drift.Value(_mealQuote),
+        completeMacroJson: drift.Value(_completeMacroJson()),
+        goalFitJson: drift.Value(_goalFitJson()),
         updatedAt: drift.Value(DateTime.now()),
         synced: const drift.Value(false),
       );
@@ -1973,6 +2121,10 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           if (!_goalFit.isEmpty) ...[
             const SizedBox(height: 16),
             _buildGoalFitSection(c),
+          ],
+          if (!_paramsEditMode && _val(_caloriesCtl) > 0) ...[
+            const SizedBox(height: 16),
+            _buildBurnCaloriesSection(c),
           ],
           if (!_completeMacro.isEmpty) ...[
             const SizedBox(height: 16),
@@ -2710,8 +2862,17 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                     decoration: InputDecoration(
                       isCollapsed: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                      // Outer Container already draws the 1 px border;
+                      // killing every TextField border state stops the
+                      // theme's default underline from layering on top.
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      focusedErrorBorder: InputBorder.none,
                       filled: false,
+                      fillColor: Colors.transparent,
                       hintText: context.l10n.refineDishHint,
                       hintStyle: TextStyle(
                         color: hint,
@@ -3370,6 +3531,177 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         ],
       ),
     );
+  }
+
+  /// "How to burn calories?" — five activity rows (Walking / Running /
+  /// Gym workout / Cycling / Body at rest) with km / steps / hours
+  /// derived from the dish's total calories and the user's weight.
+  /// Hidden when total calories are zero (e.g. a glass of water).
+  Widget _buildBurnCaloriesSection(_AiSheetColors c) {
+    final l10n = context.l10n;
+    final kcal = _val(_caloriesCtl);
+    if (kcal <= 0) return const SizedBox.shrink();
+    final burn = _BurnEquivalent.forCalories(kcal, _userWeightKg);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(c, l10n.burnSectionTitle),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: c.cardBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildBurnRow(
+                c,
+                icon: Icons.directions_walk_rounded,
+                label: l10n.burnWalking,
+                primary: l10n.burnApproxSteps(
+                  _formatStepsCount(burn.walkSteps),
+                ),
+                secondary: l10n.approxHours(burn.walkHours.round().clamp(1, 99)),
+              ),
+              const SizedBox(height: 6),
+              _buildBurnRow(
+                c,
+                icon: Icons.directions_run_rounded,
+                label: l10n.burnRunning,
+                primary: l10n.burnApproxKm(burn.runKm.toStringAsFixed(0)),
+                secondary: _formatBurnDuration(burn.runMinutes),
+              ),
+              const SizedBox(height: 6),
+              _buildBurnRow(
+                c,
+                icon: Icons.fitness_center_rounded,
+                label: l10n.burnGym,
+                primary: _formatBurnDuration(burn.gymMinutes),
+              ),
+              const SizedBox(height: 6),
+              _buildBurnRow(
+                c,
+                icon: Icons.directions_bike_rounded,
+                label: l10n.burnCycling,
+                primary: l10n.burnApproxKm(burn.cyclingKm.toStringAsFixed(0)),
+                secondary: l10n.approxHours(
+                  burn.cyclingHours.round().clamp(1, 99),
+                ),
+              ),
+              const SizedBox(height: 6),
+              _buildBurnRow(
+                c,
+                icon: Icons.bed_rounded,
+                label: l10n.burnResting,
+                primary: l10n.approxHours(burn.restHours.round().clamp(1, 99)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Single burn row — icon + label on the left, value(s) on the right.
+  /// When [secondary] is provided we join with a localised "or" so users
+  /// see two equivalent ways of burning the same calories.
+  Widget _buildBurnRow(
+    _AiSheetColors c, {
+    required IconData icon,
+    required String label,
+    required String primary,
+    String? secondary,
+  }) {
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        color: c.back,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: c.onSurface),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: c.onSurface,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 18 / 14,
+              ),
+            ),
+          ),
+          _buildBurnValueText(c, primary, secondary),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBurnValueText(
+    _AiSheetColors c,
+    String primary,
+    String? secondary,
+  ) {
+    final primaryStyle = TextStyle(
+      color: c.onSurface,
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      height: 18 / 14,
+    );
+    if (secondary == null) {
+      return Text(primary, style: primaryStyle);
+    }
+    final secondaryStyle = TextStyle(
+      color: c.secondaryText,
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      height: 18 / 14,
+    );
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: primary, style: primaryStyle),
+          TextSpan(text: '  ${context.l10n.burnOr}  ', style: secondaryStyle),
+          TextSpan(text: secondary, style: primaryStyle),
+        ],
+      ),
+    );
+  }
+
+  /// Formats step counts the way native tracker apps do: 8 723 → "8 700",
+  /// 12 345 → "12 000", to avoid spurious precision and keep the row
+  /// stable when the user adjusts the dish weight by ±10 g via the stepper.
+  String _formatStepsCount(int steps) {
+    if (steps < 1000) return steps.toString();
+    final rounded = (steps / 100).round() * 100;
+    final s = rounded.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+
+  /// Human-readable "~ 1 h 15 min" / "~ 45 min" / "~ 2 h" depending on
+  /// the total minutes. Reuses approxHours / approxMinutes for the pure
+  /// cases and the new burnApproxHoursMinutes for the mixed one.
+  String _formatBurnDuration(double minutes) {
+    final m = minutes.round();
+    if (m <= 0) return context.l10n.approxMinutes(1);
+    if (m < 60) return context.l10n.approxMinutes(m);
+    final h = m ~/ 60;
+    final rem = m % 60;
+    if (rem == 0) return context.l10n.approxHours(h);
+    return context.l10n.burnApproxHoursMinutes(h, rem);
   }
 
   /// "Complete macro" — grouped breakdown of dish nutrition into three

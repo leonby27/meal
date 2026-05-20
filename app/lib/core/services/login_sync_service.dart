@@ -122,6 +122,14 @@ class LoginSyncService {
       'calories': log.calories,
       'image_url': log.imageUrl,
       'ingredients_json': log.ingredientsJson,
+      // AI-supplied analytics fields — keep the snake_case names the
+      // backend expects on `/api/sync/push`. Null values are forwarded
+      // so a cleared meal_quote propagates instead of being sticky.
+      'health_rating': log.healthRating,
+      'health_comment': log.healthComment,
+      'meal_quote': log.mealQuote,
+      'complete_macro_json': log.completeMacroJson,
+      'goal_fit_json': log.goalFitJson,
       'created_at': log.createdAt.toUtc().toIso8601String(),
       'updated_at': log.updatedAt.toUtc().toIso8601String(),
     };
@@ -141,6 +149,11 @@ class LoginSyncService {
       calories: Value((json['calories'] as num?)?.toDouble() ?? 0),
       imageUrl: Value(json['image_url'] as String?),
       ingredientsJson: Value(json['ingredients_json'] as String?),
+      healthRating: Value(json['health_rating'] as int?),
+      healthComment: Value(json['health_comment'] as String?),
+      mealQuote: Value(json['meal_quote'] as String?),
+      completeMacroJson: Value(json['complete_macro_json'] as String?),
+      goalFitJson: Value(json['goal_fit_json'] as String?),
       createdAt: _parseTimestamp(json['created_at']),
       updatedAt: _parseTimestamp(json['updated_at']),
     );

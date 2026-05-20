@@ -938,5 +938,39 @@
   "macroStatusAverage": "Moyen",
   "macroStatusGood": "Bon",
   "dishWeightLabel": "Poids du plat",
-  "macroSalt": "Sel"
+  "macroSalt": "Sel",
+  "burnSectionTitle": "Comment brûler les calories ?",
+  "burnWalking": "Marche",
+  "burnRunning": "Course",
+  "burnGym": "Musculation",
+  "burnCycling": "Vélo",
+  "burnResting": "Au repos",
+  "burnOr": "ou",
+  "burnApproxSteps": "~ {count} pas",
+  "@burnApproxSteps": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxKm": "~ {count} km",
+  "@burnApproxKm": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxHoursMinutes": "~ {hours} h {minutes} min",
+  "@burnApproxHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  }
 }

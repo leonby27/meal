@@ -36,6 +36,17 @@ class FoodLog(Base):
     calories: Mapped[float] = mapped_column(Float, default=0)
     image_url: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
     ingredients_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # AI-supplied health verdict (1-10) + one-sentence comment. Persisted
+    # so cloud sync round-trips the same numbers the client locally has.
+    health_rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    health_comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Light-irony caption shown above the dish photo. Plain text, ≤100 ch.
+    meal_quote: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Verbatim JSON blobs for the AI-supplied `complete_macro` and
+    # `goal_fit` payloads. Stored as opaque text so the schema doesn't
+    # need to change every time we add a sub-field.
+    complete_macro_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    goal_fit_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now()
     )

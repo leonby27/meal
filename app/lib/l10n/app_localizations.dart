@@ -4377,6 +4377,66 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Соль'**
   String get macroSalt;
+
+  /// No description provided for @burnSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как сжечь калории?'**
+  String get burnSectionTitle;
+
+  /// No description provided for @burnWalking.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ходьба'**
+  String get burnWalking;
+
+  /// No description provided for @burnRunning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бег'**
+  String get burnRunning;
+
+  /// No description provided for @burnGym.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тренировка'**
+  String get burnGym;
+
+  /// No description provided for @burnCycling.
+  ///
+  /// In ru, this message translates to:
+  /// **'Велосипед'**
+  String get burnCycling;
+
+  /// No description provided for @burnResting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Покой'**
+  String get burnResting;
+
+  /// No description provided for @burnOr.
+  ///
+  /// In ru, this message translates to:
+  /// **'или'**
+  String get burnOr;
+
+  /// No description provided for @burnApproxSteps.
+  ///
+  /// In ru, this message translates to:
+  /// **'~ {count} шагов'**
+  String burnApproxSteps(String count);
+
+  /// No description provided for @burnApproxKm.
+  ///
+  /// In ru, this message translates to:
+  /// **'~ {count} км'**
+  String burnApproxKm(String count);
+
+  /// No description provided for @burnApproxHoursMinutes.
+  ///
+  /// In ru, this message translates to:
+  /// **'~ {hours} ч {minutes} мин'**
+  String burnApproxHoursMinutes(int hours, int minutes);
 }
 
 class _AppLocalizationsDelegate
