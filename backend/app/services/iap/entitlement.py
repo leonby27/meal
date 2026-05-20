@@ -229,6 +229,15 @@ async def upsert_promo(
             row.expires_at = base + week
         if user_id and not row.user_id:
             row.user_id = user_id
+        # Re-redeeming after a revoke is an explicit user signal — they
+        # typed the code again on the paywall, knowing it grants premium.
+        # Clear `revoked_at` so the grant is actually live: otherwise
+        # is_active() would return False even though we just extended
+        # expires_at, and the user would see a silent no-op. The promo
+        # codes are the access control; a re-redemption that wasn't
+        # supposed to work would fail at the code-lookup gate in the
+        # router, not here.
+        row.revoked_at = None
         row.last_event_at = now
         await db.commit()
         await db.refresh(row)
