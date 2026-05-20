@@ -162,6 +162,71 @@ async def debug_recent_apple_webhooks(request: Request):
     return {"count": len(_recent_apple_webhooks), "items": list(_recent_apple_webhooks)}
 
 
+@router.get("/admin/list-entitlements")
+async def admin_list_entitlements(
+    request: Request,
+    app_account_token: Optional[str] = None,
+    promo_code: Optional[str] = None,
+    user_id: Optional[str] = None,
+    include_revoked: bool = False,
+    db: AsyncSession = Depends(get_db),
+):
+    """Diagnostic: dump entitlement rows matching the given filters.
+
+    Helps understand "user says they're premium but I can't find why" —
+    in particular spotting legacy `expires_at=NULL` lifetime promos,
+    or rows linked to a different `app_account_token` than the one the
+    current device generates.
+
+    Auth via the same `X-Admin-Token` gate as the other admin endpoints.
+    """
+    _require_admin(request)
+    if not app_account_token and not promo_code and not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide app_account_token, user_id, and/or promo_code.",
+        )
+
+    stmt = select(Entitlement)
+    if app_account_token:
+        stmt = stmt.where(Entitlement.app_account_token == app_account_token)
+    if user_id:
+        stmt = stmt.where(Entitlement.user_id == user_id)
+    if promo_code:
+        stmt = stmt.where(
+            Entitlement.store == "promo",
+            Entitlement.original_transaction_id == promo_code,
+        )
+    if not include_revoked:
+        stmt = stmt.where(Entitlement.revoked_at.is_(None))
+
+    rows = (await db.execute(stmt)).scalars().all()
+    now = datetime.utcnow()
+    return {
+        "count": len(rows),
+        "items": [
+            {
+                "id": row.id,
+                "user_id": row.user_id,
+                "app_account_token": row.app_account_token,
+                "store": row.store,
+                "product_id": row.product_id,
+                "plan": row.plan,
+                "original_transaction_id": row.original_transaction_id,
+                "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+                "revoked_at": row.revoked_at.isoformat() if row.revoked_at else None,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "is_lifetime": row.expires_at is None,
+                "is_expired": (
+                    False if row.expires_at is None else row.expires_at < now
+                ),
+                "is_active_now": ent_svc.is_active(row, now),
+            }
+            for row in rows
+        ],
+    }
+
+
 @router.post("/admin/revoke")
 async def admin_revoke_entitlements(
     request: Request,
