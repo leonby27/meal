@@ -2360,7 +2360,13 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                 ),
                 child: Text(
                   quote,
-                  maxLines: 3,
+                  // 4 lines fits a typical ≤100-char quote at the
+                  // Figma width of 256 px (Inter Bold 15/20 averages
+                  // ~25 chars per line including spaces). Anything
+                  // longer than that is on the AI — the prompt caps
+                  // it at 100 chars, so we keep ellipsis as a guard
+                  // rather than removing maxLines entirely.
+                  maxLines: 4,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
@@ -2523,15 +2529,20 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       children: [
         // Calorie ring + macro rows (Figma: ring 106×105 left, three
         // 32 px gradient rows stacked on the right with 6 px gap).
+        // Note: ring SEGMENTS use the final shares unchanged — only the
+        // calorie number inside the ring counts up. The ring redrawing
+        // its arcs on every ±10 g tap is jarring; the macro distribution
+        // doesn't really change for small weight tweaks, so we let the
+        // numbers do the talking.
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildCalorieRing(
               c,
               calories * progress,
-              pShare * progress,
-              fShare * progress,
-              cShare * progress,
+              pShare,
+              fShare,
+              cShare,
             ),
             const SizedBox(width: 23),
             Expanded(
@@ -2553,20 +2564,26 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: _buildLabelledValue(
-                c,
-                value: l10n.gramsValue(grams.round()),
-                label: l10n.dishWeightLabel,
-                alignment: CrossAxisAlignment.start,
+              child: _animNum(
+                grams,
+                (v) => _buildLabelledValue(
+                  c,
+                  value: l10n.gramsValue(v.round()),
+                  label: l10n.dishWeightLabel,
+                  alignment: CrossAxisAlignment.start,
+                ),
               ),
             ),
             if (dailyPercent != null)
               Expanded(
-                child: _buildLabelledValue(
-                  c,
-                  value: '${(dailyPercent * progress).round()}%',
-                  label: l10n.ofYourDailyCalories,
-                  alignment: CrossAxisAlignment.end,
+                child: _animNum(
+                  dailyPercent * progress,
+                  (v) => _buildLabelledValue(
+                    c,
+                    value: '${v.round()}%',
+                    label: l10n.ofYourDailyCalories,
+                    alignment: CrossAxisAlignment.end,
+                  ),
                 ),
               ),
           ],
@@ -2588,6 +2605,29 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   }
 
   // ── Helpers used by the new Figma overview layout ────────────────────
+
+  /// Wraps any numeric value in a TweenAnimationBuilder so that
+  /// successive rebuilds tween FROM the previously rendered number TO
+  /// the new one — instead of snapping. Reused by the calorie ring,
+  /// macro rows, weight, %, burn-calorie values and the health score.
+  /// The intro count-up still works because [progress] in the parent
+  /// scales the input from 0 → full on first show; this helper just
+  /// follows whichever value flows in.
+  ///
+  /// [duration] is short by default (260 ms) — long enough to feel
+  /// like a transition, short enough that ±10 g spam doesn't queue up.
+  Widget _animNum(
+    double value,
+    Widget Function(double current) builder, {
+    Duration duration = const Duration(milliseconds: 260),
+  }) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: value, end: value),
+      duration: duration,
+      curve: Curves.easeOutCubic,
+      builder: (_, current, _) => builder(current),
+    );
+  }
 
   /// Returns the macro's current per-portion grams from the editable
   /// controllers (so stepper-driven recalculation is reflected live).
@@ -2665,13 +2705,16 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
               ),
             ),
           ),
-          Text(
-            l10n.gramsValue(grams.round()),
-            style: TextStyle(
-              color: c.onSurface,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              height: 16 / 13,
+          _animNum(
+            grams,
+            (v) => Text(
+              l10n.gramsValue(v.round()),
+              style: TextStyle(
+                color: c.onSurface,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 16 / 13,
+              ),
             ),
           ),
         ],
@@ -2778,6 +2821,12 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         ing.caloriesCtl.text = _fmt(ing.calories);
       }
     });
+    // Don't replay the intro count-up here — counting from 0 makes
+    // ±10 g feel like a full reload. The actual displayed values are
+    // wrapped in TweenAnimationBuilder by [_animNum], so each setState
+    // animates from the PREVIOUS rendered value to the new target
+    // automatically. The intro controller stays at 1.0 from its first
+    // run; only the per-value tween reacts to this delta.
   }
 
   /// Surface-toned chip that flips the card into edit mode. Figma:
@@ -2825,98 +2874,131 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final hint = c.isDark
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _refineFocus.requestFocus(),
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
-        decoration: BoxDecoration(
-          color: c.cardBg,
-          border: Border.all(
-            color: c.isDark ? AppColors.lineDT200 : AppColors.lineLight200,
+    // While refining, drop the whole row to ~60 % opacity and freeze
+    // the text field — visual signal that the AI is working on the
+    // dish, plus prevents the user from stacking a second request on
+    // top of the in-flight one.
+    final busy = _refining;
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 180),
+      opacity: busy ? 0.6 : 1,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: busy ? null : () => _refineFocus.requestFocus(),
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+          decoration: BoxDecoration(
+            color: c.cardBg,
+            border: Border.all(
+              color: c.isDark ? AppColors.lineDT200 : AppColors.lineLight200,
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _refineCtl,
-                builder: (context, value, _) {
-                  return TextField(
-                    controller: _refineCtl,
-                    focusNode: _refineFocus,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) {
-                      if (_refineCtl.text.trim().isNotEmpty) {
-                        _onRefineDish();
-                      }
-                    },
-                    style: TextStyle(
-                      color: c.onSurface,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      height: 18 / 14,
-                    ),
-                    decoration: InputDecoration(
-                      isCollapsed: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 11),
-                      // Outer Container already draws the 1 px border;
-                      // killing every TextField border state stops the
-                      // theme's default underline from layering on top.
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
-                      filled: false,
-                      fillColor: Colors.transparent,
-                      hintText: context.l10n.refineDishHint,
-                      hintStyle: TextStyle(
-                        color: hint,
+          child: Row(
+            children: [
+              Expanded(
+                child: ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _refineCtl,
+                  builder: (context, value, _) {
+                    return TextField(
+                      controller: _refineCtl,
+                      focusNode: _refineFocus,
+                      enabled: !busy,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) {
+                        if (_refineCtl.text.trim().isNotEmpty) {
+                          _onRefineDish();
+                        }
+                      },
+                      style: TextStyle(
+                        color: c.onSurface,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                         height: 18 / 14,
+                      ),
+                      decoration: InputDecoration(
+                        isCollapsed: true,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 11),
+                        // Outer Container already draws the 1 px border;
+                        // killing every TextField border state stops the
+                        // theme's default underline from layering on top.
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        filled: false,
+                        fillColor: Colors.transparent,
+                        hintText: context.l10n.refineDishHint,
+                        hintStyle: TextStyle(
+                          color: hint,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          height: 18 / 14,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _refineCtl,
+                builder: (context, value, _) {
+                  final hasText = value.text.trim().isNotEmpty;
+                  // When in-flight we keep the button blue so the inline
+                  // spinner reads as "active" rather than "disabled grey".
+                  final bg = (hasText || busy)
+                      ? AppColors.primary
+                      : (c.isDark
+                          ? AppColors.darkSecondaryExtraLight
+                          : AppColors.lightSecondaryExtraLight);
+                  return GestureDetector(
+                    onTap: hasText && !busy ? _onRefineDish : null,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: bg,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      // Cross-fade between the send arrow and the
+                      // spinner so the busy → idle transition isn't a
+                      // hard glyph swap.
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 160),
+                        child: busy
+                            ? const SizedBox(
+                                key: ValueKey('spinner'),
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : SvgPicture.asset(
+                                'assets/icons/send.svg',
+                                key: const ValueKey('arrow'),
+                                width: 18,
+                                height: 18,
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.white,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
                       ),
                     ),
                   );
                 },
               ),
-            ),
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _refineCtl,
-              builder: (context, value, _) {
-                final hasText = value.text.trim().isNotEmpty;
-                final bg = hasText
-                    ? AppColors.primary
-                    : (c.isDark
-                        ? AppColors.darkSecondaryExtraLight
-                        : AppColors.lightSecondaryExtraLight);
-                return GestureDetector(
-                  onTap: hasText && !_refining ? _onRefineDish : null,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: bg,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: SvgPicture.asset(
-                      'assets/icons/send.svg',
-                      width: 18,
-                      height: 18,
-                      colorFilter: const ColorFilter.mode(
-                        Colors.white, BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -2948,13 +3030,16 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                _formatCalories(calories),
-                style: TextStyle(
-                  color: c.onSurface,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  height: 1,
+              _animNum(
+                calories,
+                (v) => Text(
+                  _formatCalories(v),
+                  style: TextStyle(
+                    color: c.onSurface,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                  ),
                 ),
               ),
               Text(
@@ -3541,7 +3626,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final l10n = context.l10n;
     final kcal = _val(_caloriesCtl);
     if (kcal <= 0) return const SizedBox.shrink();
-    final burn = _BurnEquivalent.forCalories(kcal, _userWeightKg);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3554,51 +3638,67 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildBurnRow(
-                c,
-                icon: Icons.directions_walk_rounded,
-                label: l10n.burnWalking,
-                primary: l10n.burnApproxSteps(
-                  _formatStepsCount(burn.walkSteps),
-                ),
-                secondary: l10n.approxHours(burn.walkHours.round().clamp(1, 99)),
-              ),
-              const SizedBox(height: 6),
-              _buildBurnRow(
-                c,
-                icon: Icons.directions_run_rounded,
-                label: l10n.burnRunning,
-                primary: l10n.burnApproxKm(burn.runKm.toStringAsFixed(0)),
-                secondary: _formatBurnDuration(burn.runMinutes),
-              ),
-              const SizedBox(height: 6),
-              _buildBurnRow(
-                c,
-                icon: Icons.fitness_center_rounded,
-                label: l10n.burnGym,
-                primary: _formatBurnDuration(burn.gymMinutes),
-              ),
-              const SizedBox(height: 6),
-              _buildBurnRow(
-                c,
-                icon: Icons.directions_bike_rounded,
-                label: l10n.burnCycling,
-                primary: l10n.burnApproxKm(burn.cyclingKm.toStringAsFixed(0)),
-                secondary: l10n.approxHours(
-                  burn.cyclingHours.round().clamp(1, 99),
-                ),
-              ),
-              const SizedBox(height: 6),
-              _buildBurnRow(
-                c,
-                icon: Icons.bed_rounded,
-                label: l10n.burnResting,
-                primary: l10n.approxHours(burn.restHours.round().clamp(1, 99)),
-              ),
-            ],
+          // The whole burn-by-activity card rebuilds against a tweened
+          // kcal so a ±10 g tap slides every row's number from the old
+          // value to the new one in lock-step (instead of snapping).
+          child: _animNum(
+            kcal,
+            (currentKcal) {
+              final burn = _BurnEquivalent.forCalories(
+                currentKcal,
+                _userWeightKg,
+              );
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildBurnRow(
+                    c,
+                    icon: Icons.directions_walk_rounded,
+                    label: l10n.burnWalking,
+                    primary: l10n.burnApproxSteps(
+                      _formatStepsCount(burn.walkSteps),
+                    ),
+                    secondary: l10n.approxHours(
+                      burn.walkHours.round().clamp(1, 99),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildBurnRow(
+                    c,
+                    icon: Icons.directions_run_rounded,
+                    label: l10n.burnRunning,
+                    primary: l10n.burnApproxKm(burn.runKm.toStringAsFixed(0)),
+                    secondary: _formatBurnDuration(burn.runMinutes),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildBurnRow(
+                    c,
+                    icon: Icons.fitness_center_rounded,
+                    label: l10n.burnGym,
+                    primary: _formatBurnDuration(burn.gymMinutes),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildBurnRow(
+                    c,
+                    icon: Icons.directions_bike_rounded,
+                    label: l10n.burnCycling,
+                    primary:
+                        l10n.burnApproxKm(burn.cyclingKm.toStringAsFixed(0)),
+                    secondary: l10n.approxHours(
+                      burn.cyclingHours.round().clamp(1, 99),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildBurnRow(
+                    c,
+                    icon: Icons.bed_rounded,
+                    label: l10n.burnResting,
+                    primary:
+                        l10n.approxHours(burn.restHours.round().clamp(1, 99)),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -3925,75 +4025,14 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             onChanged: (_) => _recalcFromMacros(),
           ),
         ],
-        const SizedBox(height: 12),
-        _buildRefineField(c),
+        // Refine field belongs to the overview surface (the user has
+        // the dish in front of them and asks the AI to nudge it).
+        // The edit mode is the manual editor — pure number tweaking —
+        // so the "Refine the dish…" input would just sit in the way of
+        // the Update button. Keep edit-mode focused on the macros.
         const SizedBox(height: 12),
         _buildSaveMacrosButton(c),
       ],
-    );
-  }
-
-  Widget _buildRefineField(_AiSheetColors c) {
-    final hint =
-        c.isDark ? AppColors.darkOnSurfaceVariant : AppColors.lightOnSurfaceVariant;
-    // GestureDetector covers the full 44×W bordered area so any tap (even
-    // on the empty hint side) focuses the field — without it taps only
-    // landed on the actual text glyphs.
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _refineFocus.requestFocus(),
-      child: Container(
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: c.isDark ? AppColors.lineDT200 : AppColors.lineLight200,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        // Center wrapper + isCollapsed/zero contentPadding gives TextField
-        // its intrinsic line-height; the Container then perfectly centers
-        // it. Cross-platform — Android wasn't honouring textAlignVertical
-        // with non-zero contentPadding and shifted the glyphs downward.
-        child: Center(
-          child: TextField(
-            controller: _refineCtl,
-            focusNode: _refineFocus,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) {
-              if (_refineCtl.text.trim().isEmpty) {
-                _onSaveMacros();
-              } else {
-                _onRefineDish();
-              }
-            },
-            style: TextStyle(
-              color: c.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              height: 18 / 14,
-            ),
-            decoration: InputDecoration(
-              isCollapsed: true,
-              contentPadding: EdgeInsets.zero,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              // Theme-level dark TextField fillColor leaks through unless we
-              // pin the field as unfilled — that produces the inner grey block.
-              filled: false,
-              fillColor: Colors.transparent,
-              hintText: context.l10n.refineDishHint,
-              hintStyle: TextStyle(
-                color: hint,
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                height: 18 / 14,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 

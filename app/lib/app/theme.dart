@@ -128,38 +128,16 @@ class AppTheme {
   ];
 
   // ── Card edge shadows ──────────────────────────────────────
-  /// Hard-edge shadow that sits flush against a rounded card to
-  /// create a subtle skeumorphic depth on the bottom.
+  /// USED TO paint a 4 px solid line under every card to fake a
+  /// subtle skeumorphic depth. Disabled — design moved to a flat
+  /// look. Kept as a no-op so the dozen call sites scattered across
+  /// dashboard / diary / favorites / profile / meal_section don't
+  /// need a coordinated rename; ship the visual change atomically.
   ///
-  /// Light theme: 4px solid line under the card (`cardEdgeLight`).
-  /// Dark theme:  4px solid line under the card (`cardEdgeDark`).
-  ///
-  /// `blurRadius: 0` and `spreadRadius: 0` make the shadow follow
-  /// the card's exact shape, so rounded corners stay clean.
-  ///
-  /// The dark-theme top highlight is implemented separately via
-  /// [cardEdgeBorder], because Flutter does not support inset
-  /// shadows.
-  static List<BoxShadow> cardEdgeShadows({required bool isDark}) {
-    if (isDark) {
-      return const [
-        BoxShadow(
-          color: AppColors.cardEdgeDark,
-          offset: Offset(0, 4),
-          blurRadius: 0,
-          spreadRadius: 0,
-        ),
-      ];
-    }
-    return const [
-      BoxShadow(
-        color: AppColors.cardEdgeLight,
-        offset: Offset(0, 4),
-        blurRadius: 0,
-        spreadRadius: 0,
-      ),
-    ];
-  }
+  /// Reintroduce the depth by returning the same single-blur shadow
+  /// (`AppColors.cardEdge*`, `Offset(0, 4)`, `blurRadius: 0`).
+  static List<BoxShadow> cardEdgeShadows({required bool isDark}) =>
+      const <BoxShadow>[];
 
   /// Top-only border that paints a 2px highlight inside the rounded
   /// shape. Used together with [cardEdgeShadows] in dark mode to
