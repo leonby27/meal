@@ -2436,16 +2436,16 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get aiLoadingPhrase01 => 'Hmm… ça a l\'air suspicieusement délicieux.';
+  String get aiLoadingPhrase01 => 'Hmm… ça a l\'air super suspect.';
 
   @override
-  String get aiLoadingPhrase02 => 'Attends, je dois inspecter cette beauté.';
+  String get aiLoadingPhrase02 => 'Attends, j\'inspecte cette beauté.';
 
   @override
   String get aiLoadingPhrase03 => 'Voyons ce que cette assiette cache.';
 
   @override
-  String get aiLoadingPhrase04 => 'Nourriture détectée. Curiosité activée.';
+  String get aiLoadingPhrase04 => 'Nourriture vue. Curiosité activée.';
 
   @override
   String get aiLoadingPhrase05 => 'Une seconde, ce plat a des secrets.';
@@ -2457,13 +2457,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aiLoadingPhrase07 => 'Je décrypte ce mystère savoureux.';
 
   @override
-  String get aiLoadingPhrase08 => 'Petit détective culinaire sur l\'affaire.';
+  String get aiLoadingPhrase08 => 'Détective culinaire sur l\'affaire.';
 
   @override
   String get aiLoadingPhrase09 => 'Ça a l\'air bon. Trop bon, peut-être.';
 
   @override
-  String get aiLoadingPhrase10 => 'Je scanne l\'assiette comme une preuve.';
+  String get aiLoadingPhrase10 => 'Je scanne l\'assiette à fond.';
 
   @override
   String get aiLoadingPhrase11 => 'Un instant, j\'enquête sur le délice.';
@@ -2484,10 +2484,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aiLoadingPhrase16 => 'Zoom sur les preuves savoureuses.';
 
   @override
-  String get aiLoadingPhrase17 => 'Enquête complète sur le snack en cours.';
+  String get aiLoadingPhrase17 => 'Enquête complète sur le snack.';
 
   @override
-  String get aiLoadingPhrase18 => 'Je sens des calories. Métaphoriquement.';
+  String get aiLoadingPhrase18 => 'Je sens des calories. Au figuré.';
 
   @override
   String get aiLoadingPhrase19 => 'Cette assiette est en mode analyse.';
@@ -2496,16 +2496,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aiLoadingPhrase20 => 'Je lis les ragots de la cuisine.';
 
   @override
-  String get aiLoadingPhrase21 => 'Je cherche les macros derrière la magie.';
+  String get aiLoadingPhrase21 => 'Je cherche les macros de la magie.';
 
   @override
   String get aiLoadingPhrase22 => 'Hmm… cette assiette est la star.';
 
   @override
-  String get aiLoadingPhrase23 => 'Voyons de quoi ce petit festin est fait.';
+  String get aiLoadingPhrase23 => 'De quoi ce petit festin est fait ?';
 
   @override
-  String get aiLoadingPhrase24 => 'Je calcule des chiffres, pas ton repas.';
+  String get aiLoadingPhrase24 => 'Je calcule des chiffres, pas toi.';
 
   @override
   String get aiLoadingPhrase25 => 'Vibes de bouffe détectées. Calcul…';

@@ -2427,7 +2427,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get aiLoadingPhrase01 => 'Hmm… das sieht verdächtig lecker aus.';
+  String get aiLoadingPhrase01 => 'Hmm… sieht verdächtig lecker aus.';
 
   @override
   String get aiLoadingPhrase02 => 'Moment, prüfe diese Schönheit.';
@@ -2439,7 +2439,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiLoadingPhrase04 => 'Essen erkannt. Neugier aktiviert.';
 
   @override
-  String get aiLoadingPhrase05 => 'Warte, dieses Gericht hat Geheimnisse.';
+  String get aiLoadingPhrase05 => 'Warte, das Gericht hat Geheimnisse.';
 
   @override
   String get aiLoadingPhrase06 => 'Analysiere die köstliche Lage…';
@@ -2457,13 +2457,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiLoadingPhrase10 => 'Scanne den Teller nach Antworten.';
 
   @override
-  String get aiLoadingPhrase11 => 'Moment, ich untersuche das Lecker hier.';
+  String get aiLoadingPhrase11 => 'Moment, untersuche das Lecker hier.';
 
   @override
-  String get aiLoadingPhrase12 => 'Mal sehen, was hier wirklich los ist.';
+  String get aiLoadingPhrase12 => 'Mal sehen, was hier wirklich läuft.';
 
   @override
-  String get aiLoadingPhrase13 => 'Die Gabel wartet. Wissenschaft zuerst.';
+  String get aiLoadingPhrase13 => 'Gabel wartet. Wissenschaft zuerst.';
 
   @override
   String get aiLoadingPhrase14 => 'Ist es so unschuldig wie es scheint?';
@@ -2472,10 +2472,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiLoadingPhrase15 => 'Etwas Leckeres geschieht hier…';
 
   @override
-  String get aiLoadingPhrase16 => 'Zoome auf das köstliche Beweismaterial.';
+  String get aiLoadingPhrase16 => 'Zoome auf die köstlichen Beweise.';
 
   @override
-  String get aiLoadingPhrase17 => 'Starte vollständige Snack-Ermittlung.';
+  String get aiLoadingPhrase17 => 'Volle Snack-Ermittlung läuft.';
 
   @override
   String get aiLoadingPhrase18 => 'Ich rieche Kalorien. Metaphorisch.';
@@ -2487,10 +2487,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiLoadingPhrase20 => 'Moment, ich lese den Essensklatsch.';
 
   @override
-  String get aiLoadingPhrase21 => 'Suche nach den Makros hinter der Magie.';
+  String get aiLoadingPhrase21 => 'Suche die Makros hinter der Magie.';
 
   @override
-  String get aiLoadingPhrase22 => 'Hmm… der Teller hat Main-Character-Energy.';
+  String get aiLoadingPhrase22 => 'Hmm… der Teller hat Star-Energie.';
 
   @override
   String get aiLoadingPhrase23 => 'Woraus besteht dieses Festmahl?';

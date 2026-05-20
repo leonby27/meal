@@ -4441,13 +4441,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiLoadingPhrase01.
   ///
   /// In ru, this message translates to:
-  /// **'Хм… выглядит подозрительно вкусно.'**
+  /// **'Хм… подозрительно вкусно.'**
   String get aiLoadingPhrase01;
 
   /// No description provided for @aiLoadingPhrase02.
   ///
   /// In ru, this message translates to:
-  /// **'Секунду, мне нужно изучить эту красоту.'**
+  /// **'Секунду, изучу эту красоту.'**
   String get aiLoadingPhrase02;
 
   /// No description provided for @aiLoadingPhrase03.
@@ -4459,13 +4459,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiLoadingPhrase04.
   ///
   /// In ru, this message translates to:
-  /// **'Еда обнаружена. Любопытство активировано.'**
+  /// **'Еда найдена. Любопытно стало.'**
   String get aiLoadingPhrase04;
 
   /// No description provided for @aiLoadingPhrase05.
   ///
   /// In ru, this message translates to:
-  /// **'Подожди, у этого блюда есть секреты.'**
+  /// **'У этого блюда есть секреты.'**
   String get aiLoadingPhrase05;
 
   /// No description provided for @aiLoadingPhrase06.
@@ -4477,7 +4477,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiLoadingPhrase07.
   ///
   /// In ru, this message translates to:
-  /// **'Дай-ка я разгадаю эту вкусную загадку.'**
+  /// **'Разгадаю эту вкусную загадку.'**
   String get aiLoadingPhrase07;
 
   /// No description provided for @aiLoadingPhrase08.
@@ -4489,7 +4489,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiLoadingPhrase09.
   ///
   /// In ru, this message translates to:
-  /// **'Выглядит хорошо. Подозрительно хорошо.'**
+  /// **'Выглядит хорошо. Слишком хорошо.'**
   String get aiLoadingPhrase09;
 
   /// No description provided for @aiLoadingPhrase10.
@@ -4501,7 +4501,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiLoadingPhrase11.
   ///
   /// In ru, this message translates to:
-  /// **'Минутку, расследую эту вкуснотищу.'**
+  /// **'Минутку, расследую вкуснотищу.'**
   String get aiLoadingPhrase11;
 
   /// No description provided for @aiLoadingPhrase12.
@@ -4537,7 +4537,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiLoadingPhrase17.
   ///
   /// In ru, this message translates to:
-  /// **'Веду полное расследование закуски.'**
+  /// **'Полное расследование закуски.'**
   String get aiLoadingPhrase17;
 
   /// No description provided for @aiLoadingPhrase18.
@@ -4555,7 +4555,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiLoadingPhrase20.
   ///
   /// In ru, this message translates to:
-  /// **'Секунду, читаю гастрономические сплетни.'**
+  /// **'Читаю гастрономические сплетни.'**
   String get aiLoadingPhrase20;
 
   /// No description provided for @aiLoadingPhrase21.
@@ -4573,7 +4573,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiLoadingPhrase23.
   ///
   /// In ru, this message translates to:
-  /// **'Посмотрим, из чего сделан этот мини-пир.'**
+  /// **'Из чего сделан этот мини-пир?'**
   String get aiLoadingPhrase23;
 
   /// No description provided for @aiLoadingPhrase24.

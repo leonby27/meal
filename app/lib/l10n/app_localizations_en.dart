@@ -2407,13 +2407,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aiLoadingPhrase01 => 'Hmm… this looks suspiciously delicious.';
+  String get aiLoadingPhrase01 => 'Hmm… this looks suspiciously good.';
 
   @override
-  String get aiLoadingPhrase02 => 'Hold up, I need to inspect this beauty.';
+  String get aiLoadingPhrase02 => 'Hold up, inspecting this beauty.';
 
   @override
-  String get aiLoadingPhrase03 => 'Okay, let\'s see what this plate is hiding.';
+  String get aiLoadingPhrase03 => 'Okay, what is this plate hiding?';
 
   @override
   String get aiLoadingPhrase04 => 'Food detected. Curiosity activated.';
@@ -2437,13 +2437,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiLoadingPhrase10 => 'Scanning the plate for answers.';
 
   @override
-  String get aiLoadingPhrase11 => 'One moment, I\'m investigating the yum.';
+  String get aiLoadingPhrase11 => 'One sec, investigating the yum.';
 
   @override
   String get aiLoadingPhrase12 => 'Let\'s see what\'s really up here.';
 
   @override
-  String get aiLoadingPhrase13 => 'The fork can wait. Science goes first.';
+  String get aiLoadingPhrase13 => 'Fork can wait. Science goes first.';
 
   @override
   String get aiLoadingPhrase14 => 'Is this as innocent as it looks?';
@@ -2452,7 +2452,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiLoadingPhrase15 => 'Something tasty is happening here…';
 
   @override
-  String get aiLoadingPhrase16 => 'Zooming in on the delicious evidence.';
+  String get aiLoadingPhrase16 => 'Zooming in on the tasty evidence.';
 
   @override
   String get aiLoadingPhrase17 => 'Running a full snack investigation.';
@@ -2461,16 +2461,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiLoadingPhrase18 => 'I smell calories. Metaphorically.';
 
   @override
-  String get aiLoadingPhrase19 => 'This plate just entered analysis mode.';
+  String get aiLoadingPhrase19 => 'Plate just entered analysis mode.';
 
   @override
   String get aiLoadingPhrase20 => 'One sec — reading the food gossip.';
 
   @override
-  String get aiLoadingPhrase21 => 'Looking for the macros behind the magic.';
+  String get aiLoadingPhrase21 => 'Hunting the macros behind the magic.';
 
   @override
-  String get aiLoadingPhrase22 => 'Hmm… this plate\'s the main character.';
+  String get aiLoadingPhrase22 => 'Hmm… this plate is the lead role.';
 
   @override
   String get aiLoadingPhrase23 => 'What\'s this little feast made of?';

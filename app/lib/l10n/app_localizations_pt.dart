@@ -2423,25 +2423,25 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get aiLoadingPhrase01 => 'Hmm… isso parece suspeitamente delicioso.';
+  String get aiLoadingPhrase01 => 'Hmm… suspeitamente delicioso.';
 
   @override
-  String get aiLoadingPhrase02 => 'Espera, preciso inspecionar essa beleza.';
+  String get aiLoadingPhrase02 => 'Espera, inspecionando essa beleza.';
 
   @override
-  String get aiLoadingPhrase03 => 'Ok, vamos ver o que esse prato esconde.';
+  String get aiLoadingPhrase03 => 'Ok, o que esse prato esconde?';
 
   @override
-  String get aiLoadingPhrase04 => 'Comida detectada. Curiosidade ativada.';
+  String get aiLoadingPhrase04 => 'Comida vista. Curiosidade ativada.';
 
   @override
-  String get aiLoadingPhrase05 => 'Um segundo, essa refeição tem segredos.';
+  String get aiLoadingPhrase05 => 'Essa refeição tem segredos.';
 
   @override
   String get aiLoadingPhrase06 => 'Analisando a situação deliciosa…';
 
   @override
-  String get aiLoadingPhrase07 => 'Deixa eu decifrar esse mistério saboroso.';
+  String get aiLoadingPhrase07 => 'Decifrando esse mistério saboroso.';
 
   @override
   String get aiLoadingPhrase08 => 'Pequeno detetive de comida em ação.';
@@ -2471,29 +2471,29 @@ class AppLocalizationsPt extends AppLocalizations {
   String get aiLoadingPhrase16 => 'Aproximando da evidência deliciosa.';
 
   @override
-  String get aiLoadingPhrase17 => 'Iniciando investigação completa do lanche.';
+  String get aiLoadingPhrase17 => 'Investigação completa do lanche.';
 
   @override
-  String get aiLoadingPhrase18 => 'Sinto cheiro de calorias. Metaforicamente.';
+  String get aiLoadingPhrase18 => 'Cheiro calorias. Metaforicamente.';
 
   @override
   String get aiLoadingPhrase19 => 'Prato entrou em modo análise.';
 
   @override
-  String get aiLoadingPhrase20 => 'Um momento, lendo as fofocas da comida.';
+  String get aiLoadingPhrase20 => 'Lendo as fofocas da comida.';
 
   @override
-  String get aiLoadingPhrase21 => 'Procurando os macros por trás da mágica.';
+  String get aiLoadingPhrase21 => 'Caçando os macros da mágica.';
 
   @override
-  String get aiLoadingPhrase22 => 'Hmm… o prato tem energia de protagonista.';
+  String get aiLoadingPhrase22 => 'Hmm… o prato é o protagonista.';
 
   @override
-  String get aiLoadingPhrase23 => 'Vamos ver do que esse banquete é feito.';
+  String get aiLoadingPhrase23 => 'Do que esse banquete é feito?';
 
   @override
   String get aiLoadingPhrase24 => 'Calculando números, não sua comida.';
 
   @override
-  String get aiLoadingPhrase25 => 'Vibes de comida detectadas. Calculando…';
+  String get aiLoadingPhrase25 => 'Vibes de comida. Calculando…';
 }

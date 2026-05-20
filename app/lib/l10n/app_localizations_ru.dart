@@ -2423,37 +2423,37 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get aiLoadingPhrase01 => 'Хм… выглядит подозрительно вкусно.';
+  String get aiLoadingPhrase01 => 'Хм… подозрительно вкусно.';
 
   @override
-  String get aiLoadingPhrase02 => 'Секунду, мне нужно изучить эту красоту.';
+  String get aiLoadingPhrase02 => 'Секунду, изучу эту красоту.';
 
   @override
   String get aiLoadingPhrase03 => 'Посмотрим, что прячет тарелка.';
 
   @override
-  String get aiLoadingPhrase04 => 'Еда обнаружена. Любопытство активировано.';
+  String get aiLoadingPhrase04 => 'Еда найдена. Любопытно стало.';
 
   @override
-  String get aiLoadingPhrase05 => 'Подожди, у этого блюда есть секреты.';
+  String get aiLoadingPhrase05 => 'У этого блюда есть секреты.';
 
   @override
   String get aiLoadingPhrase06 => 'Анализирую аппетитную ситуацию…';
 
   @override
-  String get aiLoadingPhrase07 => 'Дай-ка я разгадаю эту вкусную загадку.';
+  String get aiLoadingPhrase07 => 'Разгадаю эту вкусную загадку.';
 
   @override
   String get aiLoadingPhrase08 => 'Маленький детектив еды на деле.';
 
   @override
-  String get aiLoadingPhrase09 => 'Выглядит хорошо. Подозрительно хорошо.';
+  String get aiLoadingPhrase09 => 'Выглядит хорошо. Слишком хорошо.';
 
   @override
   String get aiLoadingPhrase10 => 'Сканирую тарелку как улику.';
 
   @override
-  String get aiLoadingPhrase11 => 'Минутку, расследую эту вкуснотищу.';
+  String get aiLoadingPhrase11 => 'Минутку, расследую вкуснотищу.';
 
   @override
   String get aiLoadingPhrase12 => 'Выясним, что тут на самом деле.';
@@ -2471,7 +2471,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiLoadingPhrase16 => 'Приближаюсь к аппетитным уликам.';
 
   @override
-  String get aiLoadingPhrase17 => 'Веду полное расследование закуски.';
+  String get aiLoadingPhrase17 => 'Полное расследование закуски.';
 
   @override
   String get aiLoadingPhrase18 => 'Чую калории. Метафорически.';
@@ -2480,7 +2480,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiLoadingPhrase19 => 'Тарелка вошла в режим анализа.';
 
   @override
-  String get aiLoadingPhrase20 => 'Секунду, читаю гастрономические сплетни.';
+  String get aiLoadingPhrase20 => 'Читаю гастрономические сплетни.';
 
   @override
   String get aiLoadingPhrase21 => 'Ищу макросы за этой магией.';
@@ -2489,7 +2489,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get aiLoadingPhrase22 => 'Хм… тарелка — главный герой.';
 
   @override
-  String get aiLoadingPhrase23 => 'Посмотрим, из чего сделан этот мини-пир.';
+  String get aiLoadingPhrase23 => 'Из чего сделан этот мини-пир?';
 
   @override
   String get aiLoadingPhrase24 => 'Считаю цифры, а не твоё блюдо.';

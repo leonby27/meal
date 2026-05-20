@@ -2425,7 +2425,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get aiLoadingPhrase01 => 'Mmm… esto se ve sospechosamente delicioso.';
+  String get aiLoadingPhrase01 => 'Mmm… sospechosamente delicioso.';
 
   @override
   String get aiLoadingPhrase02 => 'Espera, voy a inspeccionar esto.';
@@ -2434,16 +2434,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiLoadingPhrase03 => 'Vale, veamos qué esconde este plato.';
 
   @override
-  String get aiLoadingPhrase04 => 'Comida detectada. Curiosidad activada.';
+  String get aiLoadingPhrase04 => 'Comida vista. Curiosidad activada.';
 
   @override
-  String get aiLoadingPhrase05 => 'Un momento, esta comida tiene secretos.';
+  String get aiLoadingPhrase05 => 'Esta comida tiene secretos.';
 
   @override
   String get aiLoadingPhrase06 => 'Analizando la situación deliciosa…';
 
   @override
-  String get aiLoadingPhrase07 => 'Déjame descifrar este misterio sabroso.';
+  String get aiLoadingPhrase07 => 'Descifrando este misterio sabroso.';
 
   @override
   String get aiLoadingPhrase08 => 'Detective culinario en acción.';
@@ -2455,7 +2455,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiLoadingPhrase10 => 'Escaneando el plato a fondo.';
 
   @override
-  String get aiLoadingPhrase11 => 'Un momento, estoy investigando lo rico.';
+  String get aiLoadingPhrase11 => 'Un sec, investigando lo rico.';
 
   @override
   String get aiLoadingPhrase12 => 'Veamos qué pasa aquí realmente.';
@@ -2470,7 +2470,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiLoadingPhrase15 => 'Algo sabroso está pasando aquí…';
 
   @override
-  String get aiLoadingPhrase16 => 'Acercándome a la deliciosa evidencia.';
+  String get aiLoadingPhrase16 => 'Acercando la deliciosa evidencia.';
 
   @override
   String get aiLoadingPhrase17 => 'Investigación completa del snack.';
@@ -2479,10 +2479,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiLoadingPhrase18 => 'Huelo calorías. Metafóricamente.';
 
   @override
-  String get aiLoadingPhrase19 => 'El plato acaba de entrar en modo análisis.';
+  String get aiLoadingPhrase19 => 'El plato entró en modo análisis.';
 
   @override
-  String get aiLoadingPhrase20 => 'Un momento, leo los chismes del plato.';
+  String get aiLoadingPhrase20 => 'Leyendo los chismes del plato.';
 
   @override
   String get aiLoadingPhrase21 => 'Buscando los macros tras la magia.';
@@ -2491,11 +2491,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aiLoadingPhrase22 => 'Mmm… el plato es el protagonista.';
 
   @override
-  String get aiLoadingPhrase23 => 'Veamos de qué está hecho este festín.';
+  String get aiLoadingPhrase23 => '¿De qué está hecho este festín?';
 
   @override
   String get aiLoadingPhrase24 => 'Calculo números, no tu comida.';
 
   @override
-  String get aiLoadingPhrase25 => 'Vibes de comida detectadas. Calculando…';
+  String get aiLoadingPhrase25 => 'Vibes de comida. Calculando…';
 }

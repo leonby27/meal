@@ -2166,12 +2166,10 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final phrase = _loadingPhrases(l10n)[_loadingPhraseIndex];
 
     // Minimal horizontal padding so the longest phrases stay on a
-    // single line. A 28 px padding (the old layout) only left ~300 px
-    // for the text on a 393 px-wide sheet, which forced 40+-char
-    // phrases into two lines and made the dots above bounce up/down
-    // on every swap. 12 px gives ~370 px, and the FittedBox below
-    // gracefully scales the rare overflowing phrase down instead of
-    // wrapping.
+    // single line. Phrases are editorially capped at
+    // [_kLoadingPhraseMaxChars] (see assertion in _loadingPhrases) so
+    // the FittedBox below should never need to scale; it's kept only
+    // as a safety net for future translations.
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 48, 12, 32),
       child: Column(
@@ -2248,37 +2246,57 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
   }
 
-  /// 25 playful loading lines from ARB (index 0 = the fixed
-  /// "Hmm… this looks suspiciously delicious." opener). The list is
-  /// rebuilt every call so locale switches mid-load (rare but
-  /// possible) pick up the new language.
-  List<String> _loadingPhrases(AppLocalizations l10n) => [
-        l10n.aiLoadingPhrase01,
-        l10n.aiLoadingPhrase02,
-        l10n.aiLoadingPhrase03,
-        l10n.aiLoadingPhrase04,
-        l10n.aiLoadingPhrase05,
-        l10n.aiLoadingPhrase06,
-        l10n.aiLoadingPhrase07,
-        l10n.aiLoadingPhrase08,
-        l10n.aiLoadingPhrase09,
-        l10n.aiLoadingPhrase10,
-        l10n.aiLoadingPhrase11,
-        l10n.aiLoadingPhrase12,
-        l10n.aiLoadingPhrase13,
-        l10n.aiLoadingPhrase14,
-        l10n.aiLoadingPhrase15,
-        l10n.aiLoadingPhrase16,
-        l10n.aiLoadingPhrase17,
-        l10n.aiLoadingPhrase18,
-        l10n.aiLoadingPhrase19,
-        l10n.aiLoadingPhrase20,
-        l10n.aiLoadingPhrase21,
-        l10n.aiLoadingPhrase22,
-        l10n.aiLoadingPhrase23,
-        l10n.aiLoadingPhrase24,
-        l10n.aiLoadingPhrase25,
-      ];
+  /// Hard upper bound on loading-phrase length in characters. At 18 px
+  /// Inter w600 with 12 px horizontal padding, anything longer can
+  /// trigger FittedBox scaleDown on narrower devices — translators
+  /// must stay under this when localising aiLoadingPhrase*.
+  static const int _kLoadingPhraseMaxChars = 36;
+
+  /// 25 playful loading lines from ARB (index 0 = the fixed opener).
+  /// The list is rebuilt every call so locale switches mid-load (rare
+  /// but possible) pick up the new language.
+  List<String> _loadingPhrases(AppLocalizations l10n) {
+    final phrases = [
+      l10n.aiLoadingPhrase01,
+      l10n.aiLoadingPhrase02,
+      l10n.aiLoadingPhrase03,
+      l10n.aiLoadingPhrase04,
+      l10n.aiLoadingPhrase05,
+      l10n.aiLoadingPhrase06,
+      l10n.aiLoadingPhrase07,
+      l10n.aiLoadingPhrase08,
+      l10n.aiLoadingPhrase09,
+      l10n.aiLoadingPhrase10,
+      l10n.aiLoadingPhrase11,
+      l10n.aiLoadingPhrase12,
+      l10n.aiLoadingPhrase13,
+      l10n.aiLoadingPhrase14,
+      l10n.aiLoadingPhrase15,
+      l10n.aiLoadingPhrase16,
+      l10n.aiLoadingPhrase17,
+      l10n.aiLoadingPhrase18,
+      l10n.aiLoadingPhrase19,
+      l10n.aiLoadingPhrase20,
+      l10n.aiLoadingPhrase21,
+      l10n.aiLoadingPhrase22,
+      l10n.aiLoadingPhrase23,
+      l10n.aiLoadingPhrase24,
+      l10n.aiLoadingPhrase25,
+    ];
+    assert(() {
+      for (var i = 0; i < phrases.length; i++) {
+        final p = phrases[i];
+        if (p.characters.length > _kLoadingPhraseMaxChars) {
+          throw FlutterError(
+            'aiLoadingPhrase${(i + 1).toString().padLeft(2, '0')} is '
+            '${p.characters.length} chars (max $_kLoadingPhraseMaxChars): "$p"',
+          );
+        }
+      }
+      return true;
+    }());
+    return phrases;
+  }
 
   /// Starts cycling loading phrases. The opener (index 0) is shown for
   /// the first 2.6 s untouched; every subsequent rotation lands on a
@@ -2896,6 +2914,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final current = _val(_totalGramsCtl);
     final next = (current + deltaG).clamp(0.0, 9999.0);
     if (next == current) return;
+    HapticFeedback.selectionClick();
     final ratio = current > 0 ? next / current : 1.0;
     setState(() {
       _totalGramsCtl.text = _fmt(next);
