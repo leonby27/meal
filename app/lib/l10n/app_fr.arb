@@ -937,5 +937,6 @@
   "macroStatusWorse": "Pire que la moyenne",
   "macroStatusAverage": "Moyen",
   "macroStatusGood": "Bon",
-  "dishWeightLabel": "Poids du plat"
+  "dishWeightLabel": "Poids du plat",
+  "macroSalt": "Sel"
 }

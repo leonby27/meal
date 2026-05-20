@@ -2366,4 +2366,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dishWeightLabel => 'Dish weight';
+
+  @override
+  String get macroSalt => 'Salt';
 }

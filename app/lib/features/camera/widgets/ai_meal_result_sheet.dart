@@ -160,6 +160,15 @@ _MacroStatus _statusForCholesterol(double mg) {
   return _MacroStatus.good;
 }
 
+_MacroStatus _statusForSodium(double mg) {
+  // WHO daily ceiling = 2000 mg of sodium (≈ 5 g of salt). Per single
+  // meal: >800 mg already eats ~40 % of the daily allowance — that's
+  // worse. 400–799 mg is average, below that good.
+  if (mg >= 800) return _MacroStatus.worse;
+  if (mg >= 400) return _MacroStatus.average;
+  return _MacroStatus.good;
+}
+
 _MacroStatus _statusForTransFat(double g) {
   if (g >= 1) return _MacroStatus.worse;
   if (g > 0) return _MacroStatus.average;
@@ -173,8 +182,12 @@ _MacroStatus _statusForGlycemicLoad(double load) {
 }
 
 _MacroStatus _statusForCaloricDensity(double kcalPerG) {
-  if (kcalPerG >= 4) return _MacroStatus.worse;
-  if (kcalPerG >= 2.25) return _MacroStatus.average;
+  // Reference: leafy veg ≈ 0.2, lean meat ≈ 1.3, pasta dishes ≈ 1.5,
+  // burger ≈ 2.4, pizza slice ≈ 2.8, fries ≈ 3.1, chocolate ≈ 5.5.
+  // Old worse ≥ 4 was too lenient — burgers and pizzas slipped into
+  // "average" despite being the canonical calorie-dense junk food.
+  if (kcalPerG >= 3.5) return _MacroStatus.worse;
+  if (kcalPerG >= 2) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 
@@ -228,6 +241,12 @@ class _SuggestionItem {
 /// not have a value for a given dish (e.g. cholesterol on a vegan meal).
 class _CompleteMacro {
   final double? sugarG;
+  /// Refined / added sugars only (white sugar, honey added during
+  /// cooking, syrups in packaged foods). NEVER counts natural sugars
+  /// from whole fruit, plain milk, or plain yogurt — so a fresh-fruit
+  /// smoothie with 25 g `sugarG` reads ~0 g `addedSugarG` and the
+  /// status row stays green.
+  final double? addedSugarG;
   final double? fiberG;
   final double? saturatedFatG;
   final double? cholesterolMg;
@@ -239,6 +258,7 @@ class _CompleteMacro {
 
   const _CompleteMacro({
     this.sugarG,
+    this.addedSugarG,
     this.fiberG,
     this.saturatedFatG,
     this.cholesterolMg,
@@ -251,6 +271,7 @@ class _CompleteMacro {
 
   bool get isEmpty =>
       sugarG == null &&
+      addedSugarG == null &&
       fiberG == null &&
       saturatedFatG == null &&
       cholesterolMg == null &&
@@ -1046,6 +1067,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final macro = result['complete_macro'] as Map<String, dynamic>? ?? const {};
     _completeMacro = _CompleteMacro(
       sugarG: (macro['sugar_g'] as num?)?.toDouble(),
+      addedSugarG: (macro['added_sugar_g'] as num?)?.toDouble(),
       fiberG: (macro['fiber_g'] as num?)?.toDouble(),
       saturatedFatG: (macro['saturated_fat_g'] as num?)?.toDouble(),
       cholesterolMg: (macro['cholesterol_mg'] as num?)?.toDouble(),
@@ -3348,8 +3370,14 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final rows = <(_MacroStatus, String)>[];
     void add(_MacroStatus status, String label) => rows.add((status, label));
 
-    if (_completeMacro.sugarG != null) {
-      add(_statusForSugar(_completeMacro.sugarG!), l10n.macroSugar);
+    // Prefer added_sugar_g when the model split it out: natural sugars
+    // from fruit/milk shouldn't penalise the row (a fresh smoothie
+    // shouldn't read red for 25 g of mostly-banana sugar). Fallback to
+    // total sugar_g keeps backward compatibility with old responses.
+    final sugarForStatus =
+        _completeMacro.addedSugarG ?? _completeMacro.sugarG;
+    if (sugarForStatus != null) {
+      add(_statusForSugar(sugarForStatus), l10n.macroSugar);
     }
     if (_completeMacro.fiberG != null) {
       add(_statusForFiber(_completeMacro.fiberG!), l10n.macroFiber);
@@ -3362,6 +3390,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         _statusForCholesterol(_completeMacro.cholesterolMg!),
         l10n.macroCholesterol,
       );
+    }
+    if (_completeMacro.sodiumMg != null) {
+      add(_statusForSodium(_completeMacro.sodiumMg!), l10n.macroSalt);
     }
     if (_completeMacro.transFatG != null) {
       add(_statusForTransFat(_completeMacro.transFatG!), l10n.macroTransFat);

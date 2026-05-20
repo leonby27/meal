@@ -937,5 +937,6 @@
   "macroStatusWorse": "Worse than average",
   "macroStatusAverage": "Average",
   "macroStatusGood": "Good",
-  "dishWeightLabel": "Dish weight"
+  "dishWeightLabel": "Dish weight",
+  "macroSalt": "Salt"
 }

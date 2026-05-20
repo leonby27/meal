@@ -937,5 +937,6 @@
   "macroStatusWorse": "Schlechter als Durchschnitt",
   "macroStatusAverage": "Durchschnittlich",
   "macroStatusGood": "Gut",
-  "dishWeightLabel": "Gerichtgewicht"
+  "dishWeightLabel": "Gerichtgewicht",
+  "macroSalt": "Salz"
 }

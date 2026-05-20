@@ -34,6 +34,7 @@ _JSON_SCHEMA = """{
   "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278},
   "complete_macro": {
     "sugar_g": 2.4,
+    "added_sugar_g": 0.5,
     "fiber_g": 2.5,
     "saturated_fat_g": 9.8,
     "cholesterol_mg": 380,
@@ -253,7 +254,14 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   must be different.
 - `complete_macro` is REQUIRED. Numeric values for the WHOLE portion
   (not per 100 g):
-    * `sugar_g`           — total sugars in grams (added + natural)
+    * `sugar_g`           — TOTAL sugars in grams (added + natural)
+    * `added_sugar_g`     — refined / added sugars only (white sugar,
+                            HFCS, honey added during cooking, syrups in
+                            packaged foods). EXCLUDE naturally occurring
+                            sugars from whole fruits, plain milk, plain
+                            yogurt. A banana smoothie with no added
+                            sweetener should have added_sugar_g near 0
+                            even when sugar_g is ~25 g.
     * `fiber_g`           — dietary fiber in grams
     * `saturated_fat_g`   — saturated fat in grams
     * `cholesterol_mg`    — cholesterol in milligrams
@@ -321,16 +329,38 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   ingredient quantities either — that swings the macros the wrong way
   in the other direction. Typical real-world portions, unless the
   photo clearly shows more:
-    • salad with eggs    → 1–2 eggs (50–100 g), not 3+
-    • pasta with sauce   → 80–120 g cooked pasta + 80–150 g sauce
-    • burger             → 1 patty (~110 g), 1 bun (~60 g)
-    • bowl of soup       → 250–350 g total
-    • stir-fry portion   → 200–350 g
-    • grated cheese on   → 10–30 g, not 60+
+    • salad with eggs       → 1–2 eggs (50–100 g), not 3+
+    • leafy salad bowl      → 200–300 g total greens + veg
+    • pasta with sauce      → 80–120 g cooked pasta + 80–150 g sauce
+    • pizza (1–2 slices)    → 1 slice ≈ 100–130 g, 2 slices ≈ 200–260 g
+    • burger                → 1 patty (~110 g), 1 bun (~60 g), 1 slice
+                              cheese (~20 g), small sauce (~10 g)
+    • sandwich              → 80–120 g bread, 30–60 g protein, 20–40 g
+                              cheese; total 150–250 g
+    • shaurma / wrap        → 1 wrap (~70 g), 100–150 g meat, sauce
+                              (~15 g), veg (~30 g); total 250–350 g
+    • bowl of soup          → 250–350 g total
+    • cream soup            → 250–300 g total
+    • stir-fry portion      → 200–350 g
+    • steak with side       → 150–250 g meat + 150–250 g side
+    • sushi (6–8 pieces)    → 150–200 g total
+    • smoothie (cup)        → 250–350 ml
+    • grated cheese on      → 10–30 g, not 60+
       a dish
+    • oil / butter visible  → 5–15 g, not 30+
+      on a salad / pasta
+  Salty staples worth flagging explicitly — they push sodium hard:
+    • soy sauce (1 tbsp ~15 g)  → 920 mg sodium
+    • ham / bacon / deli meat (30 g)  → 350–450 mg sodium
+    • hard cheese (30 g)        → 200–250 mg sodium
+    • bread (1 slice ~30 g)     → 140–170 mg sodium
+    • bouillon-based broth (250 g) → 500–800 mg sodium
   When you can't tell, lean toward the SMALLER end of the typical
   range — over-estimating ingredient grams pushes cholesterol /
   saturated fat / sodium into "worse" unfairly and the user notices.
+  When sodium-heavy items are clearly present (deli meat in a
+  sandwich, soy in sushi/poke, packaged broth) DO count them — the
+  user expects the row to flag salt for visibly-salty dishes.
 - `goal_fit` is REQUIRED. Evaluates the dish against the user's goal,
   which is provided in the user prompt (one of: weight loss / maintenance /
   muscle gain / balanced eating).
@@ -353,6 +383,21 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   Example: HIGH_CALORIES is positive for muscle gain, negative for weight
   loss. Pick FEWER but ACCURATE codes — do not stretch to fill 5 slots.
   Both arrays may be empty if nothing applicable.
+
+  MAINTENANCE GOAL specifically (the user is keeping weight stable):
+    • The polarising codes above (HIGH_CALORIES, LOW_CALORIES,
+      HIGH_ENERGY, LOW_FAT, LOW_CARB, HEAVY_MEAL, LIGHT_MEAL) should
+      be used SPARINGLY. Skip them entirely unless the dish is
+      genuinely extreme — e.g. HIGH_CALORIES only when the portion is
+      clearly heavy (> ~800 kcal) AND nutrient-poor; LOW_CALORIES only
+      for very light snacks (< ~150 kcal).
+    • For an everyday dish on a maintenance day, prefer composition
+      codes (BALANCED_MACROS, WHOLE_FOODS, NUTRIENT_DENSE,
+      HIGH_PROTEIN, RICH_IN_OMEGA3, GUT_FRIENDLY, etc.) over
+      calorie-direction codes. The vibe is "neutral and balanced",
+      not "this is great / this is bad".
+    • You may return goal_fit with 1–2 codes in maintenance — that is
+      preferable to forcing 4–5 weak ones.
 
 Respond STRICTLY as JSON (no markdown, no text before or after):
 """ + _JSON_SCHEMA

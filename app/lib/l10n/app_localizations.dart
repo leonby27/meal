@@ -4371,6 +4371,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Вес блюда'**
   String get dishWeightLabel;
+
+  /// No description provided for @macroSalt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Соль'**
+  String get macroSalt;
 }
 
 class _AppLocalizationsDelegate

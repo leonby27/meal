@@ -2382,4 +2382,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dishWeightLabel => 'Вес блюда';
+
+  @override
+  String get macroSalt => 'Соль';
 }
