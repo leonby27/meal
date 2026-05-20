@@ -38,6 +38,10 @@ class Ingredient(BaseModel):
 
 class CompleteMacro(BaseModel):
     sugar_g: float | None = None
+    # Refined/added sugars only — excludes natural sugars from whole
+    # fruits, plain milk, plain yogurt. Optional: older recognise
+    # responses without it fall back to `sugar_g` on the client.
+    added_sugar_g: float | None = None
     fiber_g: float | None = None
     saturated_fat_g: float | None = None
     cholesterol_mg: float | None = None

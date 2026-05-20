@@ -129,7 +129,22 @@ enum _MacroStatus { worse, average, good }
 /// are loose category boundaries; precise FDA/WHO cutoffs are not the
 /// point — surfacing an at-a-glance verdict is.
 _MacroStatus _statusForSugar(double g) {
+  // Tuned for TOTAL sugar (natural + added). Used only when the model
+  // didn't return the split — fallback path for older responses.
   if (g >= 22.5) return _MacroStatus.worse;
+  if (g >= 5) return _MacroStatus.average;
+  return _MacroStatus.good;
+}
+
+_MacroStatus _statusForAddedSugar(double g) {
+  // WHO recommends < 25 g of added sugar per day. Per-meal:
+  //   ≥ 15 g  → already ~60 % of the daily ceiling, worse
+  //   5–14 g  → significant but acceptable in a balanced day, average
+  //   < 5 g   → good
+  // These cut-offs are intentionally stricter than _statusForSugar:
+  // 22 g of strawberry sugar in a fresh smoothie is fine; 22 g of
+  // added syrup in a coffee drink is not.
+  if (g >= 15) return _MacroStatus.worse;
   if (g >= 5) return _MacroStatus.average;
   return _MacroStatus.good;
 }
@@ -3372,12 +3387,17 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     // Prefer added_sugar_g when the model split it out: natural sugars
     // from fruit/milk shouldn't penalise the row (a fresh smoothie
-    // shouldn't read red for 25 g of mostly-banana sugar). Fallback to
-    // total sugar_g keeps backward compatibility with old responses.
-    final sugarForStatus =
-        _completeMacro.addedSugarG ?? _completeMacro.sugarG;
-    if (sugarForStatus != null) {
-      add(_statusForSugar(sugarForStatus), l10n.macroSugar);
+    // shouldn't read red for 25 g of mostly-banana sugar). Use the
+    // matching stricter threshold for added sugar; fall back to the
+    // total-sugar threshold when only `sugar_g` is available so older
+    // responses still render.
+    if (_completeMacro.addedSugarG != null) {
+      add(
+        _statusForAddedSugar(_completeMacro.addedSugarG!),
+        l10n.macroSugar,
+      );
+    } else if (_completeMacro.sugarG != null) {
+      add(_statusForSugar(_completeMacro.sugarG!), l10n.macroSugar);
     }
     if (_completeMacro.fiberG != null) {
       add(_statusForFiber(_completeMacro.fiberG!), l10n.macroFiber);
