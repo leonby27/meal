@@ -158,6 +158,76 @@ async def debug_recent_apple_webhooks(request: Request):
     return {"count": len(_recent_apple_webhooks), "items": list(_recent_apple_webhooks)}
 
 
+@router.post("/admin/revoke")
+async def admin_revoke_entitlements(
+    request: Request,
+    app_account_token: Optional[str] = None,
+    promo_code: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """One-shot revocation of active entitlements for testing.
+
+    Use case: a tester redeemed a promo and now can't reach the paywall
+    because the device is still marked premium. We mark `revoked_at` on
+    the matching active row(s) so the next `/entitlement` refresh
+    downgrades the device to non-premium.
+
+    Pass at least one of the filters (AND-ed together if both are given):
+
+      - `app_account_token`: revoke entitlements for this device UUID
+        (the `device_install_uuid` minted by [DeviceIdService] in the
+        Flutter app — visible in any `/verify` request body server-side
+        and in the app's debug log).
+      - `promo_code`: revoke all entitlements granted by this promo
+        across every device. Useful when you don't know the token but
+        remember the code you typed in. Matches
+        `Entitlement.original_transaction_id` for `store='promo'`.
+
+    Already-revoked rows are skipped (the existing `revoked_at` stamp is
+    preserved). Returns the rows that this call changed.
+    """
+    _require_admin(request)
+    if not app_account_token and not promo_code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide app_account_token and/or promo_code.",
+        )
+
+    stmt = select(Entitlement).where(Entitlement.revoked_at.is_(None))
+    if app_account_token:
+        stmt = stmt.where(Entitlement.app_account_token == app_account_token)
+    if promo_code:
+        stmt = stmt.where(
+            Entitlement.store == "promo",
+            Entitlement.original_transaction_id == promo_code,
+        )
+
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+
+    now = datetime.utcnow()
+    revoked_items = []
+    for row in rows:
+        row.revoked_at = now
+        revoked_items.append(
+            {
+                "id": row.id,
+                "store": row.store,
+                "product_id": row.product_id,
+                "plan": row.plan,
+                "app_account_token": row.app_account_token,
+                "original_transaction_id": row.original_transaction_id,
+                "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+            }
+        )
+
+    await db.commit()
+    return {
+        "revoked_count": len(revoked_items),
+        "items": revoked_items,
+    }
+
+
 @router.get("/debug/versions")
 async def debug_versions(request: Request):
     _require_admin(request)
