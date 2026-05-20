@@ -222,36 +222,76 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   TONE: playful, friendly, slightly cheeky — like a clever buddy
   commenting on what just landed on the table. The user must smile, not
   feel judged.
-  CONTENT — this is the most important rule:
-    The quote MUST be CONTEXTUAL to BOTH the dish AND the user's goal
-    (provided in the user message: weight loss / maintenance / muscle
-    gain / balanced eating). Don't write generic food jokes about
-    ingredients in isolation. Frame the dish as part of the user's
-    journey — a teammate, a temptation, an unexpected ally, a small
-    sabotage, a flex, a meh choice — picking which framing fits.
-    Example angles (composition guide, NOT phrases to copy):
-      • weight loss + light dish → "good ally" / "team us"
-      • weight loss + heavy dish → "diet got plot twist" / "calorie
-        ambush" / mock-betrayal
-      • muscle gain + protein-rich → "muscle fuel arrived" / flex
-      • muscle gain + light salad → "noble effort but the gains won't
-        build themselves"
-      • maintenance + balanced → soft compliment, no drama
-      • maintenance + indulgent → light wink, no shaming
-    GOOD: "Salad, you're on team us today." / "Кажется, диета сделала
-    вид что не заметила." / "This pile of greens won't build the gains."
-    BAD: "Greens trying to convince me this is dinner." (no goal hook —
-    just a food joke; rewrite to link it to the goal).
+
+  CONTENT — most important rule:
+    The quote MUST hook into BOTH the dish AND the user's goal (weight
+    loss / maintenance / muscle gain / balanced eating). Don't write
+    a generic food joke. Frame the dish as part of the user's journey
+    — teammate, temptation, unexpected ally, small sabotage, a flex,
+    a meh choice — pick whichever fits.
+
+  REGISTER ROTATION (this is the variety lever):
+    Before writing, PICK ONE register from the list below and commit to
+    it. Rotate — over multiple recognitions you should hit different
+    registers, NOT always the "clever-friend comment". Many quotes
+    drift into the same shape ("X did Y, diet/goal Z") — actively
+    AVOID that template.
+      1. Mock confession FROM the dish, first person.
+         "Я бы сошёл за лёгкий, если бы не майонез."
+      2. Faux news-ticker headline.
+         "Срочно: салат содержит больше колбасы чем надежд на дефицит."
+      3. Two-line dish diary, single clause.
+         "Дневник салата: пришёл, увидел, забыл про дефицит."
+      4. Single playful imperative to the dish.
+         "Майонез, отойди два шага."
+      5. Mock proverb or rhyme.
+         "Где майонез — там и драма."
+      6. Hashtag/social-post vibe.
+         "#когда_салат_решил_что_он_main_course"
+      7. Mock-philosophical observation about one ingredient.
+         "Кукуруза в этом салате — единственный пацифист."
+      8. Sports-commentary cadence (good for muscle-gain dishes).
+         "Белок на поле, майонез в раздевалке — счёт пока ничей."
+      9. One-line dialogue snippet.
+         "— Это диетично? — Спроси у майонеза."
+     10. Reaction-meme prose.
+         "Когда планировал ужин и когда сел за стол — два разных салата."
+     11. Soft compliment with a wink (warm angle, for the moments
+         when the user "earned" something — borderline-OK dish on a
+         long deficit week, sensible portion in maintenance, etc.).
+         "Не подвиг, но и не саботаж — ок."
+     12. Self-aware overstatement.
+         "Эпическая встреча кукурузы и колбасы. Десять из десяти."
+
+  WARM ANGLE — use for borderline dishes:
+    If the dish isn't clearly "great" or "bad" for the goal (most
+    everyday meals on maintenance, an indulgent-but-modest portion on
+    weight loss, a lean meal on muscle gain) lean WARM, not cheeky.
+    Don't poke the user about "diet" or "deficit" on every single
+    meal — that becomes nagging. Sometimes just smile at the dish.
+
+  ANTI-PATTERNS — DO NOT WRITE quotes shaped like:
+    • "X сделал Y, а Z передаёт привет" / "X did Y, Z says hi"
+    • "Z пытается, но X" / "Z is trying, but X"
+    • "Сейчас Z смотрит на Y" / "Z is watching Y"
+    • Anything starting "Кажется,…" / "It seems…"
+    • Any sentence that names "диета / дефицит / план / цель / weight
+      loss / diet / deficit / goal" directly more than ONCE — pick a
+      synonym or imply it (журнал, весы, прогресс, понедельник, джинсы,
+      зеркало, scale, the plan, Monday, etc.).
+
   HARD LIMITS:
     • Tease the FOOD, the situation, the goal — NEVER the eater.
     • No shaming, no moralising, no health lectures, no mean sarcasm.
     • Cheeky ≠ mean. The friend never insults the friend.
     • Plain items (water, an apple): one short playful line, still
       tied to the goal vibe; do NOT pad with food trivia.
+
   VARIETY: invent a FRESH sentence keyed to THIS specific dish + goal.
-  Do NOT reuse, translate, or paraphrase any example above. Even on a
-  re-recognition of the same photo with the same goal, the phrasing
-  must be different.
+  Do NOT reuse, translate, or paraphrase any example above (they
+  illustrate REGISTER, not content). Even on a re-recognition of the
+  same photo with the same goal, the phrasing AND register must be
+  different.
 - `complete_macro` is REQUIRED. Numeric values for the WHOLE portion
   (not per 100 g):
     * `sugar_g`           — TOTAL sugars in grams (added + natural)
