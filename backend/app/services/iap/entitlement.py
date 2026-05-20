@@ -26,6 +26,17 @@ _PRODUCT_TO_PLAN = {
     "yearly_premium": "yearly",
 }
 
+# Per-code duration overrides for promo redemption. Anything not listed
+# falls back to `_DEFAULT_PROMO_DURATION` (7 days).
+_DEFAULT_PROMO_DURATION = timedelta(days=7)
+_PROMO_CODE_DURATIONS: dict[str, timedelta] = {
+    "2171": timedelta(hours=1),
+}
+
+
+def _promo_duration(code: str) -> timedelta:
+    return _PROMO_CODE_DURATIONS.get(code, _DEFAULT_PROMO_DURATION)
+
 
 def product_to_plan(product_id: str) -> str:
     return _PRODUCT_TO_PLAN.get(product_id, product_id)
@@ -196,14 +207,16 @@ async def upsert_promo(
     app_account_token: str,
     code: str,
 ) -> Entitlement:
-    """Promo redemption: grants 7 days of premium, stackable.
+    """Promo redemption: grants a duration of premium, stackable.
 
-    Each call adds a week to whichever is later — the current expiry or
-    "now" — so re-entering a code mid-week doesn't waste remaining time
-    and re-entering after expiry simply starts a fresh week. There's no
-    cap on how many times the same code can be redeemed; the codes
-    themselves are the access control (we trust [config.get_promo_codes]
-    to be small and curated).
+    Default duration is 7 days; per-code overrides live in
+    `_PROMO_CODE_DURATIONS` (e.g. "2171" is a 1-hour QA code). Each call
+    adds the duration to whichever is later — the current expiry or
+    "now" — so re-entering a code mid-window doesn't waste remaining
+    time and re-entering after expiry simply starts a fresh window.
+    There's no cap on how many times the same code can be redeemed; the
+    codes themselves are the access control (we trust
+    [config.get_promo_codes] to be small and curated).
 
     The unique constraint (store, original_transaction_id) is satisfied
     by a synthetic `code:token` id so the same code can live on
@@ -220,13 +233,13 @@ async def upsert_promo(
     row = (await db.execute(stmt)).scalar_one_or_none()
 
     now = datetime.utcnow()
-    week = timedelta(days=7)
+    duration = _promo_duration(code)
 
     if row is not None:
         # Don't downgrade a legacy lifetime grant (expires_at IS NULL).
         if row.expires_at is not None:
             base = row.expires_at if row.expires_at > now else now
-            row.expires_at = base + week
+            row.expires_at = base + duration
         if user_id and not row.user_id:
             row.user_id = user_id
         # Re-redeeming after a revoke is an explicit user signal — they
@@ -250,7 +263,7 @@ async def upsert_promo(
         product_id=f"promo_{code}",
         plan="promo",
         original_transaction_id=synthetic_id,
-        expires_at=now + week,
+        expires_at=now + duration,
         is_in_trial=False,
         is_in_grace_period=False,
         auto_renew_enabled=False,

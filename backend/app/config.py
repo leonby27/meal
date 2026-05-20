@@ -47,7 +47,9 @@ class Settings(BaseSettings):
     apple_force_sandbox: bool = False
     # Promo codes that immediately grant lifetime access (matches the legacy
     # hard-coded list on the client). Comma-separated.
-    promo_codes: str = "8259,2170"
+    # "2171" is a short-lived QA code (1 hour) — see PROMO_CODE_DURATIONS
+    # in services/iap/entitlement.py for per-code overrides.
+    promo_codes: str = "8259,2170,2171"
 
     # Optional admin token gating /api/iap/debug/* — set this in production
     # so the recent-webhook ring buffer (which contains real users' signed
