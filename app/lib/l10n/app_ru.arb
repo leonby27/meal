@@ -1106,11 +1106,12 @@
   "macroSaturatedFat": "Насыщенные жиры",
   "macroCholesterol": "Холестерин",
   "macroTransFat": "Транс-жиры",
-  "macroGlycemicLoad": "Гликемическая нагрузка",
+  "macroGlycemicLoad": "Гликем. нагрузка",
   "macroCaloricDensity": "Плотность калорий",
   "macroProcessing": "Степень обработки",
   "macroVitamins": "Витамины и минералы",
   "macroStatusWorse": "Хуже среднего",
   "macroStatusAverage": "Средне",
-  "macroStatusGood": "Хорошо"
+  "macroStatusGood": "Хорошо",
+  "dishWeightLabel": "Вес блюда"
 }

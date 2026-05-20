@@ -2383,4 +2383,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get macroStatusGood => 'Gut';
+
+  @override
+  String get dishWeightLabel => 'Gerichtgewicht';
 }

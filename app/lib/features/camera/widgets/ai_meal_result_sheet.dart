@@ -135,8 +135,12 @@ _MacroStatus _statusForSugar(double g) {
 }
 
 _MacroStatus _statusForFiber(double g) {
-  if (g >= 6) return _MacroStatus.good;
-  if (g >= 3) return _MacroStatus.average;
+  // A leafy-veg salad (~250 g of mixed greens, radish, cucumber, herbs)
+  // realistically carries 5–7 g of fiber, which should clearly read as
+  // "good" — not "average". 5 g is also ~20 % of the WHO daily target
+  // for a single meal, a reasonable threshold for the upper bucket.
+  if (g >= 5) return _MacroStatus.good;
+  if (g >= 2.5) return _MacroStatus.average;
   return _MacroStatus.worse;
 }
 
@@ -147,7 +151,11 @@ _MacroStatus _statusForSatFat(double g) {
 }
 
 _MacroStatus _statusForCholesterol(double mg) {
-  if (mg >= 300) return _MacroStatus.worse;
+  // 1 egg ~185 mg; a dish with two eggs lands at ~370 mg. The "worse"
+  // threshold sits at 350 mg so 1-2 eggs in a salad falls into average,
+  // and the bar climbs to worse only when the dish is genuinely heavy on
+  // organ meat, multiple eggs, or hard-cheese-loaded toppings.
+  if (mg >= 350) return _MacroStatus.worse;
   if (mg >= 100) return _MacroStatus.average;
   return _MacroStatus.good;
 }
@@ -1771,17 +1779,18 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Photo + body in a Stack so the body card overlaps
-                      // the photo by 24px without leaving phantom whitespace
-                      // at the bottom. Cards are inset 8px on each side
-                      // relative to the photo (Figma layout).
+                      // Photo + body in a Stack. Per Figma the body sits
+                      // 28 px BELOW the photo (no overlap) — keeps the
+                      // dish quote bubble clean and gives the analytics
+                      // card its own breathing room. Cards are inset 8 px
+                      // on each side relative to the photo.
                       Stack(
                         children: [
                           if (hasImage) _buildImageCard(c),
                           Padding(
                             padding: EdgeInsets.fromLTRB(
                               8,
-                              hasImage ? 221 - 24 : 0,
+                              hasImage ? 221 + 28 : 0,
                               8,
                               0,
                             ),
@@ -1911,6 +1920,19 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
               ),
             ),
           ),
+          // Health rating sits as its OWN 20-radius card under the
+          // analytics card (Figma `Frame 60` gap = 8 px). Only shown in
+          // overview mode — when the user flips into the macro editor
+          // it doesn't make sense to keep showing the rating.
+          if (!_paramsEditMode) ...[
+            const SizedBox(height: 8),
+            _buildHealthCard(
+              c,
+              score: _computeHealthScore(),
+              scoreRatio: (_computeHealthScore() / 10).clamp(0.0, 1.0),
+              description: _healthDescription(_computeHealthScore()),
+            ),
+          ],
           if (!_goalFit.isEmpty) ...[
             const SizedBox(height: 16),
             _buildGoalFitSection(c),
@@ -2093,57 +2115,76 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     }
 
     final quote = _mealQuote;
-    return Container(
+    // At 24 px radius the combination of `Border.all` + `Clip.antiAlias`
+    // gives jagged corners on iOS — the border anti-aliases against
+    // ARGB pixels and the clip then chews into them. Splitting the
+    // border (outer Container) from the clip (inner ClipRRect) lets
+    // each pass do clean anti-aliasing.
+    final photo = Container(
       height: 221,
       width: double.infinity,
       decoration: BoxDecoration(
-        // Real photos (camera / saved meal file) are opaque — no canvas
-        // needed, and a white one would bleed through the antialiased
-        // rounded clip as a 1-px halo. Network images may be product
-        // cut-outs with transparency, so they keep the flat-white canvas.
         color: isOpaquePhoto ? null : Colors.white,
         border: Border.all(color: c.borderColor),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(24),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          imageWidget,
-          if (quote != null)
-            Positioned(
-              left: 20,
-              right: 20,
-              bottom: 20,
-              child: Align(
-                alignment: Alignment.bottomLeft,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 256),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.lightInverse,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      quote,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        height: 20 / 15,
-                      ),
-                    ),
+      child: ClipRRect(
+        // Inset the inner clip by the 1 px border so the image's outer
+        // pixels never paint over (or under) the border ring.
+        borderRadius: BorderRadius.circular(23),
+        child: imageWidget,
+      ),
+    );
+
+    if (quote == null) return photo;
+
+    // The bubble overhangs the bottom edge of the photo by 8 px (per
+    // design), so it has to live OUTSIDE the photo's clipBehavior. We
+    // wrap photo + bubble in an outer Stack with `clipBehavior: none`
+    // and pin the bubble to the bottom. With Positioned(left/right/bottom)
+    // and no `top`, the bubble's height is determined entirely by its
+    // child — so it visually GROWS UPWARD when the quote wraps to more
+    // lines, while its bottom edge stays nailed at -8.
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        photo,
+        Positioned(
+          left: 20,
+          right: 20,
+          bottom: -12,
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 256),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.lightInverse,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.lightBack2,
+                    width: 4,
+                  ),
+                ),
+                child: Text(
+                  quote,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    height: 20 / 15,
                   ),
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -2259,11 +2300,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     return Container(
       decoration: BoxDecoration(
         color: c.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: c.isDark ? AppColors.darkBack2 : AppColors.lightBack2,
-          width: 2,
-        ),
+        borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.all(20),
       child: child,
@@ -2282,181 +2319,408 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     required double fShare,
     required double cShare,
     required int? dailyPercent,
+    // [score / scoreRatio / description] are passed in but the new Figma
+    // layout renders the health card OUTSIDE the analytics shell — we
+    // ignore them here. Keeping them in the signature so the parent
+    // build can stay unchanged.
     required int score,
     required double scoreRatio,
     required String description,
   }) {
+    final order = MacroOrder.of(context);
+    final grams = _val(_totalGramsCtl);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-          // Calorie ring + activity rows
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _buildCalorieRing(
+        // Calorie ring + macro rows (Figma: ring 106×105 left, three
+        // 32 px gradient rows stacked on the right with 6 px gap).
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildCalorieRing(
+              c,
+              calories * progress,
+              pShare * progress,
+              fShare * progress,
+              cShare * progress,
+            ),
+            const SizedBox(width: 23),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (int i = 0; i < order.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 6),
+                    _buildMacroRow(c, order[i], _macroGrams(order[i]) * progress),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        // Weight (left) + daily-calorie % (right).
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildLabelledValue(
                 c,
-                calories * progress,
-                pShare * progress,
-                fShare * progress,
-                cShare * progress,
+                value: l10n.gramsValue(grams.round()),
+                label: l10n.dishWeightLabel,
+                alignment: CrossAxisAlignment.start,
               ),
-              const SizedBox(width: 18),
+            ),
+            if (dailyPercent != null)
               Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildActivityRow(
-                      c,
-                      icon: Icons.directions_walk_rounded,
-                      label: l10n.activityWalking,
-                      value: _formatActivityHours(calories * progress / 250),
-                    ),
-                    const SizedBox(height: 4),
-                    _buildActivityRow(
-                      c,
-                      icon: Icons.directions_bike_rounded,
-                      label: l10n.activityBicycle,
-                      value: _formatActivityHours(calories * progress / 600),
-                    ),
-                    const SizedBox(height: 4),
-                    _buildActivityRow(
-                      c,
-                      svgAsset: 'assets/icons/sleep.svg',
-                      svgWidth: 16,
-                      svgHeight: 10,
-                      label: l10n.activityResting,
-                      value: _formatActivityHours(calories * progress / 70),
-                    ),
-                  ],
+                child: _buildLabelledValue(
+                  c,
+                  value: '${(dailyPercent * progress).round()}%',
+                  label: l10n.ofYourDailyCalories,
+                  alignment: CrossAxisAlignment.end,
                 ),
               ),
-            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Stepper (left) + Edit chip (right).
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildWeightStepper(c),
+            const Spacer(),
+            _buildEditChip(c, l10n),
+          ],
+        ),
+        const SizedBox(height: 9),
+        _buildRefineFieldCompact(c),
+      ],
+    );
+  }
+
+  // ── Helpers used by the new Figma overview layout ────────────────────
+
+  /// Returns the macro's current per-portion grams from the editable
+  /// controllers (so stepper-driven recalculation is reflected live).
+  double _macroGrams(Macro m) {
+    switch (m) {
+      case Macro.protein: return _val(_proteinCtl);
+      case Macro.fat: return _val(_fatCtl);
+      case Macro.carbs: return _val(_carbsCtl);
+    }
+  }
+
+  /// Figma `Frame 235999..236003` — 32 px full-width row, radius 8, a
+  /// macro-specific horizontal gradient (right→left as in Figma), 20 px
+  /// circle for the SVG ingredient icon, Medium 13 label left, Bold 13
+  /// gram count right with 8 px inset from the row's edge.
+  Widget _buildMacroRow(_AiSheetColors c, Macro macro, double grams) {
+    final l10n = context.l10n;
+    final (gradient, iconAsset, label) = switch (macro) {
+      Macro.protein => (
+          const LinearGradient(
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+            colors: [Color(0x26F0681B), Color(0x26D91D1D)],
           ),
-          const SizedBox(height: 16),
-          // Macro pills
-          Row(
-            children: [
-              for (int i = 0; i < MacroOrder.of(context).length; i++) ...[
-                if (i > 0) const SizedBox(width: 8),
-                Expanded(
-                  child: _buildMacroPill(
-                    c,
-                    iconAsset: switch (MacroOrder.of(context)[i]) {
-                      Macro.protein => 'assets/icons/belok.svg',
-                      Macro.fat => 'assets/icons/fat.svg',
-                      Macro.carbs => 'assets/icons/uglevod.svg',
-                    },
-                    letter: switch (MacroOrder.of(context)[i]) {
-                      Macro.protein => l10n.proteinShort,
-                      Macro.fat => l10n.fatShort,
-                      Macro.carbs => l10n.carbsShort,
-                    },
-                    grams: switch (MacroOrder.of(context)[i]) {
-                      Macro.protein => protein * progress,
-                      Macro.fat => fat * progress,
-                      Macro.carbs => carbs * progress,
-                    },
-                    gradient: switch (MacroOrder.of(context)[i]) {
-                      Macro.protein => const LinearGradient(
-                          begin: Alignment.centerRight,
-                          end: Alignment.centerLeft,
-                          colors: [Color(0x26F0681B), Color(0x26D91D1D)],
-                        ),
-                      Macro.fat => const LinearGradient(
-                          begin: Alignment.centerRight,
-                          end: Alignment.centerLeft,
-                          colors: [Color(0x26FFBB00), Color(0x26D0FF00)],
-                        ),
-                      Macro.carbs => const LinearGradient(
-                          begin: Alignment.centerRight,
-                          end: Alignment.centerLeft,
-                          colors: [Color(0x261787D1), Color(0x2617D1C7)],
-                        ),
-                    },
-                  ),
-                ),
-              ],
-            ],
+          'assets/onboarding/emoji/cut-of-meat.svg',
+          l10n.proteinLabel,
+        ),
+      Macro.fat => (
+          const LinearGradient(
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+            colors: [Color(0x26FFBB00), Color(0x26D0FF00)],
           ),
-          const SizedBox(height: 16),
-          _buildHealthCard(
-            c,
-            score: score,
-            scoreRatio: scoreRatio,
-            description: description,
-            progress: progress,
+          'assets/onboarding/emoji/avocado.svg',
+          l10n.fatLabel,
+        ),
+      Macro.carbs => (
+          const LinearGradient(
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+            colors: [Color(0x261787D1), Color(0x2617D1C7)],
           ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: () => setState(() => _paramsEditMode = true),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: c.baseSurface,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.edit_outlined,
-                        size: 20,
-                        color: c.isDark
-                            ? AppColors.darkSecondaryDark
-                            : AppColors.lightSecondaryDark,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        l10n.edit,
-                        style: TextStyle(
-                          color: c.isDark
-                              ? AppColors.darkPrimaryLight
-                              : AppColors.lightPrimaryLight,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          height: 18 / 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          'assets/onboarding/emoji/bread.svg',
+          l10n.carbsLabel,
+        ),
+    };
+
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.only(left: 4, right: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: Center(
+              child: SvgPicture.asset(iconAsset, width: 17, height: 17),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: c.onSurface,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                height: 16 / 13,
               ),
-              const Spacer(),
-              if (dailyPercent != null)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${(dailyPercent * progress).round()}%',
-                      style: TextStyle(
-                        color: c.onSurface,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.ofYourDailyCalories,
-                      style: TextStyle(
-                        color: c.onSurface.withAlpha(128),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        height: 1,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
+            ),
+          ),
+          Text(
+            l10n.gramsValue(grams.round()),
+            style: TextStyle(
+              color: c.onSurface,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 16 / 13,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Big-number-over-secondary-label pair used twice in the analytics
+  /// card: weight on the left, % of daily calories on the right. Figma
+  /// styles: 18 px Bold value, 13 px Regular secondary label at 50 %
+  /// opacity over primary text.
+  Widget _buildLabelledValue(
+    _AiSheetColors c, {
+    required String value,
+    required String label,
+    required CrossAxisAlignment alignment,
+  }) {
+    final textAlign = alignment == CrossAxisAlignment.end
+        ? TextAlign.right
+        : TextAlign.left;
+    return Column(
+      crossAxisAlignment: alignment,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          textAlign: textAlign,
+          style: TextStyle(
+            color: c.onSurface,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            height: 24 / 18,
+          ),
+        ),
+        Text(
+          label,
+          textAlign: textAlign,
+          style: TextStyle(
+            color: c.onSurface.withValues(alpha: 0.5),
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            height: 16 / 13,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// −/+ stepper that adjusts the dish's total weight by 10 g and
+  /// scales every macro accordingly so the displayed totals stay
+  /// consistent. Two 40×40 buttons with a 4 px gap on a 84 px footprint.
+  Widget _buildWeightStepper(_AiSheetColors c) {
+    return SizedBox(
+      width: 84,
+      height: 40,
+      child: Row(
+        children: [
+          _weightStepperButton(c, icon: Icons.remove_rounded, onTap: () => _adjustWeight(-10)),
+          const SizedBox(width: 4),
+          _weightStepperButton(c, icon: Icons.add_rounded, onTap: () => _adjustWeight(10)),
+        ],
+      ),
+    );
+  }
+
+  Widget _weightStepperButton(
+    _AiSheetColors c, {
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          decoration: BoxDecoration(
+            color: c.back,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 24, color: c.onSurface),
+        ),
+      ),
+    );
+  }
+
+  void _adjustWeight(int deltaG) {
+    final current = _val(_totalGramsCtl);
+    final next = (current + deltaG).clamp(0.0, 9999.0);
+    if (next == current) return;
+    final ratio = current > 0 ? next / current : 1.0;
+    setState(() {
+      _totalGramsCtl.text = _fmt(next);
+      _proteinCtl.text = _fmt(_val(_proteinCtl) * ratio);
+      _fatCtl.text = _fmt(_val(_fatCtl) * ratio);
+      _carbsCtl.text = _fmt(_val(_carbsCtl) * ratio);
+      _caloriesCtl.text = _fmt(_val(_caloriesCtl) * ratio);
+      for (final ing in _ingredients) {
+        ing.grams = ing.grams * ratio;
+        ing.protein = ing.protein * ratio;
+        ing.fat = ing.fat * ratio;
+        ing.carbs = ing.carbs * ratio;
+        ing.calories = ing.calories * ratio;
+        ing.caloriesCtl.text = _fmt(ing.calories);
+      }
+    });
+  }
+
+  /// Surface-toned chip that flips the card into edit mode. Figma:
+  /// 139×40, radius 12, icon 20 + label 14 px Medium with 8 px gap.
+  Widget _buildEditChip(_AiSheetColors c, AppLocalizations l10n) {
+    return GestureDetector(
+      onTap: () => setState(() => _paramsEditMode = true),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: c.back,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/edit.svg',
+              width: 20,
+              height: 20,
+              colorFilter: ColorFilter.mode(c.onSurface, BlendMode.srcIn),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              l10n.edit,
+              style: TextStyle(
+                color: c.onSurface,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 18 / 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Compact refine field per Figma: 48 px tall outlined input with a
+  /// 36 px round send button pinned to the right. Tapping the field
+  /// focuses the text input; tapping the send button submits when
+  /// there's text, otherwise no-op.
+  Widget _buildRefineFieldCompact(_AiSheetColors c) {
+    final hint = c.isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _refineFocus.requestFocus(),
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+        decoration: BoxDecoration(
+          color: c.cardBg,
+          border: Border.all(
+            color: c.isDark ? AppColors.lineDT200 : AppColors.lineLight200,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _refineCtl,
+                builder: (context, value, _) {
+                  return TextField(
+                    controller: _refineCtl,
+                    focusNode: _refineFocus,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) {
+                      if (_refineCtl.text.trim().isNotEmpty) {
+                        _onRefineDish();
+                      }
+                    },
+                    style: TextStyle(
+                      color: c.onSurface,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      height: 18 / 14,
+                    ),
+                    decoration: InputDecoration(
+                      isCollapsed: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                      border: InputBorder.none,
+                      filled: false,
+                      hintText: context.l10n.refineDishHint,
+                      hintStyle: TextStyle(
+                        color: hint,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        height: 18 / 14,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _refineCtl,
+              builder: (context, value, _) {
+                final hasText = value.text.trim().isNotEmpty;
+                final bg = hasText
+                    ? AppColors.primary
+                    : (c.isDark
+                        ? AppColors.darkSecondaryExtraLight
+                        : AppColors.lightSecondaryExtraLight);
+                return GestureDetector(
+                  onTap: hasText && !_refining ? _onRefineDish : null,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: bg,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: SvgPicture.asset(
+                      'assets/icons/send.svg',
+                      width: 18,
+                      height: 18,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white, BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -2511,6 +2775,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
   }
 
+  // Kept for the upcoming "How to burn calories" section; the old
+  // overview now uses macro rows instead.
+  // ignore: unused_element
   Widget _buildActivityRow(
     _AiSheetColors c, {
     IconData? icon,
@@ -2586,55 +2853,10 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
   }
 
-  Widget _buildMacroPill(
-    _AiSheetColors c, {
-    required String iconAsset,
-    required String letter,
-    required double grams,
-    required LinearGradient gradient,
-  }) {
-    return Container(
-      height: 32,
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            alignment: Alignment.center,
-            child: SvgPicture.asset(iconAsset, width: 18, height: 18),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              letter.toUpperCase(),
-              style: TextStyle(
-                color: c.onSurface,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                height: 16 / 13,
-              ),
-            ),
-          ),
-          Text(
-            context.l10n.gramsValue(grams.round()),
-            style: TextStyle(
-              color: c.onSurface,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              height: 16 / 13,
-            ),
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-    );
-  }
-
+  /// Standalone health-rating card sat below the analytics card (Figma
+  /// `Frame 236000`). Same outer radius (20) and white background as the
+  /// analytics card; heart icon left, title + 6 px progress bar + comment
+  /// stacked on the right.
   Widget _buildHealthCard(
     _AiSheetColors c, {
     required int score,
@@ -2649,10 +2871,9 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     return Container(
       decoration: BoxDecoration(
         color: c.cardBg,
-        border: Border.all(color: c.borderColor),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
       ),
-      padding: const EdgeInsets.fromLTRB(8, 8, 16, 16),
+      padding: const EdgeInsets.all(16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2663,75 +2884,72 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        l10n.healthRatingLabel,
-                        style: TextStyle(
-                          color: c.onSurface,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          height: 16 / 13,
-                        ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      l10n.healthRatingLabel,
+                      style: TextStyle(
+                        color: c.onSurface,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        height: 20 / 15,
                       ),
-                      Text(
-                        l10n.healthRatingValue(displayScore),
-                        style: TextStyle(
-                          color: c.onSurface,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          height: 16 / 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: c.isDark
-                          ? AppColors.lineDT200
-                          : AppColors.lineLight200,
-                      borderRadius: BorderRadius.circular(3),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor:
-                            displayRatio <= 0 ? 0.001 : displayRatio,
-                        heightFactor: 1,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: _healthBarGradient(score),
-                            ),
-                            borderRadius: BorderRadius.circular(3),
+                    Text(
+                      l10n.healthRatingValue(displayScore),
+                      style: TextStyle(
+                        color: c.onSurface,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        height: 20 / 15,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: c.isDark
+                        ? AppColors.lineDT200
+                        : AppColors.lineLight200,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor:
+                          displayRatio <= 0 ? 0.001 : displayRatio,
+                      heightFactor: 1,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: _healthBarGradient(score),
                           ),
+                          borderRadius: BorderRadius.circular(3),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 11),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: c.isDark
-                          ? AppColors.darkPrimaryLight
-                          : AppColors.lightPrimaryLight,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      height: 16 / 13,
-                    ),
+                ),
+                const SizedBox(height: 11),
+                Text(
+                  description,
+                  style: TextStyle(
+                    color: c.isDark
+                        ? AppColors.darkPrimaryLight
+                        : AppColors.lightPrimaryLight,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    height: 20 / 15,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -3004,6 +3222,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     return v.round().toString();
   }
 
+  // ignore: unused_element
   String _formatActivityHours(double hours) {
     if (hours.isNaN || hours <= 0) {
       return context.l10n.approxMinutes(0);
@@ -3071,13 +3290,16 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   }
 
   Widget _buildGoalFitChip(String label, {required bool positive}) {
-    // Figma: positive = success @ 15% over surface, negative = warning
-    // @ 9% over surface. Status icon is a 20 px filled circle with a
-    // white glyph centered inside.
+    // Figma: positive = success @ 15% over surface, negative = orange
+    // @ 10% over surface. The negative tint is intentionally orange-not-
+    // red here — red is reserved for "Worse than average" rows in
+    // [_buildMacroGroup], so that the user has a clear visual hierarchy
+    // between "this is suboptimal for your goal" (orange) and "this is
+    // a meaningful nutrition red flag" (red).
     final bgColor = positive
         ? AppColors.success.withValues(alpha: 0.15)
-        : AppColors.error.withValues(alpha: 0.09);
-    final iconBg = positive ? AppColors.success : AppColors.error;
+        : AppColors.orange.withValues(alpha: 0.10);
+    final iconBg = positive ? AppColors.success : AppColors.orange;
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -3089,12 +3311,12 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 20,
-            height: 20,
+            width: 16,
+            height: 16,
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
             child: Icon(
               positive ? Icons.check : Icons.priority_high,
-              size: 14,
+              size: 12,
               color: Colors.white,
             ),
           ),
@@ -3266,15 +3488,15 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    width: 20,
-                    height: 20,
+                    width: 16,
+                    height: 16,
                     decoration: BoxDecoration(
                       color: accent,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       isPositive ? Icons.check : Icons.priority_high,
-                      size: 14,
+                      size: 12,
                       color: Colors.white,
                     ),
                   ),
@@ -3737,7 +3959,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       child: Container(
         height: 34,
         decoration: BoxDecoration(
-          color: c.baseSurface,
+          color: c.back,
           borderRadius: BorderRadius.circular(8),
         ),
         alignment: Alignment.center,
@@ -4269,7 +4491,7 @@ class _SuggestionChip extends StatelessWidget {
               width: 26,
               height: 26,
               decoration: BoxDecoration(
-                color: c.baseSurface,
+                color: c.back,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,

@@ -4327,7 +4327,7 @@ abstract class AppLocalizations {
   /// No description provided for @macroGlycemicLoad.
   ///
   /// In ru, this message translates to:
-  /// **'Гликемическая нагрузка'**
+  /// **'Гликем. нагрузка'**
   String get macroGlycemicLoad;
 
   /// No description provided for @macroCaloricDensity.
@@ -4365,6 +4365,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Хорошо'**
   String get macroStatusGood;
+
+  /// No description provided for @dishWeightLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вес блюда'**
+  String get dishWeightLabel;
 }
 
 class _AppLocalizationsDelegate

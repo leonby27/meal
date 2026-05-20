@@ -218,32 +218,39 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   and these two fields are never omitted.
 - `meal_quote` is REQUIRED. One short sentence (≤ 100 characters), in the
   same language as the rest of the response.
-  TONE: playful and slightly cheeky — a witty quip with a dash of sass,
-  the kind of line a clever friend would drop while passing you the
-  plate. It should make the user smile, not feel judged. Tease the dish,
-  the chef, the portion size, the plate — anything visual or contextual
-  is fair game. AVOID anything that:
-    - shames the eater for what they're eating (no "you'll regret this",
-      no "diet ruined" framing aimed at the user),
-    - moralises about health, calories, or willpower,
-    - sounds like a parent or a coach lecturing,
-    - is sarcastic in a mean way.
-  Cheeky ≠ mean. Tease the FOOD, never the person.
-  May be written from the dish's point of view, or as a third-person
-  wisecrack about what's on the plate. For plain items (a glass of
-  water, a single apple) keep it short and still playful, not bland.
-  IMPORTANT — VARIETY: invent a FRESH sentence keyed to THIS specific
-  dish. Do NOT reuse, translate, or paraphrase any of the example tones
-  below. They illustrate REGISTER, not content; the phrasing itself must
-  be original each time, even for the same dish on a different photo.
-  Example registers (for INSPIRATION ONLY, do not copy):
-    - dramatic confession from the food's perspective
-    - mock-philosophical observation about a single ingredient
-    - dry one-liner about portion size, plate styling, or temperature
-    - playful warning to the eater
-    - faux-news-headline style summary
-    - cooking-show inner-monologue snippet
-  Picking which register fits each dish — and the wording — is your job.
+  TONE: playful, friendly, slightly cheeky — like a clever buddy
+  commenting on what just landed on the table. The user must smile, not
+  feel judged.
+  CONTENT — this is the most important rule:
+    The quote MUST be CONTEXTUAL to BOTH the dish AND the user's goal
+    (provided in the user message: weight loss / maintenance / muscle
+    gain / balanced eating). Don't write generic food jokes about
+    ingredients in isolation. Frame the dish as part of the user's
+    journey — a teammate, a temptation, an unexpected ally, a small
+    sabotage, a flex, a meh choice — picking which framing fits.
+    Example angles (composition guide, NOT phrases to copy):
+      • weight loss + light dish → "good ally" / "team us"
+      • weight loss + heavy dish → "diet got plot twist" / "calorie
+        ambush" / mock-betrayal
+      • muscle gain + protein-rich → "muscle fuel arrived" / flex
+      • muscle gain + light salad → "noble effort but the gains won't
+        build themselves"
+      • maintenance + balanced → soft compliment, no drama
+      • maintenance + indulgent → light wink, no shaming
+    GOOD: "Salad, you're on team us today." / "Кажется, диета сделала
+    вид что не заметила." / "This pile of greens won't build the gains."
+    BAD: "Greens trying to convince me this is dinner." (no goal hook —
+    just a food joke; rewrite to link it to the goal).
+  HARD LIMITS:
+    • Tease the FOOD, the situation, the goal — NEVER the eater.
+    • No shaming, no moralising, no health lectures, no mean sarcasm.
+    • Cheeky ≠ mean. The friend never insults the friend.
+    • Plain items (water, an apple): one short playful line, still
+      tied to the goal vibe; do NOT pad with food trivia.
+  VARIETY: invent a FRESH sentence keyed to THIS specific dish + goal.
+  Do NOT reuse, translate, or paraphrase any example above. Even on a
+  re-recognition of the same photo with the same goal, the phrasing
+  must be different.
 - `complete_macro` is REQUIRED. Numeric values for the WHOLE portion
   (not per 100 g):
     * `sugar_g`           — total sugars in grams (added + natural)
@@ -286,6 +293,14 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
     Onion (raw)                  fiber ~1.7 g, sugar ~4 g
     Carrot (raw)                 fiber ~2.8 g, sugar ~5 g
     Lettuce / leafy greens       fiber ~1.3 g, sugar ~1 g
+    Cucumber                     fiber ~0.5 g, sugar ~1.7 g
+    Radish                       fiber ~1.6 g, sugar ~1.9 g
+    Spinach / arugula            fiber ~2.2 g
+    Fresh herbs (parsley, dill)  fiber ~3 g
+    Mixed salad (greens+veg)     fiber ~2.2 g/100 g — a typical 250 g
+                                 bowl already lands above 5 g; do NOT
+                                 under-report fiber on visible-green
+                                 salads
     Avocado                      fiber ~7 g, sat. fat ~2 g
     Apple                        fiber ~2.4 g, sugar ~10 g
     Banana                       fiber ~2.6 g, sugar ~12 g
@@ -301,6 +316,21 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   not 95. Sum reference values per ingredient × grams; do not
   "average it out". A dish with 150 g of ground beef plus 30 g of
   parmesan should NOT report cholesterol under 130 mg.
+
+- REALISTIC INGREDIENT COUNTS for `complete_macro`: don't INFLATE
+  ingredient quantities either — that swings the macros the wrong way
+  in the other direction. Typical real-world portions, unless the
+  photo clearly shows more:
+    • salad with eggs    → 1–2 eggs (50–100 g), not 3+
+    • pasta with sauce   → 80–120 g cooked pasta + 80–150 g sauce
+    • burger             → 1 patty (~110 g), 1 bun (~60 g)
+    • bowl of soup       → 250–350 g total
+    • stir-fry portion   → 200–350 g
+    • grated cheese on   → 10–30 g, not 60+
+      a dish
+  When you can't tell, lean toward the SMALLER end of the typical
+  range — over-estimating ingredient grams pushes cholesterol /
+  saturated fat / sodium into "worse" unfairly and the user notices.
 - `goal_fit` is REQUIRED. Evaluates the dish against the user's goal,
   which is provided in the user prompt (one of: weight loss / maintenance /
   muscle gain / balanced eating).

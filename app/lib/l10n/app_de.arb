@@ -936,5 +936,6 @@
   "macroVitamins": "Vitamine und Mineralien",
   "macroStatusWorse": "Schlechter als Durchschnitt",
   "macroStatusAverage": "Durchschnittlich",
-  "macroStatusGood": "Gut"
+  "macroStatusGood": "Gut",
+  "dishWeightLabel": "Gerichtgewicht"
 }

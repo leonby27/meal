@@ -936,5 +936,6 @@
   "macroVitamins": "Vitaminas y minerales",
   "macroStatusWorse": "Peor que la media",
   "macroStatusAverage": "Promedio",
-  "macroStatusGood": "Bueno"
+  "macroStatusGood": "Bueno",
+  "dishWeightLabel": "Peso del plato"
 }

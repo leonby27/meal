@@ -2360,7 +2360,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get macroTransFat => 'Транс-жиры';
 
   @override
-  String get macroGlycemicLoad => 'Гликемическая нагрузка';
+  String get macroGlycemicLoad => 'Гликем. нагрузка';
 
   @override
   String get macroCaloricDensity => 'Плотность калорий';
@@ -2379,4 +2379,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get macroStatusGood => 'Хорошо';
+
+  @override
+  String get dishWeightLabel => 'Вес блюда';
 }
