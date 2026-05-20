@@ -2190,4 +2190,193 @@ class AppLocalizationsPt extends AppLocalizations {
   String onbTrialReminderSubtitle(String yearly, String monthly) {
     return 'Apenas $yearly por ano ($monthly/mês)';
   }
+
+  @override
+  String get tagHighProtein => 'Rico em proteína';
+
+  @override
+  String get tagContainsProtein => 'Com proteína';
+
+  @override
+  String get tagLowProtein => 'Pouca proteína';
+
+  @override
+  String get tagCompleteProtein => 'Proteína completa';
+
+  @override
+  String get tagHealthyFats => 'Gorduras boas';
+
+  @override
+  String get tagRichInOmega3 => 'Rico em ômega-3';
+
+  @override
+  String get tagHighFat => 'Rico em gordura';
+
+  @override
+  String get tagHighSatFat => 'Gordura saturada';
+
+  @override
+  String get tagHighTransFat => 'Gordura trans';
+
+  @override
+  String get tagLowFat => 'Pouca gordura';
+
+  @override
+  String get tagHighFiber => 'Rico em fibras';
+
+  @override
+  String get tagContainsFiber => 'Com fibras';
+
+  @override
+  String get tagLowFiber => 'Pouca fibra';
+
+  @override
+  String get tagComplexCarbs => 'Carboidratos complexos';
+
+  @override
+  String get tagRefinedCarbs => 'Carboidratos refinados';
+
+  @override
+  String get tagLowSugar => 'Pouco açúcar';
+
+  @override
+  String get tagHighSugar => 'Muito açúcar';
+
+  @override
+  String get tagLowCarb => 'Baixo carboidrato';
+
+  @override
+  String get tagHighCalories => 'Calórico';
+
+  @override
+  String get tagLowCalories => 'Baixa caloria';
+
+  @override
+  String get tagHighEnergy => 'Muita energia';
+
+  @override
+  String get tagHelpsQuota => 'Atinge a meta';
+
+  @override
+  String get tagNutrientDense => 'Nutritivo';
+
+  @override
+  String get tagEmptyCalories => 'Calorias vazias';
+
+  @override
+  String get tagHeavyMeal => 'Refeição pesada';
+
+  @override
+  String get tagLightMeal => 'Refeição leve';
+
+  @override
+  String get tagHighSalt => 'Muito sal';
+
+  @override
+  String get tagLowSalt => 'Pouco sal';
+
+  @override
+  String get tagHighCholesterol => 'Muito colesterol';
+
+  @override
+  String get tagGoodPostWorkout => 'Pós-treino';
+
+  @override
+  String get tagGoodPreWorkout => 'Pré-treino';
+
+  @override
+  String get tagBreakfastFriendly => 'Bom café da manhã';
+
+  @override
+  String get tagHeartFriendly => 'Bom para o coração';
+
+  @override
+  String get tagGutFriendly => 'Bom para o intestino';
+
+  @override
+  String get tagBrainFood => 'Bom para o cérebro';
+
+  @override
+  String get tagImmuneBoost => 'Reforça imunidade';
+
+  @override
+  String get tagBoneHealth => 'Para os ossos';
+
+  @override
+  String get tagRichInVitamins => 'Rico em vitaminas';
+
+  @override
+  String get tagRichInIron => 'Rico em ferro';
+
+  @override
+  String get tagRichInCalcium => 'Rico em cálcio';
+
+  @override
+  String get tagRichInPotassium => 'Rico em potássio';
+
+  @override
+  String get tagHighAntioxidants => 'Antioxidantes';
+
+  @override
+  String get tagBalancedMacros => 'Macros equilibradas';
+
+  @override
+  String get tagWholeFoods => 'Alimentos integrais';
+
+  @override
+  String get tagUltraProcessed => 'Ultraprocessado';
+
+  @override
+  String get tagPlantBased => 'Vegetal';
+
+  @override
+  String get tagHydrating => 'Hidratante';
+
+  @override
+  String get forYourGoalLose => 'Meta: Perder peso';
+
+  @override
+  String get forYourGoalMaintain => 'Meta: Manter peso';
+
+  @override
+  String get forYourGoalGain => 'Meta: Ganhar músculo';
+
+  @override
+  String get completeMacroSection => 'Macros completas';
+
+  @override
+  String get macroSugar => 'Açúcar';
+
+  @override
+  String get macroFiber => 'Fibra';
+
+  @override
+  String get macroSaturatedFat => 'Gorduras saturadas';
+
+  @override
+  String get macroCholesterol => 'Colesterol';
+
+  @override
+  String get macroTransFat => 'Gorduras trans';
+
+  @override
+  String get macroGlycemicLoad => 'Carga glicêmica';
+
+  @override
+  String get macroCaloricDensity => 'Densidade calórica';
+
+  @override
+  String get macroProcessing => 'Grau de processamento';
+
+  @override
+  String get macroVitamins => 'Vitaminas e minerais';
+
+  @override
+  String get macroStatusWorse => 'Pior que a média';
+
+  @override
+  String get macroStatusAverage => 'Médio';
+
+  @override
+  String get macroStatusGood => 'Bom';
 }

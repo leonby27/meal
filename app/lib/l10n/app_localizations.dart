@@ -3987,6 +3987,384 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Всего {yearly} в год ({monthly} / мес)'**
   String onbTrialReminderSubtitle(String yearly, String monthly);
+
+  /// No description provided for @tagHighProtein.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много белка'**
+  String get tagHighProtein;
+
+  /// No description provided for @tagContainsProtein.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть белок'**
+  String get tagContainsProtein;
+
+  /// No description provided for @tagLowProtein.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мало белка'**
+  String get tagLowProtein;
+
+  /// No description provided for @tagCompleteProtein.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полноценный белок'**
+  String get tagCompleteProtein;
+
+  /// No description provided for @tagHealthyFats.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полезные жиры'**
+  String get tagHealthyFats;
+
+  /// No description provided for @tagRichInOmega3.
+  ///
+  /// In ru, this message translates to:
+  /// **'Омега-3'**
+  String get tagRichInOmega3;
+
+  /// No description provided for @tagHighFat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много жиров'**
+  String get tagHighFat;
+
+  /// No description provided for @tagHighSatFat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Насыщенные жиры'**
+  String get tagHighSatFat;
+
+  /// No description provided for @tagHighTransFat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Транс-жиры'**
+  String get tagHighTransFat;
+
+  /// No description provided for @tagLowFat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мало жиров'**
+  String get tagLowFat;
+
+  /// No description provided for @tagHighFiber.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много клетчатки'**
+  String get tagHighFiber;
+
+  /// No description provided for @tagContainsFiber.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть клетчатка'**
+  String get tagContainsFiber;
+
+  /// No description provided for @tagLowFiber.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мало клетчатки'**
+  String get tagLowFiber;
+
+  /// No description provided for @tagComplexCarbs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сложные углеводы'**
+  String get tagComplexCarbs;
+
+  /// No description provided for @tagRefinedCarbs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Быстрые углеводы'**
+  String get tagRefinedCarbs;
+
+  /// No description provided for @tagLowSugar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мало сахара'**
+  String get tagLowSugar;
+
+  /// No description provided for @tagHighSugar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много сахара'**
+  String get tagHighSugar;
+
+  /// No description provided for @tagLowCarb.
+  ///
+  /// In ru, this message translates to:
+  /// **'Низкоуглеводное'**
+  String get tagLowCarb;
+
+  /// No description provided for @tagHighCalories.
+  ///
+  /// In ru, this message translates to:
+  /// **'Калорийное'**
+  String get tagHighCalories;
+
+  /// No description provided for @tagLowCalories.
+  ///
+  /// In ru, this message translates to:
+  /// **'Низкокалорийное'**
+  String get tagLowCalories;
+
+  /// No description provided for @tagHighEnergy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много энергии'**
+  String get tagHighEnergy;
+
+  /// No description provided for @tagHelpsQuota.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добивает норму'**
+  String get tagHelpsQuota;
+
+  /// No description provided for @tagNutrientDense.
+  ///
+  /// In ru, this message translates to:
+  /// **'Питательное'**
+  String get tagNutrientDense;
+
+  /// No description provided for @tagEmptyCalories.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пустые калории'**
+  String get tagEmptyCalories;
+
+  /// No description provided for @tagHeavyMeal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тяжёлое блюдо'**
+  String get tagHeavyMeal;
+
+  /// No description provided for @tagLightMeal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лёгкое блюдо'**
+  String get tagLightMeal;
+
+  /// No description provided for @tagHighSalt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много соли'**
+  String get tagHighSalt;
+
+  /// No description provided for @tagLowSalt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мало соли'**
+  String get tagLowSalt;
+
+  /// No description provided for @tagHighCholesterol.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много холестерина'**
+  String get tagHighCholesterol;
+
+  /// No description provided for @tagGoodPostWorkout.
+  ///
+  /// In ru, this message translates to:
+  /// **'После тренировки'**
+  String get tagGoodPostWorkout;
+
+  /// No description provided for @tagGoodPreWorkout.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перед тренировкой'**
+  String get tagGoodPreWorkout;
+
+  /// No description provided for @tagBreakfastFriendly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хороший завтрак'**
+  String get tagBreakfastFriendly;
+
+  /// No description provided for @tagHeartFriendly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для сердца'**
+  String get tagHeartFriendly;
+
+  /// No description provided for @tagGutFriendly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для ЖКТ'**
+  String get tagGutFriendly;
+
+  /// No description provided for @tagBrainFood.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для мозга'**
+  String get tagBrainFood;
+
+  /// No description provided for @tagImmuneBoost.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для иммунитета'**
+  String get tagImmuneBoost;
+
+  /// No description provided for @tagBoneHealth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для костей'**
+  String get tagBoneHealth;
+
+  /// No description provided for @tagRichInVitamins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Много витаминов'**
+  String get tagRichInVitamins;
+
+  /// No description provided for @tagRichInIron.
+  ///
+  /// In ru, this message translates to:
+  /// **'Богато железом'**
+  String get tagRichInIron;
+
+  /// No description provided for @tagRichInCalcium.
+  ///
+  /// In ru, this message translates to:
+  /// **'Богато кальцием'**
+  String get tagRichInCalcium;
+
+  /// No description provided for @tagRichInPotassium.
+  ///
+  /// In ru, this message translates to:
+  /// **'Богато калием'**
+  String get tagRichInPotassium;
+
+  /// No description provided for @tagHighAntioxidants.
+  ///
+  /// In ru, this message translates to:
+  /// **'Антиоксиданты'**
+  String get tagHighAntioxidants;
+
+  /// No description provided for @tagBalancedMacros.
+  ///
+  /// In ru, this message translates to:
+  /// **'Баланс БЖУ'**
+  String get tagBalancedMacros;
+
+  /// No description provided for @tagWholeFoods.
+  ///
+  /// In ru, this message translates to:
+  /// **'Натуральные продукты'**
+  String get tagWholeFoods;
+
+  /// No description provided for @tagUltraProcessed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переработанное'**
+  String get tagUltraProcessed;
+
+  /// No description provided for @tagPlantBased.
+  ///
+  /// In ru, this message translates to:
+  /// **'Растительное'**
+  String get tagPlantBased;
+
+  /// No description provided for @tagHydrating.
+  ///
+  /// In ru, this message translates to:
+  /// **'Увлажняющее'**
+  String get tagHydrating;
+
+  /// No description provided for @forYourGoalLose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель: Похудеть'**
+  String get forYourGoalLose;
+
+  /// No description provided for @forYourGoalMaintain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель: Поддержание'**
+  String get forYourGoalMaintain;
+
+  /// No description provided for @forYourGoalGain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цель: Набор массы'**
+  String get forYourGoalGain;
+
+  /// No description provided for @completeMacroSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полные показатели'**
+  String get completeMacroSection;
+
+  /// No description provided for @macroSugar.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сахар'**
+  String get macroSugar;
+
+  /// No description provided for @macroFiber.
+  ///
+  /// In ru, this message translates to:
+  /// **'Клетчатка'**
+  String get macroFiber;
+
+  /// No description provided for @macroSaturatedFat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Насыщенные жиры'**
+  String get macroSaturatedFat;
+
+  /// No description provided for @macroCholesterol.
+  ///
+  /// In ru, this message translates to:
+  /// **'Холестерин'**
+  String get macroCholesterol;
+
+  /// No description provided for @macroTransFat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Транс-жиры'**
+  String get macroTransFat;
+
+  /// No description provided for @macroGlycemicLoad.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гликемическая нагрузка'**
+  String get macroGlycemicLoad;
+
+  /// No description provided for @macroCaloricDensity.
+  ///
+  /// In ru, this message translates to:
+  /// **'Плотность калорий'**
+  String get macroCaloricDensity;
+
+  /// No description provided for @macroProcessing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Степень обработки'**
+  String get macroProcessing;
+
+  /// No description provided for @macroVitamins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Витамины и минералы'**
+  String get macroVitamins;
+
+  /// No description provided for @macroStatusWorse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хуже среднего'**
+  String get macroStatusWorse;
+
+  /// No description provided for @macroStatusAverage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Средне'**
+  String get macroStatusAverage;
+
+  /// No description provided for @macroStatusGood.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хорошо'**
+  String get macroStatusGood;
 }
 
 class _AppLocalizationsDelegate

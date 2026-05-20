@@ -298,6 +298,7 @@ class ApiClient {
     Uint8List imageBytes, {
     String? locale,
     String? text,
+    String? goal,
   }) async {
     await _selectUploadClient();
     await ensureAuthenticated();
@@ -317,6 +318,7 @@ class ApiClient {
 
       if (locale != null) writeField('locale', locale);
       if (text != null && text.isNotEmpty) writeField('text', text);
+      if (goal != null && goal.isNotEmpty) writeField('goal', goal);
 
       headerBuf.add(utf8.encode('--$boundary\r\n'));
       headerBuf.add(
@@ -357,10 +359,12 @@ class ApiClient {
   Future<Map<String, dynamic>> recognizeText(
     String text, {
     String? locale,
+    String? goal,
   }) async {
     await ensureAuthenticated();
     final bodyMap = <String, dynamic>{'text': text};
     if (locale != null) bodyMap['locale'] = locale;
+    if (goal != null && goal.isNotEmpty) bodyMap['goal'] = goal;
     var response = await _withRetry(
       () => _client
           .post(

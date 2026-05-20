@@ -2190,4 +2190,193 @@ class AppLocalizationsRu extends AppLocalizations {
   String onbTrialReminderSubtitle(String yearly, String monthly) {
     return 'Всего $yearly в год ($monthly / мес)';
   }
+
+  @override
+  String get tagHighProtein => 'Много белка';
+
+  @override
+  String get tagContainsProtein => 'Есть белок';
+
+  @override
+  String get tagLowProtein => 'Мало белка';
+
+  @override
+  String get tagCompleteProtein => 'Полноценный белок';
+
+  @override
+  String get tagHealthyFats => 'Полезные жиры';
+
+  @override
+  String get tagRichInOmega3 => 'Омега-3';
+
+  @override
+  String get tagHighFat => 'Много жиров';
+
+  @override
+  String get tagHighSatFat => 'Насыщенные жиры';
+
+  @override
+  String get tagHighTransFat => 'Транс-жиры';
+
+  @override
+  String get tagLowFat => 'Мало жиров';
+
+  @override
+  String get tagHighFiber => 'Много клетчатки';
+
+  @override
+  String get tagContainsFiber => 'Есть клетчатка';
+
+  @override
+  String get tagLowFiber => 'Мало клетчатки';
+
+  @override
+  String get tagComplexCarbs => 'Сложные углеводы';
+
+  @override
+  String get tagRefinedCarbs => 'Быстрые углеводы';
+
+  @override
+  String get tagLowSugar => 'Мало сахара';
+
+  @override
+  String get tagHighSugar => 'Много сахара';
+
+  @override
+  String get tagLowCarb => 'Низкоуглеводное';
+
+  @override
+  String get tagHighCalories => 'Калорийное';
+
+  @override
+  String get tagLowCalories => 'Низкокалорийное';
+
+  @override
+  String get tagHighEnergy => 'Много энергии';
+
+  @override
+  String get tagHelpsQuota => 'Добивает норму';
+
+  @override
+  String get tagNutrientDense => 'Питательное';
+
+  @override
+  String get tagEmptyCalories => 'Пустые калории';
+
+  @override
+  String get tagHeavyMeal => 'Тяжёлое блюдо';
+
+  @override
+  String get tagLightMeal => 'Лёгкое блюдо';
+
+  @override
+  String get tagHighSalt => 'Много соли';
+
+  @override
+  String get tagLowSalt => 'Мало соли';
+
+  @override
+  String get tagHighCholesterol => 'Много холестерина';
+
+  @override
+  String get tagGoodPostWorkout => 'После тренировки';
+
+  @override
+  String get tagGoodPreWorkout => 'Перед тренировкой';
+
+  @override
+  String get tagBreakfastFriendly => 'Хороший завтрак';
+
+  @override
+  String get tagHeartFriendly => 'Для сердца';
+
+  @override
+  String get tagGutFriendly => 'Для ЖКТ';
+
+  @override
+  String get tagBrainFood => 'Для мозга';
+
+  @override
+  String get tagImmuneBoost => 'Для иммунитета';
+
+  @override
+  String get tagBoneHealth => 'Для костей';
+
+  @override
+  String get tagRichInVitamins => 'Много витаминов';
+
+  @override
+  String get tagRichInIron => 'Богато железом';
+
+  @override
+  String get tagRichInCalcium => 'Богато кальцием';
+
+  @override
+  String get tagRichInPotassium => 'Богато калием';
+
+  @override
+  String get tagHighAntioxidants => 'Антиоксиданты';
+
+  @override
+  String get tagBalancedMacros => 'Баланс БЖУ';
+
+  @override
+  String get tagWholeFoods => 'Натуральные продукты';
+
+  @override
+  String get tagUltraProcessed => 'Переработанное';
+
+  @override
+  String get tagPlantBased => 'Растительное';
+
+  @override
+  String get tagHydrating => 'Увлажняющее';
+
+  @override
+  String get forYourGoalLose => 'Цель: Похудеть';
+
+  @override
+  String get forYourGoalMaintain => 'Цель: Поддержание';
+
+  @override
+  String get forYourGoalGain => 'Цель: Набор массы';
+
+  @override
+  String get completeMacroSection => 'Полные показатели';
+
+  @override
+  String get macroSugar => 'Сахар';
+
+  @override
+  String get macroFiber => 'Клетчатка';
+
+  @override
+  String get macroSaturatedFat => 'Насыщенные жиры';
+
+  @override
+  String get macroCholesterol => 'Холестерин';
+
+  @override
+  String get macroTransFat => 'Транс-жиры';
+
+  @override
+  String get macroGlycemicLoad => 'Гликемическая нагрузка';
+
+  @override
+  String get macroCaloricDensity => 'Плотность калорий';
+
+  @override
+  String get macroProcessing => 'Степень обработки';
+
+  @override
+  String get macroVitamins => 'Витамины и минералы';
+
+  @override
+  String get macroStatusWorse => 'Хуже среднего';
+
+  @override
+  String get macroStatusAverage => 'Средне';
+
+  @override
+  String get macroStatusGood => 'Хорошо';
 }

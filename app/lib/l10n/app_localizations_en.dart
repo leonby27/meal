@@ -2174,4 +2174,193 @@ class AppLocalizationsEn extends AppLocalizations {
   String onbTrialReminderSubtitle(String yearly, String monthly) {
     return 'Just $yearly per year ($monthly/mo)';
   }
+
+  @override
+  String get tagHighProtein => 'High protein';
+
+  @override
+  String get tagContainsProtein => 'Has protein';
+
+  @override
+  String get tagLowProtein => 'Low in protein';
+
+  @override
+  String get tagCompleteProtein => 'Complete protein';
+
+  @override
+  String get tagHealthyFats => 'Healthy fats';
+
+  @override
+  String get tagRichInOmega3 => 'Rich in omega-3';
+
+  @override
+  String get tagHighFat => 'High in fat';
+
+  @override
+  String get tagHighSatFat => 'High sat. fat';
+
+  @override
+  String get tagHighTransFat => 'Trans fats';
+
+  @override
+  String get tagLowFat => 'Low fat';
+
+  @override
+  String get tagHighFiber => 'High fiber';
+
+  @override
+  String get tagContainsFiber => 'Has fiber';
+
+  @override
+  String get tagLowFiber => 'Low fiber';
+
+  @override
+  String get tagComplexCarbs => 'Complex carbs';
+
+  @override
+  String get tagRefinedCarbs => 'Refined carbs';
+
+  @override
+  String get tagLowSugar => 'Low sugar';
+
+  @override
+  String get tagHighSugar => 'High sugar';
+
+  @override
+  String get tagLowCarb => 'Low-carb';
+
+  @override
+  String get tagHighCalories => 'High calories';
+
+  @override
+  String get tagLowCalories => 'Low calories';
+
+  @override
+  String get tagHighEnergy => 'High energy';
+
+  @override
+  String get tagHelpsQuota => 'Hits your quota';
+
+  @override
+  String get tagNutrientDense => 'Nutrient-dense';
+
+  @override
+  String get tagEmptyCalories => 'Empty calories';
+
+  @override
+  String get tagHeavyMeal => 'Heavy meal';
+
+  @override
+  String get tagLightMeal => 'Light meal';
+
+  @override
+  String get tagHighSalt => 'High salt';
+
+  @override
+  String get tagLowSalt => 'Low salt';
+
+  @override
+  String get tagHighCholesterol => 'High cholesterol';
+
+  @override
+  String get tagGoodPostWorkout => 'Post-workout fuel';
+
+  @override
+  String get tagGoodPreWorkout => 'Pre-workout fuel';
+
+  @override
+  String get tagBreakfastFriendly => 'Great breakfast';
+
+  @override
+  String get tagHeartFriendly => 'Heart-friendly';
+
+  @override
+  String get tagGutFriendly => 'Gut-friendly';
+
+  @override
+  String get tagBrainFood => 'Brain food';
+
+  @override
+  String get tagImmuneBoost => 'Immune boost';
+
+  @override
+  String get tagBoneHealth => 'Bone health';
+
+  @override
+  String get tagRichInVitamins => 'Rich in vitamins';
+
+  @override
+  String get tagRichInIron => 'Iron-rich';
+
+  @override
+  String get tagRichInCalcium => 'Calcium-rich';
+
+  @override
+  String get tagRichInPotassium => 'Potassium-rich';
+
+  @override
+  String get tagHighAntioxidants => 'Antioxidant-rich';
+
+  @override
+  String get tagBalancedMacros => 'Balanced macros';
+
+  @override
+  String get tagWholeFoods => 'Whole foods';
+
+  @override
+  String get tagUltraProcessed => 'Ultra-processed';
+
+  @override
+  String get tagPlantBased => 'Plant-based';
+
+  @override
+  String get tagHydrating => 'Hydrating';
+
+  @override
+  String get forYourGoalLose => 'For your goal: Lose weight';
+
+  @override
+  String get forYourGoalMaintain => 'For your goal: Maintain weight';
+
+  @override
+  String get forYourGoalGain => 'For your goal: Gain muscle';
+
+  @override
+  String get completeMacroSection => 'Complete macro';
+
+  @override
+  String get macroSugar => 'Sugar';
+
+  @override
+  String get macroFiber => 'Fiber';
+
+  @override
+  String get macroSaturatedFat => 'Saturated fats';
+
+  @override
+  String get macroCholesterol => 'Cholesterol';
+
+  @override
+  String get macroTransFat => 'Trans fats';
+
+  @override
+  String get macroGlycemicLoad => 'Glycemic load';
+
+  @override
+  String get macroCaloricDensity => 'Caloric density';
+
+  @override
+  String get macroProcessing => 'Degree of processing';
+
+  @override
+  String get macroVitamins => 'Vitamins and minerals';
+
+  @override
+  String get macroStatusWorse => 'Worse than average';
+
+  @override
+  String get macroStatusAverage => 'Average';
+
+  @override
+  String get macroStatusGood => 'Good';
 }

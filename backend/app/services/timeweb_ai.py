@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 _JSON_SCHEMA = """{
   "name": "Dish name",
+  "meal_quote": "I came for a light meal... and this pasta had other plans.",
   "health_rating": 7,
   "health_comment": "Сбалансированный завтрак с хорошим белком; помидоры добавляют клетчатку, сыр — насыщенный жир.",
   "total_grams": 350,
@@ -30,8 +31,70 @@ _JSON_SCHEMA = """{
     {"name": "Mushrooms", "grams": 40, "protein": 1.2, "fat": 0.1, "carbs": 1.3, "calories": 11}
   ],
   "per_100g": {"protein": 10.5, "fat": 8.5, "carbs": 2.2, "calories": 127},
-  "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278}
+  "total": {"protein": 22.4, "fat": 19.6, "carbs": 4.0, "calories": 278},
+  "complete_macro": {
+    "sugar_g": 2.4,
+    "fiber_g": 2.5,
+    "saturated_fat_g": 9.8,
+    "cholesterol_mg": 380,
+    "trans_fat_g": 0.0,
+    "sodium_mg": 520,
+    "glycemic_load": 4,
+    "caloric_density": 1.27,
+    "processing_level": 2
+  },
+  "goal_fit": {
+    "positive": ["HIGH_PROTEIN", "BREAKFAST_FRIENDLY", "BALANCED_MACROS"],
+    "negative": ["HIGH_SAT_FAT", "LOW_FIBER"]
+  }
 }"""
+
+# Closed list of tag codes for `goal_fit.positive` / `goal_fit.negative`.
+# Client localises each code into the user's language. Adding a new code here
+# requires adding it to all 6 ARB files (app/lib/l10n/app_*.arb) too.
+_TAG_CODES = (
+    # Protein
+    "HIGH_PROTEIN", "CONTAINS_PROTEIN", "LOW_PROTEIN", "COMPLETE_PROTEIN",
+    # Fats
+    "HEALTHY_FATS", "RICH_IN_OMEGA3", "HIGH_FAT", "HIGH_SAT_FAT",
+    "HIGH_TRANS_FAT", "LOW_FAT",
+    # Carbs / fiber / sugar
+    "HIGH_FIBER", "CONTAINS_FIBER", "LOW_FIBER",
+    "COMPLEX_CARBS", "REFINED_CARBS",
+    "LOW_SUGAR", "HIGH_SUGAR", "LOW_CARB",
+    # Calories / density / energy
+    "HIGH_CALORIES", "LOW_CALORIES", "HIGH_ENERGY",
+    "HELPS_QUOTA", "NUTRIENT_DENSE", "EMPTY_CALORIES",
+    "HEAVY_MEAL", "LIGHT_MEAL",
+    # Salt / cholesterol
+    "HIGH_SALT", "LOW_SALT", "HIGH_CHOLESTEROL",
+    # Context
+    "GOOD_POST_WORKOUT", "GOOD_PRE_WORKOUT", "BREAKFAST_FRIENDLY",
+    # Body systems
+    "HEART_FRIENDLY", "GUT_FRIENDLY", "BRAIN_FOOD",
+    "IMMUNE_BOOST", "BONE_HEALTH",
+    # Micronutrients
+    "RICH_IN_VITAMINS", "RICH_IN_IRON", "RICH_IN_CALCIUM",
+    "RICH_IN_POTASSIUM", "HIGH_ANTIOXIDANTS",
+    # Quality / composition
+    "BALANCED_MACROS", "WHOLE_FOODS", "ULTRA_PROCESSED",
+    "PLANT_BASED", "HYDRATING",
+)
+
+
+# User goal codes used in the client (onboarding_data.goal) → human description
+# the model sees in the prompt. Anything else falls back to balanced eating.
+_GOAL_DESCRIPTIONS = {
+    "lose": "weight loss (calorie deficit, lean protein, fiber, low added sugar)",
+    "maintain": "maintenance (balanced macros, steady energy, no extremes)",
+    "gain": "muscle gain (calorie surplus, high protein, post-workout fuel)",
+}
+
+
+def _goal_description(goal: str | None) -> str:
+    if not goal:
+        return "balanced everyday eating (no specific goal selected)"
+    return _GOAL_DESCRIPTIONS.get(goal.lower(), "balanced everyday eating")
 
 # BCP-47 / ISO 639-1 language code → full English language name.
 # Used to explicitly tell the model which language to respond in.
@@ -153,6 +216,51 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   fields, even when the dish is plain or the photo is ambiguous. Keep
   ingredient names concise so the response fits within the token budget
   and these two fields are never omitted.
+- `meal_quote` is REQUIRED. One short sentence (≤ 100 characters), in the
+  same language as the rest of the response. Tone: light, friendly irony;
+  may be written from the dish's point of view ("I came for a light meal
+  and this pasta had other plans"), or as a witty observation about the
+  dish. NEVER aggressive, NEVER shaming, NEVER moralising. For plain
+  items (a glass of water, a single apple) keep it neutral and short.
+- `complete_macro` is REQUIRED. Numeric values for the WHOLE portion
+  (not per 100 g):
+    * `sugar_g`           — total sugars in grams (added + natural)
+    * `fiber_g`           — dietary fiber in grams
+    * `saturated_fat_g`   — saturated fat in grams
+    * `cholesterol_mg`    — cholesterol in milligrams
+    * `trans_fat_g`       — industrial trans fats in grams (usually 0)
+    * `sodium_mg`         — sodium in milligrams (NOT salt grams)
+    * `glycemic_load`     — integer 0–40+ for the whole portion
+                            (GI × available_carbs_g / 100)
+    * `caloric_density`   — kcal per gram (total.calories / total_grams)
+    * `processing_level`  — NOVA classification 1–4:
+                            1 = unprocessed / minimally processed,
+                            2 = culinary ingredient,
+                            3 = processed food,
+                            4 = ultra-processed food
+  Round grams to one decimal, mg to integers, density to two decimals.
+- `goal_fit` is REQUIRED. Evaluates the dish against the user's goal,
+  which is provided in the user prompt (one of: weight loss / maintenance /
+  muscle gain / balanced eating).
+  Return up to 5 codes in `positive` and up to 5 in `negative`. Codes MUST
+  come from this EXACT list and nothing else:
+    HIGH_PROTEIN, CONTAINS_PROTEIN, LOW_PROTEIN, COMPLETE_PROTEIN,
+    HEALTHY_FATS, RICH_IN_OMEGA3, HIGH_FAT, HIGH_SAT_FAT, HIGH_TRANS_FAT, LOW_FAT,
+    HIGH_FIBER, CONTAINS_FIBER, LOW_FIBER, COMPLEX_CARBS, REFINED_CARBS,
+    LOW_SUGAR, HIGH_SUGAR, LOW_CARB,
+    HIGH_CALORIES, LOW_CALORIES, HIGH_ENERGY, HELPS_QUOTA,
+    NUTRIENT_DENSE, EMPTY_CALORIES, HEAVY_MEAL, LIGHT_MEAL,
+    HIGH_SALT, LOW_SALT, HIGH_CHOLESTEROL,
+    GOOD_POST_WORKOUT, GOOD_PRE_WORKOUT, BREAKFAST_FRIENDLY,
+    HEART_FRIENDLY, GUT_FRIENDLY, BRAIN_FOOD, IMMUNE_BOOST, BONE_HEALTH,
+    RICH_IN_VITAMINS, RICH_IN_IRON, RICH_IN_CALCIUM, RICH_IN_POTASSIUM, HIGH_ANTIOXIDANTS,
+    BALANCED_MACROS, WHOLE_FOODS, ULTRA_PROCESSED, PLANT_BASED, HYDRATING.
+  Same code MUST NOT appear in both arrays. Several codes are GOAL-DEPENDENT
+  (HIGH_CALORIES, LOW_CALORIES, HIGH_ENERGY, LOW_FAT, LOW_CARB, HEAVY_MEAL,
+  LIGHT_MEAL): pick the side that actually helps or hurts the stated goal.
+  Example: HIGH_CALORIES is positive for muscle gain, negative for weight
+  loss. Pick FEWER but ACCURATE codes — do not stretch to fill 5 slots.
+  Both arrays may be empty if nothing applicable.
 
 Respond STRICTLY as JSON (no markdown, no text before or after):
 """ + _JSON_SCHEMA
@@ -173,32 +281,40 @@ If the user gave an explicit weight — use it. Otherwise estimate a
 standard portion."""
 
 
-def build_image_prompt(locale: str | None) -> str:
+def build_image_prompt(locale: str | None, goal: str | None) -> str:
     lang = _language_name(locale)
+    goal_desc = _goal_description(goal)
     return (
         f"{_IMAGE_TASK_EN}\n\n"
         f"Respond entirely in {lang}. All dish names, ingredient names and "
-        f"any free-form text you produce must be in {lang}. The only "
-        f"exception is the literal Cyrillic \"шт.\" marker described below, "
-        f"which stays the same in every language.\n\n"
+        f"any free-form text you produce (including `meal_quote`) must be "
+        f"in {lang}. The only exception is the literal Cyrillic \"шт.\" "
+        f"marker described below, which stays the same in every language. "
+        f"`goal_fit` codes are language-independent — return them verbatim "
+        f"in UPPER_SNAKE_CASE.\n\n"
+        f"The user's goal is: {goal_desc}. Tailor `goal_fit` to this goal.\n\n"
         f"{_COMMON_RULES_EN}"
     )
 
 
-def build_text_prompt(locale: str | None) -> str:
+def build_text_prompt(locale: str | None, goal: str | None) -> str:
     lang = _language_name(locale)
+    goal_desc = _goal_description(goal)
     return (
         f"{_TEXT_TASK_EN}\n\n"
         f"Respond entirely in {lang}. All dish names, ingredient names and "
-        f"any free-form text you produce must be in {lang}. The only "
-        f"exception is the literal Cyrillic \"шт.\" marker described below, "
-        f"which stays the same in every language.\n\n"
+        f"any free-form text you produce (including `meal_quote`) must be "
+        f"in {lang}. The only exception is the literal Cyrillic \"шт.\" "
+        f"marker described below, which stays the same in every language. "
+        f"`goal_fit` codes are language-independent — return them verbatim "
+        f"in UPPER_SNAKE_CASE.\n\n"
+        f"The user's goal is: {goal_desc}. Tailor `goal_fit` to this goal.\n\n"
         f"{_COMMON_RULES_EN}"
     )
 
 MAX_DIMENSION = 768
 JPEG_QUALITY = 75
-MAX_TOKENS = 2400
+MAX_TOKENS = 2800
 
 HTTP_TIMEOUT = 60.0
 MAX_ATTEMPTS = 3
@@ -382,6 +498,43 @@ def _parse_ai_response(data: dict) -> dict:
             kind="truncated" if truncated else "parse_error",
             raw=content[:1000],
         ) from e
+
+
+_TAG_CODES_SET = frozenset(_TAG_CODES)
+
+
+def _sanitize_goal_fit(parsed: dict) -> None:
+    """Drop unknown/duplicate codes in goal_fit and cap each side at 5.
+
+    The model is told to pick only from a closed list, but it sometimes
+    hallucinates new codes or puts the same one in both arrays. The
+    client cannot localise unknown codes, so we drop them here.
+    """
+    goal_fit = parsed.get("goal_fit")
+    if not isinstance(goal_fit, dict):
+        parsed["goal_fit"] = {"positive": [], "negative": []}
+        return
+
+    def _clean(arr) -> list[str]:
+        if not isinstance(arr, list):
+            return []
+        seen: set[str] = set()
+        out: list[str] = []
+        for item in arr:
+            if not isinstance(item, str):
+                continue
+            code = item.strip().upper()
+            if code in _TAG_CODES_SET and code not in seen:
+                seen.add(code)
+                out.append(code)
+        return out[:5]
+
+    positive = _clean(goal_fit.get("positive"))
+    negative = _clean(goal_fit.get("negative"))
+    # Same code can't be on both sides — keep it on the positive side.
+    pos_set = set(positive)
+    negative = [c for c in negative if c not in pos_set]
+    parsed["goal_fit"] = {"positive": positive, "negative": negative}
 
 
 def _locale_code(locale: str | None) -> str:
@@ -632,30 +785,36 @@ async def recognize_food(
     *,
     text: str | None = None,
     locale: str | None = None,
+    goal: str | None = None,
 ) -> dict:
     """Отправляет фото еды в Timeweb Cloud AI-агент для распознавания.
 
     Если передан text, он используется как сопроводительное описание к фото.
     locale — код языка UI (ru/en/de/es/fr/pt); модель должна отвечать именно на нём.
+    goal — цель пользователя из онбординга: 'lose' / 'maintain' / 'gain'.
     """
     image_base64 = normalize_image(image_bytes)
     lang = _language_name(locale)
+    goal_desc = _goal_description(goal)
 
     if text:
         user_text = (
             f"Here is a photo of food. User-provided description: \"{text}\". "
             f"Use explicit facts from the description as authoritative. "
-            f"Identify the dish and its nutrition. Reply as JSON, in {lang}."
+            f"Identify the dish and its nutrition. The user's goal is "
+            f"{goal_desc} — pick `goal_fit` codes accordingly. "
+            f"Reply as JSON, in {lang}."
         )
     else:
         user_text = (
             f"Identify the dish in the photo and its nutrition. "
-            f"Reply as JSON, in {lang}."
+            f"The user's goal is {goal_desc} — pick `goal_fit` codes "
+            f"accordingly. Reply as JSON, in {lang}."
         )
 
     payload = {
         "messages": [
-            {"role": "system", "content": build_image_prompt(locale)},
+            {"role": "system", "content": build_image_prompt(locale, goal)},
             {
                 "role": "user",
                 "content": [
@@ -678,6 +837,7 @@ async def recognize_food(
 
     data = await _post_with_retries(payload)
     result = _parse_ai_response(data)
+    _sanitize_goal_fit(result)
     return await _enrich_packaged_items(result, locale)
 
 
@@ -685,19 +845,24 @@ async def recognize_food_from_text(
     text: str,
     *,
     locale: str | None = None,
+    goal: str | None = None,
 ) -> dict:
     """Отправляет текстовое описание еды в Timeweb Cloud AI-агент для оценки КБЖУ.
 
     locale — код языка UI (ru/en/de/es/fr/pt); модель должна отвечать именно на нём.
+    goal — цель пользователя из онбординга: 'lose' / 'maintain' / 'gain'.
     """
     lang = _language_name(locale)
+    goal_desc = _goal_description(goal)
     user_text = (
         f"User description of the food: \"{text}\".\n"
-        f"Identify the dish and its nutrition. Reply as JSON, in {lang}."
+        f"Identify the dish and its nutrition. The user's goal is "
+        f"{goal_desc} — pick `goal_fit` codes accordingly. "
+        f"Reply as JSON, in {lang}."
     )
     payload = {
         "messages": [
-            {"role": "system", "content": build_text_prompt(locale)},
+            {"role": "system", "content": build_text_prompt(locale, goal)},
             {"role": "user", "content": user_text},
         ],
         "temperature": 0.2,
@@ -705,4 +870,6 @@ async def recognize_food_from_text(
     }
 
     data = await _post_with_retries(payload)
-    return _parse_ai_response(data)
+    result = _parse_ai_response(data)
+    _sanitize_goal_fit(result)
+    return result

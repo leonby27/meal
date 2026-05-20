@@ -23,6 +23,161 @@ import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/l10n/app_localizations.dart';
 
+/// Reads the user's onboarding goal ('lose' / 'maintain' / 'gain') from
+/// the local settings table. Returns null on a fresh install / unknown
+/// value so the backend falls back to balanced-eating defaults.
+Future<String?> _loadUserGoal() async {
+  try {
+    final db = await AppDatabase.getInstance();
+    final raw = await db.getSetting('user_goal');
+    if (raw == null) return null;
+    final code = raw.trim().toLowerCase();
+    if (code == 'lose' || code == 'maintain' || code == 'gain') {
+      return code;
+    }
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Resolves an AI tag code from the closed list (see backend
+/// `_TAG_CODES`) to the user-facing label. Returns null when the code
+/// is unknown — the caller drops it.
+String? _tagLabel(AppLocalizations l10n, String code) {
+  switch (code) {
+    // Protein
+    case 'HIGH_PROTEIN': return l10n.tagHighProtein;
+    case 'CONTAINS_PROTEIN': return l10n.tagContainsProtein;
+    case 'LOW_PROTEIN': return l10n.tagLowProtein;
+    case 'COMPLETE_PROTEIN': return l10n.tagCompleteProtein;
+    // Fats
+    case 'HEALTHY_FATS': return l10n.tagHealthyFats;
+    case 'RICH_IN_OMEGA3': return l10n.tagRichInOmega3;
+    case 'HIGH_FAT': return l10n.tagHighFat;
+    case 'HIGH_SAT_FAT': return l10n.tagHighSatFat;
+    case 'HIGH_TRANS_FAT': return l10n.tagHighTransFat;
+    case 'LOW_FAT': return l10n.tagLowFat;
+    // Carbs / fiber / sugar
+    case 'HIGH_FIBER': return l10n.tagHighFiber;
+    case 'CONTAINS_FIBER': return l10n.tagContainsFiber;
+    case 'LOW_FIBER': return l10n.tagLowFiber;
+    case 'COMPLEX_CARBS': return l10n.tagComplexCarbs;
+    case 'REFINED_CARBS': return l10n.tagRefinedCarbs;
+    case 'LOW_SUGAR': return l10n.tagLowSugar;
+    case 'HIGH_SUGAR': return l10n.tagHighSugar;
+    case 'LOW_CARB': return l10n.tagLowCarb;
+    // Calories / density / energy
+    case 'HIGH_CALORIES': return l10n.tagHighCalories;
+    case 'LOW_CALORIES': return l10n.tagLowCalories;
+    case 'HIGH_ENERGY': return l10n.tagHighEnergy;
+    case 'HELPS_QUOTA': return l10n.tagHelpsQuota;
+    case 'NUTRIENT_DENSE': return l10n.tagNutrientDense;
+    case 'EMPTY_CALORIES': return l10n.tagEmptyCalories;
+    case 'HEAVY_MEAL': return l10n.tagHeavyMeal;
+    case 'LIGHT_MEAL': return l10n.tagLightMeal;
+    // Salt / cholesterol
+    case 'HIGH_SALT': return l10n.tagHighSalt;
+    case 'LOW_SALT': return l10n.tagLowSalt;
+    case 'HIGH_CHOLESTEROL': return l10n.tagHighCholesterol;
+    // Context
+    case 'GOOD_POST_WORKOUT': return l10n.tagGoodPostWorkout;
+    case 'GOOD_PRE_WORKOUT': return l10n.tagGoodPreWorkout;
+    case 'BREAKFAST_FRIENDLY': return l10n.tagBreakfastFriendly;
+    // Body systems
+    case 'HEART_FRIENDLY': return l10n.tagHeartFriendly;
+    case 'GUT_FRIENDLY': return l10n.tagGutFriendly;
+    case 'BRAIN_FOOD': return l10n.tagBrainFood;
+    case 'IMMUNE_BOOST': return l10n.tagImmuneBoost;
+    case 'BONE_HEALTH': return l10n.tagBoneHealth;
+    // Micronutrients
+    case 'RICH_IN_VITAMINS': return l10n.tagRichInVitamins;
+    case 'RICH_IN_IRON': return l10n.tagRichInIron;
+    case 'RICH_IN_CALCIUM': return l10n.tagRichInCalcium;
+    case 'RICH_IN_POTASSIUM': return l10n.tagRichInPotassium;
+    case 'HIGH_ANTIOXIDANTS': return l10n.tagHighAntioxidants;
+    // Quality / composition
+    case 'BALANCED_MACROS': return l10n.tagBalancedMacros;
+    case 'WHOLE_FOODS': return l10n.tagWholeFoods;
+    case 'ULTRA_PROCESSED': return l10n.tagUltraProcessed;
+    case 'PLANT_BASED': return l10n.tagPlantBased;
+    case 'HYDRATING': return l10n.tagHydrating;
+  }
+  return null;
+}
+
+/// "For your goal: X" caption. Picks one of three localized strings —
+/// the goal code itself is small and stable, so we avoid an ICU plural
+/// hack with a placeholder. Defaults to `lose` to match onboarding's
+/// default goal.
+String _goalLabel(AppLocalizations l10n, String? goal) {
+  switch (goal) {
+    case 'gain': return l10n.forYourGoalGain;
+    case 'maintain': return l10n.forYourGoalMaintain;
+    case 'lose':
+    default: return l10n.forYourGoalLose;
+  }
+}
+
+/// Bucket for Complete-macro rows. The visual treatment (background tint
+/// and trailing icon) is purely a function of this status, so the
+/// per-field threshold helpers below all return one of these three.
+enum _MacroStatus { worse, average, good }
+
+/// Per-field threshold helpers for the Complete-macro section. All inputs
+/// are for the WHOLE portion (matching the model contract). Thresholds
+/// are loose category boundaries; precise FDA/WHO cutoffs are not the
+/// point — surfacing an at-a-glance verdict is.
+_MacroStatus _statusForSugar(double g) {
+  if (g >= 22.5) return _MacroStatus.worse;
+  if (g >= 5) return _MacroStatus.average;
+  return _MacroStatus.good;
+}
+
+_MacroStatus _statusForFiber(double g) {
+  if (g >= 6) return _MacroStatus.good;
+  if (g >= 3) return _MacroStatus.average;
+  return _MacroStatus.worse;
+}
+
+_MacroStatus _statusForSatFat(double g) {
+  if (g >= 10) return _MacroStatus.worse;
+  if (g >= 5) return _MacroStatus.average;
+  return _MacroStatus.good;
+}
+
+_MacroStatus _statusForCholesterol(double mg) {
+  if (mg >= 300) return _MacroStatus.worse;
+  if (mg >= 100) return _MacroStatus.average;
+  return _MacroStatus.good;
+}
+
+_MacroStatus _statusForTransFat(double g) {
+  if (g >= 1) return _MacroStatus.worse;
+  if (g > 0) return _MacroStatus.average;
+  return _MacroStatus.good;
+}
+
+_MacroStatus _statusForGlycemicLoad(double load) {
+  if (load >= 20) return _MacroStatus.worse;
+  if (load >= 11) return _MacroStatus.average;
+  return _MacroStatus.good;
+}
+
+_MacroStatus _statusForCaloricDensity(double kcalPerG) {
+  if (kcalPerG >= 4) return _MacroStatus.worse;
+  if (kcalPerG >= 2.25) return _MacroStatus.average;
+  return _MacroStatus.good;
+}
+
+_MacroStatus _statusForProcessing(int novaLevel) {
+  switch (novaLevel) {
+    case 4: return _MacroStatus.worse;
+    case 3: return _MacroStatus.average;
+    default: return _MacroStatus.good;
+  }
+}
+
 /// Coarse profile of a dish derived from its macro distribution and
 /// calorie density. Drives both the lead sentence in the health
 /// description and the trait modifier (so we don't repeat ourselves).
@@ -58,6 +213,56 @@ class _SuggestionItem {
     required this.carbs,
     required this.calories,
   });
+}
+
+/// Detailed micro-nutrient breakdown rendered by the "Complete macro"
+/// section. All fields are nullable because the model may legitimately
+/// not have a value for a given dish (e.g. cholesterol on a vegan meal).
+class _CompleteMacro {
+  final double? sugarG;
+  final double? fiberG;
+  final double? saturatedFatG;
+  final double? cholesterolMg;
+  final double? transFatG;
+  final double? sodiumMg;
+  final double? glycemicLoad;
+  final double? caloricDensity;
+  final int? processingLevel;
+
+  const _CompleteMacro({
+    this.sugarG,
+    this.fiberG,
+    this.saturatedFatG,
+    this.cholesterolMg,
+    this.transFatG,
+    this.sodiumMg,
+    this.glycemicLoad,
+    this.caloricDensity,
+    this.processingLevel,
+  });
+
+  bool get isEmpty =>
+      sugarG == null &&
+      fiberG == null &&
+      saturatedFatG == null &&
+      cholesterolMg == null &&
+      transFatG == null &&
+      sodiumMg == null &&
+      glycemicLoad == null &&
+      caloricDensity == null &&
+      processingLevel == null;
+}
+
+/// AI's goal-aware verdict on the dish. Each code is a member of the
+/// closed list defined in backend/app/services/timeweb_ai.py and is
+/// resolved to a localized chip via [_TagInfo].
+class _GoalFit {
+  final List<String> positive;
+  final List<String> negative;
+
+  const _GoalFit({this.positive = const [], this.negative = const []});
+
+  bool get isEmpty => positive.isEmpty && negative.isEmpty;
 }
 
 class _IngredientEntry {
@@ -226,10 +431,12 @@ class AiMealResultSheet extends StatefulWidget {
     final future = _runRecognition(() async {
       final api = ApiClient();
       final locale = LocaleNotifier.instance.value.languageCode;
+      final goal = await _loadUserGoal();
       return api.uploadImage(
         '/api/recognize',
         imageBytes,
         locale: locale,
+        goal: goal,
       );
     });
 
@@ -261,7 +468,8 @@ class AiMealResultSheet extends StatefulWidget {
       final api = ApiClient();
       await api.ensureAuthenticated();
       final locale = LocaleNotifier.instance.value.languageCode;
-      return api.recognizeText(text, locale: locale);
+      final goal = await _loadUserGoal();
+      return api.recognizeText(text, locale: locale, goal: goal);
     });
 
     return showModalBottomSheet(
@@ -295,11 +503,13 @@ class AiMealResultSheet extends StatefulWidget {
     final future = _runRecognition(() async {
       final api = ApiClient();
       final locale = LocaleNotifier.instance.value.languageCode;
+      final goal = await _loadUserGoal();
       return api.uploadImage(
         '/api/recognize',
         imageBytes,
         locale: locale,
         text: text,
+        goal: goal,
       );
     });
 
@@ -475,6 +685,22 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   List<_IngredientEntry> _ingredients = [];
   List<_SuggestionItem> _suggestions = const [];
+
+  /// Optional light-irony caption rendered as a bubble overlay on the dish
+  /// photo. Hidden when the AI returned nothing or an empty string.
+  String? _mealQuote;
+
+  /// Detailed macro/quality breakdown for the "Complete macro" section.
+  _CompleteMacro _completeMacro = const _CompleteMacro();
+
+  /// AI-picked tag codes for the "For your goal" chips section. Resolved to
+  /// localized labels and ✓/⚠ icons via [_resolveTag].
+  _GoalFit _goalFit = const _GoalFit();
+
+  /// User's onboarding goal — drives the "For your goal: X" caption and is
+  /// forwarded to AI on every recognise call so chips stay goal-aware.
+  /// 'lose' / 'maintain' / 'gain'. Null until [_loadUserGoal] resolves.
+  String? _userGoal;
   // Index of the ingredient whose name is currently in inline-edit
   // mode. -1 = none. Each `_IngredientEntry` carries its own
   // `FocusNode`, so we just toggle `readOnly` on a single always-
@@ -568,6 +794,14 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
     _resolveImagePath();
     _loadDailyCalorieGoal();
+    _loadUserGoalFromSettings();
+  }
+
+  Future<void> _loadUserGoalFromSettings() async {
+    final goal = await _loadUserGoal();
+    if (!mounted) return;
+    if (goal == null) return;
+    setState(() => _userGoal = goal);
   }
 
   Future<void> _loadDailyCalorieGoal() async {
@@ -797,6 +1031,32 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             calories: (s['calories'] as num?)?.toDouble() ?? 0,
           ),
     ];
+
+    final quote = (result['meal_quote'] as String?)?.trim();
+    _mealQuote = (quote != null && quote.isNotEmpty) ? quote : null;
+
+    final macro = result['complete_macro'] as Map<String, dynamic>? ?? const {};
+    _completeMacro = _CompleteMacro(
+      sugarG: (macro['sugar_g'] as num?)?.toDouble(),
+      fiberG: (macro['fiber_g'] as num?)?.toDouble(),
+      saturatedFatG: (macro['saturated_fat_g'] as num?)?.toDouble(),
+      cholesterolMg: (macro['cholesterol_mg'] as num?)?.toDouble(),
+      transFatG: (macro['trans_fat_g'] as num?)?.toDouble(),
+      sodiumMg: (macro['sodium_mg'] as num?)?.toDouble(),
+      glycemicLoad: (macro['glycemic_load'] as num?)?.toDouble(),
+      caloricDensity: (macro['caloric_density'] as num?)?.toDouble(),
+      processingLevel: (macro['processing_level'] as num?)?.toInt(),
+    );
+
+    final fit = result['goal_fit'] as Map<String, dynamic>? ?? const {};
+    _goalFit = _GoalFit(
+      positive: ((fit['positive'] as List?) ?? const [])
+          .whereType<String>()
+          .toList(),
+      negative: ((fit['negative'] as List?) ?? const [])
+          .whereType<String>()
+          .toList(),
+    );
 
     _captureMacroRatio();
   }
@@ -1308,7 +1568,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     try {
       final api = ApiClient();
       final locale = LocaleNotifier.instance.value.languageCode;
-      result = await api.recognizeText(prompt, locale: locale);
+      final goal = await _loadUserGoal();
+      result = await api.recognizeText(prompt, locale: locale, goal: goal);
     } on NetworkException catch (e) {
       debugPrint('Refine network error: ${e.message}');
       error = e.message;
@@ -1650,6 +1911,14 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
               ),
             ),
           ),
+          if (!_goalFit.isEmpty) ...[
+            const SizedBox(height: 16),
+            _buildGoalFitSection(c),
+          ],
+          if (!_completeMacro.isEmpty) ...[
+            const SizedBox(height: 16),
+            _buildCompleteMacroSection(c),
+          ],
           if (_ingredients.isNotEmpty) ...[
             const SizedBox(height: 16),
             _buildIngredientsSection(c),
@@ -1823,6 +2092,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       );
     }
 
+    final quote = _mealQuote;
     return Container(
       height: 221,
       width: double.infinity,
@@ -1836,7 +2106,44 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         borderRadius: BorderRadius.circular(12),
       ),
       clipBehavior: Clip.antiAlias,
-      child: imageWidget,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          imageWidget,
+          if (quote != null)
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 20,
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 256),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.lightInverse,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      quote,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        height: 20 / 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -2706,6 +3013,277 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       return context.l10n.approxMinutes(minutes);
     }
     return context.l10n.approxHours(hours.round().clamp(1, 99));
+  }
+
+  /// Section header used by the "For your goal" and "Complete macro"
+  /// blocks. Matches Figma `Text Small 14px/Medium`, secondary color,
+  /// with an 8 px gap to the card body below.
+  Widget _buildSectionHeader(_AiSheetColors c, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: c.secondaryText,
+          fontSize: 14,
+          height: 18 / 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  /// "For your goal: X" — wrap of positive/negative AI-picked tags. The
+  /// AI already split codes into [_GoalFit.positive] / `.negative`; we
+  /// just resolve labels and pick the chip variant accordingly.
+  Widget _buildGoalFitSection(_AiSheetColors c) {
+    final l10n = context.l10n;
+    final chips = <Widget>[];
+    for (final code in _goalFit.positive) {
+      final label = _tagLabel(l10n, code);
+      if (label != null) chips.add(_buildGoalFitChip(label, positive: true));
+    }
+    for (final code in _goalFit.negative) {
+      final label = _tagLabel(l10n, code);
+      if (label != null) chips.add(_buildGoalFitChip(label, positive: false));
+    }
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(c, _goalLabel(l10n, _userGoal)),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: c.cardBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: chips,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGoalFitChip(String label, {required bool positive}) {
+    // Figma: positive = success @ 15% over surface, negative = warning
+    // @ 9% over surface. Status icon is a 20 px filled circle with a
+    // white glyph centered inside.
+    final bgColor = positive
+        ? AppColors.success.withValues(alpha: 0.15)
+        : AppColors.error.withValues(alpha: 0.09);
+    final iconBg = positive ? AppColors.success : AppColors.error;
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            child: Icon(
+              positive ? Icons.check : Icons.priority_high,
+              size: 14,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.lightOnSurface,
+              fontSize: 14,
+              height: 18 / 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// "Complete macro" — grouped breakdown of dish nutrition into three
+  /// blocks coloured by [_MacroStatus]: red for "worse", amber for
+  /// "average", green for "good". Empty fields are skipped entirely.
+  Widget _buildCompleteMacroSection(_AiSheetColors c) {
+    if (_completeMacro.isEmpty) return const SizedBox.shrink();
+    final l10n = context.l10n;
+
+    // Collect every row with a value and bucket it by status. Order
+    // inside a bucket mirrors the Figma frame order so the eye lands on
+    // the same nutrient when comparing dishes.
+    final rows = <(_MacroStatus, String)>[];
+    void add(_MacroStatus status, String label) => rows.add((status, label));
+
+    if (_completeMacro.sugarG != null) {
+      add(_statusForSugar(_completeMacro.sugarG!), l10n.macroSugar);
+    }
+    if (_completeMacro.fiberG != null) {
+      add(_statusForFiber(_completeMacro.fiberG!), l10n.macroFiber);
+    }
+    if (_completeMacro.saturatedFatG != null) {
+      add(_statusForSatFat(_completeMacro.saturatedFatG!), l10n.macroSaturatedFat);
+    }
+    if (_completeMacro.cholesterolMg != null) {
+      add(
+        _statusForCholesterol(_completeMacro.cholesterolMg!),
+        l10n.macroCholesterol,
+      );
+    }
+    if (_completeMacro.transFatG != null) {
+      add(_statusForTransFat(_completeMacro.transFatG!), l10n.macroTransFat);
+    }
+    if (_completeMacro.glycemicLoad != null) {
+      add(
+        _statusForGlycemicLoad(_completeMacro.glycemicLoad!),
+        l10n.macroGlycemicLoad,
+      );
+    }
+    if (_completeMacro.caloricDensity != null) {
+      add(
+        _statusForCaloricDensity(_completeMacro.caloricDensity!),
+        l10n.macroCaloricDensity,
+      );
+    }
+    if (_completeMacro.processingLevel != null) {
+      add(
+        _statusForProcessing(_completeMacro.processingLevel!),
+        l10n.macroProcessing,
+      );
+    }
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    final worse = [for (final r in rows) if (r.$1 == _MacroStatus.worse) r.$2];
+    final average = [
+      for (final r in rows) if (r.$1 == _MacroStatus.average) r.$2,
+    ];
+    final good = [for (final r in rows) if (r.$1 == _MacroStatus.good) r.$2];
+
+    final groups = <Widget>[];
+    if (worse.isNotEmpty) {
+      groups.add(_buildMacroGroup(c, worse, _MacroStatus.worse));
+    }
+    if (average.isNotEmpty) {
+      if (groups.isNotEmpty) groups.add(const SizedBox(height: 4));
+      groups.add(_buildMacroGroup(c, average, _MacroStatus.average));
+    }
+    if (good.isNotEmpty) {
+      if (groups.isNotEmpty) groups.add(const SizedBox(height: 4));
+      groups.add(_buildMacroGroup(c, good, _MacroStatus.good));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(c, l10n.completeMacroSection),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: c.cardBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: groups,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMacroGroup(
+    _AiSheetColors c,
+    List<String> labels,
+    _MacroStatus status,
+  ) {
+    final l10n = context.l10n;
+    final (bg, statusText, isPositive) = switch (status) {
+      _MacroStatus.worse =>
+        (AppColors.error.withValues(alpha: 0.09), l10n.macroStatusWorse, false),
+      _MacroStatus.average => (
+          AppColors.orange.withValues(alpha: 0.10),
+          l10n.macroStatusAverage,
+          false,
+        ),
+      _MacroStatus.good => (
+          AppColors.success.withValues(alpha: 0.12),
+          l10n.macroStatusGood,
+          true,
+        ),
+    };
+    final accent = switch (status) {
+      _MacroStatus.worse => AppColors.error,
+      _MacroStatus.average => AppColors.orange,
+      _MacroStatus.good => AppColors.success,
+    };
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      labels[i],
+                      style: TextStyle(
+                        color: AppColors.lightOnSurface,
+                        fontSize: 14,
+                        height: 18 / 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      color: accent,
+                      fontSize: 13,
+                      height: 14 / 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: accent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isPositive ? Icons.check : Icons.priority_high,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _buildParametersSection(_AiSheetColors c) {
