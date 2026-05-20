@@ -193,9 +193,19 @@ async def admin_list_entitlements(
     if user_id:
         stmt = stmt.where(Entitlement.user_id == user_id)
     if promo_code:
+        # upsert_promo stores original_transaction_id as `code:token`
+        # (synthetic, includes the device token so the unique constraint
+        # doesn't collide across devices). Legacy rows from before that
+        # change stored just `code`. Match both — startswith covers the
+        # new shape, equality covers the old one. product_id is also
+        # `promo_{code}`, so include that as a third match path.
         stmt = stmt.where(
             Entitlement.store == "promo",
-            Entitlement.original_transaction_id == promo_code,
+            or_(
+                Entitlement.original_transaction_id == promo_code,
+                Entitlement.original_transaction_id.like(f"{promo_code}:%"),
+                Entitlement.product_id == f"promo_{promo_code}",
+            ),
         )
     if not include_revoked:
         stmt = stmt.where(Entitlement.revoked_at.is_(None))
@@ -273,9 +283,17 @@ async def admin_revoke_entitlements(
     if user_id:
         stmt = stmt.where(Entitlement.user_id == user_id)
     if promo_code:
+        # See list-entitlements for why we match three shapes here:
+        # current schema stores synthetic `code:token` in
+        # `original_transaction_id`; legacy rows stored bare `code`;
+        # `product_id` carries `promo_{code}` in both schemas.
         stmt = stmt.where(
             Entitlement.store == "promo",
-            Entitlement.original_transaction_id == promo_code,
+            or_(
+                Entitlement.original_transaction_id == promo_code,
+                Entitlement.original_transaction_id.like(f"{promo_code}:%"),
+                Entitlement.product_id == f"promo_{promo_code}",
+            ),
         )
 
     result = await db.execute(stmt)
