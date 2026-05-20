@@ -972,5 +972,30 @@
         "type": "int"
       }
     }
-  }
+  },
+  "aiLoadingPhrase01": "Hmm… this looks suspiciously delicious.",
+  "aiLoadingPhrase02": "Hold up, I need to inspect this beauty.",
+  "aiLoadingPhrase03": "Okay, let's see what this plate is hiding.",
+  "aiLoadingPhrase04": "Food detected. Curiosity activated.",
+  "aiLoadingPhrase05": "Wait a sec, this meal has secrets.",
+  "aiLoadingPhrase06": "Analyzing the delicious situation…",
+  "aiLoadingPhrase07": "Let me decode this tasty mystery.",
+  "aiLoadingPhrase08": "Tiny food detective is on the case.",
+  "aiLoadingPhrase09": "This looks good. Maybe too good.",
+  "aiLoadingPhrase10": "Scanning the plate for answers.",
+  "aiLoadingPhrase11": "One moment, I'm investigating the yum.",
+  "aiLoadingPhrase12": "Let's see what's really up here.",
+  "aiLoadingPhrase13": "The fork can wait. Science goes first.",
+  "aiLoadingPhrase14": "Is this as innocent as it looks?",
+  "aiLoadingPhrase15": "Something tasty is happening here…",
+  "aiLoadingPhrase16": "Zooming in on the delicious evidence.",
+  "aiLoadingPhrase17": "Running a full snack investigation.",
+  "aiLoadingPhrase18": "I smell calories. Metaphorically.",
+  "aiLoadingPhrase19": "This plate just entered analysis mode.",
+  "aiLoadingPhrase20": "One sec — reading the food gossip.",
+  "aiLoadingPhrase21": "Looking for the macros behind the magic.",
+  "aiLoadingPhrase22": "Hmm… this plate's the main character.",
+  "aiLoadingPhrase23": "What's this little feast made of?",
+  "aiLoadingPhrase24": "Crunching numbers, not your meal.",
+  "aiLoadingPhrase25": "Food vibes detected. Calculating…"
 }

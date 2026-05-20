@@ -4437,6 +4437,156 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'~ {hours} ч {minutes} мин'**
   String burnApproxHoursMinutes(int hours, int minutes);
+
+  /// No description provided for @aiLoadingPhrase01.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хм… выглядит подозрительно вкусно.'**
+  String get aiLoadingPhrase01;
+
+  /// No description provided for @aiLoadingPhrase02.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секунду, мне нужно изучить эту красоту.'**
+  String get aiLoadingPhrase02;
+
+  /// No description provided for @aiLoadingPhrase03.
+  ///
+  /// In ru, this message translates to:
+  /// **'Посмотрим, что прячет тарелка.'**
+  String get aiLoadingPhrase03;
+
+  /// No description provided for @aiLoadingPhrase04.
+  ///
+  /// In ru, this message translates to:
+  /// **'Еда обнаружена. Любопытство активировано.'**
+  String get aiLoadingPhrase04;
+
+  /// No description provided for @aiLoadingPhrase05.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подожди, у этого блюда есть секреты.'**
+  String get aiLoadingPhrase05;
+
+  /// No description provided for @aiLoadingPhrase06.
+  ///
+  /// In ru, this message translates to:
+  /// **'Анализирую аппетитную ситуацию…'**
+  String get aiLoadingPhrase06;
+
+  /// No description provided for @aiLoadingPhrase07.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дай-ка я разгадаю эту вкусную загадку.'**
+  String get aiLoadingPhrase07;
+
+  /// No description provided for @aiLoadingPhrase08.
+  ///
+  /// In ru, this message translates to:
+  /// **'Маленький детектив еды на деле.'**
+  String get aiLoadingPhrase08;
+
+  /// No description provided for @aiLoadingPhrase09.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выглядит хорошо. Подозрительно хорошо.'**
+  String get aiLoadingPhrase09;
+
+  /// No description provided for @aiLoadingPhrase10.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканирую тарелку как улику.'**
+  String get aiLoadingPhrase10;
+
+  /// No description provided for @aiLoadingPhrase11.
+  ///
+  /// In ru, this message translates to:
+  /// **'Минутку, расследую эту вкуснотищу.'**
+  String get aiLoadingPhrase11;
+
+  /// No description provided for @aiLoadingPhrase12.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выясним, что тут на самом деле.'**
+  String get aiLoadingPhrase12;
+
+  /// No description provided for @aiLoadingPhrase13.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вилка подождёт. Сначала наука.'**
+  String get aiLoadingPhrase13;
+
+  /// No description provided for @aiLoadingPhrase14.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверю, такое ли оно невинное.'**
+  String get aiLoadingPhrase14;
+
+  /// No description provided for @aiLoadingPhrase15.
+  ///
+  /// In ru, this message translates to:
+  /// **'Происходит что-то вкусное…'**
+  String get aiLoadingPhrase15;
+
+  /// No description provided for @aiLoadingPhrase16.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приближаюсь к аппетитным уликам.'**
+  String get aiLoadingPhrase16;
+
+  /// No description provided for @aiLoadingPhrase17.
+  ///
+  /// In ru, this message translates to:
+  /// **'Веду полное расследование закуски.'**
+  String get aiLoadingPhrase17;
+
+  /// No description provided for @aiLoadingPhrase18.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чую калории. Метафорически.'**
+  String get aiLoadingPhrase18;
+
+  /// No description provided for @aiLoadingPhrase19.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тарелка вошла в режим анализа.'**
+  String get aiLoadingPhrase19;
+
+  /// No description provided for @aiLoadingPhrase20.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секунду, читаю гастрономические сплетни.'**
+  String get aiLoadingPhrase20;
+
+  /// No description provided for @aiLoadingPhrase21.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ищу макросы за этой магией.'**
+  String get aiLoadingPhrase21;
+
+  /// No description provided for @aiLoadingPhrase22.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хм… тарелка — главный герой.'**
+  String get aiLoadingPhrase22;
+
+  /// No description provided for @aiLoadingPhrase23.
+  ///
+  /// In ru, this message translates to:
+  /// **'Посмотрим, из чего сделан этот мини-пир.'**
+  String get aiLoadingPhrase23;
+
+  /// No description provided for @aiLoadingPhrase24.
+  ///
+  /// In ru, this message translates to:
+  /// **'Считаю цифры, а не твоё блюдо.'**
+  String get aiLoadingPhrase24;
+
+  /// No description provided for @aiLoadingPhrase25.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вайбы еды обнаружены. Считаем…'**
+  String get aiLoadingPhrase25;
 }
 
 class _AppLocalizationsDelegate

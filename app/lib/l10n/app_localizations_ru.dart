@@ -2421,4 +2421,79 @@ class AppLocalizationsRu extends AppLocalizations {
   String burnApproxHoursMinutes(int hours, int minutes) {
     return '~ $hours ч $minutes мин';
   }
+
+  @override
+  String get aiLoadingPhrase01 => 'Хм… выглядит подозрительно вкусно.';
+
+  @override
+  String get aiLoadingPhrase02 => 'Секунду, мне нужно изучить эту красоту.';
+
+  @override
+  String get aiLoadingPhrase03 => 'Посмотрим, что прячет тарелка.';
+
+  @override
+  String get aiLoadingPhrase04 => 'Еда обнаружена. Любопытство активировано.';
+
+  @override
+  String get aiLoadingPhrase05 => 'Подожди, у этого блюда есть секреты.';
+
+  @override
+  String get aiLoadingPhrase06 => 'Анализирую аппетитную ситуацию…';
+
+  @override
+  String get aiLoadingPhrase07 => 'Дай-ка я разгадаю эту вкусную загадку.';
+
+  @override
+  String get aiLoadingPhrase08 => 'Маленький детектив еды на деле.';
+
+  @override
+  String get aiLoadingPhrase09 => 'Выглядит хорошо. Подозрительно хорошо.';
+
+  @override
+  String get aiLoadingPhrase10 => 'Сканирую тарелку как улику.';
+
+  @override
+  String get aiLoadingPhrase11 => 'Минутку, расследую эту вкуснотищу.';
+
+  @override
+  String get aiLoadingPhrase12 => 'Выясним, что тут на самом деле.';
+
+  @override
+  String get aiLoadingPhrase13 => 'Вилка подождёт. Сначала наука.';
+
+  @override
+  String get aiLoadingPhrase14 => 'Проверю, такое ли оно невинное.';
+
+  @override
+  String get aiLoadingPhrase15 => 'Происходит что-то вкусное…';
+
+  @override
+  String get aiLoadingPhrase16 => 'Приближаюсь к аппетитным уликам.';
+
+  @override
+  String get aiLoadingPhrase17 => 'Веду полное расследование закуски.';
+
+  @override
+  String get aiLoadingPhrase18 => 'Чую калории. Метафорически.';
+
+  @override
+  String get aiLoadingPhrase19 => 'Тарелка вошла в режим анализа.';
+
+  @override
+  String get aiLoadingPhrase20 => 'Секунду, читаю гастрономические сплетни.';
+
+  @override
+  String get aiLoadingPhrase21 => 'Ищу макросы за этой магией.';
+
+  @override
+  String get aiLoadingPhrase22 => 'Хм… тарелка — главный герой.';
+
+  @override
+  String get aiLoadingPhrase23 => 'Посмотрим, из чего сделан этот мини-пир.';
+
+  @override
+  String get aiLoadingPhrase24 => 'Считаю цифры, а не твоё блюдо.';
+
+  @override
+  String get aiLoadingPhrase25 => 'Вайбы еды обнаружены. Считаем…';
 }

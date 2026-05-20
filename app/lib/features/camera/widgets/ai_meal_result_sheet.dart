@@ -16,6 +16,11 @@ import 'package:uuid/uuid.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/api/api_client.dart';
+// Reuses the onboarding's Latin-locale display-font helper. Locale check
+// is baked in — Russian falls back to Inter (Momo Trust Display has no
+// Cyrillic glyphs), en/de/es/fr/pt get the marketing-tuned face.
+import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart'
+    as display_title;
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
@@ -860,6 +865,13 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   bool _isLoading = false;
   String? _loadingError;
 
+  /// Index into [_loadingPhrases] of the line currently shown under the
+  /// dots loader. Cycled by [_loadingPhraseTimer]. Starts at 0 — that
+  /// slot is the fixed "Hmm… this looks suspiciously delicious." opener
+  /// (see [_loadingPhrases] / `aiLoadingPhrase01`).
+  int _loadingPhraseIndex = 0;
+  Timer? _loadingPhraseTimer;
+
   /// Three-stage progress for the AI loading screen. Each stage runs in
   /// sequence: "analyzing" → "recognizing" → "counting calories". Each fills
   /// naturally at its own pace; we never force-snap them to 1.0 just because
@@ -869,9 +881,11 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   late final AnimationController _stage1Ctl;
   late final AnimationController _stage2Ctl;
   late final AnimationController _stage3Ctl;
-  late final Animation<double> _stage1Anim;
-  late final Animation<double> _stage2Anim;
-  late final Animation<double> _stage3Anim;
+  // Stage `Animation` instances themselves are no longer read by any
+  // widget — the dots loader replaced the per-stage progress bars —
+  // but the underlying controllers still drive [_onStage1Status] /
+  // [_onStage2Status] / [_signalResultReady], which keep the minimum-
+  // loading-window timing. Keep the controllers, drop the animations.
 
   /// Result/error stashed while we wait for stage 3 to finish. We only
   /// transition to the next screen when both the bars are full AND the AI
@@ -905,11 +919,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     // The controller lower/upper bound stays 0..1; durations are passed
     // per-animateTo so we can swap pace mid-animation.
     _stage3Ctl = AnimationController(vsync: this);
-    _stage1Anim =
-        CurvedAnimation(parent: _stage1Ctl, curve: Curves.easeOutCubic);
-    _stage2Anim =
-        CurvedAnimation(parent: _stage2Ctl, curve: Curves.easeOutCubic);
-    _stage3Anim = _stage3Ctl.view;
     _stage1Ctl.addStatusListener(_onStage1Status);
     _stage2Ctl.addStatusListener(_onStage2Status);
     _overviewIntroCtl = AnimationController(
@@ -924,6 +933,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     if (widget.pendingResult != null) {
       _isLoading = true;
       _stage1Ctl.forward();
+      _startLoadingPhraseCycle();
       _awaitResult();
     } else if (widget.result != null) {
       _initResultControllers(widget.result!);
@@ -1036,6 +1046,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     Future<void>.delayed(_postCompleteHold, () {
       if (!mounted || !_isLoading) return;
 
+      _loadingPhraseTimer?.cancel();
       if (_pendingErrorMessage != null) {
         setState(() {
           _isLoading = false;
@@ -1088,6 +1099,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   @override
   void dispose() {
     _flushAutosave();
+    _loadingPhraseTimer?.cancel();
     _stage1Ctl.dispose();
     _stage2Ctl.dispose();
     _stage3Ctl.dispose();
@@ -2151,65 +2163,143 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   Widget _buildLoadingBody(_AiSheetColors c) {
     final l10n = context.l10n;
-    final labelColor = c.isDark
-        ? AppColors.darkPrimaryLight
-        : AppColors.lightPrimaryLight;
-    final doneColor =
-        c.isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
-    final trackColor = c.isDark
-        ? AppColors.lineDT200
-        : AppColors.lineLight200;
+    final phrase = _loadingPhrases(l10n)[_loadingPhraseIndex];
 
-    // Outer scroll padding contributes 8px on each side, so 28px here lands
-    // the progress bars at exactly 36px from the screen edges. The extra
-    // top padding replaces the breathing room the cabbage mascot used to
-    // occupy.
+    // Minimal horizontal padding so the longest phrases stay on a
+    // single line. A 28 px padding (the old layout) only left ~300 px
+    // for the text on a 393 px-wide sheet, which forced 40+-char
+    // phrases into two lines and made the dots above bounce up/down
+    // on every swap. 12 px gives ~370 px, and the FittedBox below
+    // gracefully scales the rare overflowing phrase down instead of
+    // wrapping.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 56, 28, 32),
+      padding: const EdgeInsets.fromLTRB(12, 48, 12, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          AnimatedBuilder(
-            animation: Listenable.merge([
-              _stage1Anim,
-              _stage2Anim,
-              _stage3Anim,
-            ]),
-            builder: (context, _) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _LoadingProgressRow(
-                    label: l10n.aiAnalyzingData,
-                    progress: _stage1Anim.value,
-                    labelColor: labelColor,
-                    doneColor: doneColor,
-                    trackColor: trackColor,
+          const Align(
+            alignment: Alignment.center,
+            child: _DotsLoader(),
+          ),
+          const SizedBox(height: 20),
+          // Fixed 28 px tall row so phrase swaps NEVER reflow the
+          // column height — the dots above stay nailed in place. The
+          // AnimatedSwitcher cross-fades and slides the outgoing line
+          // DOWN while the incoming line rises from below, so both
+          // appear AND disappear are animated.
+          SizedBox(
+            height: 28,
+            width: double.infinity,
+            child: ClipRect(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 360),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final inbound = animation.status == AnimationStatus.forward ||
+                      animation.status == AnimationStatus.completed;
+                  // Incoming: slide up from below + fade in.
+                  // Outgoing: slide down + fade out.
+                  final beginOffset =
+                      inbound ? const Offset(0, 0.4) : const Offset(0, -0.4);
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: beginOffset,
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ...previous,
+                    ?current,
+                  ],
+                ),
+                child: Align(
+                  key: ValueKey(_loadingPhraseIndex),
+                  alignment: Alignment.center,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      phrase,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      style: display_title.onboardingTitleStyle(
+                        context,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: c.onSurface,
+                        height: 24 / 18,
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  _LoadingProgressRow(
-                    label: l10n.aiRecognizingIngredients,
-                    progress: _stage2Anim.value,
-                    labelColor: labelColor,
-                    doneColor: doneColor,
-                    trackColor: trackColor,
-                  ),
-                  const SizedBox(height: 16),
-                  _LoadingProgressRow(
-                    label: l10n.aiCountingCalories,
-                    progress: _stage3Anim.value,
-                    labelColor: labelColor,
-                    doneColor: doneColor,
-                    trackColor: trackColor,
-                  ),
-                ],
-              );
-            },
+                ),
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  /// 25 playful loading lines from ARB (index 0 = the fixed
+  /// "Hmm… this looks suspiciously delicious." opener). The list is
+  /// rebuilt every call so locale switches mid-load (rare but
+  /// possible) pick up the new language.
+  List<String> _loadingPhrases(AppLocalizations l10n) => [
+        l10n.aiLoadingPhrase01,
+        l10n.aiLoadingPhrase02,
+        l10n.aiLoadingPhrase03,
+        l10n.aiLoadingPhrase04,
+        l10n.aiLoadingPhrase05,
+        l10n.aiLoadingPhrase06,
+        l10n.aiLoadingPhrase07,
+        l10n.aiLoadingPhrase08,
+        l10n.aiLoadingPhrase09,
+        l10n.aiLoadingPhrase10,
+        l10n.aiLoadingPhrase11,
+        l10n.aiLoadingPhrase12,
+        l10n.aiLoadingPhrase13,
+        l10n.aiLoadingPhrase14,
+        l10n.aiLoadingPhrase15,
+        l10n.aiLoadingPhrase16,
+        l10n.aiLoadingPhrase17,
+        l10n.aiLoadingPhrase18,
+        l10n.aiLoadingPhrase19,
+        l10n.aiLoadingPhrase20,
+        l10n.aiLoadingPhrase21,
+        l10n.aiLoadingPhrase22,
+        l10n.aiLoadingPhrase23,
+        l10n.aiLoadingPhrase24,
+        l10n.aiLoadingPhrase25,
+      ];
+
+  /// Starts cycling loading phrases. The opener (index 0) is shown for
+  /// the first 2.6 s untouched; every subsequent rotation lands on a
+  /// random index in [1..24] so the user doesn't see the same
+  /// "Hmm…" twice in one wait, but also can't predict the order on
+  /// repeated recognises.
+  void _startLoadingPhraseCycle() {
+    _loadingPhraseTimer?.cancel();
+    _loadingPhraseIndex = 0;
+    final random = math.Random();
+    _loadingPhraseTimer = Timer.periodic(
+      const Duration(milliseconds: 2600),
+      (_) {
+        if (!mounted) return;
+        // Pick a random non-opener index, never repeat current.
+        int next;
+        do {
+          next = 1 + random.nextInt(24);
+        } while (next == _loadingPhraseIndex);
+        setState(() => _loadingPhraseIndex = next);
+      },
     );
   }
 
@@ -2368,10 +2458,11 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                   // rather than removing maxLines entirely.
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: display_title.onboardingTitleStyle(
+                    context,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
+                    color: Colors.white,
                     height: 20 / 15,
                   ),
                 ),
@@ -4686,87 +4777,78 @@ class _RingSegment {
   final List<Color> colors;
 }
 
-class _LoadingProgressRow extends StatelessWidget {
-  const _LoadingProgressRow({
-    required this.label,
-    required this.progress,
-    required this.labelColor,
-    required this.doneColor,
-    required this.trackColor,
-  });
+/// Three primary-coloured 8 px dots that staggered-bounce while the AI
+/// is thinking. Each dot scales from 0.6 → 1.0 with a phase offset of
+/// 1/3 of the cycle, giving the classic "typing indicator" cadence.
+/// Self-contained — owns its own AnimationController and disposes it
+/// when removed from the tree.
+class _DotsLoader extends StatefulWidget {
+  const _DotsLoader();
 
-  final String label;
-  final double progress;
-  final Color labelColor;
-  final Color doneColor;
-  final Color trackColor;
+  @override
+  State<_DotsLoader> createState() => _DotsLoaderState();
+}
+
+class _DotsLoaderState extends State<_DotsLoader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final clamped = progress.isNaN ? 0.0 : progress.clamp(0.0, 1.0);
-    final done = clamped >= 0.999;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            // AnimatedDefaultTextStyle interpolates colour and weight without
-            // remounting the Text widget — no font-baseline pop on completion.
-            // We hold weight at a single value so glyph metrics don't shift
-            // and produce a horizontal jitter as the bar fills.
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-              style: TextStyle(
-                color: done ? doneColor : labelColor,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                height: 16 / 13,
-              ),
-              child: Text(label),
-            ),
-            const SizedBox(width: 4),
-            // Icon is always laid out (zero-sized when hidden) so the row
-            // width stays stable; we just fade + scale the check in.
-            AnimatedScale(
-              scale: done ? 1.0 : 0.6,
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutBack,
-              child: AnimatedOpacity(
-                opacity: done ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: SvgPicture.asset(
-                  'assets/icons/check.svg',
-                  width: 16,
-                  height: 16,
-                ),
-              ),
-            ),
-          ],
+    return SizedBox(
+      width: 32,
+      height: 8,
+      child: AnimatedBuilder(
+        animation: _ctl,
+        builder: (_, _) {
+          return Row(
+            children: [
+              _dot(_ctl.value, phase: 0.0),
+              const SizedBox(width: 4),
+              _dot(_ctl.value, phase: 1 / 3),
+              const SizedBox(width: 4),
+              _dot(_ctl.value, phase: 2 / 3),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _dot(double t, {required double phase}) {
+    // Phase-shift the global animation t for each dot, then map the
+    // shifted value through a sine-ish bump so the dot is at full size
+    // once per cycle and at 0.6 the rest of the time.
+    final shifted = (t + phase) % 1.0;
+    // Smooth bump: sin curve over [0, π] gives a 0→1→0 hump.
+    final bump = math.sin(shifted * math.pi).clamp(0.0, 1.0);
+    final scale = 0.6 + (0.4 * bump);
+    final opacity = 0.4 + (0.6 * bump);
+    return Transform.scale(
+      scale: scale,
+      child: Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: AppColors.lightOnSurface.withValues(alpha: opacity),
+          shape: BoxShape.circle,
         ),
-        const SizedBox(height: 8),
-        Container(
-          height: 6,
-          decoration: BoxDecoration(
-            color: trackColor,
-            borderRadius: BorderRadius.circular(3),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: FractionallySizedBox(
-              widthFactor: clamped <= 0 ? 0.001 : clamped,
-              heightFactor: 1,
-              child: const DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppColors.green,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

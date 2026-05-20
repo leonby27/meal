@@ -2434,4 +2434,79 @@ class AppLocalizationsFr extends AppLocalizations {
   String burnApproxHoursMinutes(int hours, int minutes) {
     return '~ $hours h $minutes min';
   }
+
+  @override
+  String get aiLoadingPhrase01 => 'Hmm… ça a l\'air suspicieusement délicieux.';
+
+  @override
+  String get aiLoadingPhrase02 => 'Attends, je dois inspecter cette beauté.';
+
+  @override
+  String get aiLoadingPhrase03 => 'Voyons ce que cette assiette cache.';
+
+  @override
+  String get aiLoadingPhrase04 => 'Nourriture détectée. Curiosité activée.';
+
+  @override
+  String get aiLoadingPhrase05 => 'Une seconde, ce plat a des secrets.';
+
+  @override
+  String get aiLoadingPhrase06 => 'Analyse de la situation gourmande…';
+
+  @override
+  String get aiLoadingPhrase07 => 'Je décrypte ce mystère savoureux.';
+
+  @override
+  String get aiLoadingPhrase08 => 'Petit détective culinaire sur l\'affaire.';
+
+  @override
+  String get aiLoadingPhrase09 => 'Ça a l\'air bon. Trop bon, peut-être.';
+
+  @override
+  String get aiLoadingPhrase10 => 'Je scanne l\'assiette comme une preuve.';
+
+  @override
+  String get aiLoadingPhrase11 => 'Un instant, j\'enquête sur le délice.';
+
+  @override
+  String get aiLoadingPhrase12 => 'Voyons vraiment ce qui se passe ici.';
+
+  @override
+  String get aiLoadingPhrase13 => 'Fourchette attend. Science d\'abord.';
+
+  @override
+  String get aiLoadingPhrase14 => 'Aussi innocent qu\'il en a l\'air ?';
+
+  @override
+  String get aiLoadingPhrase15 => 'Quelque chose de bon se passe ici…';
+
+  @override
+  String get aiLoadingPhrase16 => 'Zoom sur les preuves savoureuses.';
+
+  @override
+  String get aiLoadingPhrase17 => 'Enquête complète sur le snack en cours.';
+
+  @override
+  String get aiLoadingPhrase18 => 'Je sens des calories. Métaphoriquement.';
+
+  @override
+  String get aiLoadingPhrase19 => 'Cette assiette est en mode analyse.';
+
+  @override
+  String get aiLoadingPhrase20 => 'Je lis les ragots de la cuisine.';
+
+  @override
+  String get aiLoadingPhrase21 => 'Je cherche les macros derrière la magie.';
+
+  @override
+  String get aiLoadingPhrase22 => 'Hmm… cette assiette est la star.';
+
+  @override
+  String get aiLoadingPhrase23 => 'Voyons de quoi ce petit festin est fait.';
+
+  @override
+  String get aiLoadingPhrase24 => 'Je calcule des chiffres, pas ton repas.';
+
+  @override
+  String get aiLoadingPhrase25 => 'Vibes de bouffe détectées. Calcul…';
 }

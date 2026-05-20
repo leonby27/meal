@@ -972,5 +972,30 @@
         "type": "int"
       }
     }
-  }
+  },
+  "aiLoadingPhrase01": "Hmm… ça a l'air suspicieusement délicieux.",
+  "aiLoadingPhrase02": "Attends, je dois inspecter cette beauté.",
+  "aiLoadingPhrase03": "Voyons ce que cette assiette cache.",
+  "aiLoadingPhrase04": "Nourriture détectée. Curiosité activée.",
+  "aiLoadingPhrase05": "Une seconde, ce plat a des secrets.",
+  "aiLoadingPhrase06": "Analyse de la situation gourmande…",
+  "aiLoadingPhrase07": "Je décrypte ce mystère savoureux.",
+  "aiLoadingPhrase08": "Petit détective culinaire sur l'affaire.",
+  "aiLoadingPhrase09": "Ça a l'air bon. Trop bon, peut-être.",
+  "aiLoadingPhrase10": "Je scanne l'assiette comme une preuve.",
+  "aiLoadingPhrase11": "Un instant, j'enquête sur le délice.",
+  "aiLoadingPhrase12": "Voyons vraiment ce qui se passe ici.",
+  "aiLoadingPhrase13": "Fourchette attend. Science d'abord.",
+  "aiLoadingPhrase14": "Aussi innocent qu'il en a l'air ?",
+  "aiLoadingPhrase15": "Quelque chose de bon se passe ici…",
+  "aiLoadingPhrase16": "Zoom sur les preuves savoureuses.",
+  "aiLoadingPhrase17": "Enquête complète sur le snack en cours.",
+  "aiLoadingPhrase18": "Je sens des calories. Métaphoriquement.",
+  "aiLoadingPhrase19": "Cette assiette est en mode analyse.",
+  "aiLoadingPhrase20": "Je lis les ragots de la cuisine.",
+  "aiLoadingPhrase21": "Je cherche les macros derrière la magie.",
+  "aiLoadingPhrase22": "Hmm… cette assiette est la star.",
+  "aiLoadingPhrase23": "Voyons de quoi ce petit festin est fait.",
+  "aiLoadingPhrase24": "Je calcule des chiffres, pas ton repas.",
+  "aiLoadingPhrase25": "Vibes de bouffe détectées. Calcul…"
 }

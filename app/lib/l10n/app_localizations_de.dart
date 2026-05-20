@@ -2425,4 +2425,79 @@ class AppLocalizationsDe extends AppLocalizations {
   String burnApproxHoursMinutes(int hours, int minutes) {
     return '~ $hours Std. $minutes Min.';
   }
+
+  @override
+  String get aiLoadingPhrase01 => 'Hmm… das sieht verdächtig lecker aus.';
+
+  @override
+  String get aiLoadingPhrase02 => 'Moment, prüfe diese Schönheit.';
+
+  @override
+  String get aiLoadingPhrase03 => 'Mal sehen, was der Teller verbirgt.';
+
+  @override
+  String get aiLoadingPhrase04 => 'Essen erkannt. Neugier aktiviert.';
+
+  @override
+  String get aiLoadingPhrase05 => 'Warte, dieses Gericht hat Geheimnisse.';
+
+  @override
+  String get aiLoadingPhrase06 => 'Analysiere die köstliche Lage…';
+
+  @override
+  String get aiLoadingPhrase07 => 'Ich entschlüssele dieses Rätsel.';
+
+  @override
+  String get aiLoadingPhrase08 => 'Mini-Essensdetektiv im Einsatz.';
+
+  @override
+  String get aiLoadingPhrase09 => 'Sieht gut aus. Vielleicht zu gut.';
+
+  @override
+  String get aiLoadingPhrase10 => 'Scanne den Teller nach Antworten.';
+
+  @override
+  String get aiLoadingPhrase11 => 'Moment, ich untersuche das Lecker hier.';
+
+  @override
+  String get aiLoadingPhrase12 => 'Mal sehen, was hier wirklich los ist.';
+
+  @override
+  String get aiLoadingPhrase13 => 'Die Gabel wartet. Wissenschaft zuerst.';
+
+  @override
+  String get aiLoadingPhrase14 => 'Ist es so unschuldig wie es scheint?';
+
+  @override
+  String get aiLoadingPhrase15 => 'Etwas Leckeres geschieht hier…';
+
+  @override
+  String get aiLoadingPhrase16 => 'Zoome auf das köstliche Beweismaterial.';
+
+  @override
+  String get aiLoadingPhrase17 => 'Starte vollständige Snack-Ermittlung.';
+
+  @override
+  String get aiLoadingPhrase18 => 'Ich rieche Kalorien. Metaphorisch.';
+
+  @override
+  String get aiLoadingPhrase19 => 'Dieser Teller ist im Analysemodus.';
+
+  @override
+  String get aiLoadingPhrase20 => 'Moment, ich lese den Essensklatsch.';
+
+  @override
+  String get aiLoadingPhrase21 => 'Suche nach den Makros hinter der Magie.';
+
+  @override
+  String get aiLoadingPhrase22 => 'Hmm… der Teller hat Main-Character-Energy.';
+
+  @override
+  String get aiLoadingPhrase23 => 'Woraus besteht dieses Festmahl?';
+
+  @override
+  String get aiLoadingPhrase24 => 'Zähle Zahlen, nicht dein Essen.';
+
+  @override
+  String get aiLoadingPhrase25 => 'Food-Vibes erkannt. Berechne…';
 }

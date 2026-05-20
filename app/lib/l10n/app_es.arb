@@ -972,5 +972,30 @@
         "type": "int"
       }
     }
-  }
+  },
+  "aiLoadingPhrase01": "Mmm… esto se ve sospechosamente delicioso.",
+  "aiLoadingPhrase02": "Espera, voy a inspeccionar esto.",
+  "aiLoadingPhrase03": "Vale, veamos qué esconde este plato.",
+  "aiLoadingPhrase04": "Comida detectada. Curiosidad activada.",
+  "aiLoadingPhrase05": "Un momento, esta comida tiene secretos.",
+  "aiLoadingPhrase06": "Analizando la situación deliciosa…",
+  "aiLoadingPhrase07": "Déjame descifrar este misterio sabroso.",
+  "aiLoadingPhrase08": "Detective culinario en acción.",
+  "aiLoadingPhrase09": "Pinta bien. Quizás demasiado bien.",
+  "aiLoadingPhrase10": "Escaneando el plato a fondo.",
+  "aiLoadingPhrase11": "Un momento, estoy investigando lo rico.",
+  "aiLoadingPhrase12": "Veamos qué pasa aquí realmente.",
+  "aiLoadingPhrase13": "El tenedor espera. Ciencia primero.",
+  "aiLoadingPhrase14": "¿Es tan inocente como parece?",
+  "aiLoadingPhrase15": "Algo sabroso está pasando aquí…",
+  "aiLoadingPhrase16": "Acercándome a la deliciosa evidencia.",
+  "aiLoadingPhrase17": "Investigación completa del snack.",
+  "aiLoadingPhrase18": "Huelo calorías. Metafóricamente.",
+  "aiLoadingPhrase19": "El plato acaba de entrar en modo análisis.",
+  "aiLoadingPhrase20": "Un momento, leo los chismes del plato.",
+  "aiLoadingPhrase21": "Buscando los macros tras la magia.",
+  "aiLoadingPhrase22": "Mmm… el plato es el protagonista.",
+  "aiLoadingPhrase23": "Veamos de qué está hecho este festín.",
+  "aiLoadingPhrase24": "Calculo números, no tu comida.",
+  "aiLoadingPhrase25": "Vibes de comida detectadas. Calculando…"
 }

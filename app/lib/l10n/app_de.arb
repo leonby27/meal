@@ -972,5 +972,30 @@
         "type": "int"
       }
     }
-  }
+  },
+  "aiLoadingPhrase01": "Hmm… das sieht verdächtig lecker aus.",
+  "aiLoadingPhrase02": "Moment, prüfe diese Schönheit.",
+  "aiLoadingPhrase03": "Mal sehen, was der Teller verbirgt.",
+  "aiLoadingPhrase04": "Essen erkannt. Neugier aktiviert.",
+  "aiLoadingPhrase05": "Warte, dieses Gericht hat Geheimnisse.",
+  "aiLoadingPhrase06": "Analysiere die köstliche Lage…",
+  "aiLoadingPhrase07": "Ich entschlüssele dieses Rätsel.",
+  "aiLoadingPhrase08": "Mini-Essensdetektiv im Einsatz.",
+  "aiLoadingPhrase09": "Sieht gut aus. Vielleicht zu gut.",
+  "aiLoadingPhrase10": "Scanne den Teller nach Antworten.",
+  "aiLoadingPhrase11": "Moment, ich untersuche das Lecker hier.",
+  "aiLoadingPhrase12": "Mal sehen, was hier wirklich los ist.",
+  "aiLoadingPhrase13": "Die Gabel wartet. Wissenschaft zuerst.",
+  "aiLoadingPhrase14": "Ist es so unschuldig wie es scheint?",
+  "aiLoadingPhrase15": "Etwas Leckeres geschieht hier…",
+  "aiLoadingPhrase16": "Zoome auf das köstliche Beweismaterial.",
+  "aiLoadingPhrase17": "Starte vollständige Snack-Ermittlung.",
+  "aiLoadingPhrase18": "Ich rieche Kalorien. Metaphorisch.",
+  "aiLoadingPhrase19": "Dieser Teller ist im Analysemodus.",
+  "aiLoadingPhrase20": "Moment, ich lese den Essensklatsch.",
+  "aiLoadingPhrase21": "Suche nach den Makros hinter der Magie.",
+  "aiLoadingPhrase22": "Hmm… der Teller hat Main-Character-Energy.",
+  "aiLoadingPhrase23": "Woraus besteht dieses Festmahl?",
+  "aiLoadingPhrase24": "Zähle Zahlen, nicht dein Essen.",
+  "aiLoadingPhrase25": "Food-Vibes erkannt. Berechne…"
 }

@@ -972,5 +972,30 @@
         "type": "int"
       }
     }
-  }
+  },
+  "aiLoadingPhrase01": "Hmm… isso parece suspeitamente delicioso.",
+  "aiLoadingPhrase02": "Espera, preciso inspecionar essa beleza.",
+  "aiLoadingPhrase03": "Ok, vamos ver o que esse prato esconde.",
+  "aiLoadingPhrase04": "Comida detectada. Curiosidade ativada.",
+  "aiLoadingPhrase05": "Um segundo, essa refeição tem segredos.",
+  "aiLoadingPhrase06": "Analisando a situação deliciosa…",
+  "aiLoadingPhrase07": "Deixa eu decifrar esse mistério saboroso.",
+  "aiLoadingPhrase08": "Pequeno detetive de comida em ação.",
+  "aiLoadingPhrase09": "Parece bom. Talvez bom demais.",
+  "aiLoadingPhrase10": "Escaneando o prato a fundo.",
+  "aiLoadingPhrase11": "Um momento, investigando a delícia.",
+  "aiLoadingPhrase12": "Vamos ver o que rola aqui.",
+  "aiLoadingPhrase13": "O garfo espera. Ciência primeiro.",
+  "aiLoadingPhrase14": "Tão inocente quanto parece?",
+  "aiLoadingPhrase15": "Algo gostoso está acontecendo aqui…",
+  "aiLoadingPhrase16": "Aproximando da evidência deliciosa.",
+  "aiLoadingPhrase17": "Iniciando investigação completa do lanche.",
+  "aiLoadingPhrase18": "Sinto cheiro de calorias. Metaforicamente.",
+  "aiLoadingPhrase19": "Prato entrou em modo análise.",
+  "aiLoadingPhrase20": "Um momento, lendo as fofocas da comida.",
+  "aiLoadingPhrase21": "Procurando os macros por trás da mágica.",
+  "aiLoadingPhrase22": "Hmm… o prato tem energia de protagonista.",
+  "aiLoadingPhrase23": "Vamos ver do que esse banquete é feito.",
+  "aiLoadingPhrase24": "Calculando números, não sua comida.",
+  "aiLoadingPhrase25": "Vibes de comida detectadas. Calculando…"
 }
