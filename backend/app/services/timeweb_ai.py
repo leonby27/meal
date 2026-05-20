@@ -261,6 +261,46 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
                             3 = processed food,
                             4 = ultra-processed food
   Round grams to one decimal, mg to integers, density to two decimals.
+
+  REFERENCE VALUES (per 100 g of the named ingredient — sum across all
+  ingredients in the dish to get the per-portion total). Use these as
+  anchors so the per-portion numbers stay realistic:
+    Beef (ground / steak)        cholesterol ~80 mg, sat. fat ~7 g, fiber 0 g
+    Pork (lean cuts)             cholesterol ~75 mg, sat. fat ~5 g, fiber 0 g
+    Chicken breast (skinless)    cholesterol ~85 mg, sat. fat ~1 g, fiber 0 g
+    Chicken thigh (skin on)      cholesterol ~95 mg, sat. fat ~3.5 g, fiber 0 g
+    Salmon                       cholesterol ~60 mg, sat. fat ~3 g, omega3 ~2 g
+    Egg (1 large, ~50 g)         cholesterol ~185 mg, sat. fat ~1.5 g
+    Hard cheese (parmesan/cheddar) cholesterol ~95 mg, sat. fat ~18 g, sodium ~700 mg
+    Soft cheese (mozzarella)     cholesterol ~55 mg, sat. fat ~10 g, sodium ~400 mg
+    Butter                       cholesterol ~215 mg, sat. fat ~50 g
+    Whole milk                   cholesterol ~10 mg, sat. fat ~2 g, sugar ~5 g
+    Cooked pasta (refined)       fiber ~2 g, sugar ~1 g, sodium ~5 mg
+    Cooked pasta (wholegrain)    fiber ~5 g
+    Cooked white rice            fiber ~0.5 g
+    Cooked brown rice            fiber ~1.8 g
+    Bread (white)                fiber ~2.5 g, sodium ~480 mg
+    Bread (wholegrain)           fiber ~7 g
+    Tomato (raw)                 fiber ~1.2 g, sugar ~2.6 g
+    Tomato sauce / passata       fiber ~1.5 g, sugar ~5 g, sodium ~300 mg
+    Onion (raw)                  fiber ~1.7 g, sugar ~4 g
+    Carrot (raw)                 fiber ~2.8 g, sugar ~5 g
+    Lettuce / leafy greens       fiber ~1.3 g, sugar ~1 g
+    Avocado                      fiber ~7 g, sat. fat ~2 g
+    Apple                        fiber ~2.4 g, sugar ~10 g
+    Banana                       fiber ~2.6 g, sugar ~12 g
+    Olive oil                    sat. fat ~14 g (per 100 g) — typical use 5–15 g
+    Vegetable / sunflower oil    sat. fat ~10 g
+  Industrial trans fats: ≈ 0 for home cooking; > 0 only for
+  margarine-fried food, packaged baked goods, deep-fried fast food.
+
+- ANTI-BIAS for `complete_macro`: be honest. DO NOT round any field
+  toward a value that would land its client-side status in a milder
+  bucket. The client picks worse / average / good purely from the
+  numbers you return, so a 180 mg cholesterol portion must read 180,
+  not 95. Sum reference values per ingredient × grams; do not
+  "average it out". A dish with 150 g of ground beef plus 30 g of
+  parmesan should NOT report cholesterol under 130 mg.
 - `goal_fit` is REQUIRED. Evaluates the dish against the user's goal,
   which is provided in the user prompt (one of: weight loss / maintenance /
   muscle gain / balanced eating).
