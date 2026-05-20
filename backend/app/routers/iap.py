@@ -22,7 +22,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_apple_private_key_pem, get_promo_codes, settings
@@ -167,6 +167,7 @@ async def admin_revoke_entitlements(
     request: Request,
     app_account_token: Optional[str] = None,
     promo_code: Optional[str] = None,
+    user_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """One-shot revocation of active entitlements for testing.
@@ -176,12 +177,16 @@ async def admin_revoke_entitlements(
     the matching active row(s) so the next `/entitlement` refresh
     downgrades the device to non-premium.
 
-    Pass at least one of the filters (AND-ed together if both are given):
+    Pass at least one of the filters (AND-ed together if multiple given):
 
       - `app_account_token`: revoke entitlements for this device UUID
         (the `device_install_uuid` minted by [DeviceIdService] in the
         Flutter app — visible in any `/verify` request body server-side
         and in the app's debug log).
+      - `user_id`: revoke entitlements bound to this signed-in user.
+        Useful when the promo was redeemed while logged in, because
+        such rows are looked up by `user_id` on read and might not
+        match the current device token.
       - `promo_code`: revoke all entitlements granted by this promo
         across every device. Useful when you don't know the token but
         remember the code you typed in. Matches
@@ -191,15 +196,17 @@ async def admin_revoke_entitlements(
     preserved). Returns the rows that this call changed.
     """
     _require_admin(request)
-    if not app_account_token and not promo_code:
+    if not app_account_token and not promo_code and not user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provide app_account_token and/or promo_code.",
+            detail="Provide app_account_token, user_id, and/or promo_code.",
         )
 
     stmt = select(Entitlement).where(Entitlement.revoked_at.is_(None))
     if app_account_token:
         stmt = stmt.where(Entitlement.app_account_token == app_account_token)
+    if user_id:
+        stmt = stmt.where(Entitlement.user_id == user_id)
     if promo_code:
         stmt = stmt.where(
             Entitlement.store == "promo",
@@ -427,37 +434,46 @@ async def redeem_promo(
 @router.post("/promo/revoke")
 async def revoke_promo_for_device(
     req: PromoRevokeRequest,
+    user_id: Optional[str] = Depends(get_optional_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """Lets the client clear promo-granted premium for its own device —
+    """Lets the client clear promo-granted premium for itself —
     invoked when the user taps "Start over" in Settings, or as a
     self-service way to undo a promo without admin help.
 
-    Scope is intentionally narrow:
+    Scope:
       - Only `store='promo'` rows are touched. Real Apple/Google
         subscriptions are off-limits — those are governed by the stores
         and can't be revoked client-side.
-      - Only the rows for the caller's own `app_account_token` move.
+      - Mirrors `_current_state` / `find_for_principal`: a row is in
+        scope if its `user_id` matches the auth header OR its
+        `app_account_token` matches the body. This catches promos
+        redeemed under either anonymous device-token-only flow or a
+        signed-in user — the same scope the client reads through
+        `GET /entitlement`, so the two stay in lock-step.
 
-    No auth: the `app_account_token` is the per-install UUID a device
-    already passes to `/verify` and `/entitlement`. Treating it as a
-    capability is consistent with how those endpoints are gated, and
-    the worst-case abuse here is a tester losing free-tier premium —
-    not a security event.
+    Auth is optional: signed-in callers get user-id-matched rows
+    revoked too; anonymous callers fall back to token-only.
 
     Idempotent: rows that are already revoked are skipped.
     """
     token = req.app_account_token.strip()
-    if not token:
+    if not user_id and not token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="app_account_token required",
+            detail="Provide Authorization header or app_account_token",
         )
+
+    conditions = []
+    if user_id:
+        conditions.append(Entitlement.user_id == user_id)
+    if token:
+        conditions.append(Entitlement.app_account_token == token)
 
     stmt = select(Entitlement).where(
         Entitlement.store == "promo",
-        Entitlement.app_account_token == token,
         Entitlement.revoked_at.is_(None),
+        or_(*conditions),
     )
     rows = (await db.execute(stmt)).scalars().all()
     now = datetime.utcnow()
