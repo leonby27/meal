@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 _JSON_SCHEMA = """{
   "name": "Dish name",
-  "meal_quote": "I came for a light meal... and this pasta had other plans.",
+  "meal_quote": "<one fresh witty sentence about THIS dish — DO NOT copy the examples in the rules>",
   "health_rating": 7,
   "health_comment": "Сбалансированный завтрак с хорошим белком; помидоры добавляют клетчатку, сыр — насыщенный жир.",
   "total_grams": 350,
@@ -217,11 +217,23 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   ingredient names concise so the response fits within the token budget
   and these two fields are never omitted.
 - `meal_quote` is REQUIRED. One short sentence (≤ 100 characters), in the
-  same language as the rest of the response. Tone: light, friendly irony;
-  may be written from the dish's point of view ("I came for a light meal
-  and this pasta had other plans"), or as a witty observation about the
-  dish. NEVER aggressive, NEVER shaming, NEVER moralising. For plain
-  items (a glass of water, a single apple) keep it neutral and short.
+  same language as the rest of the response. Tone: light, friendly irony.
+  May be written from the dish's point of view, or as a witty observation
+  about what's in front of you. NEVER aggressive, NEVER shaming, NEVER
+  moralising. For plain items (a glass of water, a single apple) keep it
+  neutral and short.
+  IMPORTANT — VARIETY: invent a FRESH sentence keyed to THIS specific
+  dish. Do NOT reuse, translate, or paraphrase any of the example tones
+  below. They illustrate REGISTER, not content; the phrasing itself must
+  be original each time, even for the same dish on a different photo.
+  Example registers (for INSPIRATION ONLY, do not copy):
+    - dramatic confession from the food's perspective
+    - mock-philosophical observation about a single ingredient
+    - dry one-liner about portion size, plate styling, or temperature
+    - playful warning to the eater
+    - faux-news-headline style summary
+    - cooking-show inner-monologue snippet
+  Picking which register fits each dish — and the wording — is your job.
 - `complete_macro` is REQUIRED. Numeric values for the WHOLE portion
   (not per 100 g):
     * `sugar_g`           — total sugars in grams (added + natural)
