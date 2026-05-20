@@ -217,11 +217,21 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
   ingredient names concise so the response fits within the token budget
   and these two fields are never omitted.
 - `meal_quote` is REQUIRED. One short sentence (≤ 100 characters), in the
-  same language as the rest of the response. Tone: light, friendly irony.
-  May be written from the dish's point of view, or as a witty observation
-  about what's in front of you. NEVER aggressive, NEVER shaming, NEVER
-  moralising. For plain items (a glass of water, a single apple) keep it
-  neutral and short.
+  same language as the rest of the response.
+  TONE: playful and slightly cheeky — a witty quip with a dash of sass,
+  the kind of line a clever friend would drop while passing you the
+  plate. It should make the user smile, not feel judged. Tease the dish,
+  the chef, the portion size, the plate — anything visual or contextual
+  is fair game. AVOID anything that:
+    - shames the eater for what they're eating (no "you'll regret this",
+      no "diet ruined" framing aimed at the user),
+    - moralises about health, calories, or willpower,
+    - sounds like a parent or a coach lecturing,
+    - is sarcastic in a mean way.
+  Cheeky ≠ mean. Tease the FOOD, never the person.
+  May be written from the dish's point of view, or as a third-person
+  wisecrack about what's on the plate. For plain items (a glass of
+  water, a single apple) keep it short and still playful, not bland.
   IMPORTANT — VARIETY: invent a FRESH sentence keyed to THIS specific
   dish. Do NOT reuse, translate, or paraphrase any of the example tones
   below. They illustrate REGISTER, not content; the phrasing itself must
