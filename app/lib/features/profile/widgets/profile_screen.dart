@@ -11,6 +11,7 @@ import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/build_info.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
+import 'package:meal_tracker/core/services/entitlement_service.dart';
 import 'package:meal_tracker/core/services/locale_service.dart';
 import 'package:meal_tracker/core/services/login_sync_flow.dart';
 import 'package:meal_tracker/core/services/theme_service.dart';
@@ -268,6 +269,10 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
       ),
     );
     if (confirm != true) return;
+    // Start-over should drop a promo-granted premium so the user lands
+    // on the paywall after re-onboarding, the same way a fresh install
+    // would. Real Apple/Play subs are untouched by this server call.
+    await EntitlementService().revokePromoForDevice();
     await AuthService().resetOnboarding();
     if (!mounted) return;
     context.go('/onboarding');

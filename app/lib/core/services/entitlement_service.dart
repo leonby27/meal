@@ -96,34 +96,16 @@ class EntitlementService extends ChangeNotifier {
   ///   * `is_premium=true` from an Apple/Play subscription — silent
   ///     restorePurchases() in [SubscriptionService.init] will re-deliver
   ///     it and trigger /verify, no migration needed here.
-  /// Only the first case needs explicit migration: extract the code,
-  /// re-redeem on the server, then delete the legacy keys.
+  ///
+  /// We deliberately do NOT auto-redeem the promo on this path. A
+  /// reinstall is the user's signal that they want a fresh start, and
+  /// silently re-granting premium across installs makes the "delete app
+  /// to test the paywall flow" lifecycle impossible — both for testers
+  /// and for users genuinely trying to start over. The legacy keys are
+  /// wiped unconditionally; if iCloud restored them we still want them
+  /// gone so we don't keep retrying this migration on every launch.
   Future<void> _migrateLegacyPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final wasPremium = prefs.getBool(_legacyIsPremiumKey) ?? false;
-    final legacyPlan = prefs.getString(_legacyPlanNameKey);
-
-    if (wasPremium &&
-        legacyPlan != null &&
-        legacyPlan.startsWith('promo_')) {
-      final code = legacyPlan.substring('promo_'.length);
-      if (code.isNotEmpty) {
-        try {
-          await redeemPromo(code);
-        } on ApiException catch (e) {
-          // 404 means the server no longer accepts this code (admin
-          // pruned it from PROMO_CODES). Nothing to retry; drop keys.
-          if (e.statusCode != 404) {
-            debugPrint('Legacy promo migration transient error: $e');
-            return; // keep keys, retry on next launch
-          }
-        } catch (e) {
-          debugPrint('Legacy promo migration network error: $e');
-          return; // keep keys, retry on next launch
-        }
-      }
-    }
-
     await prefs.remove(_legacyIsPremiumKey);
     await prefs.remove(_legacyPlanNameKey);
     await prefs.remove(_legacyNextBillingDateKey);
@@ -264,6 +246,29 @@ class EntitlementService extends ChangeNotifier {
     await _writeCache(response);
     notifyListeners();
     return _isActive;
+  }
+
+  /// Tells the server to mark this device's promo-granted premium as
+  /// revoked, then wipes the local cache so the next `refresh()` returns
+  /// the new non-premium state. Used by the Settings → "Start over" flow
+  /// so a tester can hit the paywall again after redeeming a promo.
+  ///
+  /// Only touches `store='promo'` rows on the server — real Apple/Play
+  /// subscriptions are untouchable from the client side. Errors are
+  /// logged and swallowed: a failed revoke would otherwise block the
+  /// onboarding reset for what is fundamentally a recoverable problem
+  /// (we can always re-revoke on a later attempt or via the admin
+  /// endpoint).
+  Future<void> revokePromoForDevice() async {
+    final token = await DeviceIdService.getOrCreate();
+    try {
+      await ApiClient().post('/api/iap/promo/revoke', {
+        'app_account_token': token,
+      });
+    } catch (e) {
+      debugPrint('EntitlementService.revokePromoForDevice failed: $e');
+    }
+    await clear();
   }
 
   // ---------------------------------------------------------------------------

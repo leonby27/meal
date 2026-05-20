@@ -83,6 +83,10 @@ class PromoRedeemRequest(BaseModel):
     app_account_token: str
 
 
+class PromoRevokeRequest(BaseModel):
+    app_account_token: str
+
+
 # =============================================================================
 # Helpers
 # =============================================================================
@@ -418,6 +422,49 @@ async def redeem_promo(
         code=code,
     )
     return _to_response(row)
+
+
+@router.post("/promo/revoke")
+async def revoke_promo_for_device(
+    req: PromoRevokeRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Lets the client clear promo-granted premium for its own device —
+    invoked when the user taps "Start over" in Settings, or as a
+    self-service way to undo a promo without admin help.
+
+    Scope is intentionally narrow:
+      - Only `store='promo'` rows are touched. Real Apple/Google
+        subscriptions are off-limits — those are governed by the stores
+        and can't be revoked client-side.
+      - Only the rows for the caller's own `app_account_token` move.
+
+    No auth: the `app_account_token` is the per-install UUID a device
+    already passes to `/verify` and `/entitlement`. Treating it as a
+    capability is consistent with how those endpoints are gated, and
+    the worst-case abuse here is a tester losing free-tier premium —
+    not a security event.
+
+    Idempotent: rows that are already revoked are skipped.
+    """
+    token = req.app_account_token.strip()
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="app_account_token required",
+        )
+
+    stmt = select(Entitlement).where(
+        Entitlement.store == "promo",
+        Entitlement.app_account_token == token,
+        Entitlement.revoked_at.is_(None),
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    now = datetime.utcnow()
+    for row in rows:
+        row.revoked_at = now
+    await db.commit()
+    return {"revoked_count": len(rows)}
 
 
 # =============================================================================
