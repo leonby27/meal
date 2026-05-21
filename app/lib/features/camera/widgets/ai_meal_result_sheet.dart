@@ -1626,11 +1626,21 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   bool get _isEditing => widget.existingLogId != null;
 
-  Future<void> _saveResult() async {
+  /// True whenever the sheet is opened on top of an existing log
+  /// (edit flow via `existingLogId` or repeat-meal flow via `sourceLogId`).
+  /// Drives the two-button bottom bar (Duplicate / Save).
+  bool get _hasExistingLog =>
+      widget.existingLogId != null || widget.sourceLogId != null;
+
+  Future<void> _saveResult({bool duplicate = false}) async {
     if (_saving) return;
     final l10n = context.l10n;
 
-    if (!_isEditing) {
+    final targetLogId = widget.existingLogId ?? widget.sourceLogId;
+    final treatAsNew = duplicate || targetLogId == null;
+    // Creating a new log (fresh recognition or duplicate) requires premium.
+    // Updating an existing log doesn't.
+    if (treatAsNew) {
       final auth = AuthService();
       if (!auth.isPremium) {
         if (mounted) {
@@ -1653,7 +1663,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         : _nameCtl.text.trim();
     final ingredientsJson = _ingredientsJson();
 
-    if (_isEditing) {
+    if (!treatAsNew) {
       final companion = FoodLogsCompanion(
         productName: drift.Value(productName),
         grams: drift.Value(_val(_totalGramsCtl)),
@@ -1670,7 +1680,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         updatedAt: drift.Value(DateTime.now()),
         synced: const drift.Value(false),
       );
-      await db.updateFoodLog(widget.existingLogId!, companion);
+      await db.updateFoodLog(targetLogId!, companion);
     } else {
       final logId = const Uuid().v4();
       final imageUrl = await _imageUrlForNewLog(logId);
@@ -2972,7 +2982,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
             border: Border.all(
               color: c.isDark ? AppColors.lineDT200 : AppColors.lineLight200,
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             children: [
@@ -2985,6 +2995,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                       focusNode: _refineFocus,
                       enabled: !busy,
                       textInputAction: TextInputAction.done,
+                      textAlignVertical: TextAlignVertical.center,
                       onSubmitted: (_) {
                         if (_refineCtl.text.trim().isNotEmpty) {
                           _onRefineDish();
@@ -2998,8 +3009,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                       ),
                       decoration: InputDecoration(
                         isCollapsed: true,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 11),
+                        contentPadding: EdgeInsets.zero,
                         // Outer Container already draws the 1 px border;
                         // killing every TextField border state stops the
                         // theme's default underline from layering on top.
@@ -4582,46 +4592,112 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   }
 
   Widget _buildBottomBar(_AiSheetColors c, double bottomPadding) {
+    final enabled = _val(_totalGramsCtl) > 0 && !_saving;
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPadding + 8),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding + 8),
       decoration: BoxDecoration(
-        color: c.sheetBg,
+        color: c.onBack2,
+        // Soft shadow at the top edge so the panel doesn't have a hard
+        // divider line against the scrollable body above.
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(c.isDark ? 60 : 18),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
-      child: SizedBox(
-        height: 48,
-        width: double.infinity,
-        child: FilledButton(
-          onPressed: _val(_totalGramsCtl) > 0 && !_saving ? _saveResult : null,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: AppColors.primary.withAlpha(100),
-            disabledForegroundColor: Colors.white54,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              height: 22 / 16,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
-                'assets/icons/fork_knife.svg',
-                width: 20,
-                height: 20,
-                colorFilter: const ColorFilter.mode(
-                  Colors.white,
-                  BlendMode.srcIn,
+      child: _hasExistingLog
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: _buildBottomActionButton(
+                        c,
+                        label: context.l10n.duplicate,
+                        onPressed: enabled
+                            ? () => _saveResult(duplicate: true)
+                            : null,
+                        primary: false,
+                        icon: Icons.copy_rounded,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildBottomActionButton(
+                        c,
+                        label: context.l10n.saveChanges,
+                        onPressed: enabled ? _saveResult : null,
+                        primary: true,
+                        icon: Icons.check_rounded,
+                      ),
+                    ),
+                  ],
+                )
+              : SizedBox(
+                  height: 48,
+                  width: double.infinity,
+                  child: _buildBottomActionButton(
+                    c,
+                    label: context.l10n.logEntry,
+                    onPressed: enabled ? _saveResult : null,
+                    primary: true,
+                    svgAsset: 'assets/icons/fork_knife.svg',
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Text(_isEditing ? context.l10n.saveChanges : context.l10n.logEntry),
-            ],
+    );
+  }
+
+  Widget _buildBottomActionButton(
+    _AiSheetColors c, {
+    required String label,
+    required VoidCallback? onPressed,
+    required bool primary,
+    IconData? icon,
+    String? svgAsset,
+  }) {
+    final bg = primary
+        ? AppColors.primary
+        : (c.isDark
+            ? AppColors.darkSecondaryExtraLight
+            : AppColors.lightSecondaryExtraLight);
+    final fg = primary ? Colors.white : c.onSurface;
+    Widget? leading;
+    if (icon != null) {
+      leading = Icon(icon, size: 20, color: fg);
+    } else if (svgAsset != null) {
+      leading = SvgPicture.asset(
+        svgAsset,
+        width: 20,
+        height: 20,
+        colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
+      );
+    }
+    return SizedBox(
+      height: 48,
+      child: FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: bg,
+          foregroundColor: fg,
+          disabledBackgroundColor: bg.withAlpha(100),
+          disabledForegroundColor: fg.withAlpha(140),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
           ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (leading != null) ...[
+              leading,
+              const SizedBox(width: 8),
+            ],
+            Text(label),
+          ],
         ),
       ),
     );

@@ -43,7 +43,7 @@ class AppColors {
   static const lightDivider = Color(0xFFE6E7EC);
   static const lightDividerLight = Color(0xFFEDEEF3);
   static const lightDividerStrong = Color(0xFFD7D9E2);
-  static const lightInverse = Color(0xFF31394A);
+  static const lightInverse = Color(0xFF181A22);
   static const lightAccentLight = Color(0xFF83B0FF);
   static const lightOnBack = Color(0xFFFFFFFF);
   static const lightOnBackAlpha50 = Color(0x80FFFFFF);

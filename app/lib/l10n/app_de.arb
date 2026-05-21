@@ -208,6 +208,7 @@
   "defaultDishName": "Gericht",
   "saveEntry": "Eintrag hinzufügen",
   "saveChanges": "Speichern",
+  "duplicate": "Duplizieren",
   "logEntry": "Eintragen",
   "saveMacros": "Makros speichern",
   "macrosSavedToast": "Makros gespeichert",

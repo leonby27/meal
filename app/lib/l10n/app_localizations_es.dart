@@ -631,6 +631,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get saveChanges => 'Guardar';
 
   @override
+  String get duplicate => 'Duplicar';
+
+  @override
   String get logEntry => 'Registrar';
 
   @override

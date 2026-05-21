@@ -208,6 +208,7 @@
   "defaultDishName": "Plat",
   "saveEntry": "Ajouter une entrée",
   "saveChanges": "Enregistrer",
+  "duplicate": "Dupliquer",
   "logEntry": "Enregistrer",
   "saveMacros": "Enregistrer les macros",
   "macrosSavedToast": "Macros enregistrés",

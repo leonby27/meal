@@ -10,7 +10,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:lottie/lottie.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:meal_tracker/app/route_observer.dart';
@@ -1724,11 +1723,16 @@ class _DiaryScreenState extends State<DiaryScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Lottie.asset(
-                      'assets/animations/empty_plate.json',
-                      width: 90,
-                      height: 90,
-                      fit: BoxFit.contain,
+                    SvgPicture.asset(
+                      'assets/icons/empty_state.svg',
+                      width: 100,
+                      height: 100,
+                      colorFilter: ColorFilter.mode(
+                        Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkSecondaryLight
+                            : AppColors.lightSecondaryLight,
+                        BlendMode.srcIn,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(

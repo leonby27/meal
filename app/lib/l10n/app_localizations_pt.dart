@@ -632,6 +632,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get saveChanges => 'Salvar';
 
   @override
+  String get duplicate => 'Duplicar';
+
+  @override
   String get logEntry => 'Registrar';
 
   @override

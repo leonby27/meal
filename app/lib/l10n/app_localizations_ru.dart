@@ -631,6 +631,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get saveChanges => 'Сохранить';
 
   @override
+  String get duplicate => 'Дублировать';
+
+  @override
   String get logEntry => 'Записать';
 
   @override

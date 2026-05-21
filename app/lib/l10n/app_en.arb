@@ -208,6 +208,7 @@
   "defaultDishName": "Dish",
   "saveEntry": "Add entry",
   "saveChanges": "Save",
+  "duplicate": "Duplicate",
   "logEntry": "Log entry",
   "saveMacros": "Save macros",
   "macrosSavedToast": "Macros saved",

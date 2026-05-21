@@ -1270,6 +1270,12 @@ abstract class AppLocalizations {
   /// **'Сохранить'**
   String get saveChanges;
 
+  /// No description provided for @duplicate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дублировать'**
+  String get duplicate;
+
   /// No description provided for @logEntry.
   ///
   /// In ru, this message translates to:

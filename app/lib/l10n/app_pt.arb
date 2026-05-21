@@ -208,6 +208,7 @@
   "defaultDishName": "Prato",
   "saveEntry": "Adicionar registro",
   "saveChanges": "Salvar",
+  "duplicate": "Duplicar",
   "logEntry": "Registrar",
   "saveMacros": "Salvar macros",
   "macrosSavedToast": "Macros salvos",

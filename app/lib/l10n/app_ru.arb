@@ -304,6 +304,7 @@
   "defaultDishName": "Блюдо",
   "saveEntry": "Добавить запись",
   "saveChanges": "Сохранить",
+  "duplicate": "Дублировать",
   "logEntry": "Записать",
   "saveMacros": "Сохранить макросы",
   "macrosSavedToast": "Макросы сохранены",

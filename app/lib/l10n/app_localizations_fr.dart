@@ -634,6 +634,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get saveChanges => 'Enregistrer';
 
   @override
+  String get duplicate => 'Dupliquer';
+
+  @override
   String get logEntry => 'Enregistrer';
 
   @override
