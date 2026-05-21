@@ -5254,10 +5254,10 @@ class _AnimatedQuoteBubbleState extends State<_AnimatedQuoteBubble> {
           overflow: TextOverflow.ellipsis,
           style: display_title.onboardingTitleStyle(
             context,
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: colorScheme.onInverseSurface,
-            height: 20 / 15,
+            height: 18 / 14,
           ),
         ),
       ),
