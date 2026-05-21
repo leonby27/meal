@@ -2459,10 +2459,17 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                   horizontal: 16, vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.lightInverse,
+                  // Inverse-surface bubble: dark in light theme, light in
+                  // dark theme — pulls from ColorScheme so it auto-flips.
+                  // Previously hard-coded to lightInverse + lightBack2,
+                  // which kept the bubble dark navy and the halo stark
+                  // white in dark mode (bubble + border visually merged
+                  // and the white text disappeared on the now-white bubble
+                  // it should have flipped to).
+                  color: Theme.of(context).colorScheme.inverseSurface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.lightBack2,
+                    color: c.sheetBg,
                     width: 4,
                   ),
                 ),
@@ -2480,7 +2487,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                     context,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onInverseSurface,
                     height: 20 / 15,
                   ),
                 ),
@@ -3653,11 +3660,11 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     final chips = <Widget>[];
     for (final code in _goalFit.positive) {
       final label = _tagLabel(l10n, code);
-      if (label != null) chips.add(_buildGoalFitChip(label, positive: true));
+      if (label != null) chips.add(_buildGoalFitChip(c, label, positive: true));
     }
     for (final code in _goalFit.negative) {
       final label = _tagLabel(l10n, code);
-      if (label != null) chips.add(_buildGoalFitChip(label, positive: false));
+      if (label != null) chips.add(_buildGoalFitChip(c, label, positive: false));
     }
     if (chips.isEmpty) return const SizedBox.shrink();
 
@@ -3682,7 +3689,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
     );
   }
 
-  Widget _buildGoalFitChip(String label, {required bool positive}) {
+  Widget _buildGoalFitChip(_AiSheetColors c, String label, {required bool positive}) {
     // Figma: positive = success @ 15% over surface, negative = orange
     // @ 10% over surface. The negative tint is intentionally orange-not-
     // red here — red is reserved for "Worse than average" rows in
@@ -3717,7 +3724,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           Text(
             label,
             style: TextStyle(
-              color: AppColors.lightOnSurface,
+              color: c.onSurface,
               fontSize: 14,
               height: 18 / 14,
               fontWeight: FontWeight.w500,
@@ -4063,7 +4070,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                     child: Text(
                       labels[i],
                       style: TextStyle(
-                        color: AppColors.lightOnSurface,
+                        color: c.onSurface,
                         fontSize: 14,
                         height: 18 / 14,
                         fontWeight: FontWeight.w500,
@@ -4835,13 +4842,18 @@ class _DotsLoaderState extends State<_DotsLoader>
       child: AnimatedBuilder(
         animation: _ctl,
         builder: (_, _) {
+          // Pull the on-surface colour from the active theme so the dots
+          // contrast correctly in both light and dark Android. Using a
+          // hard-coded light-mode token (lightOnSurface) here used to
+          // render near-invisible dots on the dark sheet background.
+          final dotColor = Theme.of(context).colorScheme.onSurface;
           return Row(
             children: [
-              _dot(_ctl.value, phase: 0.0),
+              _dot(_ctl.value, phase: 0.0, color: dotColor),
               const SizedBox(width: 4),
-              _dot(_ctl.value, phase: 1 / 3),
+              _dot(_ctl.value, phase: 1 / 3, color: dotColor),
               const SizedBox(width: 4),
-              _dot(_ctl.value, phase: 2 / 3),
+              _dot(_ctl.value, phase: 2 / 3, color: dotColor),
             ],
           );
         },
@@ -4849,7 +4861,7 @@ class _DotsLoaderState extends State<_DotsLoader>
     );
   }
 
-  Widget _dot(double t, {required double phase}) {
+  Widget _dot(double t, {required double phase, required Color color}) {
     // Phase-shift the global animation t for each dot, then map the
     // shifted value through a sine-ish bump so the dot is at full size
     // once per cycle and at 0.6 the rest of the time.
@@ -4864,7 +4876,7 @@ class _DotsLoaderState extends State<_DotsLoader>
         width: 8,
         height: 8,
         decoration: BoxDecoration(
-          color: AppColors.lightOnSurface.withValues(alpha: opacity),
+          color: color.withValues(alpha: opacity),
           shape: BoxShape.circle,
         ),
       ),
