@@ -2447,52 +2447,14 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       children: [
         photo,
         Positioned(
-          left: 20,
-          right: 20,
+          left: 32,
+          right: 32,
           bottom: -12,
-          child: Align(
-            alignment: Alignment.bottomLeft,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 256),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  // Inverse-surface bubble: dark in light theme, light in
-                  // dark theme — pulls from ColorScheme so it auto-flips.
-                  // Previously hard-coded to lightInverse + lightBack2,
-                  // which kept the bubble dark navy and the halo stark
-                  // white in dark mode (bubble + border visually merged
-                  // and the white text disappeared on the now-white bubble
-                  // it should have flipped to).
-                  color: Theme.of(context).colorScheme.inverseSurface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: c.sheetBg,
-                    width: 4,
-                  ),
-                ),
-                child: Text(
-                  quote,
-                  // 4 lines fits a typical ≤100-char quote at the
-                  // Figma width of 256 px (Inter Bold 15/20 averages
-                  // ~25 chars per line including spaces). Anything
-                  // longer than that is on the AI — the prompt caps
-                  // it at 100 chars, so we keep ellipsis as a guard
-                  // rather than removing maxLines entirely.
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: display_title.onboardingTitleStyle(
-                    context,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.onInverseSurface,
-                    height: 20 / 15,
-                  ),
-                ),
-              ),
-            ),
+          // Re-key on the quote text so a different quote replays the entrance.
+          child: _AnimatedQuoteBubble(
+            key: ValueKey(quote),
+            quote: quote,
+            haloColor: c.sheetBg,
           ),
         ),
       ],
@@ -3775,9 +3737,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                     primary: l10n.burnApproxSteps(
                       _formatStepsCount(burn.walkSteps),
                     ),
-                    secondary: l10n.approxHours(
-                      burn.walkHours.round().clamp(1, 99),
-                    ),
                   ),
                   const SizedBox(height: 6),
                   _buildBurnRow(
@@ -3785,7 +3744,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                     icon: Icons.directions_run_rounded,
                     label: l10n.burnRunning,
                     primary: l10n.burnApproxKm(burn.runKm.toStringAsFixed(0)),
-                    secondary: _formatBurnDuration(burn.runMinutes),
                   ),
                   const SizedBox(height: 6),
                   _buildBurnRow(
@@ -3801,9 +3759,6 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                     label: l10n.burnCycling,
                     primary:
                         l10n.burnApproxKm(burn.cyclingKm.toStringAsFixed(0)),
-                    secondary: l10n.approxHours(
-                      burn.cyclingHours.round().clamp(1, 99),
-                    ),
                   ),
                   const SizedBox(height: 6),
                   _buildBurnRow(
@@ -5148,6 +5103,81 @@ class _MountFadeSlide extends StatelessWidget {
         );
       },
       child: child,
+    );
+  }
+}
+
+/// Quote bubble that fades + slides + micro-scales in. Has a short delay
+/// before starting so the entrance animation isn't swallowed by the modal
+/// sheet's own slide-up when an existing log is opened.
+class _AnimatedQuoteBubble extends StatefulWidget {
+  final String quote;
+  final Color haloColor;
+
+  const _AnimatedQuoteBubble({
+    super.key,
+    required this.quote,
+    required this.haloColor,
+  });
+
+  @override
+  State<_AnimatedQuoteBubble> createState() => _AnimatedQuoteBubbleState();
+}
+
+class _AnimatedQuoteBubbleState extends State<_AnimatedQuoteBubble> {
+  static const _enterDelay = Duration(milliseconds: 160);
+  static const _enterDuration = Duration(milliseconds: 380);
+  bool _animate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(_enterDelay, () {
+      if (mounted) setState(() => _animate = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: _animate ? 1 : 0),
+      duration: _enterDuration,
+      curve: Curves.easeOutCubic,
+      builder: (_, t, child) {
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * 8),
+            child: Transform.scale(
+              scale: 0.96 + 0.04 * t,
+              alignment: Alignment.bottomCenter,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: colorScheme.inverseSurface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: widget.haloColor, width: 4),
+        ),
+        child: Text(
+          widget.quote,
+          textAlign: TextAlign.center,
+          maxLines: 4,
+          overflow: TextOverflow.ellipsis,
+          style: display_title.onboardingTitleStyle(
+            context,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: colorScheme.onInverseSurface,
+            height: 20 / 15,
+          ),
+        ),
+      ),
     );
   }
 }
