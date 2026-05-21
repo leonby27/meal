@@ -139,44 +139,19 @@ class AppTheme {
   static List<BoxShadow> cardEdgeShadows({required bool isDark}) =>
       const <BoxShadow>[];
 
-  /// Top-only border that paints a 2px highlight inside the rounded
-  /// shape. Used together with [cardEdgeShadows] in dark mode to
-  /// give cards a subtle "inset highlight" along their top edge.
-  ///
-  /// Returns `null` in light mode — there is no top highlight there.
-  ///
-  /// NOTE: when a card already has its own [BoxDecoration.border]
-  /// (e.g. [Border.all]), use [cardEdgeForeground] in
-  /// `foregroundDecoration:` instead. Putting two different colours
-  /// in the same [Border] would crash with
-  /// "borderRadius can only be given on borders with uniform colors".
-  static BoxBorder? cardEdgeBorder({required bool isDark}) {
-    if (!isDark) return null;
-    return const Border(
-      top: BorderSide(color: AppColors.cardEdgeDarkTop, width: 2),
-    );
-  }
+  /// Used to paint a 2px top-edge highlight on dark-mode cards
+  /// (skeumorphic "inset shine"). Disabled — design moved to a flat
+  /// look. Kept as a no-op so existing call sites across diary,
+  /// dashboard, stats, settings etc. don't all need to be touched.
+  static BoxBorder? cardEdgeBorder({required bool isDark}) => null;
 
-  /// `foregroundDecoration` value that paints the same 2px top
-  /// highlight ON TOP of a card's content. Use this when the card
-  /// already uses `decoration.border` for its own border (e.g.
-  /// onboarding selection rings) and we cannot fold the highlight
-  /// into the same [Border] without breaking the uniform-colors
-  /// constraint.
-  ///
-  /// Returns `null` in light mode.
+  /// `foregroundDecoration` counterpart to [cardEdgeBorder] for cards
+  /// that already use `decoration.border`. Disabled — see above.
   static BoxDecoration? cardEdgeForeground({
     required bool isDark,
     required double radius,
-  }) {
-    if (!isDark) return null;
-    return BoxDecoration(
-      borderRadius: BorderRadius.circular(radius),
-      border: const Border(
-        top: BorderSide(color: AppColors.cardEdgeDarkTop, width: 2),
-      ),
-    );
-  }
+  }) =>
+      null;
 
   /// Convenience that combines the existing soft drop shadow with
   /// the new hard edges. Use for cards that already had a soft
