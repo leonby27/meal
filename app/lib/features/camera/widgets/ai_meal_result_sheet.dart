@@ -185,78 +185,85 @@ enum _MacroStatus { worse, average, good }
 _MacroStatus _statusForSugar(double g) {
   // Tuned for TOTAL sugar (natural + added). Used only when the model
   // didn't return the split — fallback path for older responses.
-  if (g >= 22.5) return _MacroStatus.worse;
-  if (g >= 5) return _MacroStatus.average;
+  // Loosened from 22.5/5 → 28/8 so a piece of fruit or a savoury dish
+  // with naturally-occurring sugars doesn't flash "average".
+  if (g >= 28) return _MacroStatus.worse;
+  if (g >= 8) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 
 _MacroStatus _statusForAddedSugar(double g) {
-  // WHO recommends < 25 g of added sugar per day. Per-meal:
-  //   ≥ 15 g  → already ~60 % of the daily ceiling, worse
-  //   5–14 g  → significant but acceptable in a balanced day, average
-  //   < 5 g   → good
-  // These cut-offs are intentionally stricter than _statusForSugar:
-  // 22 g of strawberry sugar in a fresh smoothie is fine; 22 g of
-  // added syrup in a coffee drink is not.
-  if (g >= 15) return _MacroStatus.worse;
-  if (g >= 5) return _MacroStatus.average;
+  // WHO recommends < 25 g of added sugar per day. Loosened from 15/5
+  // → 18/7 so single moderate sweet servings don't immediately turn
+  // worse / average — added sugar still matters but the bar is set at
+  // a clearer "this is dessert" level.
+  if (g >= 18) return _MacroStatus.worse;
+  if (g >= 7) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 
 _MacroStatus _statusForFiber(double g) {
-  // A leafy-veg salad (~250 g of mixed greens, radish, cucumber, herbs)
-  // realistically carries 5–7 g of fiber, which should clearly read as
-  // "good" — not "average". 5 g is also ~20 % of the WHO daily target
-  // for a single meal, a reasonable threshold for the upper bucket.
-  if (g >= 5) return _MacroStatus.good;
-  if (g >= 2.5) return _MacroStatus.average;
+  // A leafy-veg salad realistically carries 5–7 g of fiber. Loosened
+  // from 5/2.5 → 4/1.5 so a typical salad or vegetable side reads
+  // "good" without needing to be huge, and a meal with at least some
+  // veg doesn't immediately drop to "worse".
+  if (g >= 4) return _MacroStatus.good;
+  if (g >= 1.5) return _MacroStatus.average;
   return _MacroStatus.worse;
 }
 
 _MacroStatus _statusForSatFat(double g) {
-  if (g >= 10) return _MacroStatus.worse;
-  if (g >= 5) return _MacroStatus.average;
+  // Loosened from 10/5 → 12/7. Normal balanced meals with cheese or
+  // olive oil land between 5–7 g; that shouldn't read "average".
+  if (g >= 12) return _MacroStatus.worse;
+  if (g >= 7) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 
 _MacroStatus _statusForCholesterol(double mg) {
-  // 1 egg ~185 mg; a dish with two eggs lands at ~370 mg. The "worse"
-  // threshold sits at 350 mg so 1-2 eggs in a salad falls into average,
-  // and the bar climbs to worse only when the dish is genuinely heavy on
-  // organ meat, multiple eggs, or hard-cheese-loaded toppings.
-  if (mg >= 350) return _MacroStatus.worse;
-  if (mg >= 100) return _MacroStatus.average;
+  // 1 egg ~185 mg; a dish with two eggs lands at ~370 mg. Loosened
+  // from 350/100 → 400/150 so a single-egg salad or a small meat
+  // portion clears "good".
+  if (mg >= 400) return _MacroStatus.worse;
+  if (mg >= 150) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 
 _MacroStatus _statusForSodium(double mg) {
-  // WHO daily ceiling = 2000 mg of sodium (≈ 5 g of salt). Per single
-  // meal: >800 mg already eats ~40 % of the daily allowance — that's
-  // worse. 400–799 mg is average, below that good.
-  if (mg >= 800) return _MacroStatus.worse;
-  if (mg >= 400) return _MacroStatus.average;
+  // WHO daily ceiling = 2000 mg. Loosened from 800/400 → 1000/500 so
+  // a single meal with bread + cured meat doesn't immediately read
+  // "average" — the bar should be set where salt is genuinely worth
+  // flagging for the day.
+  if (mg >= 1000) return _MacroStatus.worse;
+  if (mg >= 500) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 
 _MacroStatus _statusForTransFat(double g) {
+  // Industrial trans fats — any amount is a red flag; the WHO target
+  // is zero. Keep the threshold strict.
   if (g >= 1) return _MacroStatus.worse;
   if (g > 0) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 
 _MacroStatus _statusForGlycemicLoad(double load) {
-  if (load >= 20) return _MacroStatus.worse;
-  if (load >= 11) return _MacroStatus.average;
+  // Loosened from 20/11 → 24/14 so a normal pasta or rice meal lands
+  // in "good", and only genuinely high-GL portions trip "worse".
+  if (load >= 24) return _MacroStatus.worse;
+  if (load >= 14) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 
 _MacroStatus _statusForCaloricDensity(double kcalPerG) {
   // Reference: leafy veg ≈ 0.2, lean meat ≈ 1.3, pasta dishes ≈ 1.5,
   // burger ≈ 2.4, pizza slice ≈ 2.8, fries ≈ 3.1, chocolate ≈ 5.5.
-  // Old worse ≥ 4 was too lenient — burgers and pizzas slipped into
-  // "average" despite being the canonical calorie-dense junk food.
-  if (kcalPerG >= 3.5) return _MacroStatus.worse;
-  if (kcalPerG >= 2) return _MacroStatus.average;
+  // Loosened from 3.5/2 → 3.8/2.4 so everyday cooked dishes (pasta
+  // with sauce, sandwiches) stay in "good" and only canonical
+  // calorie-dense foods (burgers, pizza, fries) trip "average" /
+  // "worse".
+  if (kcalPerG >= 3.8) return _MacroStatus.worse;
+  if (kcalPerG >= 2.4) return _MacroStatus.average;
   return _MacroStatus.good;
 }
 

@@ -250,8 +250,8 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
          "#когда_салат_решил_что_он_main_course"
       7. Mock-philosophical observation about one ingredient.
          "Кукуруза в этом салате — единственный пацифист."
-      8. Sports-commentary cadence (good for muscle-gain dishes).
-         "Белок на поле, майонез в раздевалке — счёт пока ничей."
+      8. Weather-report cadence.
+         "Прогноз на тарелку: облачно, с прояснениями из овощей."
       9. One-line dialogue snippet.
          "— Это диетично? — Спроси у майонеза."
      10. Reaction-meme prose.
@@ -275,6 +275,11 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
     • "Z пытается, но X" / "Z is trying, but X"
     • "Сейчас Z смотрит на Y" / "Z is watching Y"
     • Anything starting "Кажется,…" / "It seems…"
+    • SPORTS metaphors (поле / счёт / финиш / гол / раздевалка / разминка /
+      рывок / тренер / matchday / on the field / on the bench / scoreboard /
+      final whistle / coach). Even when the goal is muscle gain, do NOT
+      reach for football, race, or locker-room framings — they have been
+      visibly over-used. Pick a non-sports register.
     • Any sentence that names "диета / дефицит / план / цель / weight
       loss / diet / deficit / goal" directly more than ONCE — pick a
       synonym or imply it (журнал, весы, прогресс, понедельник, джинсы,
@@ -348,7 +353,17 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
     Mixed salad (greens+veg)     fiber ~2.2 g/100 g — a typical 250 g
                                  bowl already lands above 5 g; do NOT
                                  under-report fiber on visible-green
-                                 salads
+                                 salads. Fiber is the SUM across every
+                                 plant ingredient, not an average by
+                                 total dish weight: a Caesar salad with
+                                 150 g greens + 30 g croutons + 80 g
+                                 chicken is 150 × 1.3/100 + 30 × 2.5/100
+                                 + 0 ≈ 2.7 g; a green salad with 200 g
+                                 mixed veg + 30 g croutons + 80 g
+                                 chicken is 200 × 2.2/100 + 30 × 2.5/100
+                                 + 0 ≈ 5.2 g. Plug in the actual
+                                 ingredients; do NOT smear fiber down
+                                 because the dish also contains meat.
     Avocado                      fiber ~7 g, sat. fat ~2 g
     Apple                        fiber ~2.4 g, sugar ~10 g
     Banana                       fiber ~2.6 g, sugar ~12 g
@@ -417,27 +432,71 @@ _COMMON_RULES_EN = """Recognition and ingredient formatting rules:
     HEART_FRIENDLY, GUT_FRIENDLY, BRAIN_FOOD, IMMUNE_BOOST, BONE_HEALTH,
     RICH_IN_VITAMINS, RICH_IN_IRON, RICH_IN_CALCIUM, RICH_IN_POTASSIUM, HIGH_ANTIOXIDANTS,
     BALANCED_MACROS, WHOLE_FOODS, ULTRA_PROCESSED, PLANT_BASED, HYDRATING.
-  Same code MUST NOT appear in both arrays. Several codes are GOAL-DEPENDENT
-  (HIGH_CALORIES, LOW_CALORIES, HIGH_ENERGY, LOW_FAT, LOW_CARB, HEAVY_MEAL,
-  LIGHT_MEAL): pick the side that actually helps or hurts the stated goal.
-  Example: HIGH_CALORIES is positive for muscle gain, negative for weight
-  loss. Pick FEWER but ACCURATE codes — do not stretch to fill 5 slots.
-  Both arrays may be empty if nothing applicable.
+  Same code MUST NOT appear in both arrays.
 
-  MAINTENANCE GOAL specifically (the user is keeping weight stable):
-    • The polarising codes above (HIGH_CALORIES, LOW_CALORIES,
-      HIGH_ENERGY, LOW_FAT, LOW_CARB, HEAVY_MEAL, LIGHT_MEAL) should
-      be used SPARINGLY. Skip them entirely unless the dish is
-      genuinely extreme — e.g. HIGH_CALORIES only when the portion is
-      clearly heavy (> ~800 kcal) AND nutrient-poor; LOW_CALORIES only
-      for very light snacks (< ~150 kcal).
-    • For an everyday dish on a maintenance day, prefer composition
-      codes (BALANCED_MACROS, WHOLE_FOODS, NUTRIENT_DENSE,
-      HIGH_PROTEIN, RICH_IN_OMEGA3, GUT_FRIENDLY, etc.) over
-      calorie-direction codes. The vibe is "neutral and balanced",
-      not "this is great / this is bad".
-    • You may return goal_fit with 1–2 codes in maintenance — that is
-      preferable to forcing 4–5 weak ones.
+  MUTUALLY EXCLUSIVE GROUPS — pick AT MOST ONE code per group, across
+  both arrays combined. Choosing two opposites from the same group
+  produces a self-contradicting card ("Has fiber" + "Low in fiber" at
+  the same time) and is a HARD ERROR.
+    • Protein level   : HIGH_PROTEIN  / CONTAINS_PROTEIN / LOW_PROTEIN
+    • Fiber level     : HIGH_FIBER    / CONTAINS_FIBER  / LOW_FIBER
+    • Carbs quality   : COMPLEX_CARBS / REFINED_CARBS
+    • Sugar level     : LOW_SUGAR     / HIGH_SUGAR
+    • Fat level       : HIGH_FAT      / LOW_FAT
+    • Salt level      : HIGH_SALT     / LOW_SALT
+    • Calorie level   : HIGH_CALORIES / LOW_CALORIES
+    • Meal weight     : HEAVY_MEAL    / LIGHT_MEAL
+    • Composition     : NUTRIENT_DENSE / EMPTY_CALORIES
+    • Quality         : WHOLE_FOODS   / ULTRA_PROCESSED
+
+  GOAL-DEPENDENT codes — pick the side that actually helps or hurts the
+  stated goal. The full polarising list:
+    HIGH_CALORIES, LOW_CALORIES, HIGH_ENERGY, LOW_FAT, LOW_CARB,
+    HEAVY_MEAL, LIGHT_MEAL, REFINED_CARBS, HIGH_SUGAR, EMPTY_CALORIES,
+    ULTRA_PROCESSED.
+
+  Per goal:
+    • WEIGHT LOSS  : refined carbs / high sugar / empty calories /
+      ultra-processed / high calories / heavy meal all default to the
+      `negative` array if they apply.
+    • MUSCLE GAIN  : the bar is higher. Bulking diets routinely include
+      rice, white pasta, white bread, oats with honey, post-workout
+      shakes with sugar — these are FUEL, not flaws. Do NOT put
+      REFINED_CARBS, HIGH_SUGAR, HIGH_CALORIES, HEAVY_MEAL, HIGH_ENERGY
+      in `negative` for muscle gain unless the dish is genuinely
+      junk-food shaped (deep-fried fast food, candy, sugary soda as the
+      whole meal). For a normal post-workout meal with white rice or
+      oats + honey: omit these codes entirely, or place them in
+      `positive` when the dish reads as "fuel for the lift" (HIGH_ENERGY,
+      HIGH_CALORIES). Reserve `negative` for things that actively work
+      against muscle gain: LOW_PROTEIN, LOW_CALORIES, HIGH_TRANS_FAT,
+      ULTRA_PROCESSED.
+    • MAINTENANCE  : The polarising codes (HIGH_CALORIES, LOW_CALORIES,
+      HIGH_ENERGY, LOW_FAT, LOW_CARB, HEAVY_MEAL, LIGHT_MEAL) should be
+      used SPARINGLY. Skip them entirely unless the dish is genuinely
+      extreme — e.g. HIGH_CALORIES only when the portion is clearly
+      heavy (> ~800 kcal) AND nutrient-poor; LOW_CALORIES only for very
+      light snacks (< ~150 kcal). For an everyday dish on a maintenance
+      day, prefer composition codes (BALANCED_MACROS, WHOLE_FOODS,
+      NUTRIENT_DENSE, HIGH_PROTEIN, RICH_IN_OMEGA3, GUT_FRIENDLY) over
+      calorie-direction codes. 1–2 accurate codes beats 4–5 weak ones.
+    • BALANCED EATING : same logic as maintenance — composition codes
+      over calorie-direction ones.
+
+  REFINED_CARBS THRESHOLD (when used): only flag it when refined-carb
+  sources (white bread / white pasta / white rice / sugar-loaded sauces
+  / sweet drinks / pastries) supply at least ~50 % of the dish's
+  carbohydrate grams, OR contribute ≥ 20 g of refined-source carbs in
+  absolute terms. A green salad with 30 g of croutons does NOT meet
+  this bar — skip the code instead of clipping it on as negative.
+
+  HIGH_SUGAR THRESHOLD (when used): only flag when added_sugar_g ≥ 15
+  for the portion, OR total sugar_g ≥ 25 AND most of it is added /
+  refined (sweetened drinks, dessert, candy). Whole fruit, plain milk,
+  plain yogurt do NOT trigger this code on their own.
+
+  Pick FEWER but ACCURATE codes — do not stretch to fill 5 slots. Both
+  arrays may be empty if nothing applicable.
 
 Respond STRICTLY as JSON (no markdown, no text before or after):
 """ + _JSON_SCHEMA
