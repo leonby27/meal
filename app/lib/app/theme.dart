@@ -32,8 +32,8 @@ class AppColors {
   static const lightScaffold = Color(0xFFF5F6F8);
   static const lightSurface = Color(0xFFFFFFFF);
   static const lightSurface2 = Color(0xFFF0F1F5);
-  static const lightBack2 = Color(0xFFF1F1F7);
-  static const lightBack3 = Color(0xFFF1F1F7);
+  static const lightBack2 = Color(0xFFFFFFFF);
+  static const lightBack3 = Color(0xFFFFFFFF);
   static const lightOnSurface = Color(0xFF0A1B39);
   static const lightOnSurfaceVariant = Color(0xFF83899F);
   static const lightSecondaryDark = Color(0xFF676E85);
@@ -57,7 +57,7 @@ class AppColors {
   static const darkScaffold = Color(0xFF14161B);
   static const darkSurface = Color(0xFF21262D);
   static const darkBack2 = Color(0xFF101115);
-  static const darkBack3 = Color(0xFF0B0C13);
+  static const darkBack3 = Color(0xFF101115);
   static const darkSurface2 = Color(0xFF292E37);
   static const darkSurface3 = Color(0xFF2B313A);
   static const darkSurfaceElevated = Color(0xFF3B434F);
@@ -96,6 +96,26 @@ class AppColors {
   static const lineDT200 = Color(0x1ACDDEFF);
   static const lineDT300 = Color(0x1ACDDEFF);
   static const lineLight100 = Color(0xFFEDEEF3);
+
+  /// Soft drop shadow for white-surface blocks in onboarding so they
+  /// don't blend into the white scaffold. Six-layer ease-out stack that
+  /// reads like a single very-soft elevation (matches the Figma spec).
+  static const List<BoxShadow> baseDrop = [
+    BoxShadow(color: Color(0x05000000), offset: Offset(0, 11), blurRadius: 17),
+    BoxShadow(color: Color(0x03000000), offset: Offset(0, 6), blurRadius: 10),
+    BoxShadow(color: Color(0x03000000), offset: Offset(0, 3), blurRadius: 5),
+    BoxShadow(color: Color(0x03000000), offset: Offset(0, 1), blurRadius: 2),
+  ];
+
+  /// Flat background for clickable selection cards (option chips +
+  /// header back button) on the white onboarding scaffold — distinguishes
+  /// them from the surface without a border or shadow.
+  static const onboardingClickableBg = Color(0xFFEFF2F6);
+
+  /// Primary CTA background for onboarding — deep near-black instead of
+  /// the brand blue, so the new white scaffold doesn't get visually
+  /// dominated by a saturated blue rectangle.
+  static const onboardingCtaBg = Color(0xFF0E1220);
   static const lineLight200 = Color(0xFFE6E7EC);
   static const lineLight300 = Color(0xFFD7D9E2);
 
@@ -207,7 +227,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.lightScaffold,
+      scaffoldBackgroundColor: AppColors.lightBack3,
       dividerColor: AppColors.lightDivider,
       appBarTheme: AppBarTheme(
         centerTitle: true,
@@ -321,7 +341,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.darkScaffold,
+      scaffoldBackgroundColor: AppColors.darkBack3,
       dividerColor: AppColors.darkDivider,
       appBarTheme: AppBarTheme(
         centerTitle: true,

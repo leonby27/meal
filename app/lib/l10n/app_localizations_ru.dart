@@ -1684,25 +1684,37 @@ class AppLocalizationsRu extends AppLocalizations {
   String get untitledIngredientName => 'Без названия';
 
   @override
-  String get onbObstaclesTitle => 'Что мешало вам раньше?';
+  String get onbObstaclesTitle => 'Что для вас самое сложное?';
 
   @override
-  String get onbObstaclesHint => 'Выберите всё, что относится к вам';
+  String get onbObstaclesHint =>
+      'Выбирайте всё, что подходит — чем больше знаем, тем точнее план.';
 
   @override
-  String get obstacleConsistency => 'Не получается быть последовательным';
+  String onbObstaclesContinue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Продолжить · выбрано $count',
+      zero: 'Выберите хотя бы один пункт',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get obstacleConsistency => 'Сложно держаться плана';
 
   @override
   String get obstacleKnowledge => 'Не знаю, что есть';
 
   @override
-  String get obstacleBusy => 'Загруженный график';
+  String get obstacleBusy => 'Всегда в делах';
 
   @override
-  String get obstacleCravings => 'Сильная тяга к сладкому/мучному';
+  String get obstacleCravings => 'Тяга к сладкому и мучному';
 
   @override
-  String get obstacleSupport => 'Нет поддержки';
+  String get obstacleSupport => 'Без поддержки';
 
   @override
   String get obstacleEatingOut => 'Часто ем вне дома';
@@ -1712,6 +1724,30 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get obstacleTracking => 'Сложно считать калории';
+
+  @override
+  String get obstacleTagConsistency => 'Серии';
+
+  @override
+  String get obstacleTagKnowledge => 'Теги цели';
+
+  @override
+  String get obstacleTagBusy => 'Быстро';
+
+  @override
+  String get obstacleTagCravings => 'Сахар-алерт';
+
+  @override
+  String get obstacleTagSupport => 'ИИ-гид';
+
+  @override
+  String get obstacleTagEatingOut => 'Везде';
+
+  @override
+  String get obstacleTagMotivation => 'Прогресс';
+
+  @override
+  String get obstacleTagTracking => 'Без ввода';
 
   @override
   String get onbSpeedTitleLose => 'Как быстро хотите похудеть?';
@@ -2015,11 +2051,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'У вас здоровый подход к питанию. Усилим его данными.';
 
   @override
-  String get onbWelcomeTitle => 'Составим план для вашей цели';
+  String get onbWelcomeTitle => 'Сфотографируй еду. Достигни цели.';
 
   @override
   String get onbWelcomeSubtitle =>
-      'Считайте калории и БЖУ быстро и точно — без ручного ввода!';
+      'ИИ считает калории, белки, углеводы и жиры — без ручного ввода.';
 
   @override
   String get onbWelcomeCta => 'Начать';
@@ -2060,11 +2096,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Мы обещаем хранить вашу личную информацию в секрете';
 
   @override
-  String get onbKeepResultTitle => 'Body Meal помогает удерживать результат';
+  String get onbKeepResultTitle => 'Скинуть и не вернуть.';
 
   @override
-  String get onbKeepResultSubtitle =>
-      'Сохраняйте стабильный прогресс даже через 6 месяцев!';
+  String get onbKeepResultSubtitle => 'Подстроен под вас. Чтобы держался.';
 
   @override
   String get onbCalorieHistoryTitle => 'Вы когда-нибудь считали калории?';

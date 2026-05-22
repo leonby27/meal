@@ -127,9 +127,9 @@ class _DailySummaryCardState extends State<DailySummaryCard> {
       child: Container(
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: AppTheme.cardEdgeBorder(isDark: isDark),
-          boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: lineColor),
+          boxShadow: AppColors.baseDrop,
         ),
         child: Stack(
           clipBehavior: Clip.none,

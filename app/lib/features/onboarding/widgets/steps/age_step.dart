@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 
 class AgeStep extends StatefulWidget {
@@ -86,13 +85,12 @@ class _AgeStepState extends State<AgeStep> {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final pillColor = isDark ? AppColors.darkOnBack : AppColors.lightOnBack;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const SizedBox(height: 16),
-        const NotoEmoji(name: 'birthday-cake', size: 40),
-        const SizedBox(height: 12),
         Text(
           context.l10n.onboardingAgeTitle,
           style: onboardingTitleStyle(context),
@@ -118,6 +116,8 @@ class _AgeStepState extends State<AgeStep> {
                 decoration: BoxDecoration(
                   color: pillColor,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: lineColor),
+                  boxShadow: AppColors.baseDrop,
                 ),
               ),
               ListenableBuilder(

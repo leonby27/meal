@@ -170,13 +170,14 @@ class _ResultStepState extends State<ResultStep>
 
     final l10n = context.l10n;
     final obstacleEntries = data.obstacles
-        .map<({String label, String emoji})?>((k) {
+        .map<({String label, String emoji, String tag})?>((k) {
           final label = ObstaclesStep.labelFor(l10n, k);
           final emoji = ObstaclesStep.emojiFor(k);
+          final tag = ObstaclesStep.tagFor(l10n, k) ?? '';
           if (label == null) return null;
-          return (label: label, emoji: emoji);
+          return (label: label, emoji: emoji, tag: tag);
         })
-        .whereType<({String label, String emoji})>()
+        .whereType<({String label, String emoji, String tag})>()
         .toList(growable: false);
 
     // Custom milestone selection — fixed checkpoints (week 1, 3, 6) plus the
@@ -428,12 +429,15 @@ class _PlanSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
       child: Column(
@@ -880,6 +884,8 @@ class _GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final accentColor = AppColors.green;
 
     // Split the reach line on the weight so we can render the weight in the
@@ -905,6 +911,8 @@ class _GoalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Stack(
@@ -984,11 +992,15 @@ class _GoalMaintainCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
@@ -1024,11 +1036,15 @@ class _BenefitsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Column(
@@ -1093,6 +1109,8 @@ class _MilestonesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     // Progress is measured against the goal week so the goal row always
     // fills the full bar regardless of how many intermediate checkpoints
     // exist before it.
@@ -1103,6 +1121,8 @@ class _MilestonesCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
@@ -1259,7 +1279,7 @@ class _MilestoneRow extends StatelessWidget {
 // ---------------------------------------------------------------------------
 class _ObstaclesCard extends StatelessWidget {
   final String header;
-  final List<({String label, String emoji})> entries;
+  final List<({String label, String emoji, String tag})> entries;
   final Color cardBg;
 
   const _ObstaclesCard({
@@ -1271,11 +1291,15 @@ class _ObstaclesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Column(
@@ -1297,6 +1321,10 @@ class _ObstaclesCard extends StatelessWidget {
               children: [
                 NotoEmoji(name: entries[i].emoji, size: 22),
                 const SizedBox(width: 10),
+                // Label takes the remaining width minus the tag column;
+                // [Expanded] before the tag lets the label wrap to two
+                // lines on the very widest locales (e.g. RU "Сложно
+                // держаться плана") without pushing the tag off the row.
                 Expanded(
                   child: Text(
                     entries[i].label,
@@ -1305,6 +1333,21 @@ class _ObstaclesCard extends StatelessWidget {
                       color: cs.onSurface,
                       height: 20 / 14,
                     ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Right-aligned tag — short feature reference (≤12 chars
+                // in EN, translation budget honoured across locales) that
+                // tells the user how the app handles this specific blocker.
+                // Muted colour + medium weight keeps it visible but
+                // secondary to the obstacle label itself.
+                Text(
+                  entries[i].tag,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: cs.onSurfaceVariant,
+                    height: 18 / 13,
                   ),
                 ),
               ],

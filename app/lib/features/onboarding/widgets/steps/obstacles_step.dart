@@ -22,14 +22,20 @@ class ObstaclesStep extends StatelessWidget {
   /// Noto Color Emoji on Android).
   /// Each option maps to a Noto SVG bundled under
   /// `assets/onboarding/emoji/` (file name == [emoji] + `.svg`).
+  ///
+  /// Order is intentional: the three top-of-list options
+  /// (consistency / cravings / busy) are the most-frequently picked across
+  /// fitness onboardings, so we surface them first to maximise the chance
+  /// the user taps the very first card and "enters" the multi-select rhythm.
+  /// Remaining options follow in decreasing baseline frequency.
   static const List<({String value, String emoji})> _options = [
     (value: 'consistency', emoji: 'counterclockwise-arrows-button'),
-    (value: 'knowledge', emoji: 'thinking-face'),
-    (value: 'busy', emoji: 'alarm-clock'),
     (value: 'cravings', emoji: 'doughnut'),
+    (value: 'busy', emoji: 'alarm-clock'),
+    (value: 'knowledge', emoji: 'thinking-face'),
+    (value: 'motivation', emoji: 'high-voltage'),
     (value: 'support', emoji: 'people-hugging'),
     (value: 'eating_out', emoji: 'fork-and-knife-with-plate'),
-    (value: 'motivation', emoji: 'high-voltage'),
     (value: 'tracking', emoji: 'abacus'),
   ];
 
@@ -37,6 +43,16 @@ class ObstaclesStep extends StatelessWidget {
   /// chosen obstacles in the "plan accounts for" block.
   static String? labelFor(AppLocalizations l10n, String key) {
     return _labelFor(l10n, key);
+  }
+
+  /// Locale-aware short response tag (1-2 words) shown next to each obstacle
+  /// on the result step. Each tag references the concrete product feature
+  /// that addresses the user's selected blocker — turns a passive "echo of
+  /// what the user said" into an active "and here's how we handle it"
+  /// signal. Kept tight (≤12 chars in EN) so the row fits a single line
+  /// across all six locales on a narrow phone width.
+  static String? tagFor(AppLocalizations l10n, String key) {
+    return _tagFor(l10n, key);
   }
 
   /// Emoji asset name that matches the obstacle key — used by ResultStep
@@ -69,6 +85,28 @@ class ObstaclesStep extends StatelessWidget {
         return l10n.obstacleTracking;
     }
     return key;
+  }
+
+  static String _tagFor(AppLocalizations l10n, String key) {
+    switch (key) {
+      case 'consistency':
+        return l10n.obstacleTagConsistency;
+      case 'knowledge':
+        return l10n.obstacleTagKnowledge;
+      case 'busy':
+        return l10n.obstacleTagBusy;
+      case 'cravings':
+        return l10n.obstacleTagCravings;
+      case 'support':
+        return l10n.obstacleTagSupport;
+      case 'eating_out':
+        return l10n.obstacleTagEatingOut;
+      case 'motivation':
+        return l10n.obstacleTagMotivation;
+      case 'tracking':
+        return l10n.obstacleTagTracking;
+    }
+    return '';
   }
 
   void _toggle(String value) {
@@ -139,8 +177,7 @@ class _ObstacleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.onboardingClickableBg;
 
     return GestureDetector(
       onTap: onTap,
@@ -148,14 +185,19 @@ class _ObstacleCard extends StatelessWidget {
         scale: isSelected ? 1.0 : 0.98,
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          
           height: 64,
           decoration: BoxDecoration(
-            color: isSelected ? cs.primaryContainer : cardBg,
-            borderRadius: BorderRadius.circular(16),
+            color: isSelected ? Colors.white : cardBg,
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? AppColors.primary : lineColor,
-              width: isSelected ? 1.5 : 1,
+              color: isSelected
+                  ? AppColors.onboardingCtaBg
+                  : Colors.transparent,
+              width: 2,
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),

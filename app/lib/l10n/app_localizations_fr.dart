@@ -1692,34 +1692,72 @@ class AppLocalizationsFr extends AppLocalizations {
   String get untitledIngredientName => 'Sans nom';
 
   @override
-  String get onbObstaclesTitle => 'Qu\'est-ce qui vous a freiné jusqu\'ici ?';
+  String get onbObstaclesTitle =>
+      'Qu\'est-ce qui est le plus difficile pour vous ?';
 
   @override
-  String get onbObstaclesHint => 'Sélectionnez tout ce qui vous correspond';
+  String get onbObstaclesHint =>
+      'Cochez tout ce qui vous parle — plus on en sait, mieux on adapte votre plan.';
 
   @override
-  String get obstacleConsistency => 'Difficile d\'être régulier';
+  String onbObstaclesContinue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Continuer · $count sélectionnées',
+      one: 'Continuer · 1 sélectionnée',
+      zero: 'Choisissez au moins une option',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get obstacleConsistency => 'Difficile de tenir sur la durée';
 
   @override
   String get obstacleKnowledge => 'Je ne sais pas quoi manger';
 
   @override
-  String get obstacleBusy => 'Emploi du temps chargé';
+  String get obstacleBusy => 'Pas le temps';
 
   @override
-  String get obstacleCravings => 'Fortes envies de sucré/féculents';
+  String get obstacleCravings => 'Envies de sucre et féculents';
 
   @override
-  String get obstacleSupport => 'Manque de soutien';
+  String get obstacleSupport => 'Sans soutien';
 
   @override
-  String get obstacleEatingOut => 'Je mange souvent dehors';
+  String get obstacleEatingOut => 'Souvent au restaurant';
 
   @override
   String get obstacleMotivation => 'Manque de motivation';
 
   @override
   String get obstacleTracking => 'Difficile de compter les calories';
+
+  @override
+  String get obstacleTagConsistency => 'Séries';
+
+  @override
+  String get obstacleTagKnowledge => 'Tags';
+
+  @override
+  String get obstacleTagBusy => 'Rapide';
+
+  @override
+  String get obstacleTagCravings => 'Sucre';
+
+  @override
+  String get obstacleTagSupport => 'IA guide';
+
+  @override
+  String get obstacleTagEatingOut => 'Partout';
+
+  @override
+  String get obstacleTagMotivation => 'Progrès';
+
+  @override
+  String get obstacleTagTracking => 'Sans saisie';
 
   @override
   String get onbSpeedTitleLose =>
@@ -2027,11 +2065,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous avez une approche saine. Nous la renforcerons avec des données.';
 
   @override
-  String get onbWelcomeTitle => 'Créons un plan pour atteindre votre objectif';
+  String get onbWelcomeTitle =>
+      'Photographiez vos plats. Atteignez votre objectif.';
 
   @override
   String get onbWelcomeSubtitle =>
-      'Comptez calories et macros rapidement et précisément — sans saisie manuelle !';
+      'L\'IA compte les calories, protéines, glucides et lipides — sans saisie manuelle.';
 
   @override
   String get onbWelcomeCta => 'Commencer';
@@ -2072,11 +2111,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Nous nous engageons à garder vos données personnelles confidentielles';
 
   @override
-  String get onbKeepResultTitle => 'Body Meal vous aide à garder vos résultats';
+  String get onbKeepResultTitle => 'Perdre du poids, sans rebond.';
 
   @override
-  String get onbKeepResultSubtitle =>
-      'Maintenez vos progrès dans la durée — même après six mois !';
+  String get onbKeepResultSubtitle => 'Adapté à votre corps. Sur la durée.';
 
   @override
   String get onbCalorieHistoryTitle => 'Avez-vous déjà compté les calories ?';

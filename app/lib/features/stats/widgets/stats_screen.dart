@@ -497,12 +497,13 @@ class _StatsScreenState extends State<StatsScreen> {
 
     if (rows.isEmpty) return const SizedBox.shrink();
 
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: AppTheme.cardEdgeBorder(isDark: isDark),
-        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.fromLTRB(12, 18, 12, 18),
       child: Column(mainAxisSize: MainAxisSize.min, children: rows),
@@ -657,6 +658,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
   Widget _buildTrends(bool isDark) {
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final l10n = context.l10n;
 
     final buckets = _buildTrendBuckets(_trendMetric);
@@ -701,9 +703,9 @@ class _StatsScreenState extends State<StatsScreen> {
         Container(
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: AppTheme.cardEdgeBorder(isDark: isDark),
-            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: lineColor),
+            boxShadow: AppColors.baseDrop,
           ),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           child: Column(
@@ -785,6 +787,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
   Widget _buildHighlights(bool isDark) {
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final l10n = context.l10n;
     final secondary = isDark
         ? AppColors.darkOnSurfaceVariant
@@ -843,9 +846,9 @@ class _StatsScreenState extends State<StatsScreen> {
         Container(
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: AppTheme.cardEdgeBorder(isDark: isDark),
-            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: lineColor),
+            boxShadow: AppColors.baseDrop,
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -1085,6 +1088,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
   Widget _buildByDays(bool isDark) {
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final secondary = isDark
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
@@ -1103,9 +1107,9 @@ class _StatsScreenState extends State<StatsScreen> {
         Container(
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: AppTheme.cardEdgeBorder(isDark: isDark),
-            boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: lineColor),
+            boxShadow: AppColors.baseDrop,
           ),
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
@@ -1625,6 +1629,7 @@ class _StreakCardState extends State<_StreakCard> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final letterColor = isDark
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
@@ -1635,9 +1640,9 @@ class _StreakCardState extends State<_StreakCard> {
       height: 166,
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: AppTheme.cardEdgeBorder(isDark: isDark),
-        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
@@ -1900,6 +1905,7 @@ class _AverageDonutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final primary = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
     final secondary = isDark
         ? AppColors.darkSecondaryDark
@@ -1915,9 +1921,9 @@ class _AverageDonutCard extends StatelessWidget {
       height: 166,
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: AppTheme.cardEdgeBorder(isDark: isDark),
-        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(

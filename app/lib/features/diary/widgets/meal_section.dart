@@ -462,6 +462,7 @@ class _FoodLogCardState extends State<_FoodLogCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final secondaryDark = isDark
         ? const Color(0xFF9CA0B2)
         : const Color(0xFF676E85);
@@ -474,12 +475,12 @@ class _FoodLogCardState extends State<_FoodLogCard> {
       height: 72,
       decoration: BoxDecoration(
         color: back2,
-        borderRadius: BorderRadius.circular(20),
-        border: AppTheme.cardEdgeBorder(isDark: isDark),
-        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(32),
         onTap: () async {
           final saved = await AiMealResultSheet.showForDuplicate(
             context,
@@ -618,6 +619,7 @@ class _FoodLogCardState extends State<_FoodLogCard> {
     Color secondaryColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final kcalPercent = calorieGoal > 0
         ? (log.calories / calorieGoal * 100).round().clamp(0, 999)
         : 0;
@@ -626,12 +628,12 @@ class _FoodLogCardState extends State<_FoodLogCard> {
       height: 155,
       decoration: BoxDecoration(
         color: back2,
-        borderRadius: BorderRadius.circular(20),
-        border: AppTheme.cardEdgeBorder(isDark: isDark),
-        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(32),
         onTap: () async {
           final saved = await AiMealResultSheet.showForDuplicate(
             context,

@@ -11,8 +11,13 @@ class KeepResultStep extends StatelessWidget {
   const KeepResultStep({super.key});
 
   // Chart asset's logical size (4.0x export: 1440 × 916 → 360 × 229 pt).
-  static const double _heroWidth = 320;
-  static const double _heroHeight = 204;
+  // We render at the asset's native 1× point size — this lifts the chart
+  // by ~12 % vs the previous 320 pt clamp without compressing the title
+  // or subtitle slots underneath. The new headline ("Lose weight that
+  // stays off.") is shorter than the prior retention copy so the extra
+  // chart height fits comfortably even on a 4.7-inch device.
+  static const double _heroWidth = 360;
+  static const double _heroHeight = 229;
 
   @override
   Widget build(BuildContext context) {

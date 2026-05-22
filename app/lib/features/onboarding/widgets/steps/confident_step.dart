@@ -72,6 +72,7 @@ class _PrivacyCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final l10n = context.l10n;
 
     return Container(
@@ -79,6 +80,8 @@ class _PrivacyCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.all(16),
       child: Row(

@@ -139,13 +139,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: cs.surface,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(32),
                         border: Border.all(color: lineBorder, width: 1),
-                        boxShadow: AppTheme.cardEdgeShadows(isDark: isDark),
-                      ),
-                      foregroundDecoration: AppTheme.cardEdgeForeground(
-                        isDark: isDark,
-                        radius: 20,
+                        boxShadow: AppColors.baseDrop,
                       ),
                       child: Row(
                         children: [

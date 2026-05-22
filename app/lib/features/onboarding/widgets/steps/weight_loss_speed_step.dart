@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/features/onboarding/services/tdee_calculator.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 
 class WeightLossSpeedStep extends StatelessWidget {
@@ -84,8 +83,6 @@ class WeightLossSpeedStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 16),
-          const NotoEmoji(name: 'high-voltage', size: 40),
-          const SizedBox(height: 12),
           Text(
             title,
             style: onboardingTitleStyle(context, height: 32 / 24),
@@ -250,12 +247,15 @@ class _OutcomeCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.all(16),
       child: Row(

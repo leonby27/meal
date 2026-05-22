@@ -419,13 +419,15 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
   }
 
   Widget _card({required Widget child}) {
+    final lineColor =
+        _isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: _isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4,
-        borderRadius: BorderRadius.circular(20),
-        border: AppTheme.cardEdgeBorder(isDark: _isDark),
-        boxShadow: AppTheme.cardElevatedShadows(isDark: _isDark),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: lineColor),
+        boxShadow: AppColors.baseDrop,
       ),
       child: child,
     );

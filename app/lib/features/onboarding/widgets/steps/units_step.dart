@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 
 class UnitsStep extends StatelessWidget {
@@ -21,8 +20,6 @@ class UnitsStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 16),
-          const NotoEmoji(name: 'straight-ruler', size: 40),
-          const SizedBox(height: 12),
           Text(
             context.l10n.onboardingUnitsTitle,
             style: onboardingTitleStyle(context),
@@ -74,8 +71,7 @@ class _UnitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.onboardingClickableBg;
 
     return GestureDetector(
       onTap: onTap,
@@ -83,14 +79,19 @@ class _UnitCard extends StatelessWidget {
         scale: isSelected ? 1.0 : 0.95,
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOutCubic,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          
           height: 64,
           decoration: BoxDecoration(
-            color: isSelected ? cs.primaryContainer : cardBg,
-            borderRadius: BorderRadius.circular(16),
+            color: isSelected ? Colors.white : cardBg,
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? AppColors.primary : lineColor,
-              width: isSelected ? 1.5 : 1,
+              color: isSelected
+                  ? AppColors.onboardingCtaBg
+                  : Colors.transparent,
+              width: 2,
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20),

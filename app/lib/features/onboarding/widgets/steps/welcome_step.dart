@@ -21,56 +21,43 @@ class WelcomeStep extends StatelessWidget {
     // The welcome screen always fits a single viewport on supported
     // devices, so we drop the SingleChildScrollView wrapper — it was the
     // only source of the rubber-band overscroll the rest of the
-    // onboarding doesn't have. As a safety net for small phones, the
-    // hero illustration is capped at ~45 % of the available height so
-    // it shrinks instead of forcing an overflow.
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Slightly looser cap than before — at native asset aspect the
-        // hero now lands closer to its Figma reference size; on smaller
-        // phones it still shrinks instead of overflowing.
-        final heroMaxH =
-            (constraints.maxHeight * 0.55).clamp(260.0, 460.0);
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Bigger top breathing room pushes the hero + copy down
-              // off the header so the page reads as more centred.
-              const SizedBox(height: 40),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: heroMaxH),
-                child: const _HeroScan(),
-              ),
-              const SizedBox(height: 32),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  context.l10n.onbWelcomeTitle,
-                  textAlign: TextAlign.center,
-                  style: onboardingTitleStyle(context, height: 32 / 24),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  context.l10n.onbWelcomeSubtitle,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 22 / 16,
-                    color: cs.onSurface,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              _LanguagePill(localeCode: localeCode),
-            ],
+    // onboarding doesn't have.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Spacer(),
+        const AspectRatio(
+          aspectRatio: 1572 / 1364,
+          child: _HeroScan(),
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            context.l10n.onbWelcomeTitle,
+            textAlign: TextAlign.center,
+            style: onboardingTitleStyle(context, height: 32 / 24),
           ),
-        );
-      },
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            context.l10n.onbWelcomeSubtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              height: 22 / 16,
+              color: cs.onSurface,
+            ),
+          ),
+        ),
+        const Spacer(),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _LanguagePill(localeCode: localeCode),
+        ),
+      ],
     );
   }
 }
@@ -87,7 +74,9 @@ class _HeroScan extends StatelessWidget {
   Widget build(BuildContext context) {
     return Image.asset(
       'assets/onboarding/welcome_food.png',
-      fit: BoxFit.contain,
+      fit: BoxFit.fitWidth,
+      width: double.infinity,
+      alignment: Alignment.topCenter,
     );
   }
 }
@@ -145,6 +134,14 @@ class _LanguagePill extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.lightOnBack,
             borderRadius: BorderRadius.circular(122),
+            border: Border.all(color: AppColors.lineLight100),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D000000),
+                offset: Offset(0, 7),
+                blurRadius: 10,
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

@@ -1672,34 +1672,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get untitledIngredientName => 'Untitled';
 
   @override
-  String get onbObstaclesTitle => 'What\'s held you back before?';
+  String get onbObstaclesTitle => 'What\'s the hardest part for you?';
 
   @override
-  String get onbObstaclesHint => 'Select all that apply';
+  String get onbObstaclesHint =>
+      'Pick everything that feels true — the more we know, the better your plan.';
 
   @override
-  String get obstacleConsistency => 'Trouble being consistent';
+  String onbObstaclesContinue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Continue · $count selected',
+      zero: 'Pick at least one',
+    );
+    return '$_temp0';
+  }
 
   @override
-  String get obstacleKnowledge => 'Don\'t know what to eat';
+  String get obstacleConsistency => 'Hard to stay consistent';
 
   @override
-  String get obstacleBusy => 'Busy schedule';
+  String get obstacleKnowledge => 'Not sure what to eat';
 
   @override
-  String get obstacleCravings => 'Strong sweet/carb cravings';
+  String get obstacleBusy => 'Always busy';
 
   @override
-  String get obstacleSupport => 'Lack of support';
+  String get obstacleCravings => 'Sweet & carb cravings';
 
   @override
-  String get obstacleEatingOut => 'Often eat out';
+  String get obstacleSupport => 'Doing it alone';
 
   @override
-  String get obstacleMotivation => 'Lack of motivation';
+  String get obstacleEatingOut => 'Eat out a lot';
+
+  @override
+  String get obstacleMotivation => 'Hard to stay motivated';
 
   @override
   String get obstacleTracking => 'Hard to track calories';
+
+  @override
+  String get obstacleTagConsistency => 'Streaks';
+
+  @override
+  String get obstacleTagKnowledge => 'Goal tags';
+
+  @override
+  String get obstacleTagBusy => 'Quick log';
+
+  @override
+  String get obstacleTagCravings => 'Sugar alerts';
+
+  @override
+  String get obstacleTagSupport => 'AI guides';
+
+  @override
+  String get obstacleTagEatingOut => 'Any meal';
+
+  @override
+  String get obstacleTagMotivation => 'Weekly wins';
+
+  @override
+  String get obstacleTagTracking => 'No typing';
 
   @override
   String get onbSpeedTitleLose => 'How fast do you want\nto lose weight?';
@@ -1998,11 +2034,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'You have a healthy approach. We\'ll back it with data.';
 
   @override
-  String get onbWelcomeTitle => 'Let\'s set up a plan to achieve your goal';
+  String get onbWelcomeTitle => 'Snap food. Reach your goal.';
 
   @override
   String get onbWelcomeSubtitle =>
-      'Count calories and macros quickly and accurately without manual entry!';
+      'AI counts calories, protein, carbs, and fats — no manual entry.';
 
   @override
   String get onbWelcomeCta => 'Get started';
@@ -2043,11 +2079,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'We promise to keep your personal data confidential';
 
   @override
-  String get onbKeepResultTitle => 'Body Meal helps you keep results';
+  String get onbKeepResultTitle => 'Lose weight that stays off.';
 
   @override
-  String get onbKeepResultSubtitle =>
-      'Stay on track and hold your progress steady, even six months in!';
+  String get onbKeepResultSubtitle => 'Tailored to your body. Built to last.';
 
   @override
   String get onbCalorieHistoryTitle => 'Have you ever counted calories?';

@@ -109,8 +109,7 @@ class _ImproveCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
-    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.onboardingClickableBg;
 
     return GestureDetector(
       onTap: onTap,
@@ -118,14 +117,19 @@ class _ImproveCard extends StatelessWidget {
         scale: isSelected ? 1.0 : 0.98,
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          
           height: 64,
           decoration: BoxDecoration(
-            color: isSelected ? cs.primaryContainer : cardBg,
-            borderRadius: BorderRadius.circular(16),
+            color: isSelected ? Colors.white : cardBg,
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? AppColors.primary : lineColor,
-              width: isSelected ? 1.5 : 1,
+              color: isSelected
+                  ? AppColors.onboardingCtaBg
+                  : Colors.transparent,
+              width: 2,
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -1385,6 +1385,9 @@ class _DiaryScreenState extends State<DiaryScreen>
       );
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
       itemCount: _recentProducts.length,
@@ -1409,13 +1412,9 @@ class _DiaryScreenState extends State<DiaryScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: cs.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: AppTheme.cardEdgeBorder(
-                  isDark: Theme.of(context).brightness == Brightness.dark,
-                ),
-                boxShadow: AppTheme.cardEdgeShadows(
-                  isDark: Theme.of(context).brightness == Brightness.dark,
-                ),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(color: lineColor),
+                boxShadow: AppColors.baseDrop,
               ),
               child: Row(
                 children: [
@@ -1482,6 +1481,9 @@ class _DiaryScreenState extends State<DiaryScreen>
       );
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
       itemCount: _favoriteProducts.length,
@@ -1501,13 +1503,9 @@ class _DiaryScreenState extends State<DiaryScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: cs.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: AppTheme.cardEdgeBorder(
-                  isDark: Theme.of(context).brightness == Brightness.dark,
-                ),
-                boxShadow: AppTheme.cardEdgeShadows(
-                  isDark: Theme.of(context).brightness == Brightness.dark,
-                ),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(color: lineColor),
+                boxShadow: AppColors.baseDrop,
               ),
               child: Row(
                 children: [
@@ -1897,7 +1895,7 @@ class _DiaryScreenState extends State<DiaryScreen>
                                 Color(0xFF1EBF92),
                               ],
                               progress: progress,
-                              borderRadius: 12,
+                              borderRadius: 16,
                               borderWidth: 4,
                             ),
                             child: content,

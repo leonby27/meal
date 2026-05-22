@@ -1686,34 +1686,71 @@ class AppLocalizationsEs extends AppLocalizations {
   String get untitledIngredientName => 'Sin nombre';
 
   @override
-  String get onbObstaclesTitle => '¿Qué te ha frenado antes?';
+  String get onbObstaclesTitle => '¿Qué es lo más difícil para ti?';
 
   @override
-  String get onbObstaclesHint => 'Selecciona todo lo que corresponda';
+  String get onbObstaclesHint =>
+      'Elige todo lo que te aplique — cuanto más sepamos, mejor será tu plan.';
 
   @override
-  String get obstacleConsistency => 'Me cuesta ser constante';
+  String onbObstaclesContinue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Continuar · $count seleccionadas',
+      one: 'Continuar · 1 seleccionada',
+      zero: 'Elige al menos una opción',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get obstacleConsistency => 'Cuesta ser constante';
 
   @override
   String get obstacleKnowledge => 'No sé qué comer';
 
   @override
-  String get obstacleBusy => 'Agenda apretada';
+  String get obstacleBusy => 'Vida muy ocupada';
 
   @override
-  String get obstacleCravings => 'Ansias fuertes por dulces o harinas';
+  String get obstacleCravings => 'Ansias de dulce y carbohidratos';
 
   @override
-  String get obstacleSupport => 'Falta de apoyo';
+  String get obstacleSupport => 'Sin apoyo';
 
   @override
-  String get obstacleEatingOut => 'Como fuera de casa a menudo';
+  String get obstacleEatingOut => 'Como fuera a menudo';
 
   @override
-  String get obstacleMotivation => 'Falta de motivación';
+  String get obstacleMotivation => 'Cuesta mantener la motivación';
 
   @override
   String get obstacleTracking => 'Difícil contar calorías';
+
+  @override
+  String get obstacleTagConsistency => 'Rachas';
+
+  @override
+  String get obstacleTagKnowledge => 'Etiquetas';
+
+  @override
+  String get obstacleTagBusy => 'Rápido';
+
+  @override
+  String get obstacleTagCravings => 'Azúcar';
+
+  @override
+  String get obstacleTagSupport => 'IA guía';
+
+  @override
+  String get obstacleTagEatingOut => 'Donde sea';
+
+  @override
+  String get obstacleTagMotivation => 'Progreso';
+
+  @override
+  String get obstacleTagTracking => 'Sin teclear';
 
   @override
   String get onbSpeedTitleLose => '¿A qué velocidad quieres adelgazar?';
@@ -2016,11 +2053,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tienes un enfoque saludable. Lo respaldaremos con datos.';
 
   @override
-  String get onbWelcomeTitle => 'Vamos a crear un plan para tu objetivo';
+  String get onbWelcomeTitle => 'Fotografía la comida. Alcanza tu objetivo.';
 
   @override
   String get onbWelcomeSubtitle =>
-      'Cuenta calorías y macros de forma rápida y precisa, sin introducir datos a mano.';
+      'La IA cuenta calorías, proteínas, carbohidratos y grasas — sin entrada manual.';
 
   @override
   String get onbWelcomeCta => 'Empezar';
@@ -2061,12 +2098,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Prometemos mantener tu información personal en privado';
 
   @override
-  String get onbKeepResultTitle =>
-      'Body Meal te ayuda a mantener los resultados';
+  String get onbKeepResultTitle => 'Adelgazar sin rebote.';
 
   @override
   String get onbKeepResultSubtitle =>
-      '¡Mantén un progreso estable incluso después de 6 meses!';
+      'Adaptado a tu cuerpo. Para el largo plazo.';
 
   @override
   String get onbCalorieHistoryTitle => '¿Has contado calorías alguna vez?';

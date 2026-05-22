@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 import 'package:meal_tracker/l10n/app_localizations.dart';
 
@@ -63,8 +62,6 @@ class BehavioralQuizStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 16),
-          const NotoEmoji(name: 'brain', size: 40),
-          const SizedBox(height: 12),
           Text(
             l10n.onbQuizTitle,
             style: onboardingTitleStyle(context),

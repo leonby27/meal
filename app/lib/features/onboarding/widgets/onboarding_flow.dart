@@ -139,7 +139,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   List<_StepKind> get _kinds {
     return [
       _StepKind.welcome,
-      _StepKind.confident,
       _StepKind.goal,
       _StepKind.obstacles,
       _StepKind.gender,
@@ -778,7 +777,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         onPressed: _isFinishing ? () {} : (_canProceed ? _next : null),
         style: ElevatedButton.styleFrom(
           backgroundColor: _canProceed || _isFinishing
-              ? AppColors.primary
+              ? AppColors.onboardingCtaBg
               : (isDark
                     ? AppColors.darkDisabledBg
                     : AppColors.lightDisabledBg),
@@ -809,9 +808,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             : Text(
                 _currentKind == _StepKind.welcome
                     ? context.l10n.onbWelcomeCta
-                    : isResult
-                          ? context.l10n.resultOpenPlan
-                          : context.l10n.onboardingNext,
+                    // Obstacles is a multi-select; surfacing the live count
+                    // in the CTA both confirms the tap registered and softly
+                    // nudges the user toward picking 2+ (richer signal feeds
+                    // the personalised echo on the result step). When count
+                    // is 0 the plural rule resolves to a "pick at least one"
+                    // hint, keeping the button labelled even while disabled.
+                    : _currentKind == _StepKind.obstacles
+                          ? context.l10n.onbObstaclesContinue(
+                              _data.obstacles.length,
+                            )
+                          : isResult
+                                ? context.l10n.resultOpenPlan
+                                : context.l10n.onboardingNext,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -921,7 +930,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                             ? _onTrialReminderCompleted
                             : _next),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.onboardingCtaBg,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -994,13 +1003,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           // Soft drop shadow lifts the header off the scaffold — both
           // surfaces are near-white, so without it the header bleeds
           // into the content area and the back button becomes invisible.
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0D000000),
-              blurRadius: 5,
-              offset: Offset(0, 1),
-            ),
-          ],
+          boxShadow: AppColors.baseDrop,
         ),
         child: CustomPaint(
           foregroundPainter: _RoundedBottomBorderPainter(
@@ -1022,9 +1025,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                         width: 48,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: controlBg,
+                          color: AppColors.onboardingClickableBg,
                           borderRadius: BorderRadius.circular(122),
-                          border: Border.all(color: borderColor),
                         ),
                         child: IconButton(
                           padding: EdgeInsets.zero,
@@ -1040,42 +1042,37 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   ),
                 const SizedBox(width: 17),
                 Expanded(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(100),
-                      child: SizedBox(
-                        height: 12,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(color: trackColor),
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(end: progressValue),
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                            builder: (context, value, _) {
-                              return Align(
-                                alignment: Alignment.centerLeft,
-                                child: FractionallySizedBox(
-                                  widthFactor: value,
-                                  heightFactor: 1,
-                                  child: const DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Color(0xFF317BFE),
-                                          Color(0xFF31AFFE),
-                                        ],
+                  child: isFirstStep
+                      ? const SizedBox.shrink()
+                      : Align(
+                          alignment: Alignment.center,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(100),
+                            child: SizedBox(
+                              height: 12,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(color: trackColor),
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween(end: progressValue),
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                  builder: (context, value, _) {
+                                    return Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: FractionallySizedBox(
+                                        widthFactor: value,
+                                        heightFactor: 1,
+                                        child: const ColoredBox(
+                                          color: AppColors.primary,
+                                        ),
                                       ),
-                                    ),
-                                  ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
                 ),
                 // Phantom spacer mirroring the back-button + gap on the
                 // left, so the progress bar reads as horizontally centred
@@ -1125,7 +1122,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         }
       },
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBack3 : AppColors.lightBack3,
+        backgroundColor: isDark ? AppColors.darkBack3 : Colors.white,
         body: AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
             statusBarColor: headerBg,
@@ -1136,7 +1133,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           child: Column(
             children: [
-              _buildProgressHeader(context, isDark, isLoading),
+              if (_currentKind != _StepKind.welcome)
+                _buildProgressHeader(context, isDark, isLoading),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -1268,7 +1266,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                           ),
                         Positioned.fill(
                           child: SafeArea(
-                            top: false,
+                            // Welcome no longer has a header above the step
+                            // content, so honour the top safe area to keep
+                            // the hero from running under the status bar.
+                            top: _currentKind == _StepKind.welcome,
                             // Apply bottom safe-area when there's no
                             // floating CTA — otherwise step content
                             // could slip under the home indicator.

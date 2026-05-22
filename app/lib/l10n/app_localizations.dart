@@ -3139,19 +3139,25 @@ abstract class AppLocalizations {
   /// No description provided for @onbObstaclesTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Что мешало вам раньше?'**
+  /// **'Что для вас самое сложное?'**
   String get onbObstaclesTitle;
 
   /// No description provided for @onbObstaclesHint.
   ///
   /// In ru, this message translates to:
-  /// **'Выберите всё, что относится к вам'**
+  /// **'Выбирайте всё, что подходит — чем больше знаем, тем точнее план.'**
   String get onbObstaclesHint;
+
+  /// CTA label on the obstacles step. Shows count of selected options to nudge richer multi-select.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, =0{Выберите хотя бы один пункт} other{Продолжить · выбрано {count}}}'**
+  String onbObstaclesContinue(int count);
 
   /// No description provided for @obstacleConsistency.
   ///
   /// In ru, this message translates to:
-  /// **'Не получается быть последовательным'**
+  /// **'Сложно держаться плана'**
   String get obstacleConsistency;
 
   /// No description provided for @obstacleKnowledge.
@@ -3163,19 +3169,19 @@ abstract class AppLocalizations {
   /// No description provided for @obstacleBusy.
   ///
   /// In ru, this message translates to:
-  /// **'Загруженный график'**
+  /// **'Всегда в делах'**
   String get obstacleBusy;
 
   /// No description provided for @obstacleCravings.
   ///
   /// In ru, this message translates to:
-  /// **'Сильная тяга к сладкому/мучному'**
+  /// **'Тяга к сладкому и мучному'**
   String get obstacleCravings;
 
   /// No description provided for @obstacleSupport.
   ///
   /// In ru, this message translates to:
-  /// **'Нет поддержки'**
+  /// **'Без поддержки'**
   String get obstacleSupport;
 
   /// No description provided for @obstacleEatingOut.
@@ -3195,6 +3201,54 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Сложно считать калории'**
   String get obstacleTracking;
+
+  /// No description provided for @obstacleTagConsistency.
+  ///
+  /// In ru, this message translates to:
+  /// **'Серии'**
+  String get obstacleTagConsistency;
+
+  /// No description provided for @obstacleTagKnowledge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теги цели'**
+  String get obstacleTagKnowledge;
+
+  /// No description provided for @obstacleTagBusy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Быстро'**
+  String get obstacleTagBusy;
+
+  /// No description provided for @obstacleTagCravings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сахар-алерт'**
+  String get obstacleTagCravings;
+
+  /// No description provided for @obstacleTagSupport.
+  ///
+  /// In ru, this message translates to:
+  /// **'ИИ-гид'**
+  String get obstacleTagSupport;
+
+  /// No description provided for @obstacleTagEatingOut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Везде'**
+  String get obstacleTagEatingOut;
+
+  /// No description provided for @obstacleTagMotivation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прогресс'**
+  String get obstacleTagMotivation;
+
+  /// No description provided for @obstacleTagTracking.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без ввода'**
+  String get obstacleTagTracking;
 
   /// No description provided for @onbSpeedTitleLose.
   ///
@@ -3685,13 +3739,13 @@ abstract class AppLocalizations {
   /// No description provided for @onbWelcomeTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Составим план для вашей цели'**
+  /// **'Сфотографируй еду. Достигни цели.'**
   String get onbWelcomeTitle;
 
   /// No description provided for @onbWelcomeSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Считайте калории и БЖУ быстро и точно — без ручного ввода!'**
+  /// **'ИИ считает калории, белки, углеводы и жиры — без ручного ввода.'**
   String get onbWelcomeSubtitle;
 
   /// No description provided for @onbWelcomeCta.
@@ -3769,13 +3823,13 @@ abstract class AppLocalizations {
   /// No description provided for @onbKeepResultTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Body Meal помогает удерживать результат'**
+  /// **'Скинуть и не вернуть.'**
   String get onbKeepResultTitle;
 
   /// No description provided for @onbKeepResultSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сохраняйте стабильный прогресс даже через 6 месяцев!'**
+  /// **'Подстроен под вас. Чтобы держался.'**
   String get onbKeepResultSubtitle;
 
   /// No description provided for @onbCalorieHistoryTitle.

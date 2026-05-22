@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/features/onboarding/widgets/common/vertical_ruler_picker.dart';
-import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 
 class HeightStep extends StatelessWidget {
@@ -42,8 +41,6 @@ class HeightStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 16),
-          const NotoEmoji(name: 'person-standing', size: 40),
-          const SizedBox(height: 12),
           Text(
             context.l10n.onboardingHeightTitle,
             style: onboardingTitleStyle(context),
