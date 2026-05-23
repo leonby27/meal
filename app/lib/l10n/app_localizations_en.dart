@@ -1448,10 +1448,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Point the camera at a label — data fills in automatically.';
 
   @override
-  String get paywallNoPaymentNow => 'No payment required now';
+  String get paywallNoPaymentNow => 'No payment today';
 
   @override
   String get paywallStartTrial => 'Start trial';
+
+  @override
+  String get paywallContinuePro => 'Continue with Pro';
+
+  @override
+  String get paywallSave85 => 'Save 85%';
+
+  @override
+  String paywallDayPrefix(int n) {
+    return 'Day $n';
+  }
+
+  @override
+  String get paywallTrialStarts => 'Trial starts';
+
+  @override
+  String get paywallTrialRemindYou => 'We\'ll remind you';
+
+  @override
+  String get paywallTrialPlanBegins => 'Plan begins';
+
+  @override
+  String get paywallFeatureSnap => 'Snap a photo, AI counts calories';
+
+  @override
+  String get paywallFeatureScore => 'Health score for every meal';
+
+  @override
+  String get paywallFeatureTags => 'Tags personalised to your goal';
+
+  @override
+  String get paywallFeaturePrivacy => 'Encrypted · No ads · No data selling';
 
   @override
   String get paywallTrialDisclaimer => '3 days free, then \$39.99/year';

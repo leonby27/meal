@@ -491,8 +491,25 @@
   "paywallFeatureAnalyticsDesc": "Calories, macros and goal progress charted over any period.",
   "paywallFeatureBarcodeTitle": "Barcode scanner",
   "paywallFeatureBarcodeDesc": "Point the camera at a label — data fills in automatically.",
-  "paywallNoPaymentNow": "No payment required now",
+  "paywallNoPaymentNow": "No payment today",
   "paywallStartTrial": "Start trial",
+  "paywallContinuePro": "Continue with Pro",
+  "paywallSave85": "Save 85%",
+  "paywallDayPrefix": "Day {n}",
+  "@paywallDayPrefix": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallTrialStarts": "Trial starts",
+  "paywallTrialRemindYou": "We'll remind you",
+  "paywallTrialPlanBegins": "Plan begins",
+  "paywallFeatureSnap": "Snap a photo, AI counts calories",
+  "paywallFeatureScore": "Health score for every meal",
+  "paywallFeatureTags": "Tags personalised to your goal",
+  "paywallFeaturePrivacy": "Encrypted · No ads · No data selling",
   "paywallTrialDisclaimer": "3 days free, then $39.99/year",
   "paywallWeeklyDisclaimer": "Billed today. Cancel anytime.",
   "paywallTrialDisclaimerFmt": "3 days free, then {price}/year",

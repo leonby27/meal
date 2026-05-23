@@ -1458,10 +1458,42 @@ class AppLocalizationsEs extends AppLocalizations {
       'Apunta la cámara al envase — los datos se cargan solos.';
 
   @override
-  String get paywallNoPaymentNow => 'No se requiere pago ahora';
+  String get paywallNoPaymentNow => 'Hoy no se cobra';
 
   @override
   String get paywallStartTrial => 'Iniciar prueba';
+
+  @override
+  String get paywallContinuePro => 'Continuar con Pro';
+
+  @override
+  String get paywallSave85 => 'Ahorra 85 %';
+
+  @override
+  String paywallDayPrefix(int n) {
+    return 'Día $n';
+  }
+
+  @override
+  String get paywallTrialStarts => 'Empieza la prueba';
+
+  @override
+  String get paywallTrialRemindYou => 'Te recordaremos';
+
+  @override
+  String get paywallTrialPlanBegins => 'Empieza el plan';
+
+  @override
+  String get paywallFeatureSnap => 'Foto, la IA cuenta calorías';
+
+  @override
+  String get paywallFeatureScore => 'Puntuación de salud por comida';
+
+  @override
+  String get paywallFeatureTags => 'Etiquetas según tu objetivo';
+
+  @override
+  String get paywallFeaturePrivacy => 'Cifrado · Sin anuncios · Sin venta';
 
   @override
   String get paywallTrialDisclaimer => '3 días gratis, luego \$39.99/año';

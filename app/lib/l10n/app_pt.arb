@@ -499,8 +499,25 @@
   "paywallFeatureAnalyticsDesc": "Gráficos de calorias, macros e progresso por qualquer período.",
   "paywallFeatureBarcodeTitle": "Leitor de códigos de barras",
   "paywallFeatureBarcodeDesc": "Aponte a câmera para a embalagem — os dados aparecem sozinhos.",
-  "paywallNoPaymentNow": "Nenhum pagamento necessário agora",
+  "paywallNoPaymentNow": "Sem cobrança hoje",
   "paywallStartTrial": "Iniciar teste",
+  "paywallContinuePro": "Continuar com Pro",
+  "paywallSave85": "Economize 85 %",
+  "paywallDayPrefix": "Dia {n}",
+  "@paywallDayPrefix": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallTrialStarts": "Teste começa",
+  "paywallTrialRemindYou": "Avisaremos você",
+  "paywallTrialPlanBegins": "Plano começa",
+  "paywallFeatureSnap": "Foto, a IA conta calorias",
+  "paywallFeatureScore": "Pontuação de saúde por refeição",
+  "paywallFeatureTags": "Tags conforme seu objetivo",
+  "paywallFeaturePrivacy": "Criptografado · Sem ads · Sem venda",
   "paywallTrialDisclaimer": "3 dias grátis, depois $39.99/ano",
   "paywallWeeklyDisclaimer": "Cobrado hoje. Cancele quando quiser.",
   "paywallRestore": "Restaurar",

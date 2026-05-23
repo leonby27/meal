@@ -1452,10 +1452,42 @@ class AppLocalizationsRu extends AppLocalizations {
       'Наведите камеру на упаковку — данные подтянутся сами.';
 
   @override
-  String get paywallNoPaymentNow => 'Платёж сейчас не требуется';
+  String get paywallNoPaymentNow => 'Сегодня без оплаты';
 
   @override
   String get paywallStartTrial => 'Начать пробный период';
+
+  @override
+  String get paywallContinuePro => 'Продолжить с Pro';
+
+  @override
+  String get paywallSave85 => 'Экономия 85 %';
+
+  @override
+  String paywallDayPrefix(int n) {
+    return 'День $n';
+  }
+
+  @override
+  String get paywallTrialStarts => 'Старт пробного периода';
+
+  @override
+  String get paywallTrialRemindYou => 'Напомним вам';
+
+  @override
+  String get paywallTrialPlanBegins => 'Начало плана';
+
+  @override
+  String get paywallFeatureSnap => 'Фото — ИИ считает калории';
+
+  @override
+  String get paywallFeatureScore => 'Health-оценка каждого блюда';
+
+  @override
+  String get paywallFeatureTags => 'Теги под твою цель';
+
+  @override
+  String get paywallFeaturePrivacy => 'Шифрование · Без рекламы · Без продажи';
 
   @override
   String get paywallTrialDisclaimer => '3 дня бесплатно, затем \$39.99/год';

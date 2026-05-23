@@ -12,6 +12,7 @@ import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
+import 'package:meal_tracker/features/onboarding/widgets/common/faq_card.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/obstacles_step.dart';
@@ -327,8 +328,11 @@ class _ResultStepState extends State<ResultStep>
 
               _FadeSlideIn(
                 delayMs: 320,
-                child: _FaqCard(
+                child: FaqCard(
                   header: l10n.resultFaqHeader,
+                  // Lavender bg per Figma — distinguishes the FAQ block
+                  // from the surrounding stat cards on the result screen.
+                  background: const Color(0xFFE2E2F0),
                   items: [
                     (
                       question: l10n.resultFaqCancelQ,
@@ -1354,138 +1358,6 @@ class _ObstaclesCard extends StatelessWidget {
             ),
             if (i != entries.length - 1) const SizedBox(height: 10),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// FAQ — collapsible Q&A list. Distinctive lavender background per Figma so
-// it doesn't read as another stat card.
-// ---------------------------------------------------------------------------
-class _FaqCard extends StatefulWidget {
-  final String header;
-  final List<({String question, String answer})> items;
-
-  const _FaqCard({required this.header, required this.items});
-
-  @override
-  State<_FaqCard> createState() => _FaqCardState();
-}
-
-class _FaqCardState extends State<_FaqCard> {
-  // Tracks which row is currently open. Null = all collapsed. Only one row
-  // open at a time keeps the card compact and avoids long vertical jumps.
-  int? _expanded;
-
-  static const Color _bg = Color(0xFFE2E2F0);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: _bg,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.header,
-            style: onboardingTitleStyle(
-              context,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              height: 24 / 18,
-            ),
-          ),
-          const SizedBox(height: 12),
-          for (int i = 0; i < widget.items.length; i++) ...[
-            _FaqRow(
-              question: widget.items[i].question,
-              answer: widget.items[i].answer,
-              expanded: _expanded == i,
-              onTap: () => setState(
-                () => _expanded = _expanded == i ? null : i,
-              ),
-            ),
-            if (i != widget.items.length - 1) const SizedBox(height: 12),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _FaqRow extends StatelessWidget {
-  final String question;
-  final String answer;
-  final bool expanded;
-  final VoidCallback onTap;
-
-  const _FaqRow({
-    required this.question,
-    required this.answer,
-    required this.expanded,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  question,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: cs.onSurface,
-                    height: 20 / 15,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              AnimatedRotation(
-                turns: expanded ? 0.5 : 0,
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCubic,
-                child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 20,
-                  color: cs.onSurface,
-                ),
-              ),
-            ],
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: expanded
-                ? Padding(
-                    padding: const EdgeInsets.only(top: 6, right: 28),
-                    child: Text(
-                      answer,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: cs.onSurface,
-                        height: 20 / 14,
-                      ),
-                    ),
-                  )
-                : const SizedBox(width: double.infinity),
-          ),
         ],
       ),
     );

@@ -667,8 +667,25 @@
   "paywallFeatureAnalyticsDesc": "Графики калорий, БЖУ и прогресс по вашим целям за любой период.",
   "paywallFeatureBarcodeTitle": "Сканер штрихкодов",
   "paywallFeatureBarcodeDesc": "Наведите камеру на упаковку — данные подтянутся сами.",
-  "paywallNoPaymentNow": "Платёж сейчас не требуется",
+  "paywallNoPaymentNow": "Сегодня без оплаты",
   "paywallStartTrial": "Начать пробный период",
+  "paywallContinuePro": "Продолжить с Pro",
+  "paywallSave85": "Экономия 85 %",
+  "paywallDayPrefix": "День {n}",
+  "@paywallDayPrefix": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallTrialStarts": "Старт пробного периода",
+  "paywallTrialRemindYou": "Напомним вам",
+  "paywallTrialPlanBegins": "Начало плана",
+  "paywallFeatureSnap": "Фото — ИИ считает калории",
+  "paywallFeatureScore": "Health-оценка каждого блюда",
+  "paywallFeatureTags": "Теги под твою цель",
+  "paywallFeaturePrivacy": "Шифрование · Без рекламы · Без продажи",
   "paywallTrialDisclaimer": "3 дня бесплатно, затем $39.99/год",
   "paywallWeeklyDisclaimer": "Списание сегодня. Отмена в любой момент.",
   "paywallTrialDisclaimerFmt": "3 дня бесплатно, затем {price}/год",

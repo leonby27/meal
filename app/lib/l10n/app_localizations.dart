@@ -2761,7 +2761,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallNoPaymentNow.
   ///
   /// In ru, this message translates to:
-  /// **'Платёж сейчас не требуется'**
+  /// **'Сегодня без оплаты'**
   String get paywallNoPaymentNow;
 
   /// No description provided for @paywallStartTrial.
@@ -2769,6 +2769,66 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Начать пробный период'**
   String get paywallStartTrial;
+
+  /// No description provided for @paywallContinuePro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжить с Pro'**
+  String get paywallContinuePro;
+
+  /// No description provided for @paywallSave85.
+  ///
+  /// In ru, this message translates to:
+  /// **'Экономия 85 %'**
+  String get paywallSave85;
+
+  /// No description provided for @paywallDayPrefix.
+  ///
+  /// In ru, this message translates to:
+  /// **'День {n}'**
+  String paywallDayPrefix(int n);
+
+  /// No description provided for @paywallTrialStarts.
+  ///
+  /// In ru, this message translates to:
+  /// **'Старт пробного периода'**
+  String get paywallTrialStarts;
+
+  /// No description provided for @paywallTrialRemindYou.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напомним вам'**
+  String get paywallTrialRemindYou;
+
+  /// No description provided for @paywallTrialPlanBegins.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начало плана'**
+  String get paywallTrialPlanBegins;
+
+  /// No description provided for @paywallFeatureSnap.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото — ИИ считает калории'**
+  String get paywallFeatureSnap;
+
+  /// No description provided for @paywallFeatureScore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Health-оценка каждого блюда'**
+  String get paywallFeatureScore;
+
+  /// No description provided for @paywallFeatureTags.
+  ///
+  /// In ru, this message translates to:
+  /// **'Теги под твою цель'**
+  String get paywallFeatureTags;
+
+  /// No description provided for @paywallFeaturePrivacy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шифрование · Без рекламы · Без продажи'**
+  String get paywallFeaturePrivacy;
 
   /// No description provided for @paywallTrialDisclaimer.
   ///

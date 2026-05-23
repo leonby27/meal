@@ -499,8 +499,25 @@
   "paywallFeatureAnalyticsDesc": "Kalorien, Makros und Zielfortschritt über jeden Zeitraum.",
   "paywallFeatureBarcodeTitle": "Barcode-Scanner",
   "paywallFeatureBarcodeDesc": "Kamera auf die Verpackung halten — Daten werden automatisch übernommen.",
-  "paywallNoPaymentNow": "Jetzt keine Zahlung erforderlich",
+  "paywallNoPaymentNow": "Heute keine Zahlung",
   "paywallStartTrial": "Testphase starten",
+  "paywallContinuePro": "Mit Pro fortfahren",
+  "paywallSave85": "85 % sparen",
+  "paywallDayPrefix": "Tag {n}",
+  "@paywallDayPrefix": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallTrialStarts": "Testphase startet",
+  "paywallTrialRemindYou": "Wir erinnern dich",
+  "paywallTrialPlanBegins": "Plan beginnt",
+  "paywallFeatureSnap": "Foto machen, KI zählt Kalorien",
+  "paywallFeatureScore": "Health-Score für jede Mahlzeit",
+  "paywallFeatureTags": "Persönliche Ziel-Tags",
+  "paywallFeaturePrivacy": "Verschlüsselt · Werbefrei · Kein Verkauf",
   "paywallTrialDisclaimer": "3 Tage kostenlos, dann 39,99 $/Jahr",
   "paywallWeeklyDisclaimer": "Abrechnung heute. Jederzeit kündbar.",
   "paywallRestore": "Wiederherstellen",
