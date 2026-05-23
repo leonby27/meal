@@ -1111,7 +1111,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     // padding so the last content item (disclaimer) lands
                     // clearly above the block, with a small breathing gap.
                     const _resultBottomBlockTopPad = 16.0;
-                    const _resultBottomBlockGap = 24.0;
+                    const _resultBottomBlockGap = 0.0;
                     final resultBottomBlockHeight =
                         _resultBottomBlockTopPad +
                         _resultCtaHeight +
