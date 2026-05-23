@@ -535,6 +535,11 @@
   "resultCongratsTitle": "Поздравляем!",
   "resultCongratsSubtitle": "Ваш персональный план здоровья готов!",
   "resultCanChange": "Это можно изменить в любой момент",
+  "resultTailoredFromAnswers": "Подобрано по {count} вашим ответам",
+  "@resultTailoredFromAnswers": {
+    "description": "Number of onboarding answers used to build the plan, shown on the plan-reveal screen.",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "resultHowToTitle": "Как достигать целей",
   "resultTip1": "Ведите учёт еды — сформируйте полезную привычку!",
   "resultTip2": "Следуйте дневной рекомендации по калориям",
@@ -924,6 +929,10 @@
         "type": "int"
       }
     }
+  },
+  "resultStartLabel": "Старт",
+  "@resultStartLabel": {
+    "description": "Short label shown on the first weekly-progress row of the plan-reveal screen instead of a percent."
   },
   "resultGoalReachLine": "Вы достигнете {weight}",
   "@resultGoalReachLine": {

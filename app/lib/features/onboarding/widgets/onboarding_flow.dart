@@ -843,82 +843,38 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   ) {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
-    final bgColor = isDark ? AppColors.darkScaffold : AppColors.lightScaffold;
-    final yearly = SubscriptionService().productById(
-      SubscriptionService.yearlyId,
-    );
+    final bgColor = isDark ? AppColors.darkOnBack : AppColors.lightOnBack;
     final localeCode = Localizations.localeOf(context).toLanguageTag();
     final fmt = NumberFormat.simpleCurrency(
       locale: localeCode,
-      name: yearly?.currencyCode ?? 'USD',
+      name:
+          SubscriptionService()
+                  .productById(SubscriptionService.yearlyId)
+                  ?.currencyCode ??
+              'USD',
     );
     final trialPriceStr = fmt.format(0);
-    final yearlyStr = yearly?.price ?? '—';
-    final monthlyStr = yearly == null
-        ? '—'
-        : fmt.format(yearly.rawPrice / 12);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IgnorePointer(
-          child: Container(
-            height: _resultCtaFadeHeight,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                // Three-stop ease-in alpha ramp — top stays barely tinted
-                // so the underlying card holds its shape, then alpha
-                // accelerates into a fully opaque panel by the bottom.
-                // Looks closer to an opacity dissolve than a hard linear
-                // fade.
-                colors: [
-                  bgColor.withAlpha(0),
-                  bgColor.withAlpha(64),
-                  bgColor.withAlpha(180),
-                  bgColor,
-                ],
-                stops: const [0.0, 0.45, 0.78, 1.0],
-              ),
+        Container(
+          decoration: BoxDecoration(
+            color: bgColor,
+            border: const Border(
+              top: BorderSide(color: AppColors.lineLight100),
             ),
           ),
-        ),
-        Container(
-          color: bgColor,
           padding: EdgeInsets.fromLTRB(
-            20,
-            0,
-            20,
+            16,
+            16,
+            16,
             bottomInset + _resultBottomSubtitleGap,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    'assets/onboarding/icons/check.svg',
-                    width: 22,
-                    height: 22,
-                    colorFilter:
-                        ColorFilter.mode(cs.onSurface, BlendMode.srcIn),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    l10n.onbTrialReminderNoPaymentNow,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      height: 22 / 16,
-                      color: cs.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: _resultCheckBottomGap),
               SizedBox(
                 height: _resultCtaHeight,
                 child: ElevatedButton(
@@ -958,7 +914,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               ),
               const SizedBox(height: _resultSubtitleTopGap),
               Text(
-                l10n.onbTrialReminderSubtitle(yearlyStr, monthlyStr),
+                l10n.onbTrialReminderNoPaymentNow,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -1150,19 +1106,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     final stepImageBottom = isLoading
                         ? 0.0
                         : bottomInset + _stepImageBottomOffset;
-                    // The result step shows a richer bottom block (check
-                    // line + button + price subtitle) — reserve a deeper
-                    // padding so the scrollable plan content can't hide
-                    // behind it. Includes the 24-pt fade strip that sits
-                    // on top of the block to mask scrolled content.
+                    // The result step shows a button + small "No payment
+                    // required now" line below it. Reserve enough scroll
+                    // padding so the last content item (disclaimer) lands
+                    // clearly above the block, with a small breathing gap.
+                    const _resultBottomBlockTopPad = 16.0;
+                    const _resultBottomBlockGap = 24.0;
                     final resultBottomBlockHeight =
-                        _resultCheckRowHeight +
-                        _resultCheckBottomGap +
+                        _resultBottomBlockTopPad +
                         _resultCtaHeight +
                         _resultSubtitleTopGap +
                         _resultSubtitleHeight +
                         _resultBottomSubtitleGap +
-                        _resultCtaFadeHeight;
+                        _resultBottomBlockGap;
                     final contentBottomPadding = isLoading || !showCta
                         ? 0.0
                         : hasStepImage
@@ -1170,15 +1126,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                                   stepImageHeight +
                                   _stepImageContentGap
                             : showTrialBottom
-                                // Reserve the panel's solid area only — the
-                                // gradient strip sits on top and intentionally
-                                // overlaps the last few pixels of scrollable
-                                // content so the fade has something to act on
-                                // (otherwise the strip just sits over the
-                                // scaffold and looks like extra padding).
-                                ? bottomInset +
-                                      resultBottomBlockHeight -
-                                      _resultCtaFadeHeight
+                                ? bottomInset + resultBottomBlockHeight
                                 // No step image (e.g. early steps): reserve
                                 // space for the single floating CTA button.
                                 : bottomInset +

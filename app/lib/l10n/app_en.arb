@@ -397,6 +397,11 @@
   "resultCongratsTitle": "Congratulations!",
   "resultCongratsSubtitle": "Your personal health plan is ready!",
   "resultCanChange": "You can change this at any time",
+  "resultTailoredFromAnswers": "Tailored from your {count} answers",
+  "@resultTailoredFromAnswers": {
+    "description": "Number of onboarding answers used to build the plan, shown on the plan-reveal screen.",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "resultHowToTitle": "How to reach your goals",
   "resultTip1": "Track your meals — build a healthy habit!",
   "resultTip2": "Follow daily calorie recommendations",
@@ -740,6 +745,10 @@
         "type": "int"
       }
     }
+  },
+  "resultStartLabel": "Start",
+  "@resultStartLabel": {
+    "description": "Short label shown on the first weekly-progress row of the plan-reveal screen instead of a percent."
   },
   "resultGoalReachLine": "You'll reach {weight}",
   "@resultGoalReachLine": {

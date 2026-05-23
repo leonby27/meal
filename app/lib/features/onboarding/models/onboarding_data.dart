@@ -24,4 +24,18 @@ class OnboardingData {
   double? fatGoal;
   double? carbsGoal;
   DateTime? targetDate;
+
+  /// Number of meaningful onboarding answers used to build the plan.
+  /// Shown on the plan-reveal card as "Tailored from your {n} answers".
+  int get answeredCount {
+    var n = 8; // goal, gender, age, units, height, weight, target weight, activity
+    if (obstacles.isNotEmpty) n++;
+    if (weightLossKgPerWeek > 0 && goal != 'maintain') n++;
+    if (psychotype != null) n++;
+    if (calorieHistory != null) n++;
+    if (improveGoals.isNotEmpty) n++;
+    if (eatingObstacle != null) n++;
+    if (hardestChallenge != null) n++;
+    return n;
+  }
 }

@@ -397,6 +397,11 @@
   "resultCongratsTitle": "Parabéns!",
   "resultCongratsSubtitle": "Seu plano de saúde personalizado está pronto!",
   "resultCanChange": "Você pode alterar isso a qualquer momento",
+  "resultTailoredFromAnswers": "Adaptado às suas {count} respostas",
+  "@resultTailoredFromAnswers": {
+    "description": "Number of onboarding answers used to build the plan, shown on the plan-reveal screen.",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "resultHowToTitle": "Como alcançar seus objetivos",
   "resultTip1": "Registre suas refeições — crie um hábito saudável!",
   "resultTip2": "Siga as recomendações diárias de calorias",
@@ -740,6 +745,10 @@
         "type": "int"
       }
     }
+  },
+  "resultStartLabel": "Início",
+  "@resultStartLabel": {
+    "description": "Short label shown on the first weekly-progress row of the plan-reveal screen instead of a percent."
   },
   "resultGoalReachLine": "Você alcançará {weight}",
   "@resultGoalReachLine": {

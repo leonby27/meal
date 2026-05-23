@@ -2236,6 +2236,12 @@ abstract class AppLocalizations {
   /// **'Это можно изменить в любой момент'**
   String get resultCanChange;
 
+  /// Number of onboarding answers used to build the plan, shown on the plan-reveal screen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подобрано по {count} вашим ответам'**
+  String resultTailoredFromAnswers(int count);
+
   /// No description provided for @resultHowToTitle.
   ///
   /// In ru, this message translates to:
@@ -3543,6 +3549,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Неделя {week}'**
   String resultWeekRow(int week);
+
+  /// Short label shown on the first weekly-progress row of the plan-reveal screen instead of a percent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Старт'**
+  String get resultStartLabel;
 
   /// No description provided for @resultGoalReachLine.
   ///

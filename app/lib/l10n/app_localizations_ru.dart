@@ -1152,6 +1152,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resultCanChange => 'Это можно изменить в любой момент';
 
   @override
+  String resultTailoredFromAnswers(int count) {
+    return 'Подобрано по $count вашим ответам';
+  }
+
+  @override
   String get resultHowToTitle => 'Как достигать целей';
 
   @override
@@ -1927,6 +1932,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String resultWeekRow(int week) {
     return 'Неделя $week';
   }
+
+  @override
+  String get resultStartLabel => 'Старт';
 
   @override
   String resultGoalReachLine(String weight) {

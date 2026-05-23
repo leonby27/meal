@@ -1158,6 +1158,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get resultCanChange => 'Você pode alterar isso a qualquer momento';
 
   @override
+  String resultTailoredFromAnswers(int count) {
+    return 'Adaptado às suas $count respostas';
+  }
+
+  @override
   String get resultHowToTitle => 'Como alcançar seus objetivos';
 
   @override
@@ -1926,6 +1931,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String resultWeekRow(int week) {
     return 'Semana $week';
   }
+
+  @override
+  String get resultStartLabel => 'Início';
 
   @override
   String resultGoalReachLine(String weight) {

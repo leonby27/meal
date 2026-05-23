@@ -12,7 +12,6 @@ import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/utils/macro_order.dart';
 import 'package:meal_tracker/core/widgets/methodology_sources_sheet.dart';
 import 'package:meal_tracker/features/onboarding/models/onboarding_data.dart';
-import 'package:meal_tracker/features/onboarding/widgets/common/faq_card.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_noto_emoji.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart';
 import 'package:meal_tracker/features/onboarding/widgets/steps/obstacles_step.dart';
@@ -223,6 +222,9 @@ class _ResultStepState extends State<ResultStep>
                 fatLabel: l10n.fatLabel,
                 carbsLabel: l10n.carbsLabel,
                 footer: l10n.resultCanChange,
+                tailoredFooter: l10n.resultTailoredFromAnswers(
+                  widget.data.answeredCount,
+                ),
                 cardBg: cardBg,
                 isDark: isDark,
                 entryAnimation: _entryController,
@@ -287,7 +289,8 @@ class _ResultStepState extends State<ResultStep>
                     header: l10n.resultMilestonesHeader,
                     milestones: milestones,
                     startWeight: data.weightKg,
-                    formatDelta: (w) => _formatDelta(w, data.weightKg),
+                    formatWeight: _formatWeight,
+                    startLabel: l10n.resultStartLabel,
                     goalLabel: l10n.resultGoalRow,
                     weekLabelFor: (w) => l10n.resultWeekRow(w),
                     cardBg: cardBg,
@@ -325,36 +328,6 @@ class _ResultStepState extends State<ResultStep>
                 },
               ),
               const SizedBox(height: 8),
-
-              _FadeSlideIn(
-                delayMs: 320,
-                child: FaqCard(
-                  header: l10n.resultFaqHeader,
-                  // Lavender bg per Figma — distinguishes the FAQ block
-                  // from the surrounding stat cards on the result screen.
-                  background: const Color(0xFFE2E2F0),
-                  items: [
-                    (
-                      question: l10n.resultFaqCancelQ,
-                      // Cancellation steps differ between the App Store
-                      // and Play Store, so route to a platform-specific
-                      // copy.
-                      answer:
-                          Theme.of(context).platform == TargetPlatform.iOS
-                              ? l10n.resultFaqCancelAIos
-                              : l10n.resultFaqCancelAAndroid,
-                    ),
-                    (
-                      question: l10n.resultFaqSecurityQ,
-                      answer: l10n.resultFaqSecurityA,
-                    ),
-                    (
-                      question: l10n.resultFaqTrialQ,
-                      answer: l10n.resultFaqTrialA,
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),
@@ -407,6 +380,7 @@ class _PlanSummaryCard extends StatelessWidget {
   final String fatLabel;
   final String carbsLabel;
   final String footer;
+  final String tailoredFooter;
   final Color cardBg;
   final bool isDark;
   final Animation<double> entryAnimation;
@@ -424,6 +398,7 @@ class _PlanSummaryCard extends StatelessWidget {
     required this.fatLabel,
     required this.carbsLabel,
     required this.footer,
+    required this.tailoredFooter,
     required this.cardBg,
     required this.isDark,
     required this.entryAnimation,
@@ -473,6 +448,16 @@ class _PlanSummaryCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             footer,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: cs.onSurfaceVariant,
+              height: 18 / 14,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            tailoredFooter,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -710,16 +695,16 @@ class _PastelMacroPill extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SvgPicture.asset(iconAsset, width: 20, height: 20),
+              SvgPicture.asset(iconAsset, width: 18, height: 18),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: textColor,
-                    height: 16 / 13,
+                    height: 14 / 12,
                   ),
                 ),
               ),
@@ -729,10 +714,10 @@ class _PastelMacroPill extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 17,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
               color: textColor,
-              height: 22 / 17,
+              height: 20 / 15,
             ),
           ),
         ],
@@ -1041,14 +1026,14 @@ class _BenefitsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    // Gray surface card per Figma (#F5F6F8) — visually distinct from
+    // the white stat cards above/below; no border, no baseDrop.
+    final surfaceBg = isDark ? AppColors.darkSurface : AppColors.lightScaffold;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: cardBg,
+        color: surfaceBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: lineColor),
-        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Column(
@@ -1064,9 +1049,10 @@ class _BenefitsCard extends StatelessWidget {
                   child: Text(
                     items[i].label,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
                       color: cs.onSurface,
-                      height: 20 / 14,
+                      height: 20 / 15,
                     ),
                   ),
                 ),
@@ -1089,7 +1075,8 @@ class _MilestonesCard extends StatelessWidget {
   final String header;
   final List<({int week, double weight, bool isGoal})> milestones;
   final double startWeight;
-  final String Function(double) formatDelta;
+  final String Function(double) formatWeight;
+  final String startLabel;
   final String goalLabel;
   final String Function(int) weekLabelFor;
   final Color cardBg;
@@ -1103,7 +1090,8 @@ class _MilestonesCard extends StatelessWidget {
     required this.header,
     required this.milestones,
     required this.startWeight,
-    required this.formatDelta,
+    required this.formatWeight,
+    required this.startLabel,
     required this.goalLabel,
     required this.weekLabelFor,
     required this.cardBg,
@@ -1143,20 +1131,29 @@ class _MilestonesCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           for (int i = 0; i < milestones.length; i++) ...[
-            _MilestoneRow(
-              label: milestones[i].isGoal
-                  ? goalLabel
-                  : weekLabelFor(milestones[i].week),
-              weight: milestones[i].weight,
-              isFinal: milestones[i].isGoal,
-              progress: goalWeek == 0
+            () {
+              final m = milestones[i];
+              final progress = goalWeek == 0
                   ? 1.0
-                  : (milestones[i].week / goalWeek).clamp(0.0, 1.0),
-              deltaText: formatDelta(milestones[i].weight),
-              barTrackColor: cs.surfaceContainerHighest.withAlpha(80),
-              animate: animate,
-              rowIndex: i,
-            ),
+                  : (m.week / goalWeek).clamp(0.0, 1.0);
+              // Value prefix: "Start" for the very first row, "100%"
+              // for the goal, percentage otherwise.
+              final prefix = m.isGoal
+                  ? '100%'
+                  : (i == 0 ? startLabel : '${(progress * 100).round()}%');
+              return _MilestoneRow(
+                label: m.isGoal ? goalLabel : weekLabelFor(m.week),
+                weight: m.weight,
+                isFinal: m.isGoal,
+                progress: progress,
+                valueText: '$prefix · ${formatWeight(m.weight)}',
+                barTrackColor: isDark
+                    ? AppColors.lineDT100
+                    : AppColors.lineLight200,
+                animate: animate,
+                rowIndex: i,
+              );
+            }(),
             if (i != milestones.length - 1) const SizedBox(height: 12),
           ],
         ],
@@ -1170,7 +1167,7 @@ class _MilestoneRow extends StatelessWidget {
   final double weight;
   final bool isFinal;
   final double progress;
-  final String deltaText;
+  final String valueText;
   final Color barTrackColor;
   final bool animate;
   final int rowIndex;
@@ -1180,7 +1177,7 @@ class _MilestoneRow extends StatelessWidget {
     required this.weight,
     required this.isFinal,
     required this.progress,
-    required this.deltaText,
+    required this.valueText,
     required this.barTrackColor,
     required this.animate,
     required this.rowIndex,
@@ -1215,8 +1212,8 @@ class _MilestoneRow extends StatelessWidget {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 150),
               child: Text(
-                animate ? deltaText : '',
-                key: ValueKey(animate ? deltaText : '__pending'),
+                animate ? valueText : '',
+                key: ValueKey(animate ? valueText : '__pending'),
                 textAlign: TextAlign.right,
                 style: TextStyle(
                   fontSize: 14,
@@ -1250,22 +1247,12 @@ class _MilestoneRow extends StatelessWidget {
                 builder: (context, value, _) {
                   return FractionallySizedBox(
                     widthFactor: value,
-                    child: isFinal
-                        ? Container(
-                            height: 12,
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFF22D33A),
-                                  Color(0xFF1EBF92),
-                                ],
-                              ),
-                            ),
-                          )
-                        : Container(
-                            height: 12,
-                            color: const Color(0xFF317BFF),
-                          ),
+                    child: Container(
+                      height: 12,
+                      color: isFinal
+                          ? AppColors.success
+                          : AppColors.onboardingCtaBg,
+                    ),
                   );
                 },
               ),
@@ -1296,14 +1283,14 @@ class _ObstaclesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    // Gray surface card per Figma (#F5F6F8) — matches the benefits card
+    // tone above; no border, no baseDrop.
+    final surfaceBg = isDark ? AppColors.darkSurface : AppColors.lightScaffold;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: cardBg,
+        color: surfaceBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: lineColor),
-        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Column(
@@ -1333,9 +1320,10 @@ class _ObstaclesCard extends StatelessWidget {
                   child: Text(
                     entries[i].label,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
                       color: cs.onSurface,
-                      height: 20 / 14,
+                      height: 20 / 15,
                     ),
                   ),
                 ),
