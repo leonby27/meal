@@ -2074,7 +2074,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You have a healthy approach. We\'ll back it with data.';
 
   @override
-  String get onbWelcomeTitle => 'Snap food. Reach your goal.';
+  String get onbWelcomeTitle => 'Snap food.\nReach your goal.';
 
   @override
   String get onbWelcomeSubtitle =>
@@ -2082,6 +2082,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onbWelcomeCta => 'Get started';
+
+  @override
+  String get onbWelcomeLabelSalmon => 'Salmon';
+
+  @override
+  String get onbWelcomeLabelEggs => 'Eggs';
+
+  @override
+  String get onbWelcomeLabelAvocado => 'Avocado';
+
+  @override
+  String get onbWelcomeLabelBread => 'Bread';
 
   @override
   String get onbLanguageSheetTitle => 'Choose your language';

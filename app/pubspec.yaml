@@ -119,7 +119,8 @@ flutter:
     - assets/onboarding/emoji/
     - assets/onboarding/flags/
     - assets/onboarding/icons/
-    - assets/onboarding/welcome_food.png
+    - assets/onboarding/welcome_food.jpg
+    - assets/onboarding/welcome_scan.png
     - assets/onboarding/trust_hands.jpg
     - assets/onboarding/chart.png
     - assets/onboarding/support_man.jpg

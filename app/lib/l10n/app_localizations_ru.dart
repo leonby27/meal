@@ -2091,7 +2091,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'У вас здоровый подход к питанию. Усилим его данными.';
 
   @override
-  String get onbWelcomeTitle => 'Сфотографируй еду. Достигни цели.';
+  String get onbWelcomeTitle => 'Сфотографируй еду.\nДостигни цели.';
 
   @override
   String get onbWelcomeSubtitle =>
@@ -2099,6 +2099,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get onbWelcomeCta => 'Начать';
+
+  @override
+  String get onbWelcomeLabelSalmon => 'Лосось';
+
+  @override
+  String get onbWelcomeLabelEggs => 'Яйца';
+
+  @override
+  String get onbWelcomeLabelAvocado => 'Авокадо';
+
+  @override
+  String get onbWelcomeLabelBread => 'Хлеб';
 
   @override
   String get onbLanguageSheetTitle => 'Выберите язык';

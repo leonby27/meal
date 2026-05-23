@@ -3811,7 +3811,7 @@ abstract class AppLocalizations {
   /// No description provided for @onbWelcomeTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сфотографируй еду. Достигни цели.'**
+  /// **'Сфотографируй еду.\nДостигни цели.'**
   String get onbWelcomeTitle;
 
   /// No description provided for @onbWelcomeSubtitle.
@@ -3825,6 +3825,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Начать'**
   String get onbWelcomeCta;
+
+  /// No description provided for @onbWelcomeLabelSalmon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лосось'**
+  String get onbWelcomeLabelSalmon;
+
+  /// No description provided for @onbWelcomeLabelEggs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Яйца'**
+  String get onbWelcomeLabelEggs;
+
+  /// No description provided for @onbWelcomeLabelAvocado.
+  ///
+  /// In ru, this message translates to:
+  /// **'Авокадо'**
+  String get onbWelcomeLabelAvocado;
+
+  /// No description provided for @onbWelcomeLabelBread.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хлеб'**
+  String get onbWelcomeLabelBread;
 
   /// No description provided for @onbLanguageSheetTitle.
   ///

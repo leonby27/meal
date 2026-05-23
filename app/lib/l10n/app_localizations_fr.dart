@@ -2106,7 +2106,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onbWelcomeTitle =>
-      'Photographiez vos plats. Atteignez votre objectif.';
+      'Photographiez vos plats.\nAtteignez votre objectif.';
 
   @override
   String get onbWelcomeSubtitle =>
@@ -2114,6 +2114,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get onbWelcomeCta => 'Commencer';
+
+  @override
+  String get onbWelcomeLabelSalmon => 'Saumon';
+
+  @override
+  String get onbWelcomeLabelEggs => 'Œufs';
+
+  @override
+  String get onbWelcomeLabelAvocado => 'Avocat';
+
+  @override
+  String get onbWelcomeLabelBread => 'Pain';
 
   @override
   String get onbLanguageSheetTitle => 'Choisir la langue';

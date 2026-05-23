@@ -2093,7 +2093,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tienes un enfoque saludable. Lo respaldaremos con datos.';
 
   @override
-  String get onbWelcomeTitle => 'Fotografía la comida. Alcanza tu objetivo.';
+  String get onbWelcomeTitle => 'Fotografía la comida.\nAlcanza tu objetivo.';
 
   @override
   String get onbWelcomeSubtitle =>
@@ -2101,6 +2101,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onbWelcomeCta => 'Empezar';
+
+  @override
+  String get onbWelcomeLabelSalmon => 'Salmón';
+
+  @override
+  String get onbWelcomeLabelEggs => 'Huevos';
+
+  @override
+  String get onbWelcomeLabelAvocado => 'Aguacate';
+
+  @override
+  String get onbWelcomeLabelBread => 'Pan';
 
   @override
   String get onbLanguageSheetTitle => 'Elige tu idioma';

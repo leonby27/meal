@@ -2092,7 +2092,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Você tem uma abordagem saudável. Vamos reforçar com dados.';
 
   @override
-  String get onbWelcomeTitle => 'Fotografe a comida. Alcance seu objetivo.';
+  String get onbWelcomeTitle => 'Fotografe a comida.\nAlcance seu objetivo.';
 
   @override
   String get onbWelcomeSubtitle =>
@@ -2100,6 +2100,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get onbWelcomeCta => 'Começar';
+
+  @override
+  String get onbWelcomeLabelSalmon => 'Salmão';
+
+  @override
+  String get onbWelcomeLabelEggs => 'Ovos';
+
+  @override
+  String get onbWelcomeLabelAvocado => 'Abacate';
+
+  @override
+  String get onbWelcomeLabelBread => 'Pão';
 
   @override
   String get onbLanguageSheetTitle => 'Escolha o idioma';
