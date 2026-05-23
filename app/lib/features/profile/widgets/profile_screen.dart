@@ -844,20 +844,22 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                 children: [
                   Expanded(
                     child: _GoalSummaryCell(
-                      iconAsset: 'assets/icons/cal.svg',
+                      icon: Icons.local_fire_department_outlined,
                       value: _calorieGoal.toInt().toString(),
                       unit: 'kcal',
+                      label: context.l10n.caloriesLabel,
                       primary: cs.onSurface,
                       secondary: secondary,
+                      isDark: _isDark,
                     ),
                   ),
                   for (final m in MacroOrder.of(context))
                     Expanded(
                       child: _GoalSummaryCell(
-                        iconAsset: switch (m) {
-                          Macro.protein => 'assets/icons/belok.svg',
-                          Macro.fat => 'assets/icons/fat.svg',
-                          Macro.carbs => 'assets/icons/uglevod.svg',
+                        icon: switch (m) {
+                          Macro.protein => Icons.fitness_center,
+                          Macro.fat => Icons.water_drop_outlined,
+                          Macro.carbs => Icons.grain,
                         },
                         value: switch (m) {
                           Macro.protein =>
@@ -866,8 +868,14 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
                           Macro.carbs => _carbsGoal.toInt().toString(),
                         },
                         unit: 'g',
+                        label: switch (m) {
+                          Macro.protein => context.l10n.proteinLabel,
+                          Macro.fat => context.l10n.fatLabel,
+                          Macro.carbs => context.l10n.carbsLabel,
+                        },
                         primary: cs.onSurface,
                         secondary: secondary,
+                        isDark: _isDark,
                       ),
                     ),
                 ],
@@ -1096,42 +1104,65 @@ class _ProfileScreenState extends State<ProfileScreen> with RouteAware {
 
 class _GoalSummaryCell extends StatelessWidget {
   const _GoalSummaryCell({
-    required this.iconAsset,
+    required this.icon,
     required this.value,
     required this.unit,
+    required this.label,
     required this.primary,
     required this.secondary,
+    required this.isDark,
   });
 
-  final String iconAsset;
+  final IconData icon;
   final String value;
   final String unit;
+  final String label;
   final Color primary;
   final Color secondary;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
+    final baseSurface =
+        isDark ? AppColors.darkSurface : AppColors.lightScaffold;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SvgPicture.asset(iconAsset, width: 28, height: 28),
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(color: baseSurface, shape: BoxShape.circle),
+          child: Center(child: Icon(icon, size: 18, color: primary)),
+        ),
         const SizedBox(height: 6),
         FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(
-            value,
+          child: RichText(
             maxLines: 1,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              height: 22 / 16,
-              color: primary,
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                height: 22 / 16,
+                color: primary,
+              ),
+              children: [
+                TextSpan(text: value),
+                TextSpan(
+                  text: ' $unit',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: secondary,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         const SizedBox(height: 2),
         Text(
-          unit,
+          label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(

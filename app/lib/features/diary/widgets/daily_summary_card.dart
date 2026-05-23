@@ -568,6 +568,12 @@ class _MacrosRow extends StatelessWidget {
   final Color secondary;
   final Color goalNumberColor;
 
+  // Solid macro colors mirroring `_CalorieRingPainter` in the meal
+  // analytics sheet — single source of truth across the app.
+  static const _proteinColor = Color(0xFFE4431C);
+  static const _fatColor = Color(0xFFEFD400);
+  static const _carbsColor = Color(0xFF17ACCC);
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -595,7 +601,11 @@ class _MacrosRow extends StatelessWidget {
                 Macro.carbs => goalCarbs,
               },
               goalSuffix: 'g',
-              fillColor: primary,
+              fillColor: switch (order[i]) {
+                Macro.protein => _proteinColor,
+                Macro.fat => _fatColor,
+                Macro.carbs => _carbsColor,
+              },
               trackColor: trackColor,
               primary: primary,
               secondary: secondary,

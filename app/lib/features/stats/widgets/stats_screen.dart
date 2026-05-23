@@ -268,30 +268,6 @@ class _StatsScreenState extends State<StatsScreen> {
     };
   }
 
-  String _metricIconAsset(_ChartMetric m) => switch (m) {
-    _ChartMetric.calories => 'assets/icons/cal.svg',
-    _ChartMetric.protein => 'assets/icons/belok.svg',
-    _ChartMetric.fat => 'assets/icons/fat.svg',
-    _ChartMetric.carbs => 'assets/icons/uglevod.svg',
-  };
-
-  /// Accent color used for the highlight icon tint + metric label.
-  /// Calorie amber and fat yellow read fine on the dark on-back-4
-  /// surface but go washed-out on the white light surface, so we shift
-  /// them to deeper variants in light theme.
-  Color _metricAccent(_ChartMetric m) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return switch (m) {
-      _ChartMetric.calories => isDark
-          ? const Color(0xFFFBAE2E)
-          : const Color(0xFFE08405),
-      _ChartMetric.protein => const Color(0xFFEE2750),
-      _ChartMetric.fat => isDark
-          ? const Color(0xFFFFBB00)
-          : const Color(0xFFC79100),
-      _ChartMetric.carbs => const Color(0xFF17B7D1),
-    };
-  }
 
   /// Bar fill color for a given metric — mirrors `_DonutPainter` /
   /// `_CalorieRingPainter` so the trend bars and highlight bars share
@@ -379,15 +355,9 @@ class _StatsScreenState extends State<StatsScreen> {
 
   Widget _buildSummaryRow(bool isDark) {
     final cal = _data.fold(0.0, (s, d) => s + d.calories);
-    final prot = _data.fold(0.0, (s, d) => s + d.protein);
-    final fat = _data.fold(0.0, (s, d) => s + d.fat);
-    final carbs = _data.fold(0.0, (s, d) => s + d.carbs);
     final nonEmptyDays = _data.where((d) => d.calories > 0).length;
     final divisor = nonEmptyDays == 0 ? 1 : nonEmptyDays;
     final avgCal = cal / divisor;
-    final avgProt = prot / divisor;
-    final avgFat = fat / divisor;
-    final avgCarbs = carbs / divisor;
 
     return IntrinsicHeight(
       child: Row(
@@ -404,9 +374,7 @@ class _StatsScreenState extends State<StatsScreen> {
           Expanded(
             child: _AverageDonutCard(
               calories: avgCal,
-              proteinCal: avgProt * 4,
-              fatCal: avgFat * 9,
-              carbsCal: avgCarbs * 4,
+              goal: _goalCalories,
             ),
           ),
         ],
@@ -659,6 +627,7 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget _buildTrends(bool isDark) {
     final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
     final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    final primary = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
     final l10n = context.l10n;
 
     final buckets = _buildTrendBuckets(_trendMetric);
@@ -773,7 +742,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   goal: goal,
                   period: _period,
                   isDark: isDark,
-                  barColor: _metricBarColor(_trendMetric),
+                  barColor: primary,
                 ),
               ),
             ],
@@ -861,29 +830,15 @@ class _StatsScreenState extends State<StatsScreen> {
                 duration: _kSwitchDur,
                 switchInCurve: _kCurve,
                 switchOutCurve: Curves.easeInCubic,
-                child: Row(
+                child: Text(
+                  _metricLabel(_highlightMetric),
                   key: ValueKey(_highlightMetric),
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: SvgPicture.asset(
-                        _metricIconAsset(_highlightMetric),
-                        width: 20,
-                        height: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _metricLabel(_highlightMetric),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        height: 18 / 14,
-                        color: _metricAccent(_highlightMetric),
-                      ),
-                    ),
-                  ],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 18 / 14,
+                    color: primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -949,7 +904,7 @@ class _StatsScreenState extends State<StatsScreen> {
     // for carbs. The +/- direction is communicated by the description
     // text + sign in the pill, so the bar color stays "ours" regardless
     // of whether the user is above or below last week.
-    final fillColor = _metricBarColor(_highlightMetric);
+    final fillColor = primary;
 
     if (!hasPrevious) {
       // No previous period to compare against → render the current value
@@ -1324,7 +1279,7 @@ class _PeriodTabs extends StatelessWidget {
       height: 30,
       fontSize: 14,
       lineHeight: 20 / 14,
-      indicatorRadius: 6,
+      indicatorRadius: 8,
     );
   }
 }
@@ -1356,7 +1311,7 @@ class _MetricTabs extends StatelessWidget {
         height: 26,
         fontSize: 13,
         lineHeight: 16 / 13,
-        indicatorRadius: 5,
+        indicatorRadius: 7,
         cellPadding: const EdgeInsets.symmetric(horizontal: 6),
       ),
     );
@@ -1409,7 +1364,7 @@ class _SegmentedSwitch<T> extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       padding: const EdgeInsets.all(3),
       child: SizedBox(
@@ -1883,15 +1838,11 @@ class _StreakDot extends StatelessWidget {
 
 class _AverageDonutCard extends StatelessWidget {
   final double calories;
-  final double proteinCal;
-  final double fatCal;
-  final double carbsCal;
+  final double goal;
 
   const _AverageDonutCard({
     required this.calories,
-    required this.proteinCal,
-    required this.fatCal,
-    required this.carbsCal,
+    required this.goal,
   });
 
   @override
@@ -1905,10 +1856,8 @@ class _AverageDonutCard extends StatelessWidget {
         : AppColors.lightSecondaryDark;
     final trackColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
-    final total = proteinCal + fatCal + carbsCal;
-    final pProt = total <= 0 ? 0.0 : proteinCal / total;
-    final pCarbs = total <= 0 ? 0.0 : carbsCal / total;
-    final pFat = total <= 0 ? 0.0 : fatCal / total;
+    final double progress =
+        goal > 0 ? (calories / goal).clamp(0.0, 1.0).toDouble() : 0.0;
 
     return Container(
       height: 182,
@@ -1927,11 +1876,10 @@ class _AverageDonutCard extends StatelessWidget {
                 width: 110,
                 height: 110,
                 child: _AnimatedDonut(
-                  proteinFraction: pProt,
-                  carbsFraction: pCarbs,
-                  fatFraction: pFat,
+                  progress: progress,
                   calories: calories,
                   trackColor: trackColor,
+                  fillColor: primary,
                   primary: primary,
                   secondary: secondary,
                 ),
@@ -1961,20 +1909,18 @@ class _AverageDonutCard extends StatelessWidget {
 /// on each rebuild — same convention as `_overviewIntro` in the meal
 /// result sheet.
 class _AnimatedDonut extends StatefulWidget {
-  final double proteinFraction;
-  final double carbsFraction;
-  final double fatFraction;
+  final double progress;
   final double calories;
   final Color trackColor;
+  final Color fillColor;
   final Color primary;
   final Color secondary;
 
   const _AnimatedDonut({
-    required this.proteinFraction,
-    required this.carbsFraction,
-    required this.fatFraction,
+    required this.progress,
     required this.calories,
     required this.trackColor,
+    required this.fillColor,
     required this.primary,
     required this.secondary,
   });
@@ -1991,14 +1937,10 @@ class _AnimatedDonutState extends State<_AnimatedDonut>
   // Snapshot of the values the donut is currently displaying. We tween
   // from this snapshot to the latest widget values so period/metric
   // changes interpolate smoothly instead of snapping.
-  double _fromProtein = 0;
-  double _fromCarbs = 0;
-  double _fromFat = 0;
+  double _fromProgress = 0;
   double _fromCalories = 0;
 
-  double _toProtein = 0;
-  double _toCarbs = 0;
-  double _toFat = 0;
+  double _toProgress = 0;
   double _toCalories = 0;
 
   @override
@@ -2006,9 +1948,7 @@ class _AnimatedDonutState extends State<_AnimatedDonut>
     super.initState();
     _ctl = AnimationController(vsync: this, duration: _kIntroDur);
     _curve = CurvedAnimation(parent: _ctl, curve: _kCurve);
-    _toProtein = widget.proteinFraction;
-    _toCarbs = widget.carbsFraction;
-    _toFat = widget.fatFraction;
+    _toProgress = widget.progress;
     _toCalories = widget.calories;
     _ctl.forward();
   }
@@ -2016,21 +1956,15 @@ class _AnimatedDonutState extends State<_AnimatedDonut>
   @override
   void didUpdateWidget(covariant _AnimatedDonut old) {
     super.didUpdateWidget(old);
-    final changed = old.proteinFraction != widget.proteinFraction ||
-        old.carbsFraction != widget.carbsFraction ||
-        old.fatFraction != widget.fatFraction ||
+    final changed = old.progress != widget.progress ||
         old.calories != widget.calories;
     if (!changed) return;
 
     final t = _curve.value;
-    _fromProtein = _lerp(_fromProtein, _toProtein, t);
-    _fromCarbs = _lerp(_fromCarbs, _toCarbs, t);
-    _fromFat = _lerp(_fromFat, _toFat, t);
+    _fromProgress = _lerp(_fromProgress, _toProgress, t);
     _fromCalories = _lerp(_fromCalories, _toCalories, t);
 
-    _toProtein = widget.proteinFraction;
-    _toCarbs = widget.carbsFraction;
-    _toFat = widget.fatFraction;
+    _toProgress = widget.progress;
     _toCalories = widget.calories;
 
     _ctl.duration = _kDataDur;
@@ -2051,19 +1985,13 @@ class _AnimatedDonutState extends State<_AnimatedDonut>
       animation: _curve,
       builder: (context, _) {
         final t = _curve.value;
-        final prot = _lerp(_fromProtein, _toProtein, t);
-        final carbs = _lerp(_fromCarbs, _toCarbs, t);
-        final fat = _lerp(_fromFat, _toFat, t);
+        final progress = _lerp(_fromProgress, _toProgress, t);
         final cal = _lerp(_fromCalories, _toCalories, t);
-        final total = prot + carbs + fat;
         return CustomPaint(
           painter: _DonutPainter(
-            proteinFraction: prot,
-            carbsFraction: carbs,
-            fatFraction: fat,
+            progress: progress,
             trackColor: widget.trackColor,
-            isEmpty: total <= 0,
-            order: MacroOrder.of(context),
+            fillColor: widget.fillColor,
           ),
           child: Center(
             child: Column(
@@ -2097,31 +2025,16 @@ class _AnimatedDonutState extends State<_AnimatedDonut>
 }
 
 class _DonutPainter extends CustomPainter {
-  final double proteinFraction;
-  final double carbsFraction;
-  final double fatFraction;
+  final double progress;
   final Color trackColor;
-  final bool isEmpty;
-  /// Locale-driven clockwise order, starting at 12 o'clock.
-  final List<Macro> order;
+  final Color fillColor;
 
   static const _strokeWidth = 12.0;
-  // Gap between segments measured along the arc, in logical px.
-  static const _gapPx = 2.0;
-
-  // Match the per-product calorie ring (`_CalorieRingPainter`) so the
-  // analytics donut reads as the same chart family as the meal cards.
-  static const _proteinColor = Color(0xFFE4431C);
-  static const _fatColor = Color(0xFFEFD400);
-  static const _carbsColor = Color(0xFF17ACCC);
 
   _DonutPainter({
-    required this.proteinFraction,
-    required this.carbsFraction,
-    required this.fatFraction,
+    required this.progress,
     required this.trackColor,
-    required this.isEmpty,
-    required this.order,
+    required this.fillColor,
   });
 
   @override
@@ -2138,53 +2051,21 @@ class _DonutPainter extends CustomPainter {
       ..strokeWidth = _strokeWidth;
     canvas.drawArc(rect, 0, 2 * math.pi, false, track);
 
-    if (isEmpty) return;
+    if (progress <= 0) return;
 
-    final segments = <(double fraction, Color color)>[
-      for (final m in order)
-        switch (m) {
-          Macro.protein => (proteinFraction, _proteinColor),
-          Macro.fat => (fatFraction, _fatColor),
-          Macro.carbs => (carbsFraction, _carbsColor),
-        },
-    ];
-
-    // Convert 2px arc-length gap into radians for this radius.
-    final gapAngle = _gapPx / radius;
-    final visibleSegments = segments.where((s) => s.$1 > 0).length;
-    final totalGap = gapAngle * visibleSegments;
-    final available = 2 * math.pi - totalGap;
-
-    double startAngle = -math.pi / 2 + gapAngle / 2;
-
-    for (final seg in segments) {
-      if (seg.$1 <= 0) continue;
-      final sweep = seg.$1 * available;
-      final paint = Paint()
-        ..color = seg.$2
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = _strokeWidth
-        ..strokeCap = StrokeCap.butt;
-      canvas.drawArc(rect, startAngle, sweep, false, paint);
-      startAngle += sweep + gapAngle;
-    }
+    final fill = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * progress, false, fill);
   }
 
   @override
-  bool shouldRepaint(covariant _DonutPainter old) {
-    if (old.proteinFraction != proteinFraction ||
-        old.carbsFraction != carbsFraction ||
-        old.fatFraction != fatFraction ||
-        old.isEmpty != isEmpty ||
-        old.trackColor != trackColor ||
-        old.order.length != order.length) {
-      return true;
-    }
-    for (int i = 0; i < order.length; i++) {
-      if (old.order[i] != order[i]) return true;
-    }
-    return false;
-  }
+  bool shouldRepaint(covariant _DonutPainter old) =>
+      old.progress != progress ||
+      old.trackColor != trackColor ||
+      old.fillColor != fillColor;
 }
 
 // ── Macro progress row ───────────────────────────────────────────
@@ -2572,10 +2453,10 @@ class _TrendsBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final gridColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final secondary = isDark
         ? AppColors.darkOnSurfaceVariant
         : AppColors.lightOnSurfaceVariant;
-    final gridColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
 
     final maxRaw = buckets.isEmpty
         ? 0.0

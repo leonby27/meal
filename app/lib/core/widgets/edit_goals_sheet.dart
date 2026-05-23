@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/login_sync_service.dart';
@@ -511,20 +510,22 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
               children: [
                 Expanded(
                   child: _GoalSummaryCell(
-                    iconAsset: 'assets/icons/cal.svg',
+                    icon: Icons.local_fire_department_outlined,
                     value: _calCtl.text,
                     unit: 'kcal',
+                    label: l10n.caloriesLabel,
                     primary: cs.onSurface,
                     secondary: secondary,
+                    isDark: isDark,
                   ),
                 ),
                 for (final m in MacroOrder.of(context))
                   Expanded(
                     child: _GoalSummaryCell(
-                      iconAsset: switch (m) {
-                        Macro.protein => 'assets/icons/belok.svg',
-                        Macro.fat => 'assets/icons/fat.svg',
-                        Macro.carbs => 'assets/icons/uglevod.svg',
+                      icon: switch (m) {
+                        Macro.protein => Icons.fitness_center,
+                        Macro.fat => Icons.water_drop_outlined,
+                        Macro.carbs => Icons.grain,
                       },
                       value: switch (m) {
                         Macro.protein => _protCtl.text,
@@ -532,8 +533,14 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
                         Macro.carbs => _carbsCtl.text,
                       },
                       unit: 'g',
+                      label: switch (m) {
+                        Macro.protein => l10n.proteinLabel,
+                        Macro.fat => l10n.fatLabel,
+                        Macro.carbs => l10n.carbsLabel,
+                      },
                       primary: cs.onSurface,
                       secondary: secondary,
+                      isDark: isDark,
                     ),
                   ),
               ],
@@ -619,7 +626,7 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
             child: Column(
               children: [
                 _GoalEditRow(
-                  iconAsset: 'assets/icons/cal.svg',
+                  icon: Icons.local_fire_department_outlined,
                   label: l10n.goalCaloriesKcal,
                   controller: _calCtl,
                   isDark: isDark,
@@ -628,10 +635,10 @@ class _EditGoalsSheetState extends State<EditGoalsSheet> {
                 for (final m in MacroOrder.of(context)) ...[
                   const SizedBox(height: 12),
                   _GoalEditRow(
-                    iconAsset: switch (m) {
-                      Macro.protein => 'assets/icons/belok.svg',
-                      Macro.fat => 'assets/icons/fat.svg',
-                      Macro.carbs => 'assets/icons/uglevod.svg',
+                    icon: switch (m) {
+                      Macro.protein => Icons.fitness_center,
+                      Macro.fat => Icons.water_drop_outlined,
+                      Macro.carbs => Icons.grain,
                     },
                     label: switch (m) {
                       Macro.protein => l10n.goalProteinG,
@@ -828,14 +835,14 @@ class _PlanRowDivider extends StatelessWidget {
 
 class _GoalEditRow extends StatelessWidget {
   const _GoalEditRow({
-    required this.iconAsset,
+    required this.icon,
     required this.label,
     required this.controller,
     required this.isDark,
     required this.primary,
   });
 
-  final String iconAsset;
+  final IconData icon;
   final String label;
   final TextEditingController controller;
   final bool isDark;
@@ -843,12 +850,15 @@ class _GoalEditRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseSurface =
+        isDark ? AppColors.darkSurface : AppColors.lightScaffold;
     return Row(
       children: [
-        SizedBox(
+        Container(
           width: 28,
           height: 28,
-          child: SvgPicture.asset(iconAsset, width: 28, height: 28),
+          decoration: BoxDecoration(color: baseSurface, shape: BoxShape.circle),
+          child: Center(child: Icon(icon, size: 16, color: primary)),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -909,42 +919,65 @@ class _GoalEditRow extends StatelessWidget {
 
 class _GoalSummaryCell extends StatelessWidget {
   const _GoalSummaryCell({
-    required this.iconAsset,
+    required this.icon,
     required this.value,
     required this.unit,
+    required this.label,
     required this.primary,
     required this.secondary,
+    required this.isDark,
   });
 
-  final String iconAsset;
+  final IconData icon;
   final String value;
   final String unit;
+  final String label;
   final Color primary;
   final Color secondary;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
+    final baseSurface =
+        isDark ? AppColors.darkSurface : AppColors.lightScaffold;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SvgPicture.asset(iconAsset, width: 24, height: 24),
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(color: baseSurface, shape: BoxShape.circle),
+          child: Center(child: Icon(icon, size: 16, color: primary)),
+        ),
         const SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(
-            value,
+          child: RichText(
             maxLines: 1,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              height: 20 / 15,
-              color: primary,
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                height: 20 / 15,
+                color: primary,
+              ),
+              children: [
+                TextSpan(text: value),
+                TextSpan(
+                  text: ' $unit',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: secondary,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         const SizedBox(height: 2),
         Text(
-          unit,
+          label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(

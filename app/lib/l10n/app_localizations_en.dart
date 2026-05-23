@@ -1685,7 +1685,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyticsPeriod1Y => '1 Y';
 
   @override
-  String get analyticsMetricCal => 'Cal';
+  String get analyticsMetricCal => 'Kcal';
 
   @override
   String get analyticsMetricProtein => 'Prot';

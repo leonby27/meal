@@ -919,6 +919,12 @@ class _FavoriteHeartButton extends StatelessWidget {
 }
 
 class _MacroBreakdown extends StatelessWidget {
+  // Solid macro colors mirroring `_CalorieRingPainter` in the meal
+  // analytics sheet — single source of truth across the app.
+  static const _proteinColor = Color(0xFFE4431C);
+  static const _fatColor = Color(0xFFEFD400);
+  static const _carbsColor = Color(0xFF17ACCC);
+
   final FoodLog log;
   final double calorieGoal;
   final Color surfaceColor;
@@ -984,7 +990,7 @@ class _MacroBreakdown extends StatelessWidget {
           children: [
             Expanded(
               child: _MacroLabel(
-                dotColor: cs.onSurface,
+                dotColor: _proteinColor,
                 label: context.l10n.proteinShort.toUpperCase(),
                 grams: protein,
                 percent: _targetPercent(protein, calorieGoal * 0.3 / 4),
@@ -995,7 +1001,7 @@ class _MacroBreakdown extends StatelessWidget {
             _MacroDivider(color: dividerColor),
             Expanded(
               child: _MacroLabel(
-                dotColor: cs.onSurface,
+                dotColor: _fatColor,
                 label: context.l10n.fatShort.toUpperCase(),
                 grams: fat,
                 percent: _targetPercent(fat, calorieGoal * 0.3 / 9),
@@ -1006,7 +1012,7 @@ class _MacroBreakdown extends StatelessWidget {
             _MacroDivider(color: dividerColor),
             Expanded(
               child: _MacroLabel(
-                dotColor: cs.onSurface,
+                dotColor: _carbsColor,
                 label: context.l10n.carbsShort.toUpperCase(),
                 grams: carbs,
                 percent: _targetPercent(carbs, calorieGoal * 0.4 / 4),

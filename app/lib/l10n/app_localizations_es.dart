@@ -1699,7 +1699,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get analyticsPeriod1Y => '1 A';
 
   @override
-  String get analyticsMetricCal => 'Cal';
+  String get analyticsMetricCal => 'Kcal';
 
   @override
   String get analyticsMetricProtein => 'Prot';

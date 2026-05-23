@@ -624,7 +624,7 @@
   "analyticsPeriod3M": "3 M",
   "analyticsPeriod6M": "6 M",
   "analyticsPeriod1Y": "1 Y",
-  "analyticsMetricCal": "Cal",
+  "analyticsMetricCal": "Kcal",
   "analyticsMetricProtein": "Prot",
   "analyticsMetricFat": "Fats",
   "analyticsMetricCarbs": "Carbs",
