@@ -1890,10 +1890,7 @@ class _DiaryScreenState extends State<DiaryScreen>
                         ? CustomPaint(
                             painter: _DayCellBorderPainter(
                               trackColor: calendarLine,
-                              gradientColors: const [
-                                Color(0xFF22D33A),
-                                Color(0xFF1EBF92),
-                              ],
+                              fillColor: cs.onSurface,
                               progress: progress,
                               borderRadius: 16,
                               borderWidth: 4,
@@ -1982,9 +1979,8 @@ class _DiaryScreenState extends State<DiaryScreen>
         ? AppColors.darkSecondaryDark
         : AppColors.lightSecondaryDark;
     final sortBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-    final menuBg = isDark ? AppColors.darkScaffold : AppColors.lightScaffold;
-    final menuItemBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
-    final menuBorder = isDark ? AppColors.lineDT200 : AppColors.lineLight200;
+    final menuBg = isDark ? AppColors.darkScaffold : Colors.white;
+    final menuBorder = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
     final sortLabel = _recordsNewestFirst
         ? context.l10n.recordsSortNewestFirst
         : context.l10n.recordsSortOldestFirst;
@@ -2075,54 +2071,34 @@ class _DiaryScreenState extends State<DiaryScreen>
               offset: const Offset(0, 8),
               color: menuBg,
               surfaceTintColor: Colors.transparent,
-              elevation: 8,
-              shadowColor: const Color(0x21000000),
-              menuPadding: const EdgeInsets.all(16),
-              constraints: const BoxConstraints.tightFor(width: 180),
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 side: BorderSide(color: menuBorder),
+              ),
+              popUpAnimationStyle: const AnimationStyle(
+                duration: Duration(milliseconds: 240),
+                reverseDuration: Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                reverseCurve: Curves.easeInCubic,
               ),
               onOpened: () => _setViewMenuOpen(true),
               onCanceled: () => _setViewMenuOpen(false),
+              onSelected: (v) {
+                if (_foodLogCardVariant == v) return;
+                setState(() {
+                  _foodLogCardVariant = v;
+                  _recordsAnimationSeed++;
+                });
+              },
               itemBuilder: (context) => [
                 PopupMenuItem<FoodLogCardVariant>(
-                  enabled: false,
-                  padding: EdgeInsets.zero,
-                  child: StatefulBuilder(
-                    builder: (context, setMenuState) {
-                      void pick(FoodLogCardVariant v) {
-                        if (_foodLogCardVariant == v) return;
-                        setState(() {
-                          _foodLogCardVariant = v;
-                          _recordsAnimationSeed++;
-                        });
-                        setMenuState(() {});
-                      }
-
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildViewModeMenuItem(
-                            context,
-                            label: context.l10n.diaryViewExpanded,
-                            background: menuItemBg,
-                            isActive: _foodLogCardVariant ==
-                                FoodLogCardVariant.expanded,
-                            onTap: () => pick(FoodLogCardVariant.expanded),
-                          ),
-                          _buildViewModeMenuItem(
-                            context,
-                            label: context.l10n.diaryViewCompact,
-                            background: menuItemBg,
-                            isActive: _foodLogCardVariant ==
-                                FoodLogCardVariant.compact,
-                            onTap: () => pick(FoodLogCardVariant.compact),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                  value: FoodLogCardVariant.expanded,
+                  child: Text(context.l10n.diaryViewExpanded),
+                ),
+                PopupMenuItem<FoodLogCardVariant>(
+                  value: FoodLogCardVariant.compact,
+                  child: Text(context.l10n.diaryViewCompact),
                 ),
               ],
               child: AnimatedScale(
@@ -2182,44 +2158,6 @@ class _DiaryScreenState extends State<DiaryScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildViewModeMenuItem(
-    BuildContext context, {
-    required String label,
-    required Color background,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 148,
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        decoration: BoxDecoration(
-          color: isActive ? background : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 4),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              height: 18 / 14,
-              color: cs.onSurface,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -2512,6 +2450,7 @@ class _DiaryScreenState extends State<DiaryScreen>
               decoration: BoxDecoration(
                 color: onBack,
                 borderRadius: BorderRadius.circular(50),
+                border: Border.all(color: lineBorder),
                 boxShadow: inputShadow,
               ),
               padding: const EdgeInsets.all(8),
@@ -2679,14 +2618,14 @@ class _DiaryScreenState extends State<DiaryScreen>
 
 class _DayCellBorderPainter extends CustomPainter {
   final Color trackColor;
-  final List<Color> gradientColors;
+  final Color fillColor;
   final double progress;
   final double borderRadius;
   final double borderWidth;
 
   _DayCellBorderPainter({
     required this.trackColor,
-    required this.gradientColors,
+    required this.fillColor,
     required this.progress,
     required this.borderRadius,
     required this.borderWidth,
@@ -2729,12 +2668,10 @@ class _DayCellBorderPainter extends CustomPainter {
     final fillLength = metrics.length * progress.clamp(0.0, 1.0);
 
     final fillPaint = Paint()
+      ..color = fillColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = borderWidth
-      ..strokeCap = StrokeCap.round
-      ..shader = LinearGradient(
-        colors: gradientColors,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+      ..strokeCap = StrokeCap.round;
 
     canvas.drawPath(metrics.extractPath(0, fillLength), fillPaint);
   }
@@ -2743,7 +2680,7 @@ class _DayCellBorderPainter extends CustomPainter {
   bool shouldRepaint(_DayCellBorderPainter old) =>
       old.progress != progress ||
       old.trackColor != trackColor ||
-      old.gradientColors != gradientColors;
+      old.fillColor != fillColor;
 }
 
 class _CompactActionTile extends StatelessWidget {

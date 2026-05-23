@@ -919,10 +919,6 @@ class _FavoriteHeartButton extends StatelessWidget {
 }
 
 class _MacroBreakdown extends StatelessWidget {
-  static const _proteinColor = Color(0xFFF04438);
-  static const _fatColor = Color(0xFFE7F900);
-  static const _carbsColor = Color(0xFF20BDF2);
-
   final FoodLog log;
   final double calorieGoal;
   final Color surfaceColor;
@@ -975,13 +971,9 @@ class _MacroBreakdown extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: FractionallySizedBox(
                       widthFactor: calorieRatio,
-                      child: const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF22D33A), Color(0xFF1EBF92)],
-                          ),
-                        ),
-                        child: SizedBox.expand(),
+                      child: ColoredBox(
+                        color: cs.onSurface,
+                        child: const SizedBox.expand(),
                       ),
                     ),
                   ),
@@ -992,7 +984,7 @@ class _MacroBreakdown extends StatelessWidget {
           children: [
             Expanded(
               child: _MacroLabel(
-                dotColor: _proteinColor,
+                dotColor: cs.onSurface,
                 label: context.l10n.proteinShort.toUpperCase(),
                 grams: protein,
                 percent: _targetPercent(protein, calorieGoal * 0.3 / 4),
@@ -1003,7 +995,7 @@ class _MacroBreakdown extends StatelessWidget {
             _MacroDivider(color: dividerColor),
             Expanded(
               child: _MacroLabel(
-                dotColor: _fatColor,
+                dotColor: cs.onSurface,
                 label: context.l10n.fatShort.toUpperCase(),
                 grams: fat,
                 percent: _targetPercent(fat, calorieGoal * 0.3 / 9),
@@ -1014,7 +1006,7 @@ class _MacroBreakdown extends StatelessWidget {
             _MacroDivider(color: dividerColor),
             Expanded(
               child: _MacroLabel(
-                dotColor: _carbsColor,
+                dotColor: cs.onSurface,
                 label: context.l10n.carbsShort.toUpperCase(),
                 grams: carbs,
                 percent: _targetPercent(carbs, calorieGoal * 0.4 / 4),

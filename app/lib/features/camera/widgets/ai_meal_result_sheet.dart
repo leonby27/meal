@@ -2515,7 +2515,7 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: c.cardBg,
+                  color: c.baseSurface,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.close, color: c.onSurface, size: 20),
@@ -2591,6 +2591,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       decoration: BoxDecoration(
         color: c.cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: c.borderColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.all(20),
       child: child,
@@ -3251,6 +3253,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       decoration: BoxDecoration(
         color: c.cardBg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: c.borderColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -3656,6 +3660,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           decoration: BoxDecoration(
             color: c.cardBg,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: c.borderColor),
+            boxShadow: AppColors.baseDrop,
           ),
           padding: const EdgeInsets.all(16),
           child: Wrap(
@@ -3732,6 +3738,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           decoration: BoxDecoration(
             color: c.cardBg,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: c.borderColor),
+            boxShadow: AppColors.baseDrop,
           ),
           padding: const EdgeInsets.all(16),
           // The whole burn-by-activity card rebuilds against a tweened
@@ -3987,6 +3995,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
           decoration: BoxDecoration(
             color: c.cardBg,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: c.borderColor),
+            boxShadow: AppColors.baseDrop,
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -4328,6 +4338,8 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
       decoration: BoxDecoration(
         color: c.cardBg,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.borderColor),
+        boxShadow: AppColors.baseDrop,
       ),
       padding: const EdgeInsets.all(16),
       child: Column(

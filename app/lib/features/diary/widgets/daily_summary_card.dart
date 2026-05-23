@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -261,6 +259,7 @@ class _GaugeSection extends StatelessWidget {
             remainingLabel: remainingLabel,
             secondary: secondary,
             trackColor: lineColor,
+            fillColor: primary,
             formatNumber: formatNumber,
           ),
           Padding(
@@ -379,6 +378,7 @@ class _SemicircleGauge extends StatelessWidget {
     required this.remainingLabel,
     required this.secondary,
     required this.trackColor,
+    required this.fillColor,
     required this.formatNumber,
   });
 
@@ -388,6 +388,7 @@ class _SemicircleGauge extends StatelessWidget {
   final String remainingLabel;
   final Color secondary;
   final Color trackColor;
+  final Color fillColor;
   final String Function(num) formatNumber;
 
   static const double _width = 186;
@@ -409,6 +410,7 @@ class _SemicircleGauge extends StatelessWidget {
               painter: _GaugePainter(
                 progress: progress,
                 trackColor: trackColor,
+                fillColor: fillColor,
                 strokeWidth: _stroke,
                 padX: _padX,
                 padTop: _padTop,
@@ -471,6 +473,7 @@ class _GaugePainter extends CustomPainter {
   _GaugePainter({
     required this.progress,
     required this.trackColor,
+    required this.fillColor,
     required this.strokeWidth,
     required this.padX,
     required this.padTop,
@@ -478,44 +481,65 @@ class _GaugePainter extends CustomPainter {
 
   final double progress;
   final Color trackColor;
+  final Color fillColor;
   final double strokeWidth;
   final double padX;
   final double padTop;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final radius = (size.width - 2 * padX) / 2;
-    final cx = size.width / 2;
-    final cy = padTop + radius;
-    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: radius);
+    const cornerRadius = 32.0;
+    final left = padX;
+    final right = size.width - padX;
+    final top = padTop;
+    final bottom = size.height - strokeWidth / 2;
+
+    final path = Path()
+      ..moveTo(left, bottom)
+      ..lineTo(left, top + cornerRadius)
+      ..arcToPoint(
+        Offset(left + cornerRadius, top),
+        radius: const Radius.circular(cornerRadius),
+        clockwise: true,
+      )
+      ..lineTo(right - cornerRadius, top)
+      ..arcToPoint(
+        Offset(right, top + cornerRadius),
+        radius: const Radius.circular(cornerRadius),
+        clockwise: true,
+      )
+      ..lineTo(right, bottom);
 
     final trackPaint = Paint()
       ..color = trackColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
-    canvas.drawArc(rect, math.pi, math.pi, false, trackPaint);
+    canvas.drawPath(path, trackPaint);
 
     if (progress <= 0) return;
 
+    final metric = path.computeMetrics().first;
+    final targetLen = metric.length * progress;
+    final progressPath = metric.extractPath(0, targetLen);
+
     final valuePaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.bottomLeft,
-        end: Alignment.topCenter,
-        colors: [Color(0xFF22D33A), Color(0xFF1EBF92)],
-      ).createShader(rect)
+      ..color = fillColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
-    canvas.drawArc(rect, math.pi, math.pi * progress, false, valuePaint);
+    canvas.drawPath(progressPath, valuePaint);
   }
 
   @override
   bool shouldRepaint(_GaugePainter old) =>
       old.progress != progress ||
       old.trackColor != trackColor ||
+      old.fillColor != fillColor ||
       old.strokeWidth != strokeWidth;
 }
 
@@ -544,22 +568,6 @@ class _MacrosRow extends StatelessWidget {
   final Color secondary;
   final Color goalNumberColor;
 
-  static const _proteinGradient = LinearGradient(
-    begin: Alignment.centerRight,
-    end: Alignment.centerLeft,
-    colors: [Color(0xFFF0681B), Color(0xFFD91D1D)],
-  );
-  static const _carbsGradient = LinearGradient(
-    begin: Alignment.centerRight,
-    end: Alignment.centerLeft,
-    colors: [Color(0xFFFFBB00), Color(0xFFD0FF00)],
-  );
-  static const _fatGradient = LinearGradient(
-    begin: Alignment.centerRight,
-    end: Alignment.centerLeft,
-    colors: [Color(0xFF1787D1), Color(0xFF17D1C7)],
-  );
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -587,11 +595,7 @@ class _MacrosRow extends StatelessWidget {
                 Macro.carbs => goalCarbs,
               },
               goalSuffix: 'g',
-              gradient: switch (order[i]) {
-                Macro.protein => _proteinGradient,
-                Macro.fat => _fatGradient,
-                Macro.carbs => _carbsGradient,
-              },
+              fillColor: primary,
               trackColor: trackColor,
               primary: primary,
               secondary: secondary,
@@ -610,7 +614,7 @@ class _MacroColumn extends StatelessWidget {
     required this.current,
     required this.goal,
     required this.goalSuffix,
-    required this.gradient,
+    required this.fillColor,
     required this.trackColor,
     required this.primary,
     required this.secondary,
@@ -621,7 +625,7 @@ class _MacroColumn extends StatelessWidget {
   final double current;
   final double goal;
   final String goalSuffix;
-  final LinearGradient gradient;
+  final Color fillColor;
   final Color trackColor;
   final Color primary;
   final Color secondary;
@@ -660,7 +664,7 @@ class _MacroColumn extends StatelessWidget {
                 widthFactor: progress,
                 child: Container(
                   height: 8,
-                  decoration: BoxDecoration(gradient: gradient),
+                  color: fillColor,
                 ),
               ),
             ],

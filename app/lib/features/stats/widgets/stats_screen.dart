@@ -707,7 +707,7 @@ class _StatsScreenState extends State<StatsScreen> {
             border: Border.all(color: lineColor),
             boxShadow: AppColors.baseDrop,
           ),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -850,7 +850,7 @@ class _StatsScreenState extends State<StatsScreen> {
             border: Border.all(color: lineColor),
             boxShadow: AppColors.baseDrop,
           ),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1111,7 +1111,7 @@ class _StatsScreenState extends State<StatsScreen> {
             border: Border.all(color: lineColor),
             boxShadow: AppColors.baseDrop,
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 24),
           child: Column(
             children: List.generate(recent.length, (i) {
               final day = recent[i];
@@ -1393,7 +1393,7 @@ class _SegmentedSwitch<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor =
-        isDark ? AppColors.darkUnderBack : AppColors.lightUnderBack;
+        isDark ? AppColors.darkSurface : AppColors.lightScaffold;
     final selectedBg =
         isDark ? AppColors.darkSurface : AppColors.lightSurface;
     final selectedText =
@@ -1529,15 +1529,6 @@ class _StreakCard extends StatefulWidget {
     required this.maxWeeks,
   });
 
-  // Per-theme amber. The Figma value (#FBAE2E) reads great on the dark
-  // card surface but goes a touch washed-out on the white light surface,
-  // so we shift to a deeper amber there for legibility.
-  static const _accentDark = Color(0xFFFBAE2E);
-  static const _accentLight = Color(0xFFE08405);
-
-  static Color _accentFor(bool isDark) =>
-      isDark ? _accentDark : _accentLight;
-
   @override
   State<_StreakCard> createState() => _StreakCardState();
 }
@@ -1637,7 +1628,7 @@ class _StreakCardState extends State<_StreakCard> {
     final localeCode = Localizations.localeOf(context).languageCode;
 
     return Container(
-      height: 166,
+      height: 182,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(32),
@@ -1645,6 +1636,7 @@ class _StreakCardState extends State<_StreakCard> {
         boxShadow: AppColors.baseDrop,
       ),
       clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(8),
       child: LayoutBuilder(
         builder: (ctx, constraints) {
           final cardW = constraints.maxWidth;
@@ -1695,7 +1687,9 @@ class _StreakCardState extends State<_StreakCard> {
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             height: 36 / 28,
-                            color: _StreakCard._accentFor(isDark),
+                            color: isDark
+                                ? AppColors.darkOnSurface
+                                : AppColors.lightOnSurface,
                           ),
                         ),
                         Text(
@@ -1705,7 +1699,9 @@ class _StreakCardState extends State<_StreakCard> {
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             height: 20 / 15,
-                            color: _StreakCard._accentFor(isDark),
+                            color: isDark
+                                ? AppColors.darkOnSurface
+                                : AppColors.lightOnSurface,
                           ),
                         ),
                       ],
@@ -1867,21 +1863,18 @@ class _StreakDot extends StatelessWidget {
     // ColorFilter.srcIn — which only repaints the visible (non-transparent)
     // pixels, leaving the cut-out check inside the filled dot showing
     // through to the card background as before.
-    Color? tint;
-    if (!isDark) {
-      tint = filled
-          ? _StreakCard._accentLight
-          : AppColors.lightSecondaryExtraLight;
-    }
+    final Color tint = filled
+        ? (isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface)
+        : (isDark
+            ? AppColors.darkSecondaryExtraLight
+            : AppColors.lightSecondaryExtraLight);
     return SvgPicture.asset(
       filled
           ? 'assets/icons/streak_dot_done.svg'
           : 'assets/icons/streak_dot_empty.svg',
       width: size,
       height: size,
-      colorFilter: tint == null
-          ? null
-          : ColorFilter.mode(tint, BlendMode.srcIn),
+      colorFilter: ColorFilter.mode(tint, BlendMode.srcIn),
     );
   }
 }
@@ -1918,14 +1911,14 @@ class _AverageDonutCard extends StatelessWidget {
     final pFat = total <= 0 ? 0.0 : fatCal / total;
 
     return Container(
-      height: 166,
+      height: 182,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: lineColor),
         boxShadow: AppColors.baseDrop,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
         children: [
           Expanded(
