@@ -2465,10 +2465,45 @@ class AppLocalizationsRu extends AppLocalizations {
   String get macroStatusWorse => 'Хуже среднего';
 
   @override
-  String get macroStatusAverage => 'Средне';
+  String get macroStatusAverage => 'Среднее';
 
   @override
-  String get macroStatusGood => 'Хорошо';
+  String get macroStatusGood => 'Отлично';
+
+  @override
+  String macroValueOfDaily(String value, int percent) {
+    return '$value · $percent%';
+  }
+
+  @override
+  String get macroLevelLow => 'Низкая';
+
+  @override
+  String get macroLevelModerate => 'Средняя';
+
+  @override
+  String get macroLevelModerateHigh => 'Средне-высокая';
+
+  @override
+  String get macroLevelHigh => 'Высокая';
+
+  @override
+  String get macroLevelVeryHigh => 'Очень высокая';
+
+  @override
+  String get macroProcessingUnprocessed => 'Не обработано';
+
+  @override
+  String get macroProcessingMinimal => 'Минимально';
+
+  @override
+  String get macroProcessingProcessed => 'Умеренно';
+
+  @override
+  String get macroProcessingUltra => 'Ультра';
+
+  @override
+  String get macroMgUnit => 'мг';
 
   @override
   String get dishWeightLabel => 'Вес блюда';

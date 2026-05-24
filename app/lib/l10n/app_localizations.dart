@@ -4513,14 +4513,80 @@ abstract class AppLocalizations {
   /// No description provided for @macroStatusAverage.
   ///
   /// In ru, this message translates to:
-  /// **'Средне'**
+  /// **'Среднее'**
   String get macroStatusAverage;
 
   /// No description provided for @macroStatusGood.
   ///
   /// In ru, this message translates to:
-  /// **'Хорошо'**
+  /// **'Отлично'**
   String get macroStatusGood;
+
+  /// No description provided for @macroValueOfDaily.
+  ///
+  /// In ru, this message translates to:
+  /// **'{value} · {percent}%'**
+  String macroValueOfDaily(String value, int percent);
+
+  /// No description provided for @macroLevelLow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Низкая'**
+  String get macroLevelLow;
+
+  /// No description provided for @macroLevelModerate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Средняя'**
+  String get macroLevelModerate;
+
+  /// No description provided for @macroLevelModerateHigh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Средне-высокая'**
+  String get macroLevelModerateHigh;
+
+  /// No description provided for @macroLevelHigh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Высокая'**
+  String get macroLevelHigh;
+
+  /// No description provided for @macroLevelVeryHigh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очень высокая'**
+  String get macroLevelVeryHigh;
+
+  /// No description provided for @macroProcessingUnprocessed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не обработано'**
+  String get macroProcessingUnprocessed;
+
+  /// No description provided for @macroProcessingMinimal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Минимально'**
+  String get macroProcessingMinimal;
+
+  /// No description provided for @macroProcessingProcessed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Умеренно'**
+  String get macroProcessingProcessed;
+
+  /// No description provided for @macroProcessingUltra.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ультра'**
+  String get macroProcessingUltra;
+
+  /// No description provided for @macroMgUnit.
+  ///
+  /// In ru, this message translates to:
+  /// **'мг'**
+  String get macroMgUnit;
 
   /// No description provided for @dishWeightLabel.
   ///

@@ -1159,8 +1159,25 @@
   "macroProcessing": "Степень обработки",
   "macroVitamins": "Витамины и минералы",
   "macroStatusWorse": "Хуже среднего",
-  "macroStatusAverage": "Средне",
-  "macroStatusGood": "Хорошо",
+  "macroStatusAverage": "Среднее",
+  "macroStatusGood": "Отлично",
+  "macroValueOfDaily": "{value} · {percent}%",
+  "@macroValueOfDaily": {
+    "placeholders": {
+      "value": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+  "macroLevelLow": "Низкая",
+  "macroLevelModerate": "Средняя",
+  "macroLevelModerateHigh": "Средне-высокая",
+  "macroLevelHigh": "Высокая",
+  "macroLevelVeryHigh": "Очень высокая",
+  "macroProcessingUnprocessed": "Не обработано",
+  "macroProcessingMinimal": "Минимально",
+  "macroProcessingProcessed": "Умеренно",
+  "macroProcessingUltra": "Ультра",
+  "macroMgUnit": "мг",
   "dishWeightLabel": "Вес блюда",
   "macroSalt": "Соль",
   "burnSectionTitle": "Как сжечь калории?",

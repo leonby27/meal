@@ -358,6 +358,21 @@ class _CompleteMacro {
       processingLevel == null;
 }
 
+/// One nutrient row rendered inside a Complete-macro status group: the
+/// pre-bucketed [status], the localized [label] (e.g. "Sodium") and the
+/// fully formatted [value] string (e.g. "980 mg · 43% of daily").
+class _MacroRowData {
+  final _MacroStatus status;
+  final String label;
+  final String value;
+
+  const _MacroRowData({
+    required this.status,
+    required this.label,
+    required this.value,
+  });
+}
+
 /// AI's goal-aware verdict on the dish. Each code is a member of the
 /// closed list defined in backend/app/services/timeweb_ai.py and is
 /// resolved to a localized chip via [_TagInfo].
@@ -3902,88 +3917,116 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
   }
 
   /// "Complete macro" — grouped breakdown of dish nutrition into three
-  /// blocks coloured by [_MacroStatus]: red for "worse", amber for
-  /// "average", green for "good". Empty fields are skipped entirely.
+  /// blocks coloured by [_MacroStatus]. Each row shows the nutrient
+  /// label on the left and its value + share-of-daily-norm on the right.
+  /// Empty fields are skipped entirely.
   Widget _buildCompleteMacroSection(_AiSheetColors c) {
     if (_completeMacro.isEmpty) return const SizedBox.shrink();
     final l10n = context.l10n;
 
-    // Collect every row with a value and bucket it by status. Order
-    // inside a bucket mirrors the Figma frame order so the eye lands on
-    // the same nutrient when comparing dishes.
-    final rows = <(_MacroStatus, String)>[];
-    void add(_MacroStatus status, String label) => rows.add((status, label));
+    final rows = <_MacroRowData>[];
 
     // Prefer added_sugar_g when the model split it out: natural sugars
-    // from fruit/milk shouldn't penalise the row (a fresh smoothie
-    // shouldn't read red for 25 g of mostly-banana sugar). Use the
-    // matching stricter threshold for added sugar; fall back to the
-    // total-sugar threshold when only `sugar_g` is available so older
-    // responses still render.
+    // from fruit/milk shouldn't penalise the row. Fall back to total
+    // sugar so older responses still render.
     if (_completeMacro.addedSugarG != null) {
-      add(
-        _statusForAddedSugar(_completeMacro.addedSugarG!),
-        l10n.macroSugar,
-      );
+      final v = _completeMacro.addedSugarG!;
+      rows.add(_MacroRowData(
+        status: _statusForAddedSugar(v),
+        label: l10n.macroSugar,
+        value: _fmtPercentOfDaily(l10n, v, 50, l10n.gramsUnit),
+      ));
     } else if (_completeMacro.sugarG != null) {
-      add(_statusForSugar(_completeMacro.sugarG!), l10n.macroSugar);
+      final v = _completeMacro.sugarG!;
+      rows.add(_MacroRowData(
+        status: _statusForSugar(v),
+        label: l10n.macroSugar,
+        value: _fmtPercentOfDaily(l10n, v, 50, l10n.gramsUnit),
+      ));
     }
     if (_completeMacro.fiberG != null) {
-      add(_statusForFiber(_completeMacro.fiberG!), l10n.macroFiber);
+      final v = _completeMacro.fiberG!;
+      rows.add(_MacroRowData(
+        status: _statusForFiber(v),
+        label: l10n.macroFiber,
+        value: _fmtPercentOfDaily(l10n, v, 28, l10n.gramsUnit),
+      ));
     }
     if (_completeMacro.saturatedFatG != null) {
-      add(_statusForSatFat(_completeMacro.saturatedFatG!), l10n.macroSaturatedFat);
+      final v = _completeMacro.saturatedFatG!;
+      rows.add(_MacroRowData(
+        status: _statusForSatFat(v),
+        label: l10n.macroSaturatedFat,
+        value: _fmtPercentOfDaily(l10n, v, 20, l10n.gramsUnit),
+      ));
     }
     if (_completeMacro.cholesterolMg != null) {
-      add(
-        _statusForCholesterol(_completeMacro.cholesterolMg!),
-        l10n.macroCholesterol,
-      );
+      final v = _completeMacro.cholesterolMg!;
+      rows.add(_MacroRowData(
+        status: _statusForCholesterol(v),
+        label: l10n.macroCholesterol,
+        value: _fmtPercentOfDaily(l10n, v, 300, l10n.macroMgUnit),
+      ));
     }
     if (_completeMacro.sodiumMg != null) {
-      add(_statusForSodium(_completeMacro.sodiumMg!), l10n.macroSalt);
+      final v = _completeMacro.sodiumMg!;
+      rows.add(_MacroRowData(
+        status: _statusForSodium(v),
+        label: l10n.macroSalt,
+        value: _fmtPercentOfDaily(l10n, v, 2300, l10n.macroMgUnit),
+      ));
     }
     if (_completeMacro.transFatG != null) {
-      add(_statusForTransFat(_completeMacro.transFatG!), l10n.macroTransFat);
+      final v = _completeMacro.transFatG!;
+      rows.add(_MacroRowData(
+        status: _statusForTransFat(v),
+        label: l10n.macroTransFat,
+        value: '${_fmt(v)} ${l10n.gramsUnit}',
+      ));
     }
     if (_completeMacro.glycemicLoad != null) {
-      add(
-        _statusForGlycemicLoad(_completeMacro.glycemicLoad!),
-        l10n.macroGlycemicLoad,
-      );
+      final v = _completeMacro.glycemicLoad!;
+      rows.add(_MacroRowData(
+        status: _statusForGlycemicLoad(v),
+        label: l10n.macroGlycemicLoad,
+        value: '${_fmt(v)} · ${_glycemicLoadLevel(l10n, v)}',
+      ));
     }
     if (_completeMacro.caloricDensity != null) {
-      add(
-        _statusForCaloricDensity(_completeMacro.caloricDensity!),
-        l10n.macroCaloricDensity,
-      );
+      final v = _completeMacro.caloricDensity!;
+      rows.add(_MacroRowData(
+        status: _statusForCaloricDensity(v),
+        label: l10n.macroCaloricDensity,
+        value: '${v.toStringAsFixed(1)} ${l10n.kcalUnit}/${l10n.gramsUnit}',
+      ));
     }
     if (_completeMacro.processingLevel != null) {
-      add(
-        _statusForProcessing(_completeMacro.processingLevel!),
-        l10n.macroProcessing,
-      );
+      final lvl = _completeMacro.processingLevel!;
+      rows.add(_MacroRowData(
+        status: _statusForProcessing(lvl),
+        label: l10n.macroProcessing,
+        value: _processingLevelLabel(l10n, lvl),
+      ));
     }
 
     if (rows.isEmpty) return const SizedBox.shrink();
 
-    final worse = [for (final r in rows) if (r.$1 == _MacroStatus.worse) r.$2];
-    final average = [
-      for (final r in rows) if (r.$1 == _MacroStatus.average) r.$2,
-    ];
-    final good = [for (final r in rows) if (r.$1 == _MacroStatus.good) r.$2];
+    final worse = rows.where((r) => r.status == _MacroStatus.worse).toList();
+    final good = rows.where((r) => r.status == _MacroStatus.good).toList();
+    final average =
+        rows.where((r) => r.status == _MacroStatus.average).toList();
 
     final groups = <Widget>[];
     if (worse.isNotEmpty) {
       groups.add(_buildMacroGroup(c, worse, _MacroStatus.worse));
     }
-    if (average.isNotEmpty) {
-      if (groups.isNotEmpty) groups.add(const SizedBox(height: 4));
-      groups.add(_buildMacroGroup(c, average, _MacroStatus.average));
-    }
     if (good.isNotEmpty) {
       if (groups.isNotEmpty) groups.add(const SizedBox(height: 4));
       groups.add(_buildMacroGroup(c, good, _MacroStatus.good));
+    }
+    if (average.isNotEmpty) {
+      if (groups.isNotEmpty) groups.add(const SizedBox(height: 4));
+      groups.add(_buildMacroGroup(c, average, _MacroStatus.average));
     }
 
     return Column(
@@ -4010,76 +4053,91 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
 
   Widget _buildMacroGroup(
     _AiSheetColors c,
-    List<String> labels,
+    List<_MacroRowData> rows,
     _MacroStatus status,
   ) {
     final l10n = context.l10n;
-    final (bg, statusText, isPositive) = switch (status) {
-      _MacroStatus.worse =>
-        (AppColors.error.withValues(alpha: 0.09), l10n.macroStatusWorse, false),
-      _MacroStatus.average => (
-          AppColors.orange.withValues(alpha: 0.10),
-          l10n.macroStatusAverage,
-          false,
+    final isDark = c.isDark;
+
+    final (bg, accent, valueColor, statusText, icon) = switch (status) {
+      _MacroStatus.worse => (
+          AppColors.orange.withValues(alpha: isDark ? 0.16 : 0.09),
+          AppColors.orange,
+          isDark ? AppColors.orange : const Color(0xFF681409),
+          l10n.macroStatusWorse,
+          Icons.error_outline_rounded,
         ),
       _MacroStatus.good => (
-          AppColors.success.withValues(alpha: 0.12),
+          isDark
+              ? AppColors.success.withValues(alpha: 0.18)
+              : const Color(0xFFE2F1E2),
+          AppColors.success,
+          isDark ? AppColors.success : const Color(0xFF103110),
           l10n.macroStatusGood,
-          true,
+          Icons.check_circle_outline_rounded,
         ),
-    };
-    final accent = switch (status) {
-      _MacroStatus.worse => AppColors.error,
-      _MacroStatus.average => AppColors.orange,
-      _MacroStatus.good => AppColors.success,
+      _MacroStatus.average => (
+          isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : const Color(0xFFF4F6FA),
+          isDark ? AppColors.darkOnSurfaceVariant : const Color(0xFF3D4659),
+          c.onSurface,
+          l10n.macroStatusAverage,
+          Icons.radio_button_checked_rounded,
+        ),
     };
 
     return Container(
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (var i = 0; i < labels.length; i++)
+          Row(
+            children: [
+              Icon(icon, size: 20, color: accent),
+              const SizedBox(width: 4),
+              Text(
+                statusText,
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 14,
+                  height: 18 / 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (final r in rows)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 5),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
-                      labels[i],
+                      r.label,
                       style: TextStyle(
-                        color: c.onSurface,
+                        color: c.onSurface.withValues(alpha: 0.89),
                         fontSize: 14,
                         height: 18 / 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                  Text(
-                    statusText,
-                    style: TextStyle(
-                      color: accent,
-                      fontSize: 13,
-                      height: 14 / 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                   const SizedBox(width: 8),
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: accent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isPositive ? Icons.check : Icons.priority_high,
-                      size: 12,
-                      color: Colors.white,
+                  Text(
+                    r.value,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: valueColor,
+                      fontSize: 14,
+                      height: 18 / 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -4088,6 +4146,38 @@ class _AiMealResultSheetState extends State<AiMealResultSheet>
         ],
       ),
     );
+  }
+
+  String _fmtPercentOfDaily(
+    AppLocalizations l10n,
+    double value,
+    double dailyRef,
+    String unit,
+  ) {
+    final pct = (value / dailyRef * 100).round().clamp(0, 999);
+    return l10n.macroValueOfDaily('${_fmt(value)} $unit', pct);
+  }
+
+  String _glycemicLoadLevel(AppLocalizations l10n, double v) {
+    if (v < 10) return l10n.macroLevelLow;
+    if (v < 20) return l10n.macroLevelModerate;
+    if (v < 26) return l10n.macroLevelModerateHigh;
+    return l10n.macroLevelHigh;
+  }
+
+  String _processingLevelLabel(AppLocalizations l10n, int level) {
+    switch (level) {
+      case 1:
+        return l10n.macroProcessingUnprocessed;
+      case 2:
+        return l10n.macroProcessingMinimal;
+      case 3:
+        return l10n.macroProcessingProcessed;
+      case 4:
+        return l10n.macroProcessingUltra;
+      default:
+        return '';
+    }
   }
 
   Widget _buildParametersSection(_AiSheetColors c) {

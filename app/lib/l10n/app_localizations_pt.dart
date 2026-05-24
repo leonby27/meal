@@ -2468,7 +2468,42 @@ class AppLocalizationsPt extends AppLocalizations {
   String get macroStatusAverage => 'Médio';
 
   @override
-  String get macroStatusGood => 'Bom';
+  String get macroStatusGood => 'Ótimo';
+
+  @override
+  String macroValueOfDaily(String value, int percent) {
+    return '$value · $percent%';
+  }
+
+  @override
+  String get macroLevelLow => 'Baixa';
+
+  @override
+  String get macroLevelModerate => 'Moderada';
+
+  @override
+  String get macroLevelModerateHigh => 'Moderada-alta';
+
+  @override
+  String get macroLevelHigh => 'Alta';
+
+  @override
+  String get macroLevelVeryHigh => 'Muito alta';
+
+  @override
+  String get macroProcessingUnprocessed => 'Não processado';
+
+  @override
+  String get macroProcessingMinimal => 'Pouco';
+
+  @override
+  String get macroProcessingProcessed => 'Moderado';
+
+  @override
+  String get macroProcessingUltra => 'Ultra';
+
+  @override
+  String get macroMgUnit => 'mg';
 
   @override
   String get dishWeightLabel => 'Peso do prato';

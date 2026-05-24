@@ -976,7 +976,24 @@
   "macroVitamins": "Vitamins and minerals",
   "macroStatusWorse": "Worse than average",
   "macroStatusAverage": "Average",
-  "macroStatusGood": "Good",
+  "macroStatusGood": "Great",
+  "macroValueOfDaily": "{value} · {percent}%",
+  "@macroValueOfDaily": {
+    "placeholders": {
+      "value": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+  "macroLevelLow": "Low",
+  "macroLevelModerate": "Moderate",
+  "macroLevelModerateHigh": "Moderate-high",
+  "macroLevelHigh": "High",
+  "macroLevelVeryHigh": "Very high",
+  "macroProcessingUnprocessed": "Unprocessed",
+  "macroProcessingMinimal": "Minimally",
+  "macroProcessingProcessed": "Moderately",
+  "macroProcessingUltra": "Ultra",
+  "macroMgUnit": "mg",
   "dishWeightLabel": "Dish weight",
   "macroSalt": "Salt",
   "burnSectionTitle": "How to burn calories?",

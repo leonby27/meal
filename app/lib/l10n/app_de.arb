@@ -976,7 +976,24 @@
   "macroVitamins": "Vitamine und Mineralien",
   "macroStatusWorse": "Schlechter als Durchschnitt",
   "macroStatusAverage": "Durchschnittlich",
-  "macroStatusGood": "Gut",
+  "macroStatusGood": "Sehr gut",
+  "macroValueOfDaily": "{value} · {percent}%",
+  "@macroValueOfDaily": {
+    "placeholders": {
+      "value": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+  "macroLevelLow": "Niedrig",
+  "macroLevelModerate": "Mittel",
+  "macroLevelModerateHigh": "Mittel-hoch",
+  "macroLevelHigh": "Hoch",
+  "macroLevelVeryHigh": "Sehr hoch",
+  "macroProcessingUnprocessed": "Unverarbeitet",
+  "macroProcessingMinimal": "Gering",
+  "macroProcessingProcessed": "Mäßig",
+  "macroProcessingUltra": "Ultra",
+  "macroMgUnit": "mg",
   "dishWeightLabel": "Gerichtgewicht",
   "macroSalt": "Salz",
   "burnSectionTitle": "Kalorien verbrennen?",

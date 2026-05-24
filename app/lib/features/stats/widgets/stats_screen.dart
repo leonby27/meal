@@ -641,10 +641,6 @@ class _StatsScreenState extends State<StatsScreen> {
     final avg = nonEmpty == 0
         ? 0.0
         : dailyValues.fold(0.0, (s, v) => s + v) / nonEmpty;
-    final avgPercent = goal > 0
-        ? (avg / goal * 100).clamp(0, 999).toInt()
-        : 0;
-
     final localeCode = Localizations.localeOf(context).languageCode;
     final dateFormat = DateFormat('d MMM', localeCode);
     final firstDate = _data.isNotEmpty
@@ -680,59 +676,16 @@ class _StatsScreenState extends State<StatsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      dateRange,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        height: 18 / 14,
-                        color: isDark
-                            ? AppColors.darkOnSurfaceVariant
-                            : AppColors.lightOnSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  // Pill flips from green to red-orange once the period
-                  // average crosses the 100 % goal mark — same warning
-                  // language used by the trend chart's red overshoot top.
-                  Builder(builder: (context) {
-                    final overGoal = avgPercent > 100;
-                    final pillColor =
-                        overGoal ? AppColors.error : AppColors.green;
-                    return AnimatedContainer(
-                      duration: _kSwitchDur,
-                      curve: _kCurve,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: pillColor.withAlpha(40),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0, end: avgPercent.toDouble()),
-                        duration: _kIntroDur,
-                        curve: _kCurve,
-                        builder: (_, value, _) =>
-                            AnimatedDefaultTextStyle(
-                          duration: _kSwitchDur,
-                          curve: _kCurve,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            height: 14 / 12,
-                            color: pillColor,
-                          ),
-                          child: Text(l10n.percentAverage(value.round())),
-                        ),
-                      ),
-                    );
-                  }),
-                ],
+              Text(
+                dateRange,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  height: 18 / 14,
+                  color: isDark
+                      ? AppColors.darkOnSurfaceVariant
+                      : AppColors.lightOnSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 16),
               SizedBox(

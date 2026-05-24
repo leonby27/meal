@@ -976,7 +976,24 @@
   "macroVitamins": "Vitaminas y minerales",
   "macroStatusWorse": "Peor que la media",
   "macroStatusAverage": "Promedio",
-  "macroStatusGood": "Bueno",
+  "macroStatusGood": "Excelente",
+  "macroValueOfDaily": "{value} · {percent}%",
+  "@macroValueOfDaily": {
+    "placeholders": {
+      "value": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+  "macroLevelLow": "Bajo",
+  "macroLevelModerate": "Moderado",
+  "macroLevelModerateHigh": "Moderado-alto",
+  "macroLevelHigh": "Alto",
+  "macroLevelVeryHigh": "Muy alto",
+  "macroProcessingUnprocessed": "Sin procesar",
+  "macroProcessingMinimal": "Mínimamente",
+  "macroProcessingProcessed": "Moderadamente",
+  "macroProcessingUltra": "Ultra",
+  "macroMgUnit": "mg",
   "dishWeightLabel": "Peso del plato",
   "macroSalt": "Sal",
   "burnSectionTitle": "¿Cómo quemar calorías?",

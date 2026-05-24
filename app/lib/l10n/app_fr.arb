@@ -976,7 +976,24 @@
   "macroVitamins": "Vitamines et minéraux",
   "macroStatusWorse": "Pire que la moyenne",
   "macroStatusAverage": "Moyen",
-  "macroStatusGood": "Bon",
+  "macroStatusGood": "Excellent",
+  "macroValueOfDaily": "{value} · {percent}%",
+  "@macroValueOfDaily": {
+    "placeholders": {
+      "value": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+  "macroLevelLow": "Faible",
+  "macroLevelModerate": "Modérée",
+  "macroLevelModerateHigh": "Modérée-élevée",
+  "macroLevelHigh": "Élevée",
+  "macroLevelVeryHigh": "Très élevée",
+  "macroProcessingUnprocessed": "Non transformé",
+  "macroProcessingMinimal": "Peu",
+  "macroProcessingProcessed": "Modéré",
+  "macroProcessingUltra": "Ultra",
+  "macroMgUnit": "mg",
   "dishWeightLabel": "Poids du plat",
   "macroSalt": "Sel",
   "burnSectionTitle": "Comment brûler les calories ?",
