@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 /// Uses `Momo Trust Display` for Latin-script locales — it reads more like
 /// a marketing header, matching the conversion-tuned look of the funnel.
 /// The font's cmap has no Cyrillic, so Russian falls back to Inter; all of
-/// en/de/es/fr/pt glyphs (incl. ÄÖÜß, áéíóúñ¿¡, àâæçœÿ«», ãõ) are covered.
+/// en/de/es/fr/pt/pl glyphs (incl. ÄÖÜß, áéíóúñ¿¡, àâæçœÿ«», ãõ, ąćęłńóśźż) are covered.
 TextStyle onboardingTitleStyle(
   BuildContext context, {
   double fontSize = 24,
@@ -24,7 +24,7 @@ TextStyle onboardingTitleStyle(
     height: height,
     letterSpacing: letterSpacing,
   );
-  const momoSupported = {'en', 'de', 'es', 'fr', 'pt'};
+  const momoSupported = {'en', 'de', 'es', 'fr', 'pt', 'pl'};
   final lang = Localizations.localeOf(context).languageCode;
   if (!momoSupported.contains(lang)) return base;
   return GoogleFonts.momoTrustDisplay(

@@ -14,6 +14,7 @@ class LocaleNotifier extends ValueNotifier<Locale> {
     Locale('es'),
     Locale('fr'),
     Locale('pt'),
+    Locale('pl'),
   ];
 
   static Future<LocaleNotifier> init() async {
@@ -68,6 +69,7 @@ class LocaleNotifier extends ValueNotifier<Locale> {
       'es' => 'Español',
       'fr' => 'Français',
       'pt' => 'Português',
+      'pl' => 'Polski',
       _ => locale.languageCode,
     };
   }

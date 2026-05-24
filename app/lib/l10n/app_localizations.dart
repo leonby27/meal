@@ -9,6 +9,7 @@ import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
 import 'app_localizations_fr.dart';
+import 'app_localizations_pl.dart';
 import 'app_localizations_pt.dart';
 import 'app_localizations_ru.dart';
 
@@ -102,6 +103,7 @@ abstract class AppLocalizations {
     Locale('en'),
     Locale('es'),
     Locale('fr'),
+    Locale('pl'),
     Locale('pt'),
     Locale('ru'),
   ];
@@ -3892,6 +3894,12 @@ abstract class AppLocalizations {
   /// **'Пор'**
   String get langShortPt;
 
+  /// No description provided for @langShortPl.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пол'**
+  String get langShortPl;
+
   /// No description provided for @onbConfidentTitle.
   ///
   /// In ru, this message translates to:
@@ -4826,6 +4834,7 @@ class _AppLocalizationsDelegate
     'en',
     'es',
     'fr',
+    'pl',
     'pt',
     'ru',
   ].contains(locale.languageCode);
@@ -4845,6 +4854,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEs();
     case 'fr':
       return AppLocalizationsFr();
+    case 'pl':
+      return AppLocalizationsPl();
     case 'pt':
       return AppLocalizationsPt();
     case 'ru':

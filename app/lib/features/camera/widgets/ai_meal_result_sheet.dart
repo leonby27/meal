@@ -18,7 +18,7 @@ import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/api/api_client.dart';
 // Reuses the onboarding's Latin-locale display-font helper. Locale check
 // is baked in — Russian falls back to Inter (Momo Trust Display has no
-// Cyrillic glyphs), en/de/es/fr/pt get the marketing-tuned face.
+// Cyrillic glyphs), en/de/es/fr/pt/pl get the marketing-tuned face.
 import 'package:meal_tracker/features/onboarding/widgets/steps/_title_style.dart'
     as display_title;
 import 'package:meal_tracker/core/database/app_database.dart';

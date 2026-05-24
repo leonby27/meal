@@ -1,0 +1,1243 @@
+{
+  "@@locale": "pl",
+  "mealBreakfast": "Śniadanie",
+  "mealLunch": "Obiad",
+  "mealDinner": "Kolacja",
+  "mealSnack": "Przekąska",
+  "kcalUnit": "kcal",
+  "gramsUnit": "g",
+  "gramsUnitDot": "g",
+  "kgUnit": "kg",
+  "cmUnit": "cm",
+  "yearsUnit": "rok urodzenia",
+  "kcalValue": "{count} kcal",
+  "@kcalValue": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "kcalValueInt": "{count} kcal",
+  "@kcalValueInt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gramsValue": "{count} g",
+  "@gramsValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "kcalPer100g": "{count} kcal/100g",
+  "@kcalPer100g": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "per100gInfo": "Na 100 g: {cal} kcal  B{prot} T{fat} W{carbs}",
+  "@per100gInfo": {
+    "placeholders": {
+      "cal": {
+        "type": "int"
+      },
+      "prot": {
+        "type": "String"
+      },
+      "fat": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      }
+    }
+  },
+  "proteinShort": "B",
+  "fatShort": "T",
+  "carbsShort": "W",
+  "proteinLabel": "Białko",
+  "fatLabel": "Tłuszcze",
+  "carbsLabel": "Węglowodany",
+  "carbsLabelShort": "Węgl.",
+  "caloriesLabel": "Kalorie",
+  "caloriesKcalLabel": "Kalorie, kcal",
+  "proteinGramsLabel": "Białko, g",
+  "fatGramsLabel": "Tłuszcze, g",
+  "carbsGramsLabel": "Węglowodany, g",
+  "caloriesKcalInputLabel": "Kalorie (kcal)",
+  "proteinGoalLabel": "{count} białko",
+  "@proteinGoalLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fatGoalLabel": "{count} tłuszcze",
+  "@fatGoalLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "carbsGoalLabel": "{count} węglowodany",
+  "@carbsGoalLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileTitle": "Profil",
+  "myProfile": "Mój profil",
+  "subscription": "Subskrypcja",
+  "myGoals": "Moje cele",
+  "myProducts": "Moje produkty",
+  "settings": "Ustawienia",
+  "productsList": "Lista produktów",
+  "allProducts": "Wszystkie",
+  "appTheme": "Motyw aplikacji",
+  "languageSelector": "Język interfejsu",
+  "pushNotifications": "Powiadomienia push",
+  "pushNotificationsShortOn": "Wł",
+  "pushNotificationsShortOff": "Wył",
+  "themeSystem": "Systemowy",
+  "themeLight": "Jasny",
+  "themeDark": "Ciemny",
+  "signOut": "Wyloguj się",
+  "signOutConfirm": "Wylogować się z konta?",
+  "signOutLocalDataKept": "Dane lokalne pozostaną na urządzeniu.",
+  "deleteAccount": "Usuń konto",
+  "deleteAccountConfirmTitle": "Usunąć konto?",
+  "deleteAccountConfirmMessage": "Konto zostanie trwale usunięte. Historia posiłków, przepisy, produkty, ulubione i ustawienia na tym urządzeniu również zostaną usunięte. Tej operacji nie można cofnąć.",
+  "deleteAccountFinalConfirmTitle": "Czy na pewno?",
+  "deleteAccountFinalConfirmMessage": "Twoje konto i dane zostaną usunięte bez możliwości odzyskania.",
+  "deleteAccountSuccess": "Konto zostało usunięte.",
+  "deleteAccountFailed": "Nie udało się usunąć konta. Sprawdź połączenie i spróbuj ponownie.",
+  "cancel": "Anuluj",
+  "delete": "Usuń",
+  "save": "Zapisz",
+  "add": "Dodaj",
+  "close": "Zamknij",
+  "edit": "Edytuj",
+  "guestMode": "Tryb gościa",
+  "defaultUserName": "Użytkownik",
+  "signedInSnackbar": "Zalogowano pomyślnie",
+  "signInTitle": "Zaloguj się na konto",
+  "signInGoogle": "Zaloguj się przez Google",
+  "signInApple": "Zaloguj się przez Apple",
+  "signInEmail": "Zaloguj się przez e-mail",
+  "startOverOnboarding": "Zacznij od nowa",
+  "startOverOnboardingConfirm": "Rozpocząć onboarding od nowa?",
+  "startOverOnboardingHint": "Odpowiedzi w ankiecie zostaną zresetowane. Dziennik na urządzeniu pozostanie.",
+  "skipLogin": "Kontynuuj bez logowania",
+  "signInSyncHint": "Logowanie pozwala synchronizować dane\nmiędzy urządzeniami",
+  "calorieTracking": "Monitorowanie posiłków i kalorii",
+  "mergeLocalDataTitle": "Chcesz przenieść ostatnie dane na swoje konto?",
+  "mergeLocalDataKeep": "Przenieś",
+  "mergeLocalDataReplace": "Pozostaw bez zmian",
+  "loginSyncing": "Synchronizacja…",
+  "loginSyncFailed": "Nie udało się zsynchronizować danych. Spróbuj później.",
+  "loginTitle": "Logowanie",
+  "registerTitle": "Rejestracja",
+  "nameOptional": "Imię (opcjonalnie)",
+  "enterEmail": "Wpisz e-mail",
+  "invalidEmail": "Nieprawidłowy e-mail",
+  "passwordLabel": "Hasło",
+  "enterPassword": "Wpisz hasło",
+  "minPasswordLength": "Minimum 6 znaków",
+  "signInButton": "Zaloguj się",
+  "registerButton": "Zarejestruj się",
+  "switchToLogin": "Zaloguj się na konto",
+  "wrongCredentials": "Nieprawidłowy e-mail lub hasło",
+  "signInError": "Błąd logowania: {error}",
+  "@signInError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "emailAlreadyRegistered": "Ten e-mail jest już zarejestrowany",
+  "registerError": "Błąd rejestracji: {error}",
+  "@registerError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "forgotPassword": "Nie pamiętasz hasła?",
+  "resetPasswordTitle": "Resetowanie hasła",
+  "resetPasswordHint": "Wpisz e-mail podany przy rejestracji. Wyślemy 6-cyfrowy kod do resetowania hasła.",
+  "sendResetCode": "Wyślij kod",
+  "enterCodeTitle": "Wpisz kod",
+  "resetCodeSentTo": "Wysłaliśmy 6-cyfrowy kod na {email}",
+  "@resetCodeSentTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "enterSixDigitCode": "Wpisz 6-cyfrowy kod",
+  "verifyCode": "Potwierdź",
+  "resendCode": "Wyślij kod ponownie",
+  "resendCodeIn": "Ponownie za {seconds} s",
+  "@resendCodeIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "resetCodeResent": "Kod wysłany ponownie",
+  "newPasswordTitle": "Nowe hasło",
+  "newPasswordHint": "Utwórz nowe hasło do swojego konta.",
+  "newPasswordLabel": "Nowe hasło",
+  "confirmPasswordLabel": "Potwierdź hasło",
+  "passwordsDoNotMatch": "Hasła nie są zgodne",
+  "resetPasswordButton": "Zresetuj hasło",
+  "passwordResetSuccess": "Hasło pomyślnie zresetowane. Zaloguj się z nowym hasłem.",
+  "emailNotFound": "Nie znaleziono konta z takim e-mailem",
+  "invalidResetCode": "Nieprawidłowy lub wygasły kod",
+  "proTitle": "Body Meal Pro",
+  "proUnlockFeatures": "Odblokuj wszystkie funkcje:",
+  "proAiUnlimited": "Rozpoznawanie AI bez limitów",
+  "proExtendedStats": "Rozszerzone statystyki",
+  "proPersonalRecommendations": "Spersonalizowane rekomendacje",
+  "proTryFree": "Wypróbuj za darmo",
+  "planLabel": "Plan:",
+  "planWeekly": "Tygodniowy",
+  "planYearly": "Roczny",
+  "planLifetime": "Dożywotni",
+  "planPromo": "Promo",
+  "billingLabel": "Następne pobranie:",
+  "manageSubscription": "Zarządzaj subskrypcją",
+  "goalCaloriesKcal": "Kalorie, kcal",
+  "goalProteinG": "Białko, g",
+  "goalFatG": "Tłuszcze, g",
+  "goalCarbsG": "Węglowodany, g",
+  "remindersTitle": "Przypomnienia",
+  "reminderOff": "Wyłączone",
+  "remindersDescription": "Przypomnienia będą przychodzić codziennie o wskazanej porze, abyś nie zapomniał zapisać posiłków.",
+  "notifBreakfastBody": "Czas zapisać śniadanie",
+  "notifLunchBody": "Czas zapisać obiad",
+  "notifDinnerBody": "Czas zapisać kolację",
+  "notifSnackBody": "Nie zapomnij zapisać przekąski",
+  "notifChannelName": "Przypomnienia o posiłkach",
+  "notifChannelDesc": "Przypomnienia, aby zapisać posiłki",
+  "diaryRecordsForDay": "Wpisy z dnia",
+  "diaryViewLabel": "Widok",
+  "diaryViewCompact": "kompaktowy",
+  "diaryViewExpanded": "rozszerzony",
+  "recordsSortNewestFirst": "Najnowsze najpierw",
+  "recordsSortOldestFirst": "Najstarsze najpierw",
+  "diaryEmptyDay": "Brak wpisów na ten dzień",
+  "addMealTitle": "Dodaj posiłek",
+  "mealTypeLabel": "Typ posiłku",
+  "searchInDb": "Szukaj w bazie",
+  "fromGallery": "Z galerii",
+  "recognizeByPhoto": "Rozpoznaj ze zdjęcia",
+  "productNameOrDish": "Nazwa produktu lub dania",
+  "addEntry": "Dodaj wpis",
+  "recognizingViaAi": "Rozpoznaję przez AI...",
+  "notFoundInDb": "Nie znaleziono w bazie\nNaciśnij ➜ aby rozpoznać przez AI",
+  "historyTab": "Ostatnie",
+  "favoritesTab": "Ulubione",
+  "noRecentRecords": "Brak ostatnich wpisów",
+  "addMenuRecentEntries": "Polecane",
+  "scanBarcodeAction": "Skanuj kod kreskowy",
+  "attachPhotoAction": "Dołącz zdjęcie",
+  "noFavoriteProducts": "Brak ulubionych produktów",
+  "gramsDialogLabel": "Gramy",
+  "favoriteUpdated": "Ulubione zaktualizowane",
+  "addToFavorite": "Do ulubionych",
+  "dayNotYet": "Ten dzień jeszcze nie nadszedł!",
+  "copyMealTo": "Skopiuj {meal} do…",
+  "@copyMealTo": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "copiedRecords": "Skopiowano {count} wpisów do {date}",
+  "@copiedRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dayMon": "PN",
+  "dayTue": "WT",
+  "dayWed": "ŚR",
+  "dayThu": "CZ",
+  "dayFri": "PT",
+  "daySat": "SB",
+  "daySun": "ND",
+  "aiAnalyzingPhoto": "Analizujemy zdjęcie...",
+  "aiRecognizingIngredients": "Rozpoznajemy składniki...",
+  "aiCountingCalories": "Liczymy kalorie...",
+  "aiDeterminingMacros": "Ustalamy makroskładniki...",
+  "aiAlmostDone": "Prawie gotowe...",
+  "aiAnalyzingData": "Analizujemy dane...",
+  "aiRecognitionFailed": "Nie udało się rozpoznać dania",
+  "aiRecognizingDish": "Rozpoznajemy danie",
+  "addDish": "Dodaj danie",
+  "dishNameLabel": "Nazwa",
+  "dishParameters": "Parametry dania",
+  "ingredientsLabel": "Składniki",
+  "unknownDish": "Nieznane danie",
+  "defaultDishName": "Danie",
+  "saveEntry": "Dodaj wpis",
+  "saveChanges": "Zapisz",
+  "duplicate": "Duplikuj",
+  "logEntry": "Zapisz",
+  "saveMacros": "Zapisz makro",
+  "macrosSavedToast": "Makroskładniki zapisane",
+  "updateDish": "Zaktualizuj danie",
+  "refineDish": "Doprecyzuj danie",
+  "refineDishHint": "Doprecyzuj danie ...",
+  "activityWalking": "Chodzenie",
+  "activityBicycle": "Rower",
+  "activityResting": "Spoczynek",
+  "approxHours": "~ {count} godz.",
+  "@approxHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "approxMinutes": "~ {count} min",
+  "@approxMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "healthRatingLabel": "Wartość zdrowotna",
+  "healthRatingValue": "{value} / 10",
+  "@healthRatingValue": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "healthDescPoor": "Dużo kalorii, prostych węglowodanów, tłuszczu lub soli — lepiej jako rzadka przyjemność.",
+  "healthDescFair": "Smaczne i sycące, ale prawdopodobnie sporo kalorii, prostych węglowodanów, tłuszczu i soli.",
+  "healthDescGood": "Zbilansowany posiłek z rozsądnymi proporcjami makroskładników.",
+  "healthDescGreat": "Bogate w składniki odżywcze i zbilansowane — świetny wybór.",
+  "healthDescVeggie": "Lekkie i pełne wody — dużo mikroelementów na kalorię.",
+  "healthDescHighProtein": "Z przewagą białka — świetnie syci i wspiera regenerację.",
+  "healthDescLeanProtein": "Chude białko — dobra podstawa diety.",
+  "healthDescBalanced": "Zbilansowane makro — pasuje do większości planów żywieniowych.",
+  "healthDescCarbHeavy": "Dużo węglowodanów — dodaj białko lub warzywa, by syciło dłużej.",
+  "healthDescFatHeavy": "Kaloryczne z powodu tłuszczu — pilnuj porcji.",
+  "healthDescSweet": "Słodkie i kaloryczne — lepiej jako rzadka przyjemność.",
+  "healthDescUltraProcessed": "Sporo kalorii, mało białka — staraj się nie jeść tego często.",
+  "healthTraitHighProtein": "Wyraźnie bogate w białko.",
+  "healthTraitLowCalDensity": "Łatwo mieści się w dziennej normie.",
+  "healthTraitHighFat": "Kaloryczne za sprawą tłuszczu.",
+  "healthTraitHighCarb": "Podstawa to węglowodany.",
+  "healthTraitBalancedMacros": "Makroskładniki równomiernie rozłożone.",
+  "healthAdviceGreat": "Pasuje niemal każdego dnia.",
+  "healthAdviceGood": "Trafny wybór na zbilansowany dzień.",
+  "healthAdviceFair": "Jedz z umiarem.",
+  "healthAdvicePoor": "Lepiej jako rzadka przyjemność.",
+  "ofYourDailyCalories": "dziennej normy",
+  "dailyCaloriesPercent": "{percent}%",
+  "@dailyCaloriesPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "recognizeDish": "Rozpoznaj danie",
+  "photoDetailsHint": "Opisz dokładniej, jeśli chcesz ...",
+  "cameraLabel": "Aparat",
+  "searchTitle": "Wyszukiwanie",
+  "searchHint": "Szukaj produktów...",
+  "nothingFound": "Nic nie znaleziono",
+  "recognizeViaAi": "Rozpoznaj przez AI",
+  "createProduct": "Utwórz produkt",
+  "newProduct": "Nowy produkt",
+  "basicInfo": "Podstawowe",
+  "productNameRequired": "Nazwa *",
+  "enterName": "Wpisz nazwę",
+  "brandOptional": "Marka (opcjonalnie)",
+  "servingWeightG": "Waga porcji (g)",
+  "macrosPer100g": "Makro na 100 g",
+  "caloriesAutoCalc": "Obliczy się automatycznie z makro",
+  "productAdded": "Produkt dodany",
+  "saveProduct": "Zapisz produkt",
+  "myProductsCategory": "Moje produkty",
+  "newRecipe": "Nowy przepis",
+  "recipeNameRequired": "Nazwa przepisu *",
+  "servingsCount": "Liczba porcji",
+  "enterRecipeName": "Wpisz nazwę przepisu",
+  "addAtLeastOneIngredient": "Dodaj co najmniej jeden składnik",
+  "recipeSaved": "Przepis zapisany",
+  "totalForRecipe": "Razem na cały przepis",
+  "per100g": "Na 100 g:",
+  "perServing": "Na porcję ({grams} g):",
+  "@perServing": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  },
+  "ingredientSearchHint": "Szukaj składnika...",
+  "startTypingName": "Zacznij wpisywać nazwę",
+  "tapAddToSelect": "Naciśnij „Dodaj”, aby\nwybrać produkty",
+  "ingredientsCount": "Składniki ({count})",
+  "@ingredientsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "weightLabel": "Waga",
+  "favoritesTitle": "Ulubione",
+  "productAddedToMeal": "{name} dodany",
+  "@productAddedToMeal": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTitle": "Historia",
+  "noRecords": "Brak wpisów",
+  "today": "Dzisiaj",
+  "yesterday": "Wczoraj",
+  "statsTitle": "Statystyki",
+  "averageLabel": "Średnia",
+  "byDays": "Dziennie",
+  "periodWeek": "Tydzień",
+  "period2Weeks": "2 tygodnie",
+  "periodMonth": "Miesiąc",
+  "totalGrams": "Razem {count} g",
+  "@totalGrams": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noOwnProducts": "Brak własnych produktów",
+  "createProductWithMacros": "Utwórz produkt z podanym makro",
+  "productLabel": "Produkt",
+  "deleteConfirm": "Usunąć?",
+  "deleteWhat": "Usunąć {what}?",
+  "@deleteWhat": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "customizeView": "Dostosuj widok",
+  "primaryMetric": "Główna metryka",
+  "otherMetrics": "Pozostałe metryki",
+  "showMore": "Więcej",
+  "showLess": "Ukryj",
+  "caloriesRemaining": "Pozostało kalorii",
+  "dailyEatenLabel": "Zjedzone",
+  "dailyGoalLabel": "Cel",
+  "openMore": "Rozwiń",
+  "goToStatistics": "Do statystyk",
+  "goalsParamGoal": "Cel",
+  "goalsParamGender": "Płeć",
+  "goalsParamAge": "Wiek",
+  "goalsParamHeight": "Wzrost",
+  "goalsParamWeight": "Waga",
+  "goalsParamTargetWeight": "Waga docelowa",
+  "goalsParamActivity": "Aktywność",
+  "goalsPlanNote": "Obliczone według Twojego planu",
+  "goalsCustomNote": "Własne wartości",
+  "goalsEditManually": "Zmień samodzielnie",
+  "goalsUsePlan": "Oblicz według planu",
+  "networkTimeout": "Serwer nie odpowiada. Sprawdź połączenie z internetem.",
+  "networkSslError": "Błąd połączenia SSL. Spróbuj później.",
+  "networkConnectionError": "Błąd połączenia: {message}",
+  "@networkConnectionError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "networkRetryFailed": "Nie udało się połączyć z serwerem.",
+  "networkHostLookup": "Serwer chwilowo niedostępny. Sprawdź internet lub spróbuj za chwilę.",
+  "networkConnectionRefused": "Serwer nie przyjmuje połączeń. Spróbuj później.",
+  "networkConnectionReset": "Połączenie przerwane. Spróbuj jeszcze raz.",
+  "networkGenericError": "Błąd sieci. Sprawdź połączenie z internetem.",
+  "onboardingGenderTitle": "Wskaż swoją płeć",
+  "onboardingGenderHint": "Potrzebne do dokładnego obliczenia kalorii",
+  "genderMale": "Mężczyzna",
+  "genderFemale": "Kobieta",
+  "onboardingMeasurementsTitle": "Twoje parametry",
+  "onboardingUnitsTitle": "Jednostki miary",
+  "onboardingUnitsHint": "Można zmienić później w ustawieniach",
+  "unitsMetricTitle": "Metryczne",
+  "unitsMetricExamples": "cm, kg, ml",
+  "unitsImperialTitle": "Imperialne",
+  "unitsImperialExamples": "ft, lb, fl oz",
+  "onboardingHeightTitle": "Jaki masz wzrost?",
+  "onboardingHeightHint": "Potrzebne do obliczenia podstawowej przemiany materii",
+  "onboardingWeightTitle": "Ile ważysz?",
+  "onboardingWeightHint": "Punkt wyjścia dla Twojego planu",
+  "heightLabel": "Wzrost",
+  "currentWeightLabel": "Aktualna waga",
+  "onboardingAgeTitle": "Kiedy masz urodziny?",
+  "onboardingAgeHint": "Wiek wpływa na tempo metabolizmu",
+  "onboardingGoalTitle": "Jaki masz cel?",
+  "onboardingGoalHint": "Dobierzemy plan żywieniowy do Twojego celu",
+  "goalLoseWeight": "Schudnąć",
+  "goalMaintainWeight": "Utrzymać wagę",
+  "goalGainWeight": "Przybrać na masie",
+  "onboardingActivityTitle": "Jak aktywny jesteś?",
+  "onboardingActivityHint": "Aktywność określa dzienną normę kalorii",
+  "activitySedentary": "Mało aktywny",
+  "activitySedentaryDesc": "Praca siedząca, mało ruchu",
+  "activityLight": "Lekko aktywny",
+  "activityLightDesc": "Lekkie treningi 1-3 razy w tygodniu",
+  "activityModerate": "Umiarkowanie aktywny",
+  "activityModerateDesc": "Treningi 3-5 razy w tygodniu",
+  "activityHigh": "Bardzo aktywny",
+  "activityHighDesc": "Intensywne treningi 6-7 razy w tygodniu",
+  "onboardingTargetWeightTitle": "Jaka waga to Twój cel?",
+  "onboardingTargetWeightHint": "Obliczymy termin i tempo osiągnięcia",
+  "onboardingAgeYearsUnit": "lat",
+  "onboardingLoadingCalc": "Analizujemy Twoje odpowiedzi...",
+  "onboardingLoadingNorm": "Dostrajamy dzienne cele...",
+  "onboardingLoadingPlan": "Tworzymy spersonalizowany plan...",
+  "onboardingResultTitle": "Twój spersonalizowany plan",
+  "resultCongratsTitle": "Gratulacje!",
+  "resultCongratsSubtitle": "Twój spersonalizowany plan zdrowotny jest gotowy!",
+  "resultCanChange": "To można zmienić w dowolnej chwili",
+  "resultTailoredFromAnswers": "Dopasowane na podstawie {count} Twoich odpowiedzi",
+  "@resultTailoredFromAnswers": {
+    "description": "Number of onboarding answers used to build the plan, shown on the plan-reveal screen.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "resultHowToTitle": "Jak osiągać cele",
+  "resultTip1": "Zapisuj posiłki — zbuduj zdrowy nawyk!",
+  "resultTip2": "Trzymaj się dziennej rekomendacji kalorii",
+  "resultTip3": "Balansuj węglowodany, białko i tłuszcze",
+  "resultImprovementsTitle": "Wkrótce zauważysz poprawę samopoczucia",
+  "resultImprovementsBody": "Niższe ryzyko cukrzycy, niższe ciśnienie, lepszy poziom cholesterolu",
+  "resultDisclaimer": "Tylko szacunek żywieniowy. To nie porada medyczna.",
+  "kcalPerDay": "kcal/dzień",
+  "weightLossGoalText": "schudnięcia",
+  "weightGainGoalText": "przybrania na masie",
+  "achievableGoal": "Osiągalny cel {goalText}",
+  "@achievableGoal": {
+    "placeholders": {
+      "goalText": {
+        "type": "String"
+      }
+    }
+  },
+  "weeksToGoal": "{weeks} tyg. do celu — do {date}",
+  "@weeksToGoal": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "maintainWeightHint": "Pomożemy Ci utrzymać wagę\nna poziomie {weight} kg",
+  "@maintainWeightHint": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "weightWithUnit": "{value} kg",
+  "@weightWithUnit": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingNext": "Dalej",
+  "onboardingStart": "Rozpocznij",
+  "resultPlanReadyTitle": "Twój spersonalizowany plan jest gotowy",
+  "resultHeroSubtitle": "Na podstawie Twoich odpowiedzi",
+  "resultRingAdjustLine": "Liczby można zmienić w dowolnej chwili",
+  "resultGoalCardTitle": "Twój cel",
+  "resultGoalMaintainTitle": "Utrzymać wagę około {weight}",
+  "@resultGoalMaintainTitle": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalMaintainSubtitle": "Bez surowych ograniczeń — codzienna równowaga",
+  "resultBridgeTitle": "Aby plan działał — trzeba go prowadzić codziennie",
+  "resultBridgeFreeLine": "Bezpłatnie — 3 wpisy posiłków na próbę",
+  "resultBridgePremiumLine": "Z Premium — bez limitu, aż do celu",
+  "resultDisclaimerShort": "Nie zastępuje konsultacji lekarskiej.",
+  "resultDisclaimerExpand": "Więcej",
+  "resultSourcesTitle": "Źródła",
+  "resultSourceCaloriesLabel": "Norma kalorii",
+  "resultSourceMacrosLabel": "Rozkład makroskładników",
+  "resultSourcesCta": "Źródła i metodologia",
+  "profileMethodology": "Źródła i metodologia żywienia",
+  "profileMethodologyIntro": "Jak obliczane są Twoje dzienne cele",
+  "methodologyCaloriesSection": "Norma kalorii",
+  "methodologyMacrosSection": "Cele makroskładników",
+  "methodologyGeneralSection": "Ogólne zalecenia żywieniowe",
+  "methodologySourceMifflinDescription": "Wzór BMR do oszacowania kalorii.",
+  "methodologySourceDriDescription": "Zakresy referencyjne dla białka, tłuszczu i węglowodanów.",
+  "methodologySourceUsdaDescription": "Referencje DRI dla kalorii i składników odżywczych.",
+  "methodologySourceWhoDescription": "Ogólne zalecenia zdrowego odżywiania.",
+  "methodologyOpenSourceFailed": "Nie udało się otworzyć źródła.",
+  "resultOpenPlan": "Otwórz mój plan",
+  "socialProofScaleTitle": "Stworzone do poważnego śledzenia",
+  "socialProofScaleSubtitle": "Technologia, na której opiera się Twój plan",
+  "socialProofScaleProductsLabel": "produktów w naszej bazie",
+  "socialProofScaleSecondsUnit": "sek",
+  "socialProofScaleSpeedLabel": "Rozpoznawanie dań ze zdjęć",
+  "socialProofPoweredBy": "Napędzane przez",
+  "socialProofAccuracyTitle": "Zweryfikowane pod kątem dokładności",
+  "socialProofAccuracySubtitle": "Jak dokładnie AI rozpoznaje Twoje dania",
+  "socialProofAccuracyLabel": "Dokładność AI",
+  "socialProofAccuracyDisclaimer": "Na podstawie wewnętrznej kontroli jakości na 500+ daniach z różnych kuchni świata.",
+  "socialProofScienceTitle": "Oparte na nauce o żywieniu",
+  "socialProofScienceSubtitle": "Twój plan obliczono według sprawdzonego wzoru",
+  "socialProofScienceFormulaCaption": "Złoty standard żywienia od 1990 roku",
+  "socialProofScienceTrust": "Używany przez dyplomowanych dietetyków i klinicznych specjalistów żywienia na całym świecie.",
+  "paywallTitle": "Wypróbuj Pro\nza darmo",
+  "paywallWeeklyTitle": "Odblokuj Pro\njuż dziś",
+  "paywallWeeklyTimelineTodayTitle": "Dziś — odblokuj Pro",
+  "paywallWeeklyTimelineTodayDesc": "Skanowanie AI, dziennik posiłków i analityka bez ograniczeń.",
+  "paywallWeeklyTimelineRenewTitle": "Co tydzień — postęp",
+  "paywallWeeklyTimelineRenewDesc": "Plan odnawia się co tydzień, aby dostęp był nieprzerwany.",
+  "paywallWeeklyTimelineCancelTitle": "Anuluj w dowolnej chwili",
+  "paywallWeeklyTimelineCancelDesc": "Anuluj subskrypcję w ustawieniach konta sklepu.",
+  "paywallTimelineTodayTitle": "Dziś — odblokuj Pro",
+  "paywallTimelineTodayDesc": "Skanowanie AI, dziennik posiłków i analityka bez ograniczeń.",
+  "paywallTimelineReminderTitle": "Za 2 dni — przypomnimy",
+  "paywallTimelineReminderDesc": "Przypomnimy, gdy okres próbny będzie się kończył",
+  "paywallTimelinePayTitle": "Za 3 dni — płatność",
+  "paywallTimelinePayDesc": "Pobranie nastąpi {date}, chyba że anulujesz subskrypcję",
+  "@paywallTimelinePayDesc": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallMonthly": "Tygodniowo",
+  "paywallMonthlyPrice": "$4.99 / tydz.",
+  "paywallYearly": "Rocznie",
+  "paywallYearlyPrice": "$39.99 / rok",
+  "paywallPerWeek": "tydz.",
+  "paywallPerYear": "rok",
+  "paywallTrialBadge": "3 dni za darmo",
+  "paywallYearlyDiscount": "-85%",
+  "paywallSubtitle": "Maksimum możliwości i ekskluzywne funkcje z subskrypcją BodyMeal Pro",
+  "paywallFeatureAiTitle": "Rozpoznawanie AI",
+  "paywallFeatureAiDesc": "Zrób zdjęcie — AI w sekundę określi kalorie i składniki.",
+  "paywallFeatureDiaryTitle": "Dziennik posiłków",
+  "paywallFeatureDiaryDesc": "Zapisuj wszystkie posiłki bez ograniczeń, każdego dnia.",
+  "paywallFeatureAnalyticsTitle": "Szczegółowa analityka",
+  "paywallFeatureAnalyticsDesc": "Wykresy kalorii, makro i postępu do Twoich celów za dowolny okres.",
+  "paywallFeatureBarcodeTitle": "Skaner kodów kreskowych",
+  "paywallFeatureBarcodeDesc": "Skieruj aparat na opakowanie — dane pojawią się same.",
+  "paywallNoPaymentNow": "Dziś bez płatności",
+  "paywallStartTrial": "Rozpocznij okres próbny",
+  "paywallContinuePro": "Kontynuuj z Pro",
+  "paywallSave85": "Oszczędność 85%",
+  "paywallDayPrefix": "Dzień {n}",
+  "@paywallDayPrefix": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "paywallTrialStarts": "Start okresu próbnego",
+  "paywallTrialRemindYou": "Przypomnimy Ci",
+  "paywallTrialPlanBegins": "Start planu",
+  "paywallFeatureSnap": "Zdjęcie — AI liczy kalorie",
+  "paywallFeatureScore": "Ocena zdrowotna każdego dania",
+  "paywallFeatureTags": "Tagi dopasowane do Twojego celu",
+  "paywallFeaturePrivacy": "Szyfrowanie · Bez reklam · Bez sprzedaży danych",
+  "paywallTrialDisclaimer": "3 dni za darmo, potem $39.99/rok",
+  "paywallWeeklyDisclaimer": "Pobranie dzisiaj. Anuluj w dowolnej chwili.",
+  "paywallTrialDisclaimerFmt": "3 dni za darmo, potem {price}/rok",
+  "@paywallTrialDisclaimerFmt": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallRestore": "Przywróć",
+  "paywallTerms": "Warunki",
+  "paywallPrivacy": "Prywatność",
+  "paywallHaveCode": "Masz kod?",
+  "promoCodeApply": "Zastosuj",
+  "promoCodeInvalid": "Nieprawidłowy kod",
+  "paywallSkip": "Pomiń",
+  "paywallRestoreSuccess": "Subskrypcja przywrócona",
+  "paywallRestoreNotFound": "Nie znaleziono aktywnych subskrypcji",
+  "paywallSubscriptionError": "Nie udało się załadować subskrypcji. Spróbuj później.",
+  "paywallLoadingPrice": "Ładowanie…",
+  "paywallErrorTitle": "Subskrypcja niedostępna",
+  "paywallTryAgain": "Spróbuj ponownie",
+  "paywallErrorStoreUnavailable": "App Store jest obecnie niedostępny. Upewnij się, że jesteś zalogowany w App Store i spróbuj ponownie.",
+  "paywallErrorProductsEmpty": "Nie udało się załadować wariantów subskrypcji. Sprawdź połączenie i spróbuj ponownie.",
+  "paywallErrorSelectedProductUnavailable": "Ten wariant subskrypcji jest obecnie niedostępny. Wybierz inny plan lub spróbuj ponownie.",
+  "paywallErrorQueryFailed": "Nie można połączyć się z App Store. Spróbuj za chwilę.",
+  "paywallErrorPurchaseFailed": "Nie udało się dokończyć zakupu. Spróbuj ponownie.",
+  "paywallErrorRestoreFailed": "Nie udało się przywrócić zakupów. Spróbuj ponownie.",
+  "paywallErrorPaymentPending": "Płatność jest przetwarzana. Otworzymy Pro zaraz po potwierdzeniu.",
+  "restartOnboarding": "Zacznij od nowa",
+  "proActive": "Aktywna",
+  "signInToSaveData": "Zaloguj się, aby zapisać dane",
+  "dataStoredLocally": "Twoje dane są zapisane tylko na tym urządzeniu",
+  "barcodeScannerTitle": "Skaner kodów kreskowych",
+  "barcodeScanHint": "Skieruj aparat na kod kreskowy",
+  "paywallSubscribeNow": "Wykup subskrypcję",
+  "paywallGo": "Rozpocznij",
+  "paywallHardDisclaimer": "Automatyczne odnawianie. Anuluj w dowolnej chwili.",
+  "paywallHardTitle": "Kontynuuj\nz Pro",
+  "freeEntriesRemaining": "{count, plural, =1{Został 1 darmowy wpis} few{Zostały {count} darmowe wpisy} many{Zostało {count} darmowych wpisów} other{Zostało {count} darmowych wpisów}}",
+  "@freeEntriesRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "getPro": "Odbierz Pro",
+  "freeLimitReached": "Darmowe wpisy się skończyły",
+  "analyticsTitle": "Analityka",
+  "summarySection": "Podsumowanie",
+  "trendsSection": "Trendy",
+  "highlightsSection": "Najważniejsze",
+  "dayStreak": "{count, plural, =0{Dni z rzędu} =1{Dzień z rzędu} few{Dni z rzędu} many{Dni z rzędu} other{Dni z rzędu}}",
+  "@dayStreak": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "averageADay": "średnio na dzień",
+  "calDifferenceCount": "Różnica {count} kcal",
+  "@calDifferenceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "percentAverage": "{count}/100% średniej",
+  "@percentAverage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "analyticsHighlightHigher": "Średnie dzienne spożycie {metric} w tym tygodniu jest wyższe niż w poprzednim.",
+  "@analyticsHighlightHigher": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "analyticsHighlightLower": "Średnie dzienne spożycie {metric} w tym tygodniu jest niższe niż w poprzednim.",
+  "@analyticsHighlightLower": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "analyticsHighlightSimilar": "Średnie dzienne spożycie {metric} jest mniej więcej takie samo jak w poprzednim tygodniu.",
+  "@analyticsHighlightSimilar": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "analyticsPeriod1W": "1 T",
+  "analyticsPeriod2W": "2 T",
+  "analyticsPeriod1M": "1 M",
+  "analyticsPeriod3M": "3 M",
+  "analyticsPeriod6M": "6 M",
+  "analyticsPeriod1Y": "1 R",
+  "analyticsMetricCal": "Kcal",
+  "analyticsMetricProtein": "Białko",
+  "analyticsMetricFat": "Tłuszcze",
+  "analyticsMetricCarbs": "Węgl",
+  "quantityLabel": "Ilość",
+  "addSuggestionsLabel": "Dodaj składnik",
+  "suggestionSomethingElse": "Inne",
+  "untitledIngredientName": "Bez nazwy",
+  "onbObstaclesTitle": "Co jest dla Ciebie najtrudniejsze?",
+  "onbObstaclesHint": "Wybierz wszystko, co pasuje — im więcej wiemy, tym dokładniejszy plan.",
+  "onbObstaclesContinue": "{count, plural, =0{Wybierz co najmniej jedną opcję} other{Kontynuuj · wybrano {count}}}",
+  "@onbObstaclesContinue": {
+    "description": "CTA label on the obstacles step. Shows count of selected options to nudge richer multi-select.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "obstacleConsistency": "Trudno trzymać się planu",
+  "obstacleKnowledge": "Nie wiem, co jeść",
+  "obstacleBusy": "Zawsze w biegu",
+  "obstacleCravings": "Ochota na słodkie i mączne",
+  "obstacleSupport": "Bez wsparcia",
+  "obstacleEatingOut": "Często jem poza domem",
+  "obstacleMotivation": "Brakuje motywacji",
+  "obstacleTracking": "Trudno liczyć kalorie",
+  "obstacleTagConsistency": "Serie",
+  "obstacleTagKnowledge": "Tagi celu",
+  "obstacleTagBusy": "Szybko",
+  "obstacleTagCravings": "Cukier-alert",
+  "obstacleTagSupport": "Przewodnik AI",
+  "obstacleTagEatingOut": "Wszędzie",
+  "obstacleTagMotivation": "Postęp",
+  "obstacleTagTracking": "Bez wpisywania",
+  "onbSpeedTitleLose": "Jak szybko chcesz schudnąć?",
+  "onbSpeedTitleGain": "Jak szybko chcesz przybrać na masie?",
+  "onbSpeedHintKg": "Zalecane tempo — {rate} kg/tydzień",
+  "onbSpeedHintLb": "Zalecane tempo — {rate} funtów/tydzień",
+  "onbSpeedKgPerWeek": "{value} kg/tydzień",
+  "@onbSpeedKgPerWeek": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "onbSpeedLbPerWeek": "{value} funtów/tydzień",
+  "@onbSpeedLbPerWeek": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "onbSpeedBadgeGentle": "Łagodne tempo ✅",
+  "onbSpeedBadgeRecommended": "Zalecane tempo ⭐",
+  "onbSpeedBadgeAmbitious": "Ambitnie 🔥",
+  "onbSpeedBadgeAggressive": "Bardzo agresywnie ⚠️",
+  "onbSpeedTargetByPrefix": "Osiągniesz {weight} do",
+  "@onbSpeedTargetByPrefix": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "onbQuizTitle": "Opowiedz o swoich nawykach",
+  "onbQuizHint": "To pomoże spersonalizować Twój plan",
+  "quizStressEatingLeft": "Często jem z powodu stresu",
+  "quizStressEatingRight": "Jem tylko dla energii",
+  "quizSweetPreferenceLeft": "Lubię słodkie",
+  "quizSweetPreferenceRight": "Wolę słone/ostre",
+  "quizExerciseConsistencyLeft": "Trenuję regularnie",
+  "quizExerciseConsistencyRight": "Nie wychodzi mi regularne ćwiczenie",
+  "quizMealPlanningLeft": "Planuję posiłki",
+  "quizMealPlanningRight": "Jem to, co jest pod ręką",
+  "quizMotivationTypeLeft": "Napędzają mnie wyniki",
+  "quizMotivationTypeRight": "Napędzają mnie odczucia",
+  "onbRateTitle": "Podoba Ci się Twój plan?",
+  "onbRateSubtitle": "Oceń Body Meal — to pomoże nam być lepszymi",
+  "onbRateButton": "Oceń",
+  "onbRateSkip": "Pomiń",
+  "onbRateFeedbackTitle": "Co możemy poprawić?",
+  "onbRateFeedbackHint": "Powiedz, co się nie podobało",
+  "onbRateFeedbackSubmit": "Wyślij",
+  "resultAnchorPrefix": "Osiągniesz {weight} do",
+  "@resultAnchorPrefix": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultAnchorWeeksSuffix": "{count, plural, =1{(za 1 tydzień)} few{(za {count} tygodnie)} many{(za {count} tygodni)} other{(za {count} tygodni)}}",
+  "@resultAnchorWeeksSuffix": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultMaintainCard": "Pomożemy utrzymać wagę na poziomie {weight}",
+  "@resultMaintainCard": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultDailyNormLabel": "TWOJA DZIENNA NORMA",
+  "resultPsychotypeLabel": "Twój styl żywienia: {title}",
+  "@resultPsychotypeLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "resultObstaclesHeader": "Twój plan uwzględnia:",
+  "resultMilestonesHeader": "Twój postęp tydzień po tygodniu:",
+  "resultGoalRow": "Cel",
+  "resultWeekRow": "Tydzień {week}",
+  "@resultWeekRow": {
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "resultStartLabel": "Start",
+  "@resultStartLabel": {
+    "description": "Short label shown on the first weekly-progress row of the plan-reveal screen instead of a percent."
+  },
+  "resultGoalReachLine": "Osiągniesz {weight}",
+  "@resultGoalReachLine": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalByDateLine": "do {date}",
+  "@resultGoalByDateLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGoalInWeeks": "{count, plural, =1{za 1 tydzień} few{za {count} tygodnie} many{za {count} tygodni} other{za {count} tygodni}}",
+  "@resultGoalInWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultBenefit5MinDay": "Zajmuje 5 minut dziennie",
+  "resultBenefitSmartTracking": "Inteligentne śledzenie bez wysiłku",
+  "resultBenefitTailored": "Menu dopasowane do Twojego stylu życia",
+  "resultBenefitSustainable": "Trwały rezultat, a nie dieta",
+  "resultFaqHeader": "FAQ",
+  "resultFaqCancelQ": "Jak anulować subskrypcję?",
+  "resultFaqCancelAIos": "Otwórz Ustawienia → Twoje imię → Subskrypcje na iPhone, znajdź Body Meal i naciśnij „Anuluj subskrypcję”.",
+  "resultFaqCancelAAndroid": "Otwórz Google Play → profil → Płatności i subskrypcje → Subskrypcje, znajdź Body Meal i naciśnij „Anuluj”.",
+  "resultFaqSecurityQ": "Czy moje dane są bezpieczne?",
+  "resultFaqSecurityA": "Dane są szyfrowane podczas przesyłania i przechowywania. Nie przekazujemy ich reklamodawcom, a konto można usunąć w ustawieniach w dowolnej chwili.",
+  "resultFaqTrialQ": "Czy jest darmowy okres próbny?",
+  "resultFaqTrialA": "Tak — okres próbny dostępny jest w planie rocznym. Pobranie nie nastąpi do jego zakończenia, anulować można w dowolnej chwili wcześniej.",
+  "loadingMetabolism": "Analizujemy Twój metabolizm...",
+  "loadingCalories": "Obliczamy dzienną normę kalorii...",
+  "loadingMacros": "Dobieramy balans białka / tłuszczu / węglowodanów...",
+  "loadingPsychotype": "Analizujemy Twój styl żywienia i nawyki...",
+  "loadingPlanCreate": "Tworzymy spersonalizowany plan...",
+  "psyStressEaterTitle": "Emocjonalny Smakosz",
+  "psyStressEaterDesc": "Jesz pod wpływem emocji. Pomożemy znaleźć alternatywy.",
+  "psyFuelFocusedTitle": "Racjonalny Smakosz",
+  "psyFuelFocusedDesc": "Jesteś racjonalny w jedzeniu. Wystarczy precyzyjnie policzyć.",
+  "psySweetLoverTitle": "Łasuch",
+  "psySweetLoverDesc": "Nauczymy zamieniać słodkie bez wpadek.",
+  "psySavoryLoverTitle": "Miłośnik Pikantnego",
+  "psySavoryLoverDesc": "Ostre i słone — Twój styl. Znajdziemy balans sodu.",
+  "psyConsistentAthleteTitle": "Sportowy Profesjonalista",
+  "psyConsistentAthleteDesc": "Masz mocną bazę. Precyzyjna dieta zwielokrotni wynik.",
+  "psyInconsistentTitle": "Bohater Restartu",
+  "psyInconsistentDesc": "Najważniejsze to zacząć od nowa. Ułatwimy powrót.",
+  "psyPlannerTitle": "Planista",
+  "psyPlannerDesc": "Lubisz kontrolę. Pozwól AI policzyć wszystko za Ciebie.",
+  "psyConvenienceEaterTitle": "Smakosz w Biegu",
+  "psyConvenienceEaterDesc": "Mało czasu — pomożemy wybierać szybko i dobrze.",
+  "psyResultsDrivenTitle": "Zorientowany na Cel",
+  "psyResultsDrivenDesc": "Napędzają Cię liczby. Pokażemy postęp wyraziście.",
+  "psyFeelingsDrivenTitle": "Intuicyjny Smakosz",
+  "psyFeelingsDrivenDesc": "Słuchasz siebie. Uzupełnimy to danymi.",
+  "psyBalancedTitle": "Zrównoważone Podejście",
+  "psyBalancedDesc": "Masz zdrowe podejście do jedzenia. Wzmocnimy je danymi.",
+  "onbWelcomeTitle": "Sfotografuj jedzenie.\nOsiągnij cel.",
+  "onbWelcomeSubtitle": "AI liczy kalorie, białko, węglowodany i tłuszcze — bez ręcznego wpisywania.",
+  "onbWelcomeCta": "Rozpocznij",
+  "onbWelcomeLabelSalmon": "Łosoś",
+  "onbWelcomeLabelEggs": "Jajka",
+  "onbWelcomeLabelAvocado": "Awokado",
+  "onbWelcomeLabelBread": "Chleb",
+  "onbLanguageSheetTitle": "Wybierz język",
+  "langShortEn": "Ang",
+  "langShortRu": "Ros",
+  "langShortDe": "Niem",
+  "langShortEs": "Hisz",
+  "langShortFr": "Fr",
+  "langShortPt": "Por",
+  "langShortPl": "Pol",
+  "onbConfidentTitle": "Dziękujemy za zaufanie",
+  "onbConfidentSubtitle": "Personalizujemy Body Meal specjalnie pod Twoje cele",
+  "onbConfidentPrivacyTitle": "Twoja prywatność jest ważna",
+  "onbConfidentPrivacyBody": "Obiecujemy zachować Twoje dane osobowe w tajemnicy",
+  "onbKeepResultTitle": "Schudnij i nie odbij.",
+  "onbKeepResultSubtitle": "Dopasowane do Ciebie. Na trwałe.",
+  "onbCalorieHistoryTitle": "Czy kiedykolwiek liczyłeś kalorie?",
+  "onbCalorieHistoryYes": "Tak, i nadal to robię",
+  "onbCalorieHistoryTried": "{gender, select, male{Próbowałem, ale zrezygnowałem} female{Próbowałam, ale zrezygnowałam} other{Próbowałem(am), ale zrezygnowałem(am)}}",
+  "onbCalorieHistoryNever": "Nie, nigdy",
+  "@onbCalorieHistoryTried": {
+    "placeholders": {
+      "gender": {
+        "type": "String"
+      }
+    }
+  },
+  "onbImproveTitle": "Co chcesz poprawić?",
+  "onbImproveLookBetter": "Wyglądać lepiej",
+  "onbImproveFeelConfident": "Czuć się pewniej",
+  "onbImproveHealth": "Poprawić zdrowie",
+  "onbImproveMoreEnergy": "Więcej energii",
+  "onbImproveLessStress": "Mniej stresu",
+  "onbImproveImmunity": "Wzmocnić odporność",
+  "onbImproveFocus": "Lepsza koncentracja",
+  "onbImproveSleep": "Lepszy sen",
+  "onbEatingObstacleTitle": "Co przeszkadza Ci w zdrowszym jedzeniu?",
+  "onbEatingObstacleCravings": "Ochota na słodkie lub niezdrowe",
+  "onbEatingObstacleLateSnacks": "Późne przekąski",
+  "onbEatingObstacleBadHabits": "Niezdrowe nawyki",
+  "onbHardestTitle": "Co jest najtrudniejsze — nie poddać się i utrzymać reżim?",
+  "onbHardestBusy": "Napięty grafik",
+  "onbHardestRestrictive": "Za dużo ograniczeń",
+  "onbHardestNoSupport": "Brak wsparcia",
+  "onbSupportTitle": "Będziemy z Tobą!",
+  "onbSupportSubtitle": "Droga do celu bywa trudna, ale będziemy wspierać Cię na każdym kroku.",
+  "onbSocialProofTitle": "Ze wsparciem ludzie tracą więcej kilogramów i szybciej",
+  "onbSocialProofSubtitle": "Aplikacja może pomóc Ci osiągnąć trwałe rezultaty w odchudzaniu.",
+  "onbSpeedSlow": "Wolno",
+  "onbSpeedBalanced": "Zrównoważenie",
+  "onbSpeedFast": "Szybko",
+  "onbSpeedGoodTitle": "Cel: {date}",
+  "onbSpeedGoodBody": "Rozsądny plan — trwały wynik bez wpadek i plateau.",
+  "onbSpeedAlertTitle": "Za szybko — wysokie ryzyko wpadki",
+  "onbSpeedAlertBody": "Wybierz bardziej zrównoważone tempo, aby dojść do celu bez wpadek.",
+  "@onbSpeedGoodTitle": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@onbSpeedHintKg": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "@onbSpeedHintLb": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "onbTrialReminderTitle": "Wyślemy przypomnienie,\nże okres próbny\nwkrótce się kończy.",
+  "onbTrialReminderNoPaymentNow": "Płatność teraz nie jest wymagana",
+  "onbTrialReminderCta": "Wypróbuj za {price}",
+  "onbTrialReminderSubtitle": "Tylko {yearly} rocznie ({monthly} / mies.)",
+  "@onbTrialReminderCta": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "@onbTrialReminderSubtitle": {
+    "placeholders": {
+      "yearly": {
+        "type": "String"
+      },
+      "monthly": {
+        "type": "String"
+      }
+    }
+  },
+  "tagHighProtein": "Dużo białka",
+  "tagContainsProtein": "Zawiera białko",
+  "tagLowProtein": "Mało białka",
+  "tagCompleteProtein": "Pełnowartościowe białko",
+  "tagHealthyFats": "Zdrowe tłuszcze",
+  "tagRichInOmega3": "Omega-3",
+  "tagHighFat": "Dużo tłuszczu",
+  "tagHighSatFat": "Tłuszcze nasycone",
+  "tagHighTransFat": "Tłuszcze trans",
+  "tagLowFat": "Mało tłuszczu",
+  "tagHighFiber": "Dużo błonnika",
+  "tagContainsFiber": "Zawiera błonnik",
+  "tagLowFiber": "Mało błonnika",
+  "tagComplexCarbs": "Złożone węglowodany",
+  "tagRefinedCarbs": "Szybkie węglowodany",
+  "tagLowSugar": "Mało cukru",
+  "tagHighSugar": "Dużo cukru",
+  "tagLowCarb": "Niskowęglowodanowe",
+  "tagHighCalories": "Kaloryczne",
+  "tagLowCalories": "Niskokaloryczne",
+  "tagHighEnergy": "Dużo energii",
+  "tagHelpsQuota": "Dopełnia normę",
+  "tagNutrientDense": "Odżywcze",
+  "tagEmptyCalories": "Puste kalorie",
+  "tagHeavyMeal": "Ciężki posiłek",
+  "tagLightMeal": "Lekki posiłek",
+  "tagHighSalt": "Dużo soli",
+  "tagLowSalt": "Mało soli",
+  "tagHighCholesterol": "Dużo cholesterolu",
+  "tagGoodPostWorkout": "Po treningu",
+  "tagGoodPreWorkout": "Przed treningiem",
+  "tagBreakfastFriendly": "Dobre na śniadanie",
+  "tagHeartFriendly": "Dla serca",
+  "tagGutFriendly": "Dla jelit",
+  "tagBrainFood": "Dla mózgu",
+  "tagImmuneBoost": "Dla odporności",
+  "tagBoneHealth": "Dla kości",
+  "tagRichInVitamins": "Dużo witamin",
+  "tagRichInIron": "Bogate w żelazo",
+  "tagRichInCalcium": "Bogate w wapń",
+  "tagRichInPotassium": "Bogate w potas",
+  "tagHighAntioxidants": "Antyoksydanty",
+  "tagBalancedMacros": "Balans makro",
+  "tagWholeFoods": "Naturalne produkty",
+  "tagUltraProcessed": "Przetworzone",
+  "tagPlantBased": "Roślinne",
+  "tagHydrating": "Nawadniające",
+  "forYourGoalLose": "Cel: Schudnąć",
+  "forYourGoalMaintain": "Cel: Utrzymanie",
+  "forYourGoalGain": "Cel: Przybranie na masie",
+  "completeMacroSection": "Pełne wskaźniki",
+  "macroSugar": "Cukier",
+  "macroFiber": "Błonnik",
+  "macroSaturatedFat": "Tłuszcze nasycone",
+  "macroCholesterol": "Cholesterol",
+  "macroTransFat": "Tłuszcze trans",
+  "macroGlycemicLoad": "Ładunek glikem.",
+  "macroCaloricDensity": "Gęstość kalorii",
+  "macroProcessing": "Stopień przetworzenia",
+  "macroVitamins": "Witaminy i minerały",
+  "macroStatusWorse": "Gorzej niż średnio",
+  "macroStatusAverage": "Średnio",
+  "macroStatusGood": "Świetnie",
+  "macroValueOfDaily": "{value} · {percent}%",
+  "@macroValueOfDaily": {
+    "placeholders": {
+      "value": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+  "macroLevelLow": "Niska",
+  "macroLevelModerate": "Średnia",
+  "macroLevelModerateHigh": "Średnio-wysoka",
+  "macroLevelHigh": "Wysoka",
+  "macroLevelVeryHigh": "Bardzo wysoka",
+  "macroProcessingUnprocessed": "Nieprzetworzone",
+  "macroProcessingMinimal": "Minimalnie",
+  "macroProcessingProcessed": "Umiarkowanie",
+  "macroProcessingUltra": "Ultra",
+  "macroMgUnit": "mg",
+  "dishWeightLabel": "Waga dania",
+  "macroSalt": "Sól",
+  "burnSectionTitle": "Jak spalić kalorie?",
+  "burnWalking": "Chodzenie",
+  "burnRunning": "Bieg",
+  "burnGym": "Trening",
+  "burnCycling": "Rower",
+  "burnResting": "Spoczynek",
+  "burnOr": "lub",
+  "burnApproxSteps": "~ {count} kroków",
+  "@burnApproxSteps": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxKm": "~ {count} km",
+  "@burnApproxKm": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "burnApproxHoursMinutes": "~ {hours} godz. {minutes} min",
+  "@burnApproxHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "aiLoadingPhrase01": "Hmm… podejrzanie smaczne.",
+  "aiLoadingPhrase02": "Chwilę, zbadam tę pyszność.",
+  "aiLoadingPhrase03": "Zobaczmy, co kryje talerz.",
+  "aiLoadingPhrase04": "Jedzenie wykryte. Ciekawość włączona.",
+  "aiLoadingPhrase05": "To danie ma tajemnice.",
+  "aiLoadingPhrase06": "Analizuję apetyczną sytuację…",
+  "aiLoadingPhrase07": "Rozwiążę tę pyszną zagadkę.",
+  "aiLoadingPhrase08": "Mały detektyw jedzenia w akcji.",
+  "aiLoadingPhrase09": "Wygląda dobrze. Zbyt dobrze.",
+  "aiLoadingPhrase10": "Skanuję talerz jak dowód.",
+  "aiLoadingPhrase11": "Chwila, śledzę pyszności.",
+  "aiLoadingPhrase12": "Dowiemy się, co tu się dzieje.",
+  "aiLoadingPhrase13": "Widelec poczeka. Najpierw nauka.",
+  "aiLoadingPhrase14": "Sprawdzę, czy jest takie niewinne.",
+  "aiLoadingPhrase15": "Dzieje się coś smacznego…",
+  "aiLoadingPhrase16": "Przybliżam się do apetycznych dowodów.",
+  "aiLoadingPhrase17": "Pełne śledztwo w sprawie przekąski.",
+  "aiLoadingPhrase18": "Czuję kalorie. Metaforycznie.",
+  "aiLoadingPhrase19": "Talerz wszedł w tryb analizy.",
+  "aiLoadingPhrase20": "Czytam gastronomiczne plotki.",
+  "aiLoadingPhrase21": "Szukam makro za tą magią.",
+  "aiLoadingPhrase22": "Hmm… talerz to główny bohater.",
+  "aiLoadingPhrase23": "Z czego zrobiona ta mini-uczta?",
+  "aiLoadingPhrase24": "Liczę cyfry, a nie Twoje danie.",
+  "aiLoadingPhrase25": "Wibracje jedzenia wykryte. Liczymy…"
+}

@@ -2140,6 +2140,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get langShortPt => 'Por';
 
   @override
+  String get langShortPl => 'Pol';
+
+  @override
   String get onbConfidentTitle => 'Danke für Ihr Vertrauen';
 
   @override

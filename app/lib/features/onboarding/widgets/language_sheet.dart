@@ -11,6 +11,7 @@ Future<String?> showLanguageSheet(BuildContext context) {
   return showModalBottomSheet<String>(
     context: context,
     backgroundColor: AppColors.lightOnBack,
+    isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -28,6 +29,7 @@ class _LanguageSheet extends StatelessWidget {
     ('es', 'Español', 'es'),
     ('fr', 'Français', 'fr'),
     ('pt', 'Português', 'pt'),
+    ('pl', 'Polski', 'pl'),
   ];
 
   @override

@@ -2134,6 +2134,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get langShortPt => 'Пор';
 
   @override
+  String get langShortPl => 'Пол';
+
+  @override
   String get onbConfidentTitle => 'Спасибо, что доверяете';
 
   @override

@@ -2136,6 +2136,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get langShortPt => 'Por';
 
   @override
+  String get langShortPl => 'Pol';
+
+  @override
   String get onbConfidentTitle => 'Gracias por tu confianza';
 
   @override

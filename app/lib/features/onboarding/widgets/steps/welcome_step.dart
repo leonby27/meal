@@ -406,6 +406,8 @@ class _LanguagePill extends StatelessWidget {
         return l10n.langShortFr;
       case 'pt':
         return l10n.langShortPt;
+      case 'pl':
+        return l10n.langShortPl;
       case 'en':
       default:
         return l10n.langShortEn;
