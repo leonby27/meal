@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
 import 'package:meal_tracker/core/services/notification_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
@@ -109,50 +110,70 @@ class _RemindersScreenState extends State<RemindersScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.darkOnBack4 : AppColors.lightOnBack4;
+    final lineColor = isDark ? AppColors.lineDT100 : AppColors.lineLight100;
+    final secondaryText = isDark
+        ? AppColors.darkOnSurfaceVariant
+        : AppColors.lightOnSurfaceVariant;
+
     return Scaffold(
       appBar: AppBar(title: Text(context.l10n.remindersTitle)),
       body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                children: _reminders.map((r) {
-                  final isEnabled = _times.containsKey(r.key);
-                  return ListTile(
-                    leading: Icon(r.icon),
-                    title: Text(_reminderLabel(context, r.key)),
-                    subtitle: isEnabled
-                        ? GestureDetector(
-                            onTap: () => _changeTime(r.key),
-                            child: Text(
-                              _formatTime(_times[r.key]!),
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
+          Container(
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: lineColor),
+              boxShadow: AppColors.baseDrop,
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              children: _reminders.map((r) {
+                final isEnabled = _times.containsKey(r.key);
+                return ListTile(
+                  leading: Icon(r.icon),
+                  title: Text(_reminderLabel(context, r.key)),
+                  subtitle: isEnabled
+                      ? GestureDetector(
+                          onTap: () => _changeTime(r.key),
+                          child: Text(
+                            _formatTime(_times[r.key]!),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
                             ),
-                          )
-                        : Text(context.l10n.reminderOff),
-                    trailing: Switch(
-                      value: isEnabled,
-                      onChanged: (v) => _toggleReminder(r.key, v, r.defaultTime),
-                    ),
-                  );
-                }).toList(),
-              ),
+                          ),
+                        )
+                      : Text(context.l10n.reminderOff),
+                  trailing: Switch(
+                    value: isEnabled,
+                    onChanged: (v) =>
+                        _toggleReminder(r.key, v, r.defaultTime),
+                    inactiveTrackColor:
+                        isDark ? AppColors.darkSurface3 : AppColors.lightUnderBack,
+                    inactiveThumbColor: isDark
+                        ? AppColors.darkOnSurfaceVariant
+                        : AppColors.lightSecondaryLight,
+                    trackOutlineColor:
+                        const WidgetStatePropertyAll(Colors.transparent),
+                  ),
+                );
+              }).toList(),
             ),
           ),
           const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                context.l10n.remindersDescription,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              context.l10n.remindersDescription,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                height: 18 / 13,
+                color: secondaryText,
               ),
             ),
           ),
