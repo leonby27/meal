@@ -107,10 +107,10 @@ IMAGE_SIGNATURES = [
 _KIND_TO_STATUS = {
     "rate_limited": 429,   # transient → client retry OK
     "upstream_5xx": 502,   # transient → client retry OK
+    "upstream_4xx": 502,   # keep prior behavior — agent 4xx stays retriable
     "network": 504,        # transient → client retry OK
-    "upstream_4xx": 422,   # request rejected by agent — retrying never helps
-    "truncated": 422,      # bad/cut output — already re-rolled server-side
-    "parse_error": 422,
+    "truncated": 422,      # bad/cut output — already re-rolled server-side,
+    "parse_error": 422,    # so 422 (the client does NOT retry these)
     "no_json": 422,
     "bad_response": 422,
 }
@@ -144,9 +144,20 @@ async def _enforce_daily_limit(user_id: str, db: AsyncSession) -> None:
     ({429,500,502,503,504}) so a capped user fails immediately instead of
     retrying. `kind=daily_limit` lets the client message it specifically later.
     """
-    allowed = await reserve_recognition(
-        db, user_id, settings.max_recognitions_per_day
-    )
+    try:
+        allowed = await reserve_recognition(
+            db, user_id, settings.max_recognitions_per_day
+        )
+    except Exception:
+        # Fail-open: a cost guard must NEVER take down recognition. If the
+        # counter errors (e.g. recognition_usage table not yet created), log
+        # and allow the request instead of 500-ing every scan.
+        logger.exception("daily-limit check failed — allowing recognition")
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+        return
     if not allowed:
         raise HTTPException(
             status_code=403,

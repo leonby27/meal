@@ -550,12 +550,10 @@ def build_text_prompt(locale: str | None, goal: str | None) -> str:
 
 MAX_DIMENSION = 768
 JPEG_QUALITY = 75
-# Generous output cap. Most responses are well under 1500 tokens; the model
-# stops at the closing brace (strict-JSON instruction + temperature 0.2), so a
-# higher cap is only billed on genuinely large dishes. The headroom prevents
-# `finish_reason=length` truncation, which used to surface as a parse error and
-# trigger client retries (3× the token spend). Raising the cap is a net saver.
-MAX_TOKENS = 4000
+# Output cap. Kept at the long-proven 2800: the Timeweb agent rejected larger
+# values (4000) with a 4xx, breaking every recognition, so do NOT raise this
+# without first confirming the agent's real max_tokens / context limit.
+MAX_TOKENS = 2800
 
 HTTP_TIMEOUT = 60.0
 MAX_ATTEMPTS = 3
