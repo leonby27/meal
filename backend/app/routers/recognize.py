@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.models.user_setting import UserSetting
 from app.routers.deps import get_current_user_id
@@ -14,6 +15,7 @@ from app.services.timeweb_ai import (
     recognize_food,
     recognize_food_from_text,
 )
+from app.services.usage import reserve_recognition
 
 logger = logging.getLogger(__name__)
 
@@ -96,15 +98,21 @@ IMAGE_SIGNATURES = [
 ]
 
 
+# Status codes the client uses to decide whether to retry. The Flutter client
+# retries {429, 500, 502, 503, 504} (see api_client.dart _retriableStatuses), so
+# only genuinely-transient upstream failures get those codes. Bad model output
+# (truncated / unparseable JSON) is NOT transient — the backend already re-rolls
+# it once internally — so we surface it as 422, which the client will NOT retry.
+# This stops a single bad recognition from costing 3× the tokens.
 _KIND_TO_STATUS = {
-    "rate_limited": 429,
-    "upstream_5xx": 502,
-    "upstream_4xx": 502,
-    "network": 504,
-    "truncated": 502,
-    "parse_error": 502,
-    "no_json": 502,
-    "bad_response": 502,
+    "rate_limited": 429,   # transient → client retry OK
+    "upstream_5xx": 502,   # transient → client retry OK
+    "network": 504,        # transient → client retry OK
+    "upstream_4xx": 422,   # request rejected by agent — retrying never helps
+    "truncated": 422,      # bad/cut output — already re-rolled server-side
+    "parse_error": 422,
+    "no_json": 422,
+    "bad_response": 422,
 }
 
 
@@ -127,6 +135,26 @@ def _normalize_goal(value: str | None) -> str | None:
         return None
     code = value.strip().lower()
     return code if code in _ALLOWED_GOALS else None
+
+
+async def _enforce_daily_limit(user_id: str, db: AsyncSession) -> None:
+    """Count this recognition against the user's daily cap; 403 when over.
+
+    403 is deliberately outside the client's retriable set
+    ({429,500,502,503,504}) so a capped user fails immediately instead of
+    retrying. `kind=daily_limit` lets the client message it specifically later.
+    """
+    allowed = await reserve_recognition(
+        db, user_id, settings.max_recognitions_per_day
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "kind": "daily_limit",
+                "message": "Достигнут дневной лимит распознаваний",
+            },
+        )
 
 
 async def _goal_from_settings(user_id: str, db: AsyncSession) -> str | None:
@@ -179,6 +207,8 @@ async def recognize(
     if len(image_bytes) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
 
+    await _enforce_daily_limit(user_id, db)
+
     try:
         result = await recognize_food(
             image_bytes,
@@ -224,6 +254,8 @@ async def recognize_text(
         "recognize_text: user=%s locale=%s goal=%s text=%r",
         user_id, user_locale, user_goal, text[:100],
     )
+
+    await _enforce_daily_limit(user_id, db)
 
     try:
         result = await recognize_food_from_text(

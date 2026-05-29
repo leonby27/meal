@@ -550,11 +550,22 @@ def build_text_prompt(locale: str | None, goal: str | None) -> str:
 
 MAX_DIMENSION = 768
 JPEG_QUALITY = 75
-MAX_TOKENS = 2800
+# Generous output cap. Most responses are well under 1500 tokens; the model
+# stops at the closing brace (strict-JSON instruction + temperature 0.2), so a
+# higher cap is only billed on genuinely large dishes. The headroom prevents
+# `finish_reason=length` truncation, which used to surface as a parse error and
+# trigger client retries (3× the token spend). Raising the cap is a net saver.
+MAX_TOKENS = 4000
 
 HTTP_TIMEOUT = 60.0
 MAX_ATTEMPTS = 3
 RETRY_BASE_DELAY = 1.0
+# Bad-model-output kinds worth ONE in-process re-roll: the model returned
+# HTTP 200 but unparseable / truncated JSON. Because temperature > 0, a second
+# attempt often parses fine. We retry these here (cheaply, once) instead of
+# letting the client retry the whole request 3× — see _request_and_parse.
+_PARSE_ERROR_KINDS = frozenset({"truncated", "parse_error", "no_json", "bad_response"})
+MAX_PARSE_REROLLS = 1
 PACKAGED_ENRICH_TIMEOUT = 2.0
 PACKAGED_ENRICH_MAX_ITEMS = 3
 
@@ -1016,6 +1027,33 @@ async def _post_with_retries(payload: dict) -> dict:
     raise last_exc
 
 
+async def _request_and_parse(payload: dict) -> dict:
+    """POST to the agent and parse the JSON, re-rolling once on bad output.
+
+    `_post_with_retries` already handles transient HTTP failures (5xx / 429 /
+    network). This wrapper additionally retries the *whole* call when the agent
+    returns HTTP 200 with content we cannot parse (truncated / malformed JSON):
+    a fresh sample usually succeeds. We cap this at MAX_PARSE_REROLLS so a
+    persistently-broken response fails fast instead of burning tokens, and the
+    client is told (via a non-retriable status) not to retry on top of this.
+    """
+    last_exc: AIRecognitionError | None = None
+    for attempt in range(MAX_PARSE_REROLLS + 1):
+        data = await _post_with_retries(payload)
+        try:
+            return _parse_ai_response(data)
+        except AIRecognitionError as e:
+            if e.kind not in _PARSE_ERROR_KINDS or attempt == MAX_PARSE_REROLLS:
+                raise
+            last_exc = e
+            logger.warning(
+                "AI parse failed (kind=%s) on attempt %d/%d — re-rolling",
+                e.kind, attempt + 1, MAX_PARSE_REROLLS + 1,
+            )
+    assert last_exc is not None
+    raise last_exc
+
+
 async def recognize_food(
     image_bytes: bytes,
     *,
@@ -1071,8 +1109,7 @@ async def recognize_food(
         "max_tokens": MAX_TOKENS,
     }
 
-    data = await _post_with_retries(payload)
-    result = _parse_ai_response(data)
+    result = await _request_and_parse(payload)
     _sanitize_goal_fit(result)
     return await _enrich_packaged_items(result, locale)
 
@@ -1105,7 +1142,6 @@ async def recognize_food_from_text(
         "max_tokens": MAX_TOKENS,
     }
 
-    data = await _post_with_retries(payload)
-    result = _parse_ai_response(data)
+    result = await _request_and_parse(payload)
     _sanitize_goal_fit(result)
     return result
