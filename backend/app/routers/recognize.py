@@ -215,8 +215,11 @@ async def recognize(
                 detail=f"File must be an image (got content_type={ct}, no image signature found)",
             )
 
-    if len(image_bytes) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
+    # Guardrail against absurd uploads only. The image is downscaled to
+    # ~576x768 in normalize_image before reaching the agent, so the raw size
+    # never affects token cost — modern phone photos routinely exceed 10MB.
+    if len(image_bytes) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image too large (max 25MB)")
 
     await _enforce_daily_limit(user_id, db)
 
