@@ -14,7 +14,11 @@ class Settings(BaseSettings):
     timeweb_ai_token: str = ""
     timeweb_ai_base_url: str = "https://agent.timeweb.cloud/api/v1/cloud-ai/agents"
 
-    max_recognitions_per_day: int = 20
+    # Per-account daily recognition cap. 0 (or negative) DISABLES the cap —
+    # `reserve_recognition` short-circuits to allow on `limit <= 0`, writing
+    # nothing to recognition_usage. Re-enable at runtime via the
+    # MAX_RECOGNITIONS_PER_DAY env var (no redeploy needed).
+    max_recognitions_per_day: int = 0
 
     # -------------------------------------------------------------------------
     # In-App Purchases — Apple

@@ -194,8 +194,9 @@ async def recognize(
     user_locale = locale.strip() or None
     user_goal = _normalize_goal(goal) or await _goal_from_settings(user_id, db)
     logger.info(
-        "recognize: filename=%s content_type=%s size=%d text=%r locale=%s "
-        "goal=%s bytes_head=%s",
+        "recognize: user=%s filename=%s content_type=%s size=%d text=%r "
+        "locale=%s goal=%s bytes_head=%s",
+        user_id,
         file.filename, file.content_type, len(image_bytes),
         user_text[:100] if user_text else "",
         user_locale,
