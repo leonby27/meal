@@ -681,6 +681,18 @@ def _clean_json_text(text: str) -> str:
 
 
 def _parse_ai_response(data: dict) -> dict:
+    # Log the agent's own token accounting (OpenAI-compatible `usage` block).
+    # We were discarding this; logging it turns token-cost estimates into
+    # exact per-request numbers. Guarded so agents that omit it don't error.
+    usage = data.get("usage") if isinstance(data, dict) else None
+    if usage:
+        logger.info(
+            "AI usage: prompt_tokens=%s completion_tokens=%s total_tokens=%s",
+            usage.get("prompt_tokens"),
+            usage.get("completion_tokens"),
+            usage.get("total_tokens"),
+        )
+
     try:
         content = data["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as e:
