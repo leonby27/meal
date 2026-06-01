@@ -7,6 +7,7 @@ import 'package:cupertino_http/cupertino_http.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart' as http_io;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 
@@ -139,6 +140,13 @@ class _DohCacheEntry {
 class ApiClient {
   static const String _baseUrlKey = 'api_base_url';
   static const String _tokenKey = 'auth_token';
+  // Per-device guest credentials. Generated once and persisted so every
+  // install gets its OWN backend account. Previously every guest registered
+  // under a single hard-coded `local@device.app`, which funnelled all
+  // anonymous users into one shared account (broke per-user attribution and
+  // made the daily recognition cap effectively global).
+  static const String _deviceEmailKey = 'device_account_email';
+  static const String _devicePasswordKey = 'device_account_password';
   static const String defaultBaseUrl = 'https://bodymealapp.ru';
 
   static const int _maxRetries = 3;
@@ -195,21 +203,39 @@ class ApiClient {
     await prefs.setString(_baseUrlKey, url);
   }
 
+  /// Returns this device's stable guest credentials, generating and
+  /// persisting them on first use. Both values are written to
+  /// SharedPreferences BEFORE any network call so the register→409→login
+  /// fallback always logs in with the same password that was registered.
+  Future<({String email, String password})> _deviceCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    var email = prefs.getString(_deviceEmailKey);
+    var password = prefs.getString(_devicePasswordKey);
+    if (email == null || password == null) {
+      email = 'device-${const Uuid().v4()}@device.app';
+      password = const Uuid().v4();
+      await prefs.setString(_deviceEmailKey, email);
+      await prefs.setString(_devicePasswordKey, password);
+    }
+    return (email: email, password: password);
+  }
+
   Future<void> ensureAuthenticated({bool forceRefresh = false}) async {
     if (_token != null && !forceRefresh) return;
     if (forceRefresh) await clearToken();
+    final creds = await _deviceCredentials();
     try {
       final result = await post('/api/auth/register', {
-        'email': 'local@device.app',
-        'password': 'device-auto-pass',
+        'email': creds.email,
+        'password': creds.password,
         'name': 'User',
       });
       await setToken(result['access_token'] as String);
     } on ApiException catch (e) {
       if (e.statusCode == 409) {
         final result = await post('/api/auth/login', {
-          'email': 'local@device.app',
-          'password': 'device-auto-pass',
+          'email': creds.email,
+          'password': creds.password,
         });
         await setToken(result['access_token'] as String);
       } else {
