@@ -376,17 +376,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     final kind = _currentKind;
     final kinds = _kinds;
 
-    // iOS App Tracking Transparency: fire right after the user commits
-    // to their personal plan (CTA tap on the result step). By this point
-    // they have invested time in the onboarding questionnaire, watched
-    // the 6-second loading animation, read their computed plan, and
-    // chosen to proceed — peak commitment, highest allow rate. Lifting
-    // the prompt from welcome to here roughly doubles authorized
-    // shares in Cal AI / Yazio-style flows. No-op on Android and on
-    // installs that have already resolved ATT.
-    if (kind == _StepKind.result) {
-      unawaited(AnalyticsService.instance.requestAttPermissionIfNeeded());
-    }
+    // iOS App Tracking Transparency is intentionally NOT requested during
+    // onboarding any more. It used to fire on the result-step CTA, but the
+    // system prompt then overlaid the «Trial reminder» screen right before
+    // the paywall — adding friction at the single most conversion-critical
+    // moment of the funnel. The request now happens on first entry to the
+    // diary screen, after the user has subscribed (see DiaryScreen). IDFA
+    // buys little for our SKAN-attributed Google App Campaigns, so deferring
+    // it costs almost no measurement signal while removing the friction.
 
     if (kind == _StepKind.weight) {
       _updateTargetWeightFromGoal();

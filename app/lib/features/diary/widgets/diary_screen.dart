@@ -15,6 +15,7 @@ import 'package:uuid/uuid.dart';
 import 'package:meal_tracker/app/route_observer.dart';
 import 'package:meal_tracker/app/theme.dart';
 import 'package:meal_tracker/core/database/app_database.dart';
+import 'package:meal_tracker/core/services/analytics_service.dart';
 import 'package:meal_tracker/core/services/auth_service.dart';
 import 'package:meal_tracker/core/utils/l10n_extension.dart';
 import 'package:meal_tracker/core/utils/meal_type_helper.dart';
@@ -176,6 +177,20 @@ class _DiaryScreenState extends State<DiaryScreen>
     _initDb();
     _inputCtl.addListener(_onSearchTextChanged);
     _inputFocus.addListener(_onSearchFocusChanged);
+
+    // iOS App Tracking Transparency: the prompt was moved out of the
+    // onboarding funnel and is now requested here, on first entry to the main
+    // (diary) screen. This route is only reachable once the user is premium —
+    // i.e. right after they subscribe — so the system dialog no longer competes
+    // with the conversion-critical paywall step. A short delay lets the route
+    // transition settle so the dialog appears over a painted screen rather than
+    // mid-animation. Idempotent: a no-op once ATT is resolved, and on Android.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future<void>.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        unawaited(AnalyticsService.instance.requestAttPermissionIfNeeded());
+      });
+    });
   }
 
   @override
